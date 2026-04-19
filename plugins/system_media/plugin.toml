@@ -9,3 +9,4 @@ entry_class = "SystemMediaPlugin"
 official = true
 contribution_types = ["sensor"]
 platforms = ["windows", "macos"]
+dependencies = ["winrt-runtime>=2.0; sys_platform == 'win32'", "winrt-Windows.Media.Control>=2.0; sys_platform == 'win32'"]

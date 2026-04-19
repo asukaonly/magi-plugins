@@ -107,6 +107,22 @@
       ]
     },
     {
+      "plugin_id": "telegram",
+      "name": "Telegram",
+      "version": "0.1.0",
+      "path": "plugins/telegram",
+      "description": "Bidirectional Telegram bot channel adapter.",
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "channel"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
+    },
+    {
       "plugin_id": "terminal-history",
       "name": "Terminal History",
       "version": "0.1.0",
