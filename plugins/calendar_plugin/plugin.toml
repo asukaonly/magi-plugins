@@ -9,4 +9,7 @@ entry_class = "CalendarPlugin"
 official = true
 contribution_types = ["sensor"]
 platforms = ["macos"]
-dependencies = ["pyobjc-framework-EventKit>=10.0", "pyobjc-framework-Cocoa>=10.0"]
+dependencies = [
+    "pyobjc-framework-EventKit>=10.0",
+    "pyobjc-framework-Cocoa>=10.0",
+]
