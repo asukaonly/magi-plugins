@@ -8,4 +8,4 @@ entry_module = "plugin"
 entry_class = "CalendarPlugin"
 official = true
 contribution_types = ["sensor"]
-platforms = ["macos", "ios"]
+platforms = ["macos"]

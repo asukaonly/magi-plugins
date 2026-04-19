@@ -14,8 +14,7 @@
         "sensor"
       ],
       "platforms": [
-        "macos",
-        "ios"
+        "macos"
       ]
     },
     {
@@ -44,7 +43,6 @@
       ],
       "platforms": [
         "macos",
-        "linux",
         "windows"
       ]
     },

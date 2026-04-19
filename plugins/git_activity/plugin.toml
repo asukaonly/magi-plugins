@@ -8,4 +8,4 @@ entry_module = "plugin"
 entry_class = "GitActivityPlugin"
 official = true
 contribution_types = ["sensor"]
-platforms = ["macos", "linux", "windows"]
+platforms = ["macos", "windows"]
