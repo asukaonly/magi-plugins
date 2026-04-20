@@ -10,12 +10,8 @@
       "description": "Calendar event ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos"]
     },
     {
       "plugin_id": "chrome-history",
@@ -25,13 +21,8 @@
       "description": "Local Google Chrome browsing history ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos",
-        "windows"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos", "windows"]
     },
     {
       "plugin_id": "git-activity",
@@ -41,13 +32,8 @@
       "description": "Git repository activity ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos",
-        "windows"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos", "windows"]
     },
     {
       "plugin_id": "netease-music",
@@ -57,13 +43,8 @@
       "description": "Local NetEase Cloud Music play history ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos",
-        "windows"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos", "windows"]
     },
     {
       "plugin_id": "photo-library",
@@ -73,13 +54,8 @@
       "description": "Local photo library ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos",
-        "windows"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos", "windows"]
     },
     {
       "plugin_id": "screen-time",
@@ -89,12 +65,8 @@
       "description": "Frontmost app usage sampling for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos"]
     },
     {
       "plugin_id": "system-media",
@@ -104,13 +76,8 @@
       "description": "Cross-platform media playback tracking via OS transport controls.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "windows",
-        "macos"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["windows", "macos"]
     },
     {
       "plugin_id": "telegram",
@@ -120,13 +87,8 @@
       "description": "Bidirectional Telegram bot channel adapter.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "channel"
-      ],
-      "platforms": [
-        "windows",
-        "macos"
-      ]
+      "contribution_types": ["channel"],
+      "platforms": ["windows", "macos"]
     },
     {
       "plugin_id": "terminal-history",
@@ -136,12 +98,8 @@
       "description": "Terminal command history ingestion for the timeline.",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
-      "platforms": [
-        "macos"
-      ]
+      "contribution_types": ["sensor"],
+      "platforms": ["macos"]
     }
   ]
 }
