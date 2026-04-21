@@ -40,7 +40,10 @@
       "contribution_types": [
         "sensor"
       ],
-      "platforms": []
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "git-activity",
@@ -103,7 +106,10 @@
       "contribution_types": [
         "sensor"
       ],
-      "platforms": []
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "screen-time",

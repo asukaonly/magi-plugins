@@ -1,10 +1,10 @@
 [plugin]
 id = "screen-time"
 name = "App Usage"
-name_i18n = {"zh-CN" = "屏幕使用"}
+name_i18n = { "zh-CN" = "屏幕使用" }
 version = "0.1.0"
 description = "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits."
-description_i18n = {"zh-CN" = "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯"}
+description_i18n = { "zh-CN" = "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ScreenTimePlugin"

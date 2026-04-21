@@ -1,10 +1,10 @@
 [plugin]
 id = "system-media"
 name = "System Media"
-name_i18n = {"zh-CN" = "系统媒体"}
+name_i18n = { "zh-CN" = "系统媒体" }
 version = "0.1.0"
 description = "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch."
-description_i18n = {"zh-CN" = "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容"}
+description_i18n = { "zh-CN" = "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SystemMediaPlugin"
