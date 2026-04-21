@@ -26,34 +26,19 @@ from .normalizers import (
     build_entity_hints,
     build_relation_candidates,
     camera_display_name,
+    image_dimensions_label,
     shooting_params_summary,
 )
 from .reader import PhotoLibraryReader
-        tags = ["photo_library"]
-        if location_name or lat is not None:
-            tags.append("geo")
 
-        return self._build_output(
-            source_item_id=self.source_item_identity(item),
-            title=filename,
-            summary=summary,
-            occurred_at=occurred_at,
-            raw_payload_ref=path,
-            content_blocks=content_blocks,
-            tags=tags,
-            provenance=provenance,
-            domain_payload={},
-        )
 
-    async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
-        tags = ["photo_library"]
-        if item.get("latitude") is not None:
-            tags.append("geo")
-        return SensorOutputMetadata(
-            entities=build_entity_hints(item),
-            tags=tags,
-            relation_candidates=build_relation_candidates(item),
-        )
+class PhotoLibraryTimelineSensor(SensorBase):
+    """Timeline sensor for local photo libraries."""
+
+    sensor_id = "timeline.photo_library"
+    display_name = "Photo Library"
+    source_type = "photo_library"
+    polling_mode = "interval"
     default_interval = 60
     update_key_fields = ("asset_local_id", "file_hash")
     relation_edge_whitelist = ("CAPTURED", "RELATED_TO", "CREATED")
