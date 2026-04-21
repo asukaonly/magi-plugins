@@ -2,8 +2,12 @@
 from __future__ import annotations
 
 import hashlib
+import logging
+import re
 import time
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from magi.awareness import (
     SensorBase,
@@ -131,6 +135,19 @@ class ChromeHistoryTimelineSensor(SensorBase):
             )
             next_cursor = str(raw_max_visit_id) if raw_max_visit_id > 0 else context.last_cursor
             watermark_ts = max(float(item.get("visit_time") or 0.0) for item in items)
+        filter_domains_raw = sensor_settings.get("filter_domains") or []
+        filter_keywords_raw = sensor_settings.get("filter_keywords") or []
+        domain_patterns = _compile_domain_patterns(filter_domains_raw)
+        keyword_terms = _normalize_keywords(filter_keywords_raw)
+        filtered_count = 0
+        if domain_patterns or keyword_terms:
+            kept: list[dict[str, Any]] = []
+            for item in items:
+                if _item_matches_filters(item, domain_patterns, keyword_terms):
+                    filtered_count += 1
+                    continue
+                kept.append(item)
+            items = kept
         return SensorSyncResult(
             items=items,
             next_cursor=str(next_cursor) if next_cursor else None,
@@ -140,6 +157,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "profile": profile,
                 "raw_count": sum(int(item.get("merged_visit_count") or 1) for item in items),
                 "initial_sync_policy": initial_sync_policy if context.last_cursor is None else "incremental",
+                "filtered_count": filtered_count,
             },
         )
 
@@ -192,3 +210,58 @@ class ChromeHistoryTimelineSensor(SensorBase):
             tags=[tag for tag in ("chrome_history", domain) if tag],
             relation_candidates=build_relation_candidates(item),
         )
+
+
+def _compile_domain_patterns(values: Any) -> list[re.Pattern[str]]:
+    """Compile user-supplied regular expressions for domain filtering."""
+
+    if not isinstance(values, (list, tuple)):
+        return []
+    patterns: list[re.Pattern[str]] = []
+    for raw in values:
+        text = str(raw or "").strip()
+        if not text:
+            continue
+        try:
+            patterns.append(re.compile(text, re.IGNORECASE))
+        except re.error as exc:
+            logger.warning("Ignoring invalid chrome_history domain filter %r: %s", text, exc)
+    return patterns
+
+
+def _normalize_keywords(values: Any) -> list[str]:
+    """Normalize user-supplied keyword filters to lowercase, non-empty strings."""
+
+    if not isinstance(values, (list, tuple)):
+        return []
+    keywords: list[str] = []
+    for raw in values:
+        text = str(raw or "").strip().lower()
+        if text:
+            keywords.append(text)
+    return keywords
+
+
+def _item_matches_filters(
+    item: dict[str, Any],
+    domain_patterns: list[re.Pattern[str]],
+    keyword_terms: list[str],
+) -> bool:
+    """Return True when the visit should be dropped before AI analysis."""
+
+    domain = str(item.get("domain") or "").lower()
+    if domain_patterns and domain:
+        for pattern in domain_patterns:
+            if pattern.search(domain):
+                return True
+    if keyword_terms:
+        haystack_parts = [
+            str(item.get("title") or ""),
+            str(item.get("url") or ""),
+            str(item.get("canonical_url") or ""),
+        ]
+        haystack = " ".join(haystack_parts).lower()
+        for keyword in keyword_terms:
+            if keyword in haystack:
+                return True
+    return False

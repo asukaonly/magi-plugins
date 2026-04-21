@@ -23,6 +23,8 @@ DEFAULT_SETTINGS = {
     "initial_sync_policy": "lookback_days",
     "initial_sync_lookback_days": 7,
     "initial_sync_configured": False,
+    "filter_domains": [],
+    "filter_keywords": [],
 }
 _SESSION_GAP_SECONDS = 30 * 60
 
@@ -148,6 +150,28 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="analysis",
             surface="timeline",
             order=70,
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.filter_domains",
+            type="tags",
+            label="Filter Domains (Regex)",
+            description="Visits whose domain matches any of these regular expressions are skipped before AI analysis.",
+            default=[],
+            section="filters",
+            surface="timeline",
+            order=80,
+            placeholder="e.g. ^mail\\.|\\.bank\\.com$",
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.filter_keywords",
+            type="tags",
+            label="Filter Keywords",
+            description="Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match.",
+            default=[],
+            section="filters",
+            surface="timeline",
+            order=90,
+            placeholder="e.g. password reset",
         ),
     ]
 

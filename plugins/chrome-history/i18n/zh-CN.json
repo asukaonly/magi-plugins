@@ -17,5 +17,11 @@
     "full": "同步全部历史",
     "lookback_days": "同步最近几天",
     "from_now": "仅同步新记录"
+  },
+  "filters": {
+    "domains_label": "过滤域名（正则）",
+    "domains_description": "命中以下任一正则表达式的域名将不会被 AI 分析。",
+    "keywords_label": "过滤关键词",
+    "keywords_description": "URL 或标题中包含任一关键词的记录将不会被 AI 分析，匹配时不区分大小写。"
   }
 }
