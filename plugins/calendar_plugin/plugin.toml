@@ -1,8 +1,10 @@
 [plugin]
 id = "calendar"
 name = "Calendar"
+name_i18n = {"zh-CN" = "日历"}
 version = "0.1.0"
 description = "Calendar event ingestion for the timeline."
+description_i18n = {"zh-CN" = "同步日历事件和日程安排"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "CalendarPlugin"

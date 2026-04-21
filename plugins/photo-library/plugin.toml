@@ -1,8 +1,10 @@
 [plugin]
 id = "photo-library"
 name = "Photo Library"
+name_i18n = {"zh-CN" = "照片库"}
 version = "1.1.0"
 description = "Local photo library ingestion for the timeline."
+description_i18n = {"zh-CN" = "扫描本地照片目录，提取 EXIF 元数据并接入时间线"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "PhotoLibraryPlugin"

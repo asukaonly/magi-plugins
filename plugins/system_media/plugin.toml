@@ -1,8 +1,10 @@
 [plugin]
 id = "system-media"
 name = "System Media"
+name_i18n = {"zh-CN" = "系统媒体"}
 version = "0.1.0"
 description = "Cross-platform media playback tracking via OS transport controls."
+description_i18n = {"zh-CN" = "跨平台媒体播放追踪"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SystemMediaPlugin"

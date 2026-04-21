@@ -1,8 +1,10 @@
 [plugin]
 id = "telegram"
 name = "Telegram"
+name_i18n = {"zh-CN" = "Telegram"}
 version = "0.1.0"
 description = "Bidirectional Telegram bot channel adapter."
+description_i18n = {"zh-CN" = "Telegram 双向消息通道"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "TelegramPlugin"

@@ -1,13 +1,19 @@
 {
-  "registry_version": "1",
+  "registry_version": "2",
   "repo_url": "https://github.com/asukaonly/magi-plugins.git",
   "plugins": [
     {
       "plugin_id": "calendar",
       "name": "Calendar",
+      "name_i18n": {
+        "zh-CN": "日历"
+      },
       "version": "0.1.0",
       "path": "plugins/calendar_plugin",
       "description": "Calendar event ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "同步日历事件和日程安排"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -20,9 +26,15 @@
     {
       "plugin_id": "chrome-history",
       "name": "Chrome History",
+      "name_i18n": {
+        "zh-CN": "Chrome 浏览历史"
+      },
       "version": "0.1.0",
       "path": "plugins/chrome-history",
       "description": "Local Google Chrome browsing history ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "本地 Google Chrome 浏览历史接入时间线"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -33,9 +45,15 @@
     {
       "plugin_id": "git-activity",
       "name": "Git Activity",
+      "name_i18n": {
+        "zh-CN": "Git 活动"
+      },
       "version": "0.1.0",
       "path": "plugins/git_activity",
       "description": "Git repository activity ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "Git 仓库活动接入时间线"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -49,9 +67,15 @@
     {
       "plugin_id": "netease-music",
       "name": "NetEase Cloud Music",
+      "name_i18n": {
+        "zh-CN": "网易云音乐"
+      },
       "version": "0.1.0",
       "path": "plugins/netease_music",
       "description": "Local NetEase Cloud Music play history ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "网易云音乐播放记录接入时间线"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -65,9 +89,15 @@
     {
       "plugin_id": "photo-library",
       "name": "Photo Library",
+      "name_i18n": {
+        "zh-CN": "照片库"
+      },
       "version": "1.1.0",
       "path": "plugins/photo-library",
       "description": "Local photo library ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "扫描本地照片目录，提取 EXIF 元数据并接入时间线"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -78,9 +108,15 @@
     {
       "plugin_id": "screen-time",
       "name": "App Usage",
+      "name_i18n": {
+        "zh-CN": "屏幕使用"
+      },
       "version": "0.1.0",
       "path": "plugins/screen_time",
       "description": "Frontmost app usage sampling for the timeline.",
+      "description_i18n": {
+        "zh-CN": "记录应用使用时长和习惯"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -93,9 +129,15 @@
     {
       "plugin_id": "system-media",
       "name": "System Media",
+      "name_i18n": {
+        "zh-CN": "系统媒体"
+      },
       "version": "0.1.0",
       "path": "plugins/system_media",
       "description": "Cross-platform media playback tracking via OS transport controls.",
+      "description_i18n": {
+        "zh-CN": "跨平台媒体播放追踪"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -109,9 +151,15 @@
     {
       "plugin_id": "telegram",
       "name": "Telegram",
+      "name_i18n": {
+        "zh-CN": "Telegram"
+      },
       "version": "0.1.0",
       "path": "plugins/telegram",
       "description": "Bidirectional Telegram bot channel adapter.",
+      "description_i18n": {
+        "zh-CN": "Telegram 双向消息通道"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
@@ -125,9 +173,15 @@
     {
       "plugin_id": "terminal-history",
       "name": "Terminal History",
+      "name_i18n": {
+        "zh-CN": "终端历史"
+      },
       "version": "0.1.0",
       "path": "plugins/terminal_history",
       "description": "Terminal command history ingestion for the timeline.",
+      "description_i18n": {
+        "zh-CN": "记录终端命令和操作历史"
+      },
       "author": "Magi Team",
       "official": true,
       "contribution_types": [

@@ -1,8 +1,10 @@
 [plugin]
 id = "git-activity"
 name = "Git Activity"
+name_i18n = {"zh-CN" = "Git 活动"}
 version = "0.1.0"
 description = "Git repository activity ingestion for the timeline."
+description_i18n = {"zh-CN" = "Git 仓库活动接入时间线"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "GitActivityPlugin"

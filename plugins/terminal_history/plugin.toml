@@ -1,8 +1,10 @@
 [plugin]
 id = "terminal-history"
 name = "Terminal History"
+name_i18n = {"zh-CN" = "终端历史"}
 version = "0.1.0"
 description = "Terminal command history ingestion for the timeline."
+description_i18n = {"zh-CN" = "记录终端命令和操作历史"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "TerminalHistoryPlugin"

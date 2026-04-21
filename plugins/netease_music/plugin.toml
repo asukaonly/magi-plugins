@@ -1,8 +1,10 @@
 [plugin]
 id = "netease-music"
 name = "NetEase Cloud Music"
+name_i18n = {"zh-CN" = "网易云音乐"}
 version = "0.1.0"
 description = "Local NetEase Cloud Music play history ingestion for the timeline."
+description_i18n = {"zh-CN" = "网易云音乐播放记录接入时间线"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "NeteaseMusicPlugin"

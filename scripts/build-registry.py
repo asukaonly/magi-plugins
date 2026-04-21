@@ -27,17 +27,22 @@ def build_entry(plugin_dir: Path) -> dict | None:
     with open(toml_path, "rb") as f:
         data = tomllib.load(f)
     meta = data.get("plugin", {})
-    return {
+    entry: dict = {
         "plugin_id": meta.get("id", plugin_dir.name),
         "name": meta.get("name", plugin_dir.name),
-        "version": meta.get("version", "0.0.0"),
-        "path": f"plugins/{plugin_dir.name}",
-        "description": meta.get("description", ""),
-        "author": meta.get("author", ""),
-        "official": meta.get("official", False),
-        "contribution_types": meta.get("contribution_types", []),
-        "platforms": meta.get("platforms", []),
     }
+    if "name_i18n" in meta:
+        entry["name_i18n"] = meta["name_i18n"]
+    entry["version"] = meta.get("version", "0.0.0")
+    entry["path"] = f"plugins/{plugin_dir.name}"
+    entry["description"] = meta.get("description", "")
+    if "description_i18n" in meta:
+        entry["description_i18n"] = meta["description_i18n"]
+    entry["author"] = meta.get("author", "")
+    entry["official"] = meta.get("official", False)
+    entry["contribution_types"] = meta.get("contribution_types", [])
+    entry["platforms"] = meta.get("platforms", [])
+    return entry
 
 
 def main() -> None:
@@ -51,7 +56,7 @@ def main() -> None:
             print(f"  + {entry['plugin_id']} v{entry['version']}")
 
     registry = {
-        "registry_version": "1",
+        "registry_version": "2",
         "repo_url": "https://github.com/asukaonly/magi-plugins.git",
         "plugins": entries,
     }

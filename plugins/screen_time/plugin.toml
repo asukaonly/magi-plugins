@@ -1,8 +1,10 @@
 [plugin]
 id = "screen-time"
 name = "App Usage"
+name_i18n = {"zh-CN" = "屏幕使用"}
 version = "0.1.0"
 description = "Frontmost app usage sampling for the timeline."
+description_i18n = {"zh-CN" = "记录应用使用时长和习惯"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ScreenTimePlugin"
