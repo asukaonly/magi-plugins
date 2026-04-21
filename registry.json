@@ -10,9 +10,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/calendar_plugin",
-      "description": "Calendar event ingestion for the timeline.",
+      "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
-        "zh-CN": "同步日历事件和日程安排"
+        "zh-CN": "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划"
       },
       "author": "Magi Team",
       "official": true,
@@ -31,9 +31,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/chrome-history",
-      "description": "Local Google Chrome browsing history ingestion for the timeline.",
+      "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
-        "zh-CN": "本地 Google Chrome 浏览历史接入时间线"
+        "zh-CN": "读取本地 Chrome 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
       },
       "author": "Magi Team",
       "official": true,
@@ -50,9 +50,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/git_activity",
-      "description": "Git repository activity ingestion for the timeline.",
+      "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
-        "zh-CN": "Git 仓库活动接入时间线"
+        "zh-CN": "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流"
       },
       "author": "Magi Team",
       "official": true,
@@ -72,9 +72,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/netease_music",
-      "description": "Local NetEase Cloud Music play history ingestion for the timeline.",
+      "description": "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits.",
       "description_i18n": {
-        "zh-CN": "网易云音乐播放记录接入时间线"
+        "zh-CN": "读取网易云音乐的收听记录，帮助 Magi 了解你的音乐喜好和收听习惯"
       },
       "author": "Magi Team",
       "official": true,
@@ -94,9 +94,9 @@
       },
       "version": "1.1.0",
       "path": "plugins/photo-library",
-      "description": "Local photo library ingestion for the timeline.",
+      "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
       "description_i18n": {
-        "zh-CN": "扫描本地照片目录，提取 EXIF 元数据并接入时间线"
+        "zh-CN": "扫描本地照片，读取拍摄时间、地点等元数据，帮助 Magi 还原你的生活记录和去过的地方"
       },
       "author": "Magi Team",
       "official": true,
@@ -113,9 +113,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/screen_time",
-      "description": "Frontmost app usage sampling for the timeline.",
+      "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits.",
       "description_i18n": {
-        "zh-CN": "记录应用使用时长和习惯"
+        "zh-CN": "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯"
       },
       "author": "Magi Team",
       "official": true,
@@ -134,9 +134,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/system_media",
-      "description": "Cross-platform media playback tracking via OS transport controls.",
+      "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch.",
       "description_i18n": {
-        "zh-CN": "跨平台媒体播放追踪"
+        "zh-CN": "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容"
       },
       "author": "Magi Team",
       "official": true,
@@ -156,9 +156,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/telegram",
-      "description": "Bidirectional Telegram bot channel adapter.",
+      "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
-        "zh-CN": "Telegram 双向消息通道"
+        "zh-CN": "将 Magi 接入 Telegram，通过机器人与 Magi 对话并接收消息回复"
       },
       "author": "Magi Team",
       "official": true,
@@ -178,9 +178,9 @@
       },
       "version": "0.1.0",
       "path": "plugins/terminal_history",
-      "description": "Terminal command history ingestion for the timeline.",
+      "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
       "description_i18n": {
-        "zh-CN": "记录终端命令和操作历史"
+        "zh-CN": "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯"
       },
       "author": "Magi Team",
       "official": true,

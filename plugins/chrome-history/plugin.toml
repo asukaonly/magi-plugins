@@ -3,8 +3,8 @@ id = "chrome-history"
 name = "Chrome History"
 name_i18n = {"zh-CN" = "Chrome 浏览历史"}
 version = "0.1.0"
-description = "Local Google Chrome browsing history ingestion for the timeline."
-description_i18n = {"zh-CN" = "本地 Google Chrome 浏览历史接入时间线"}
+description = "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites."
+description_i18n = {"zh-CN" = "读取本地 Chrome 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"}
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ChromeHistoryPlugin"
