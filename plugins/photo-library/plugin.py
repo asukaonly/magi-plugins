@@ -174,10 +174,10 @@ class PhotoLibraryPlugin(Plugin):
             return None
 
         camera_counter: Counter[str] = Counter()
+        location_counter: Counter[str] = Counter()
         gps_count = 0
-        screenshot_count = 0
+        burst_total = 0
         timestamps: list[float] = []
-        extensions: Counter[str] = Counter()
 
         for event in events:
             metadata = event.get("metadata_json")
@@ -192,13 +192,15 @@ class PhotoLibraryPlugin(Plugin):
             camera = str(provenance.get("camera") or "").strip()
             if camera:
                 camera_counter[camera] += 1
+            location = str(provenance.get("location_name") or "").strip()
+            if location:
+                location_counter[location] += 1
             if provenance.get("latitude") is not None:
                 gps_count += 1
-            if str(provenance.get("image_type", "")) == "screenshot":
-                screenshot_count += 1
-            filename = str(provenance.get("filename") or "")
-            if "." in filename:
-                extensions[filename.rsplit(".", 1)[-1].lower()] += 1
+            try:
+                burst_total += int(provenance.get("burst_count") or 0)
+            except (TypeError, ValueError):
+                pass
             if event.get("timestamp") is not None:
                 timestamps.append(float(event["timestamp"]))
 
@@ -209,23 +211,27 @@ class PhotoLibraryPlugin(Plugin):
             {"camera": cam, "count": cnt}
             for cam, cnt in camera_counter.most_common(3)
         ]
+        top_locations = [
+            {"location": loc, "count": cnt}
+            for loc, cnt in location_counter.most_common(3)
+        ]
 
         summary_lines: list[str] = []
         if top_cameras:
             joined = " and ".join(c["camera"] for c in top_cameras[:2])
             summary_lines.append(f"Photos taken with {joined}.")
+        if top_locations:
+            joined_locs = ", ".join(loc["location"] for loc in top_locations[:2])
+            summary_lines.append(f"Mostly around {joined_locs}.")
         if gps_count > 0:
-            summary_lines.append(f"{gps_count} photos have GPS coordinates.")
-        if screenshot_count > 0:
-            photo_count = len(events) - screenshot_count
-            summary_lines.append(f"{photo_count} photos, {screenshot_count} screenshots.")
+            summary_lines.append(f"{gps_count} of {len(events)} photos have GPS.")
 
         return {
             "feature_type": "photo_library",
             "event_count": len(events),
             "cameras": top_cameras,
+            "locations": top_locations,
             "gps_count": gps_count,
-            "screenshot_count": screenshot_count,
-            "format_distribution": dict(extensions.most_common(5)),
+            "burst_total": burst_total,
             "summary_lines": summary_lines,
         }

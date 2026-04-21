@@ -30,6 +30,7 @@ _TAG_GPS_IFD = 0x8825
 # EXIF sub-IFD tags
 _TAG_DATETIME_ORIGINAL = 0x9003
 _TAG_DATETIME_DIGITIZED = 0x9004
+_TAG_OFFSET_TIME_ORIGINAL = 0x9011
 _TAG_IMAGE_WIDTH = 0xA002
 _TAG_IMAGE_HEIGHT = 0xA003
 _TAG_LENS_MODEL = 0xA434
@@ -120,16 +121,29 @@ def _file_hash_quick(path: Path, chunk_size: int = 65536) -> str:
     return h.hexdigest()[:16]
 
 
-def _parse_exif_datetime(dt_str: str) -> float:
-    """Parse EXIF datetime string 'YYYY:MM:DD HH:MM:SS' to Unix timestamp."""
+def _parse_exif_datetime(dt_str: str, offset_str: str = "") -> float:
+    """Parse EXIF datetime string 'YYYY:MM:DD HH:MM:SS' to Unix timestamp.
+
+    EXIF DateTimeOriginal is naive local time per spec. If an OffsetTimeOriginal
+    string like "+08:00" is supplied, it is honoured; otherwise the system's
+    local timezone is used (via ``time.mktime``).
+    """
     if not dt_str or len(dt_str) < 19:
         return 0.0
     try:
-        import calendar
-        from time import strptime
+        from time import mktime, strptime
         parts = dt_str.strip().rstrip("\x00")
         t = strptime(parts[:19], "%Y:%m:%d %H:%M:%S")
-        return float(calendar.timegm(t))
+        if offset_str:
+            offset = offset_str.strip().rstrip("\x00")
+            if len(offset) >= 6 and offset[0] in "+-" and offset[3] == ":":
+                sign = 1 if offset[0] == "+" else -1
+                hours = int(offset[1:3])
+                minutes = int(offset[4:6])
+                offset_seconds = sign * (hours * 3600 + minutes * 60)
+                import calendar
+                return float(calendar.timegm(t) - offset_seconds)
+        return float(mktime(t))
     except (ValueError, OverflowError):
         return 0.0
 
@@ -500,6 +514,9 @@ def extract_exif(path: Path) -> dict[str, Any]:
                 if _TAG_DATETIME_ORIGINAL in exif_ifd:
                     _, count, off = exif_ifd[_TAG_DATETIME_ORIGINAL]
                     result["datetime_original"] = _read_string(exif_data, off, count)
+                if _TAG_OFFSET_TIME_ORIGINAL in exif_ifd:
+                    _, count, off = exif_ifd[_TAG_OFFSET_TIME_ORIGINAL]
+                    result["offset_time_original"] = _read_string(exif_data, off, count)
                 if _TAG_IMAGE_WIDTH in exif_ifd:
                     type_id, _, off = exif_ifd[_TAG_IMAGE_WIDTH]
                     if type_id == 3:
@@ -592,6 +609,100 @@ def _matches_any_pattern(rel_path: str, patterns: list[str]) -> bool:
     return False
 
 
+def _has_retrievable_signal(item: dict[str, Any]) -> bool:
+    """Return True when the photo carries enough signal to be worth indexing.
+
+    A photo is kept when at least one of these holds:
+
+    * GPS coordinates present (answers "where").
+    * Real camera identity: make + model and at least one shooting parameter
+      (answers "what device / how it was shot").
+    """
+    if item.get("latitude") is not None and item.get("longitude") is not None:
+        return True
+    has_make_model = bool(item.get("camera_make")) and bool(item.get("camera_model"))
+    has_shot_param = bool(
+        item.get("lens_model")
+        or item.get("focal_length")
+        or item.get("aperture")
+        or item.get("exposure_time")
+        or item.get("iso")
+    )
+    return has_make_model and has_shot_param
+
+
+def _collapse_bursts(
+    items: list[dict[str, Any]],
+    *,
+    time_window: float = 60.0,
+    gps_window_m: float = 100.0,
+) -> list[dict[str, Any]]:
+    """Collapse burst sequences into a single representative item.
+
+    A burst is a run of photos taken with the same camera within
+    ``time_window`` seconds and ``gps_window_m`` meters of each other.
+    The representative is the first item; ``burst_count`` counts the run.
+    """
+    if not items:
+        return items
+
+    sorted_items = sorted(
+        items,
+        key=lambda it: (
+            f"{it.get('camera_make', '')}|{it.get('camera_model', '')}",
+            float(it.get("capture_timestamp") or 0.0),
+        ),
+    )
+
+    # ~1 degree latitude ≈ 111_000 m. We treat 1 degree longitude the same
+    # for cheap clustering — burst windows are tiny and exact distance is
+    # not worth the cosine cost here.
+    gps_window_deg = gps_window_m / 111_000.0
+
+    collapsed: list[dict[str, Any]] = []
+    rep: dict[str, Any] | None = None
+    burst_count = 1
+    for it in sorted_items:
+        camera_key = (it.get("camera_make", ""), it.get("camera_model", ""))
+        ts = float(it.get("capture_timestamp") or 0.0)
+        lat = it.get("latitude")
+        lon = it.get("longitude")
+        if rep is None:
+            rep = it
+            burst_count = 1
+            continue
+        rep_camera = (rep.get("camera_make", ""), rep.get("camera_model", ""))
+        rep_ts = float(rep.get("capture_timestamp") or 0.0)
+        rep_lat = rep.get("latitude")
+        rep_lon = rep.get("longitude")
+
+        same_camera = camera_key == rep_camera and any(camera_key)
+        time_close = abs(ts - rep_ts) <= time_window
+        if rep_lat is None or lat is None:
+            gps_close = rep_lat is None and lat is None
+        else:
+            gps_close = (
+                abs(float(lat) - float(rep_lat)) <= gps_window_deg
+                and abs(float(lon) - float(rep_lon)) <= gps_window_deg
+            )
+
+        if same_camera and time_close and gps_close:
+            burst_count += 1
+            continue
+
+        if burst_count > 1:
+            rep["burst_count"] = burst_count
+        collapsed.append(rep)
+        rep = it
+        burst_count = 1
+
+    if rep is not None:
+        if burst_count > 1:
+            rep["burst_count"] = burst_count
+        collapsed.append(rep)
+    return collapsed
+
+
 class PhotoLibraryReader:
     """Scan a local directory for image files and extract EXIF metadata."""
 
@@ -679,7 +790,8 @@ class PhotoLibraryReader:
                         exif = {}
 
                     capture_ts = _parse_exif_datetime(
-                        exif.get("datetime_original") or exif.get("datetime") or ""
+                        exif.get("datetime_original") or exif.get("datetime") or "",
+                        exif.get("offset_time_original", ""),
                     )
                     item: dict[str, Any] = {
                         "asset_local_id": fhash or f"file:{name}",
@@ -706,7 +818,14 @@ class PhotoLibraryReader:
                         "altitude": exif.get("altitude"),
                         "software": exif.get("software", ""),
                     }
-                    item["image_type"] = classify_image_type(item)
+                    # Skip screenshots entirely — no metadata value without OCR.
+                    if classify_image_type(item) == "screenshot":
+                        continue
+                    # Skip photos without any retrievable signal: require GPS or
+                    # a real camera identity (make+model with at least one
+                    # shooting parameter).
+                    if not _has_retrievable_signal(item):
+                        continue
                     items.append(item)
                     if len(items) >= limit:
                         break
@@ -718,10 +837,10 @@ class PhotoLibraryReader:
             # Inner loop was broken (limit reached) — flush cache and return
             if cache_entries and self._file_index is not None:
                 self._file_index.put_batch(cache_entries)
-            return ScanResult(items=items, total_scanned=total, errors=errors)
+            return ScanResult(items=_collapse_bursts(items), total_scanned=total, errors=errors)
 
         # Flush any remaining cache entries
         if cache_entries and self._file_index is not None:
             self._file_index.put_batch(cache_entries)
 
-        return ScanResult(items=items, total_scanned=total, errors=errors)
+        return ScanResult(items=_collapse_bursts(items), total_scanned=total, errors=errors)
