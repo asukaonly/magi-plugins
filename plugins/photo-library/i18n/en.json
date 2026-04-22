@@ -2,5 +2,29 @@
   "photo_library": {
     "name": "Photo Library",
     "description": "Scan local photo directories, extract EXIF metadata, and ingest into the timeline"
+  },
+  "weekday": {
+    "0": "Monday",
+    "1": "Tuesday",
+    "2": "Wednesday",
+    "3": "Thursday",
+    "4": "Friday",
+    "5": "Saturday",
+    "6": "Sunday"
+  },
+  "time_of_day": {
+    "morning": "morning",
+    "afternoon": "afternoon",
+    "evening": "evening",
+    "night": "night"
+  },
+  "summary": {
+    "place_unknown": "somewhere",
+    "photo_count_one": "{count} photo",
+    "photo_count_many": "{count} photos",
+    "when": "{weekday} {time_of_day} on {date}",
+    "session_with_device": "{when}, took {photo_count} at {place} with {device}",
+    "session_no_device": "{when}, took {photo_count} at {place}",
+    "with_time_range": "{summary} ({start}\u2013{end})"
   }
 }

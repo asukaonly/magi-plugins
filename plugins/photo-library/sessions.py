@@ -53,11 +53,16 @@ def _local_date_str(ts: float) -> str:
         return "unknown"
 
 
-def _weekday_name(ts: float) -> str:
+def _weekday_index(ts: float) -> int:
+    """Return ISO weekday index 0-6 (Mon=0). -1 when the timestamp is invalid.
+
+    Stored as a language-neutral key so the sensor can localise it at
+    output time via i18n templates.
+    """
     try:
-        return datetime.fromtimestamp(ts).strftime("%A")
+        return datetime.fromtimestamp(ts).weekday()
     except (OSError, OverflowError, ValueError):
-        return ""
+        return -1
 
 
 def _time_of_day(ts: float) -> str:
@@ -206,7 +211,7 @@ def aggregate_sessions(
                 canonical_date, sess["device_slug"], sess["geo_cell"]
             ),
             "date": canonical_date,
-            "weekday": _weekday_name(sess["first_capture_ts"]),
+            "weekday_index": _weekday_index(sess["first_capture_ts"]),
             "time_of_day": _time_of_day(sess["first_capture_ts"]),
             "device_slug": sess["device_slug"],
             "device_name": device_name,

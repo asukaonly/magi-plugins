@@ -265,27 +265,48 @@ class PhotoLibraryTimelineSensor(SensorBase):
         device = str(item.get("device_name") or "").strip()
         location = str(item.get("location_name") or "").strip()
         date = str(item.get("date") or "")
-        weekday = str(item.get("weekday") or "")
-        time_of_day = str(item.get("time_of_day") or "")
+        weekday_index = int(item.get("weekday_index") if item.get("weekday_index") is not None else -1)
+        time_of_day_key = str(item.get("time_of_day") or "")
         photo_count = int(item.get("photo_count") or 0)
 
+        weekday_label = (
+            self.t(f"weekday.{weekday_index}") if 0 <= weekday_index <= 6 else ""
+        )
+        time_of_day_label = (
+            self.t(f"time_of_day.{time_of_day_key}") if time_of_day_key else ""
+        )
+
         title_bits = [date]
-        if weekday:
-            title_bits.append(weekday)
-        if time_of_day:
-            title_bits.append(time_of_day)
+        if weekday_label:
+            title_bits.append(weekday_label)
+        if time_of_day_label:
+            title_bits.append(time_of_day_label)
         if location:
             title_bits.append(location)
         if device:
             title_bits.append(device)
-        title = " 路 ".join(title_bits)
+        title = " \u00b7 ".join(title_bits)
 
-        photo_word = "photo" if photo_count == 1 else "photos"
-        place_phrase = f"at {location}" if location else "somewhere"
-        when_phrase = " ".join(filter(None, [weekday, time_of_day, f"on {date}"])).strip()
-        summary = f"{when_phrase}, took {photo_count} {photo_word} {place_phrase}".strip()
-        if device:
-            summary = f"{summary} with {device}"
+        place_label = location or self.t("summary.place_unknown")
+        photo_count_label = self.t(
+            "summary.photo_count_one" if photo_count == 1 else "summary.photo_count_many",
+            count=photo_count,
+        )
+        when_label = self.t(
+            "summary.when",
+            weekday=weekday_label,
+            time_of_day=time_of_day_label,
+            date=date,
+        ).strip()
+        summary_key = "summary.session_with_device" if device else "summary.session_no_device"
+        summary = self.t(
+            summary_key,
+            when=when_label,
+            count=photo_count,
+            photo_count=photo_count_label,
+            place=place_label,
+            device=device,
+        ).strip()
 
         first_ts = float(item.get("first_capture_ts") or 0.0)
         last_ts = float(item.get("last_capture_ts") or 0.0)
@@ -293,7 +314,12 @@ class PhotoLibraryTimelineSensor(SensorBase):
             try:
                 start_str = _time.strftime("%H:%M", _time.localtime(first_ts))
                 end_str = _time.strftime("%H:%M", _time.localtime(last_ts))
-                summary = f"{summary} ({start_str}\u2013{end_str})"
+                summary = self.t(
+                    "summary.with_time_range",
+                    summary=summary,
+                    start=start_str,
+                    end=end_str,
+                )
             except (OSError, OverflowError, ValueError):
                 pass
 
@@ -314,8 +340,8 @@ class PhotoLibraryTimelineSensor(SensorBase):
             "sensor_id": self.sensor_id,
             "session_key": str(item.get("session_key") or ""),
             "date": date,
-            "weekday": weekday,
-            "time_of_day": time_of_day,
+            "weekday_index": weekday_index if 0 <= weekday_index <= 6 else None,
+            "time_of_day": time_of_day_key,
             "device_name": device,
             "device_slug": str(item.get("device_slug") or ""),
             "location_name": location,

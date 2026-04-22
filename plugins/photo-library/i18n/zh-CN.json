@@ -2,5 +2,29 @@
   "photo_library": {
     "name": "照片库",
     "description": "扫描本地照片目录，提取 EXIF 元数据并接入时间线"
+  },
+  "weekday": {
+    "0": "周一",
+    "1": "周二",
+    "2": "周三",
+    "3": "周四",
+    "4": "周五",
+    "5": "周六",
+    "6": "周日"
+  },
+  "time_of_day": {
+    "morning": "上午",
+    "afternoon": "下午",
+    "evening": "傍晚",
+    "night": "夜晚"
+  },
+  "summary": {
+    "place_unknown": "某处",
+    "photo_count_one": "{count} 张照片",
+    "photo_count_many": "{count} 张照片",
+    "when": "{date} {weekday}{time_of_day}",
+    "session_with_device": "{when}用 {device} 在{place}拍摄了{photo_count}",
+    "session_no_device": "{when}在{place}拍摄了{photo_count}",
+    "with_time_range": "{summary}（{start}–{end}）"
   }
 }
