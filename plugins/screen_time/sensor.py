@@ -6,7 +6,14 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from magi.awareness import ContentBlock, SensorBase, SensorMemoryPolicy, SensorOutput, SensorSyncContext, SensorSyncResult
+from magi_plugin_sdk.sensors import (
+    ContentBlock,
+    SensorBase,
+    SensorMemoryPolicy,
+    SensorOutput,
+    SensorSyncContext,
+    SensorSyncResult,
+)
 
 from .state import ScreenTimeStateStore
 

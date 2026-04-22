@@ -8,7 +8,14 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-from magi.awareness import SensorBase, ContentBlock, SensorMemoryPolicy, SensorOutput, SensorSyncContext, SensorSyncResult
+from magi_plugin_sdk.sensors import (
+    ContentBlock,
+    SensorBase,
+    SensorMemoryPolicy,
+    SensorOutput,
+    SensorSyncContext,
+    SensorSyncResult,
+)
 
 from .exceptions import ShellNotSupportedError
 from .filters import SensitiveCommandFilter

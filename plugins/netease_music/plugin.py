@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 
-from magi.plugins import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 from .reader import DEFAULT_DB_PATH
 from .sensor import NeteaseMusicTimelineSensor
 

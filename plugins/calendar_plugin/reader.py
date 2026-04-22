@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urlparse
 
-from magi.core.logger import get_logger
+from magi_plugin_sdk import get_logger
 
 from .exceptions import PlatformNotSupportedError
 from .types import CalendarEvent, CalendarListEntry, Participant

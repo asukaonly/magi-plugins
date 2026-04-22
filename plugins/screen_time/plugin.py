@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import sys
 
-from magi.events.plugin_ingress import PluginIngressHandlerRegistration
-from magi.plugins import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk.ingress import PluginIngressHandlerRegistration
+from magi_plugin_sdk.sensors import PluginRuntimePaths
 
 from .ingress import ScreenTimePluginIngressHandler
 from .sensor import ScreenTimeTimelineSensor
@@ -50,7 +51,11 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 class ScreenTimePlugin(Plugin):
     """Registers the frontmost app usage source under the existing package id."""
 
-    def get_plugin_ingress_registrations(self, *, runtime_paths: object) -> list[PluginIngressHandlerRegistration]:
+    def get_plugin_ingress_registrations(
+        self,
+        *,
+        runtime_paths: PluginRuntimePaths,
+    ) -> list[PluginIngressHandlerRegistration]:
         if sys.platform != "darwin":
             return []
 

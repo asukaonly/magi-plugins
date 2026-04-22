@@ -9,7 +9,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from magi.awareness import (
+from magi_plugin_sdk.sensors import (
     SensorBase,
     ContentBlock,
     L2BatchPolicy,

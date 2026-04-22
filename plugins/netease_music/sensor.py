@@ -6,15 +6,15 @@ import logging
 import time
 from typing import Any
 
-from magi.awareness import (
+from magi_plugin_sdk.sensors import (
     SensorBase,
     ContentBlock,
     SensorMemoryPolicy,
     SensorOutput,
+    SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
 )
-from magi.awareness.sensor_output import SensorOutputMetadata
 from .normalizers import build_netease_url
 from .reader import DEFAULT_DB_PATH, NeteaseMusicReader
 

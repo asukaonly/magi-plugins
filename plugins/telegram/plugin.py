@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from magi.channels.base import Channel
-from magi.plugins.base import Plugin
-from magi.plugins.contracts import ExtensionFieldOption, ExtensionFieldSpec
+from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin
+from magi_plugin_sdk.channels import Channel
 
 from .adapter import TelegramChannel, TelegramChannelConfig
 

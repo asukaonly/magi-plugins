@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-from magi.plugins import (
+from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,

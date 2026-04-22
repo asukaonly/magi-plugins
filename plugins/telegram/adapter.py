@@ -5,10 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from magi.channels.base import Channel
-from magi.channels.contracts import ChannelTarget, OutboundContent
-from magi.channels.session_mapper import ChannelSessionMapper
-from magi.core.logger import get_logger
+from magi_plugin_sdk import get_logger
+from magi_plugin_sdk.channels import (
+    Channel,
+    ChannelMessageDispatcherProtocol,
+    ChannelSessionMapperProtocol,
+    ChannelTarget,
+    OutboundContent,
+)
 
 from .formatter import telegram_format
 
@@ -37,16 +41,21 @@ class TelegramChannel(Channel):
         self,
         *,
         config: TelegramChannelConfig,
-        session_mapper: ChannelSessionMapper | None = None,
+        session_mapper: ChannelSessionMapperProtocol | None = None,
+        message_dispatcher: ChannelMessageDispatcherProtocol | None = None,
     ) -> None:
         self._config = config
         self._session_mapper = session_mapper
+        self._message_dispatcher = message_dispatcher
         self._application: Any = None
         self._bot_username: str = ""
         self._bot_id: int = 0
 
-    def bind_session_mapper(self, session_mapper: Any) -> None:  # type: ignore[override]
+    def bind_session_mapper(self, session_mapper: ChannelSessionMapperProtocol) -> None:
         self._session_mapper = session_mapper
+
+    def bind_message_dispatcher(self, dispatcher: ChannelMessageDispatcherProtocol) -> None:
+        self._message_dispatcher = dispatcher
 
     @property
     def channel_type(self) -> str:
@@ -166,6 +175,8 @@ class TelegramChannel(Channel):
         user = update.effective_user
         if chat is None or user is None:
             return
+        if self._session_mapper is None:
+            raise RuntimeError("Telegram channel session mapper is not bound")
         external_chat_id = str(chat.id)
         await self._session_mapper.delete_mapping("telegram", external_chat_id)
         await context.bot.send_message(
@@ -212,6 +223,10 @@ class TelegramChannel(Channel):
         external_user_id = str(user.id)
         if not self._is_user_allowed(external_user_id):
             return
+        if self._session_mapper is None:
+            raise RuntimeError("Telegram channel session mapper is not bound")
+        if self._message_dispatcher is None:
+            raise RuntimeError("Telegram channel message dispatcher is not bound")
 
         is_group = chat.type in ("group", "supergroup")
         display_name = self._build_display_name(chat, user, is_group)
@@ -232,9 +247,6 @@ class TelegramChannel(Channel):
         except Exception:
             pass
 
-        # Dispatch through standard Magi pipeline
-        from magi.api.services.message_dispatch_service import dispatch_user_message
-
         metadata = {
             "channel_type": "telegram",
             "external_chat_id": str(chat.id),
@@ -244,7 +256,7 @@ class TelegramChannel(Channel):
             "is_group": is_group,
         }
 
-        outcome = await dispatch_user_message(
+        outcome = await self._message_dispatcher.dispatch_user_message(
             source="telegram",
             user_id=mapping.magi_user_id,
             session_id=mapping.magi_session_id,

@@ -14,7 +14,7 @@ import time as _time
 from pathlib import Path
 from typing import Any
 
-from magi.awareness import (
+from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
     SensorBase,

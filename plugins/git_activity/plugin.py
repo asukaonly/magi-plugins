@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from magi.plugins import (
+from magi_plugin_sdk import (
     ExtensionFieldOption,
     ExtensionFieldSpec,
     Plugin,

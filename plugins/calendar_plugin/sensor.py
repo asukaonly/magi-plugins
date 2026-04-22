@@ -7,8 +7,15 @@ import time
 from datetime import datetime, timedelta
 from typing import Any
 
-from magi.awareness import SensorBase, ContentBlock, SensorMemoryPolicy, SensorOutput, SensorSyncContext, SensorSyncResult
-from magi.core.logger import get_logger
+from magi_plugin_sdk import get_logger
+from magi_plugin_sdk.sensors import (
+    ContentBlock,
+    SensorBase,
+    SensorMemoryPolicy,
+    SensorOutput,
+    SensorSyncContext,
+    SensorSyncResult,
+)
 
 from .exceptions import PlatformNotSupportedError
 from .normalizers import normalize_calendar_event

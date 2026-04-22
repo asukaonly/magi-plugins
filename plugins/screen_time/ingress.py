@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
 
-from magi.runtime_trace import PluginIngressEventRecord
+from magi_plugin_sdk.ingress import PluginIngressEventRecord
+from magi_plugin_sdk.sensors import PluginRuntimePaths
 
 from .state import ScreenTimeStateStore
 
@@ -13,7 +13,12 @@ from .state import ScreenTimeStateStore
 class ScreenTimePluginIngressHandler:
     """Reduce raw activation events into shared screen-time state."""
 
-    def __init__(self, *, runtime_paths: Any, state_store: ScreenTimeStateStore | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        runtime_paths: PluginRuntimePaths,
+        state_store: ScreenTimeStateStore | None = None,
+    ) -> None:
         self._runtime_paths = runtime_paths
         self._state_store = state_store or ScreenTimeStateStore()
 

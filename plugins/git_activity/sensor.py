@@ -8,7 +8,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-from magi.awareness import SensorBase, ContentBlock, SensorMemoryPolicy, SensorOutput, SensorSyncContext, SensorSyncResult
+from magi_plugin_sdk.sensors import (
+    ContentBlock,
+    SensorBase,
+    SensorMemoryPolicy,
+    SensorOutput,
+    SensorSyncContext,
+    SensorSyncResult,
+)
 
 from .filters import SensitiveMessageFilter
 from .normalizers import normalize_git_activity
