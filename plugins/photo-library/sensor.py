@@ -1,10 +1,16 @@
-"""Timeline sensor for local photo libraries."""
+﻿"""Timeline sensor for local photo libraries.
+
+Emits one L1 event per *photo session* 鈥?a coherent shooting activity
+defined by (local date, device, geo cell) with cross-midnight merging.
+Per-photo records are not surfaced individually: a typical user shoots
+hundreds of photos that compress into a handful of memorable sessions,
+and that is the unit the memory layer should index.
+"""
 from __future__ import annotations
 
 import asyncio
 import hashlib
 import time as _time
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,25 +29,29 @@ from .geocoder import batch_lookup as _geo_batch_lookup, format_location
 from .file_index import FileIndexCache
 from .locale_data import get_locale_map
 from .normalizers import (
-    build_entity_hints,
-    build_relation_candidates,
-    camera_display_name,
-    image_dimensions_label,
-    shooting_params_summary,
+    build_session_entity_hints,
+    build_session_relation_candidates,
 )
 from .reader import PhotoLibraryReader
+from .sessions import aggregate_sessions
+
+
+# Sessions with no new captures within this window are emitted to L1.
+# Younger sessions are deferred so each session is written exactly once
+# with its full content (L1 store is INSERT OR IGNORE on idempotency_key).
+_DEFAULT_SETTLE_WINDOW_SECONDS = 4 * 3600
 
 
 class PhotoLibraryTimelineSensor(SensorBase):
-    """Timeline sensor for local photo libraries."""
+    """Pull-sync sensor that aggregates a local photo directory into sessions."""
 
     sensor_id = "timeline.photo_library"
     display_name = "Photo Library"
     source_type = "photo_library"
     polling_mode = "interval"
     default_interval = 60
-    update_key_fields = ("asset_local_id", "file_hash")
-    relation_edge_whitelist = ("CAPTURED", "RELATED_TO", "CREATED")
+    update_key_fields = ("session_key",)
+    relation_edge_whitelist = ("OWNED_DEVICE", "VISITED")
     supports_pull_sync = True
 
     memory_policy = SensorMemoryPolicy(
@@ -50,8 +60,6 @@ class PhotoLibraryTimelineSensor(SensorBase):
         importance_bias=0.6,
     )
 
-    _l2_batch_shard_count = 4
-
     def __init__(
         self,
         *,
@@ -59,6 +67,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         max_items_per_sync: int = 200,
         analysis_features: list[str] | None = None,
         exclude_patterns: list[str] | None = None,
+        settle_window_seconds: float = _DEFAULT_SETTLE_WINDOW_SECONDS,
         reader: PhotoLibraryReader | None = None,
     ) -> None:
         super().__init__()
@@ -66,6 +75,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         self.max_items_per_sync = max_items_per_sync
         self.analysis_features = analysis_features or ["exif"]
         self.exclude_patterns = exclude_patterns or []
+        self.settle_window_seconds = settle_window_seconds
         self._reader = reader or PhotoLibraryReader()
 
     # ------------------------------------------------------------------
@@ -73,35 +83,33 @@ class PhotoLibraryTimelineSensor(SensorBase):
     # ------------------------------------------------------------------
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
-        return str(item.get("asset_local_id") or item.get("file_hash") or "photo")
+        return str(item.get("session_key") or "session:unknown")
 
     def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        parts = [
-            str(item.get("file_hash", "")),
-            str(item.get("modified_at", "")),
-        ]
-        return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+        # Sessions are emitted exactly once when settled, so the fingerprint
+        # only needs to capture identity (not content version).
+        return hashlib.sha1(
+            self.source_item_identity(item).encode("utf-8")
+        ).hexdigest()
 
     # ------------------------------------------------------------------
     # L2 batching
     # ------------------------------------------------------------------
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
-        camera = str(output.provenance.get("camera", "")).strip()
-        parts = [self.source_type]
-        if camera:
-            parts.append(camera)
-        catch_up_owner = None
-        if camera:
-            digest = hashlib.sha1(camera.lower().encode("utf-8")).hexdigest()
-            shard = int(digest[:8], 16) % self._l2_batch_shard_count
-            catch_up_owner = f"{self.source_type}:catchup:{shard}"
+        """Group session events by year-month for higher-level synthesis."""
+        ts = output.occurred_at or output.captured_at or _time.time()
+        try:
+            month = _time.strftime("%Y%m", _time.localtime(ts))
+        except (OSError, OverflowError, ValueError):
+            month = "unknown"
+        owner = f"{self.source_type}:{month}"
         return L2BatchPolicy(
-            owner=":".join(parts),
-            catch_up_owner=catch_up_owner,
+            owner=owner,
+            catch_up_owner=f"{self.source_type}:catchup",
             max_events=15,
-            min_ready_events=5,
-            max_wait_seconds=300,
+            min_ready_events=2,
+            max_wait_seconds=600,
         )
 
     # ------------------------------------------------------------------
@@ -115,15 +123,11 @@ class PhotoLibraryTimelineSensor(SensorBase):
             else {}
         )
 
-        # Resolve source paths: prefer settings list, fall back to legacy string, then instance
+        # Resolve source paths: prefer settings list, fall back to instance.
         source_paths: list[str] = []
         raw_paths = sensor_settings.get("source_paths")
         if isinstance(raw_paths, list):
             source_paths = [str(p) for p in raw_paths if p]
-        if not source_paths:
-            legacy = str(sensor_settings.get("source_path") or "")
-            if legacy:
-                source_paths = [legacy]
         if not source_paths:
             source_paths = list(self.source_paths)
 
@@ -133,7 +137,6 @@ class PhotoLibraryTimelineSensor(SensorBase):
                 stats={"count": 0, "error": "source_paths not configured"},
             )
 
-        # Resolve exclude patterns
         raw_excludes = sensor_settings.get("exclude_patterns")
         exclude_patterns = (
             [str(p) for p in raw_excludes if p]
@@ -141,25 +144,26 @@ class PhotoLibraryTimelineSensor(SensorBase):
             else list(self.exclude_patterns)
         )
 
-        # Use cursor as minimum modified-at watermark for incremental sync
-        min_modified_at = 0.0
+        # The cursor stores the max modified_at of photos that have already
+        # contributed to a *settled* (emitted) session. We keep a look-back
+        # window so unfinalized recent sessions get re-evaluated each sync.
+        now_ts = _time.time()
+        last_cursor = 0.0
         if context.last_cursor:
             try:
-                min_modified_at = float(context.last_cursor)
+                last_cursor = float(context.last_cursor)
             except (ValueError, TypeError):
-                pass
+                last_cursor = 0.0
+        look_back = now_ts - self.settle_window_seconds * 2
+        min_modified_at = max(0.0, min(last_cursor, look_back))
 
-        limit = min(max(1, context.limit), self.max_items_per_sync)
-        safe_items: list[dict[str, Any]] = []
-        total_scanned = 0
-        total_errors = 0
+        # The reader's per-scan limit caps photos, not sessions.
+        photo_limit = max(self.max_items_per_sync, 1000)
 
-        # Resolve analysis features
         analysis_features = list(
             sensor_settings.get("analysis_features", self.analysis_features)
         )
 
-        # Use file index cache when EXIF extraction is enabled
         file_index: FileIndexCache | None = None
         if "exif" in analysis_features:
             try:
@@ -170,15 +174,15 @@ class PhotoLibraryTimelineSensor(SensorBase):
         if file_index is not None:
             self._reader._file_index = file_index
 
-        remaining = limit
+        all_photos: list[dict[str, Any]] = []
+        total_scanned = 0
+        total_errors = 0
+
         for src in source_paths:
-            if remaining <= 0:
-                break
-            # Run synchronous I/O-heavy scan in a thread to avoid blocking the event loop
             result = await asyncio.to_thread(
                 self._reader.scan_directory,
                 src,
-                limit=remaining,
+                limit=photo_limit,
                 min_modified_at=min_modified_at,
                 exclude_patterns=exclude_patterns,
                 analysis_features=analysis_features,
@@ -186,50 +190,65 @@ class PhotoLibraryTimelineSensor(SensorBase):
             total_scanned += result.total_scanned
             total_errors += result.errors
 
-            # Validate all paths are within configured scope
             allowed_root = Path(src).expanduser().resolve()
             for item in result.items:
                 item_path = Path(str(item.get("path", ""))).resolve()
                 if allowed_root in {item_path, *item_path.parents}:
-                    safe_items.append(item)
-            remaining = limit - len(safe_items)
+                    all_photos.append(item)
 
-        # Batch reverse geocode if enabled
-        if "geocode" in analysis_features and safe_items:
+        # Reverse-geocode before session aggregation so location_name
+        # participates in the session's representative pick.
+        if "geocode" in analysis_features and all_photos:
             cache_dir = context.runtime_paths.plugin_cache_dir("photo-library")
             locale_map = get_locale_map(
                 str(context.plugin_settings.get("locale", ""))
             )
             coords = [
-                (float(it["latitude"]), float(it["longitude"]))
-                for it in safe_items
-                if it.get("latitude") is not None and it.get("longitude") is not None
+                (float(p["latitude"]), float(p["longitude"]))
+                for p in all_photos
+                if p.get("latitude") is not None and p.get("longitude") is not None
             ]
-            coord_indices = [
-                i for i, it in enumerate(safe_items)
-                if it.get("latitude") is not None and it.get("longitude") is not None
+            indices = [
+                i for i, p in enumerate(all_photos)
+                if p.get("latitude") is not None and p.get("longitude") is not None
             ]
             if coords:
-                results = await asyncio.to_thread(_geo_batch_lookup, coords, cache_dir)
-                for idx, geo in zip(coord_indices, results):
+                geo_results = await asyncio.to_thread(_geo_batch_lookup, coords, cache_dir)
+                for idx, geo in zip(indices, geo_results):
                     if geo is not None:
-                        safe_items[idx]["location_name"] = format_location(geo, locale_map=locale_map)
-                        safe_items[idx]["location_country"] = geo.country_code
+                        all_photos[idx]["location_name"] = format_location(
+                            geo, locale_map=locale_map
+                        )
+                        all_photos[idx]["location_country"] = geo.country_code
 
-        # Advance cursor to the max modified_at seen
+        sessions, max_settled_mtime = aggregate_sessions(
+            all_photos,
+            now_ts=now_ts,
+            settle_window_seconds=self.settle_window_seconds,
+        )
+
+        # Cap emission per sync to keep individual L2 batches manageable.
+        if len(sessions) > self.max_items_per_sync:
+            sessions = sessions[: self.max_items_per_sync]
+            max_settled_mtime = max(
+                float(s.get("max_modified_at") or 0.0) for s in sessions
+            )
+
+        # Cursor only advances past photos that contributed to an emitted
+        # session. Unsettled recent photos stay within the look-back window.
         next_cursor = context.last_cursor
         watermark_ts = context.last_success_at
-        if safe_items:
-            max_mtime = max(float(it.get("modified_at") or 0.0) for it in safe_items)
-            next_cursor = str(max_mtime)
-            watermark_ts = max_mtime
+        if max_settled_mtime > 0:
+            next_cursor = str(max_settled_mtime)
+            watermark_ts = max_settled_mtime
 
         return SensorSyncResult(
-            items=safe_items,
+            items=sessions,
             next_cursor=next_cursor,
             watermark_ts=watermark_ts,
             stats={
-                "count": len(safe_items),
+                "count": len(sessions),
+                "photos_seen": len(all_photos),
                 "total_scanned": total_scanned,
                 "errors": total_errors,
             },
@@ -240,112 +259,98 @@ class PhotoLibraryTimelineSensor(SensorBase):
     # ------------------------------------------------------------------
 
     async def fetch_item(self, item: dict[str, Any]) -> dict[str, Any]:
-        """Validate path scope. Items are already enriched by the reader."""
-        path = Path(str(item.get("path", ""))).resolve()
-        if not self.source_paths:
-            raise ValueError("Photo library source_paths is required")
-        in_scope = False
-        for src in self.source_paths:
-            allowed_root = Path(src).expanduser().resolve()
-            if allowed_root in {path, *path.parents}:
-                in_scope = True
-                break
-        if not in_scope:
-            raise ValueError(
-                f"Photo path {path} is outside configured library scopes"
-            )
         return dict(item)
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
-        path = str(item.get("path", ""))
-        filename = str(item.get("filename") or Path(path).name or "Photo")
-        camera = camera_display_name(
-            str(item.get("camera_make", "")),
-            str(item.get("camera_model", "")),
+        device = str(item.get("device_name") or "").strip()
+        location = str(item.get("location_name") or "").strip()
+        date = str(item.get("date") or "")
+        weekday = str(item.get("weekday") or "")
+        time_of_day = str(item.get("time_of_day") or "")
+        photo_count = int(item.get("photo_count") or 0)
+
+        title_bits = [date]
+        if weekday:
+            title_bits.append(weekday)
+        if time_of_day:
+            title_bits.append(time_of_day)
+        if location:
+            title_bits.append(location)
+        if device:
+            title_bits.append(device)
+        title = " 路 ".join(title_bits)
+
+        photo_word = "photo" if photo_count == 1 else "photos"
+        place_phrase = f"at {location}" if location else "somewhere"
+        when_phrase = " ".join(filter(None, [weekday, time_of_day, f"on {date}"])).strip()
+        summary = f"{when_phrase}, took {photo_count} {photo_word} {place_phrase}".strip()
+        if device:
+            summary = f"{summary} with {device}"
+
+        first_ts = float(item.get("first_capture_ts") or 0.0)
+        last_ts = float(item.get("last_capture_ts") or 0.0)
+        if first_ts and last_ts and last_ts > first_ts:
+            try:
+                start_str = _time.strftime("%H:%M", _time.localtime(first_ts))
+                end_str = _time.strftime("%H:%M", _time.localtime(last_ts))
+                summary = f"{summary} ({start_str}\u2013{end_str})"
+            except (OSError, OverflowError, ValueError):
+                pass
+
+        # Hero thumbnails: first / middle / last representative.
+        reps: list[dict[str, Any]] = list(item.get("representative_photos") or [])
+        content_blocks: list[ContentBlock] = []
+        hero_indices = (
+            [0, len(reps) // 2, len(reps) - 1] if len(reps) >= 3 else list(range(len(reps)))
         )
-        params = shooting_params_summary(item)
-        dimensions = image_dimensions_label(
-            int(item.get("image_width") or 0),
-            int(item.get("image_height") or 0),
-        )
+        seen_paths: set[str] = set()
+        for idx in hero_indices:
+            path = str(reps[idx].get("path", "")) if 0 <= idx < len(reps) else ""
+            if path and path not in seen_paths:
+                content_blocks.append(ContentBlock(kind="image", value=path))
+                seen_paths.add(path)
 
-        # Build i18n summary
-        image_type = str(item.get("image_type", "photo"))
-        location_name = str(item.get("location_name") or "")
-        if image_type == "screenshot":
-            device = camera or str(item.get("camera_model", ""))
-            if device:
-                summary = self.t("summary.screenshot_with_device", filename=filename, device=device)
-            else:
-                summary = self.t("summary.screenshot", filename=filename)
-        elif camera and params and location_name:
-            summary = self.t(
-                "summary.with_camera_params_location",
-                filename=filename, camera=camera, params=params, location=location_name,
-            )
-        elif camera and params:
-            summary = self.t("summary.with_camera_params", filename=filename, camera=camera, params=params)
-        elif camera and location_name:
-            summary = self.t("summary.with_camera_location", filename=filename, camera=camera, location=location_name)
-        elif camera:
-            summary = self.t("summary.with_camera", filename=filename, camera=camera)
-        elif location_name:
-            summary = self.t("summary.with_location", filename=filename, location=location_name)
-        else:
-            summary = self.t("summary.basic", filename=filename)
+        provenance: dict[str, Any] = {
+            "sensor_id": self.sensor_id,
+            "session_key": str(item.get("session_key") or ""),
+            "date": date,
+            "weekday": weekday,
+            "time_of_day": time_of_day,
+            "device_name": device,
+            "device_slug": str(item.get("device_slug") or ""),
+            "location_name": location,
+            "latitude": item.get("latitude"),
+            "longitude": item.get("longitude"),
+            "photo_count": photo_count,
+            "burst_total": int(item.get("burst_total") or 0),
+            "first_capture_ts": first_ts,
+            "last_capture_ts": last_ts,
+        }
 
-        content_blocks = [ContentBlock(kind="image", value=path)]
-        if camera:
-            content_blocks.append(ContentBlock(kind="text", value=camera))
-        if params:
-            content_blocks.append(ContentBlock(kind="text", value=params))
-        if dimensions:
-            content_blocks.append(ContentBlock(kind="text", value=dimensions))
+        tags = ["photo_library", "session"]
+        if location or item.get("latitude") is not None:
+            tags.append("geo")
 
-        lat = item.get("latitude")
-        lon = item.get("longitude")
-        location_name = str(item.get("location_name") or "")
-        if location_name:
-            content_blocks.append(ContentBlock(kind="text", value=location_name))
-        if lat is not None and lon is not None:
-            content_blocks.append(ContentBlock(kind="text", value=f"GPS: {lat:.6f}, {lon:.6f}"))
-
-        occurred_at = float(item.get("capture_timestamp") or item.get("modified_at") or 0.0)
+        domain_payload = {"representative_photos": reps}
 
         return self._build_output(
-            source_item_id=self.source_item_identity(item),
-            title=filename,
+            source_item_id=str(item.get("session_key") or ""),
+            title=title,
             summary=summary,
-            occurred_at=occurred_at,
-            raw_payload_ref=path,
+            occurred_at=first_ts,
+            raw_payload_ref=None,
             content_blocks=content_blocks,
-            tags=[t for t in ("photo_library", image_type, item.get("extension", "")) if t],
-            provenance={
-                "sensor_id": self.sensor_id,
-                "camera": camera,
-                "camera_make": str(item.get("camera_make", "")),
-                "camera_model": str(item.get("camera_model", "")),
-                "lens_model": str(item.get("lens_model", "")),
-                "focal_length": str(item.get("focal_length", "")),
-                "aperture": str(item.get("aperture", "")),
-                "exposure_time": str(item.get("exposure_time", "")),
-                "iso": str(item.get("iso", "")),
-                "image_width": int(item.get("image_width") or 0),
-                "image_height": int(item.get("image_height") or 0),
-                "latitude": lat,
-                "longitude": lon,
-                "location_name": location_name,
-                "file_hash": str(item.get("file_hash", "")),
-                "filename": filename,
-                "image_type": image_type,
-            },
-            domain_payload={"analysis_features": self.analysis_features},
+            tags=tags,
+            provenance=provenance,
+            domain_payload=domain_payload,
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
-        image_type = str(item.get("image_type", "photo"))
+        tags = ["photo_library", "session"]
+        if item.get("latitude") is not None or item.get("location_name"):
+            tags.append("geo")
         return SensorOutputMetadata(
-            entities=build_entity_hints(item),
-            tags=[t for t in ("photo_library", image_type, item.get("extension", "")) if t],
-            relation_candidates=build_relation_candidates(item),
+            entities=build_session_entity_hints(item),
+            tags=tags,
+            relation_candidates=build_session_relation_candidates(item),
         )

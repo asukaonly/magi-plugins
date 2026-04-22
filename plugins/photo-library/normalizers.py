@@ -1,4 +1,4 @@
-"""Normalization helpers for photo library timeline ingestion."""
+﻿"""Normalization helpers for photo library timeline ingestion."""
 from __future__ import annotations
 
 from typing import Any
@@ -34,33 +34,28 @@ def shooting_params_summary(item: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def image_dimensions_label(width: int, height: int) -> str:
-    """Return a dimensions label like '4032x3024'."""
-    if width > 0 and height > 0:
-        return f"{width}x{height}"
-    return ""
+def build_session_entity_hints(session: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract entity hints from a session for L2 cognition.
 
+    Sessions surface two kinds of first-class entities:
 
-def build_entity_hints(item: dict[str, Any]) -> list[dict[str, Any]]:
-    """Extract entity hints from photo metadata for L2 cognition."""
+    * ``device``  鈥?the camera identity used during the session.
+    * ``location`` 鈥?the geocoded place when GPS is available.
+    """
     hints: list[dict[str, Any]] = []
 
-    # Camera as entity
-    camera = camera_display_name(
-        str(item.get("camera_make", "")),
-        str(item.get("camera_model", "")),
-    )
-    if camera:
+    device_name = str(session.get("device_name") or "").strip()
+    device_slug = str(session.get("device_slug") or "").strip()
+    if device_name:
         hints.append({
-            "mention_text": camera,
+            "mention_text": device_name,
             "entity_type": "device",
-            "canonical_name_hint": camera,
+            "canonical_name_hint": device_slug or device_name,
         })
 
-    # GPS location as entity — prefer reverse-geocoded name
-    lat = item.get("latitude")
-    lon = item.get("longitude")
-    location_name = str(item.get("location_name") or "")
+    lat = session.get("latitude")
+    lon = session.get("longitude")
+    location_name = str(session.get("location_name") or "")
     if lat is not None and lon is not None:
         coord_label = f"{lat:.4f}, {lon:.4f}"
         canonical = location_name or coord_label
@@ -70,73 +65,68 @@ def build_entity_hints(item: dict[str, Any]) -> list[dict[str, Any]]:
             "canonical_name_hint": canonical,
             "attributes": {"latitude": lat, "longitude": lon},
         })
-
     return hints
 
 
-def build_relation_candidates(item: dict[str, Any]) -> list[dict[str, Any]]:
-    """Generate conservative relation candidates for a photo item."""
+def build_session_relation_candidates(session: dict[str, Any]) -> list[dict[str, Any]]:
+    """Generate relation candidates from a settled photo session.
+
+    Two predicates are emitted:
+
+    * ``user:self -OWNED_DEVICE-> device``  when device identity is known.
+    * ``user:self -VISITED-> location``     when GPS / geocoded place is known.
+
+    These are the long-lived facts a memory system actually needs about
+    photos. Per-photo edges (``CREATED``, ``CAPTURED``, ``RELATED_TO``) are
+    not emitted: photos are not graph nodes.
+
+    ``RESIDED_IN`` is intentionally not produced here. Distinguishing a
+    visit from a residence requires multi-week aggregation that belongs in
+    a higher-level (L3) summarisation pass.
+    """
     candidates: list[dict[str, Any]] = []
-    capture_ts = float(item.get("capture_timestamp") or item.get("modified_at") or 0.0)
-    path = str(item.get("path", ""))
-    image_type = str(item.get("image_type", "photo"))
-    source_kind = "screenshot" if image_type == "screenshot" else "photo"
+    observed_at = float(
+        session.get("first_capture_ts")
+        or session.get("last_capture_ts")
+        or 0.0
+    )
 
-    # CAPTURED: user captured this photo / took this screenshot
-    candidates.append({
-        "subject_id": "user:self",
-        "subject_type": "user",
-        "predicate": "CAPTURED",
-        "object_id": f"photo:{item.get('asset_local_id', '')}",
-        "object_type": image_type,
-        "confidence": 0.85,
-        "observed_at": capture_ts,
-        "object_attributes": {
-            "path": path,
-            "filename": str(item.get("filename", "")),
-            "source_kind": source_kind,
-        },
-    })
+    device_slug = str(session.get("device_slug") or "").strip()
+    device_name = str(session.get("device_name") or "").strip()
+    if device_slug and device_name:
+        candidates.append({
+            "subject_id": "user:self",
+            "subject_type": "user",
+            "predicate": "OWNED_DEVICE",
+            "object_id": f"device:{device_slug}",
+            "object_type": "device",
+            "confidence": 0.9,
+            "observed_at": observed_at,
+            "object_attributes": {
+                "device_name": device_name,
+                "source_kind": "exif",
+            },
+        })
 
-    # RELATED_TO location if GPS available
-    lat = item.get("latitude")
-    lon = item.get("longitude")
-    location_name = str(item.get("location_name") or "")
+    lat = session.get("latitude")
+    lon = session.get("longitude")
+    location_name = str(session.get("location_name") or "")
     if lat is not None and lon is not None:
         loc_id = location_name or f"{lat:.4f},{lon:.4f}"
         candidates.append({
-            "subject_id": f"photo:{item.get('asset_local_id', '')}",
-            "subject_type": "photo",
-            "predicate": "RELATED_TO",
+            "subject_id": "user:self",
+            "subject_type": "user",
+            "predicate": "VISITED",
             "object_id": f"location:{loc_id}",
             "object_type": "location",
-            "confidence": 0.9,
-            "observed_at": capture_ts,
+            "confidence": 0.85,
+            "observed_at": observed_at,
             "object_attributes": {
                 "latitude": lat,
                 "longitude": lon,
                 "location_name": location_name,
+                "photo_count": int(session.get("photo_count") or 0),
                 "source_kind": "gps",
-            },
-        })
-
-    # CREATED: if camera info is available, link photo to device
-    camera = camera_display_name(
-        str(item.get("camera_make", "")),
-        str(item.get("camera_model", "")),
-    )
-    if camera:
-        candidates.append({
-            "subject_id": f"device:{camera}",
-            "subject_type": "device",
-            "predicate": "CREATED",
-            "object_id": f"photo:{item.get('asset_local_id', '')}",
-            "object_type": "photo",
-            "confidence": 0.8,
-            "observed_at": capture_ts,
-            "object_attributes": {
-                "camera": camera,
-                "source_kind": "exif",
             },
         })
 

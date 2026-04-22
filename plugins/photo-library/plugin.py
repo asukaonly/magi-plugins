@@ -16,6 +16,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "exclude_patterns": ["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"],
     "max_items_per_sync": 200,
     "analysis_features": ["exif"],
+    "settle_window_hours": 4,
 }
 
 
@@ -104,6 +105,21 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             surface="timeline",
             order=45,
         ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.settle_window_hours",
+            type="number",
+            label="Session Settle Window (hours)",
+            description=(
+                "A photo session is emitted to the timeline only after no "
+                "new photos arrive for this many hours. Lower values surface "
+                "today's photos faster; higher values group long outings "
+                "more reliably."
+            ),
+            default=4,
+            section="general",
+            surface="timeline",
+            order=50,
+        ),
     ]
 
 
@@ -137,6 +153,9 @@ class PhotoLibraryPlugin(Plugin):
             max_items_per_sync=int(settings.get("max_items_per_sync", DEFAULT_SETTINGS["max_items_per_sync"])),
             analysis_features=list(settings.get("analysis_features", DEFAULT_SETTINGS["analysis_features"])),
             exclude_patterns=exclude_patterns,
+            settle_window_seconds=float(
+                settings.get("settle_window_hours", DEFAULT_SETTINGS["settle_window_hours"])
+            ) * 3600.0,
         )
         return [
             (
@@ -168,16 +187,18 @@ class PhotoLibraryPlugin(Plugin):
         period_start: float,
         period_end: float,
     ) -> dict[str, object] | None:
-        """Build photo-specific temporal summary features."""
+        """Aggregate session events into period-level features."""
         _ = summary_category, period_start, period_end
         if source_type != "photo_library":
             return None
+        if not events:
+            return None
 
-        camera_counter: Counter[str] = Counter()
+        device_counter: Counter[str] = Counter()
         location_counter: Counter[str] = Counter()
-        gps_count = 0
-        burst_total = 0
-        timestamps: list[float] = []
+        photo_total = 0
+        gps_session_count = 0
+        days_active: set[str] = set()
 
         for event in events:
             metadata = event.get("metadata_json")
@@ -189,49 +210,50 @@ class PhotoLibraryPlugin(Plugin):
             provenance = timeline.get("provenance")
             if not isinstance(provenance, dict):
                 continue
-            camera = str(provenance.get("camera") or "").strip()
-            if camera:
-                camera_counter[camera] += 1
+            device = str(provenance.get("device_name") or "").strip()
+            if device:
+                device_counter[device] += 1
             location = str(provenance.get("location_name") or "").strip()
             if location:
                 location_counter[location] += 1
             if provenance.get("latitude") is not None:
-                gps_count += 1
+                gps_session_count += 1
             try:
-                burst_total += int(provenance.get("burst_count") or 0)
+                photo_total += int(provenance.get("photo_count") or 0)
             except (TypeError, ValueError):
                 pass
-            if event.get("timestamp") is not None:
-                timestamps.append(float(event["timestamp"]))
+            date = str(provenance.get("date") or "")
+            if date:
+                days_active.add(date)
 
-        if not events:
-            return None
-
-        top_cameras = [
-            {"camera": cam, "count": cnt}
-            for cam, cnt in camera_counter.most_common(3)
+        top_devices = [
+            {"device": dev, "session_count": cnt}
+            for dev, cnt in device_counter.most_common(3)
         ]
         top_locations = [
-            {"location": loc, "count": cnt}
-            for loc, cnt in location_counter.most_common(3)
+            {"location": loc, "session_count": cnt}
+            for loc, cnt in location_counter.most_common(5)
         ]
 
         summary_lines: list[str] = []
-        if top_cameras:
-            joined = " and ".join(c["camera"] for c in top_cameras[:2])
-            summary_lines.append(f"Photos taken with {joined}.")
+        summary_lines.append(
+            f"{len(events)} photo sessions across {len(days_active)} days, "
+            f"{photo_total} photos in total."
+        )
+        if top_devices:
+            joined = " and ".join(d["device"] for d in top_devices[:2])
+            summary_lines.append(f"Most active devices: {joined}.")
         if top_locations:
-            joined_locs = ", ".join(loc["location"] for loc in top_locations[:2])
-            summary_lines.append(f"Mostly around {joined_locs}.")
-        if gps_count > 0:
-            summary_lines.append(f"{gps_count} of {len(events)} photos have GPS.")
+            joined_locs = ", ".join(loc["location"] for loc in top_locations[:3])
+            summary_lines.append(f"Visited: {joined_locs}.")
 
         return {
             "feature_type": "photo_library",
-            "event_count": len(events),
-            "cameras": top_cameras,
+            "session_count": len(events),
+            "photo_total": photo_total,
+            "active_days": len(days_active),
+            "devices": top_devices,
             "locations": top_locations,
-            "gps_count": gps_count,
-            "burst_total": burst_total,
+            "gps_session_count": gps_session_count,
             "summary_lines": summary_lines,
         }
