@@ -95,10 +95,30 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                         description="Maximum number of candidate photos to return.",
                         default=6,
                         min_value=1,
-                        max_value=24,
+                        max_value=100,
                     ),
                 ],
             )
+
+        async def validate_parameters(
+            self,
+            parameters: dict[str, Any],
+        ) -> tuple[bool, str | None]:
+            _coerce_numeric_parameter(parameters, "start_timestamp", float)
+            _coerce_numeric_parameter(parameters, "end_timestamp", float)
+            _coerce_numeric_parameter(parameters, "year", int)
+            _coerce_numeric_parameter(parameters, "month", int)
+            _coerce_numeric_parameter(parameters, "day", int)
+            _coerce_numeric_parameter(parameters, "limit", int)
+
+            valid, error = await super().validate_parameters(parameters)
+            if not valid:
+                return valid, error
+
+            if "date" in parameters and parameters.get("date") not in (None, ""):
+                if not _normalize_date(parameters.get("date")):
+                    return False, "Parameter date must be in YYYY-MM-DD format"
+            return True, None
 
         async def execute(
             self,
@@ -112,7 +132,7 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                     error_code=ToolErrorCode.INVALID_CONFIG.value,
                 )
 
-            limit = _coerce_limit(parameters.get("limit"), default=6, minimum=1, maximum=24)
+            limit = _coerce_limit(parameters.get("limit"), default=6, minimum=1, maximum=100)
             start_timestamp = _coerce_float(parameters.get("start_timestamp"))
             end_timestamp = _coerce_float(parameters.get("end_timestamp"))
             year = _coerce_int(parameters.get("year"))
@@ -288,6 +308,28 @@ def _resolve_string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item).strip() for item in value if str(item or "").strip()]
+
+
+def _coerce_numeric_parameter(
+    parameters: dict[str, Any],
+    name: str,
+    cast_type: type[int] | type[float],
+) -> None:
+    if name not in parameters:
+        return
+    value = parameters.get(name)
+    if value is None or value == "" or isinstance(value, cast_type):
+        return
+    if isinstance(value, bool):
+        return
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return
+        try:
+            parameters[name] = cast_type(raw)
+        except ValueError:
+            return
 
 
 def _coerce_limit(value: Any, *, default: int, minimum: int, maximum: int) -> int:

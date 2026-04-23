@@ -95,7 +95,7 @@
       "name_i18n": {
         "zh-CN": "照片库"
       },
-      "version": "2.1.2",
+      "version": "2.1.3",
       "path": "plugins/photo-library",
       "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
       "description_i18n": {
