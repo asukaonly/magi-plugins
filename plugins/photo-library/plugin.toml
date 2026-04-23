@@ -9,5 +9,5 @@ author = "Magi Team"
 entry_module = "plugin"
 entry_class = "PhotoLibraryPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["sensor", "tool"]
 platforms = ["macos", "windows"]

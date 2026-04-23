@@ -5,6 +5,7 @@ from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from .photo_tools import build_photo_library_tool_classes
 from .sensor import PhotoLibraryTimelineSensor
 
 
@@ -125,6 +126,13 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class PhotoLibraryPlugin(Plugin):
     """Registers the photo library timeline source."""
+
+    def get_tools(self) -> list[type[object]]:
+        sensors_settings = self.settings.get("sensors", {})
+        settings: dict[str, Any] = {}
+        if isinstance(sensors_settings, dict):
+            settings = dict(sensors_settings.get("photo_library", {}))
+        return build_photo_library_tool_classes(settings)
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         settings: dict[str, Any] = {}

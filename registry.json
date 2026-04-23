@@ -104,7 +104,8 @@
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
-        "sensor"
+        "sensor",
+        "tool"
       ],
       "platforms": [
         "macos",
