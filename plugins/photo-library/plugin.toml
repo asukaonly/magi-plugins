@@ -2,7 +2,7 @@
 id = "photo-library"
 name = "Photo Library"
 name_i18n = { "zh-CN" = "照片库" }
-version = "2.1.0"
+version = "2.1.2"
 description = "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited."
 description_i18n = { "zh-CN" = "扫描本地照片，读取拍摄时间、地点等元数据，帮助 Magi 还原你的生活记录和去过的地方" }
 author = "Magi Team"
