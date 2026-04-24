@@ -186,6 +186,27 @@ class PhotoLibraryPlugin(Plugin):
             )
         ]
 
+    def build_recall_artifacts(
+        self,
+        *,
+        source_type: str,
+        events: list[dict[str, Any]],
+        query: str,
+        query_mode: str | None,
+    ) -> dict[str, object] | None:
+        """Project photo-session memories into generic answer-facing asset refs."""
+        _ = query, query_mode
+        if source_type != "photo_library" or not events:
+            return None
+
+        asset_refs: list[dict[str, Any]] = []
+        for event in events:
+            asset_refs.extend(_build_recall_asset_refs(event))
+
+        if not asset_refs:
+            return None
+        return {"asset_refs": asset_refs}
+
     def build_temporal_summary_features(
         self,
         *,
@@ -265,3 +286,64 @@ class PhotoLibraryPlugin(Plugin):
             "gps_session_count": gps_session_count,
             "summary_lines": summary_lines,
         }
+
+
+def _build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
+    metadata = event.get("metadata_json") if isinstance(event.get("metadata_json"), dict) else {}
+    timeline = metadata.get("timeline") if isinstance(metadata.get("timeline"), dict) else {}
+    if str(timeline.get("source_type") or "").strip() != "photo_library":
+        return []
+
+    provenance = timeline.get("provenance") if isinstance(timeline.get("provenance"), dict) else {}
+    representative_photos = metadata.get("representative_photos")
+    if not isinstance(representative_photos, list):
+        return []
+
+    title = str(timeline.get("title") or "").strip() or None
+    location_name = str(provenance.get("location_name") or "").strip() or None
+    device_name = str(provenance.get("device_name") or "").strip() or None
+    session_source_item_id = str(timeline.get("source_item_id") or event.get("source_item_id") or "").strip() or None
+    event_id = str(event.get("event_id") or "").strip() or None
+    occurred_at = event.get("timestamp") or event.get("created_at")
+
+    asset_refs: list[dict[str, Any]] = []
+    for index, item in enumerate(representative_photos):
+        if not isinstance(item, dict):
+            continue
+        asset_ref_id = str(item.get("asset_local_id") or "").strip()
+        if not asset_ref_id:
+            continue
+
+        attributes: dict[str, Any] = {"representative_index": index + 1}
+        if session_source_item_id is not None:
+            attributes["session_source_item_id"] = session_source_item_id
+        if location_name is not None:
+            attributes["location_name"] = location_name
+        if device_name is not None:
+            attributes["device_name"] = device_name
+        if item.get("latitude") is not None:
+            attributes["latitude"] = item.get("latitude")
+        if item.get("longitude") is not None:
+            attributes["longitude"] = item.get("longitude")
+
+        asset_ref = {
+            "asset_ref_id": asset_ref_id,
+            "kind": "image",
+            "event_id": event_id,
+            "source_type": "photo_library",
+            "source_item_id": asset_ref_id,
+            "display_name": title,
+            "captured_at": item.get("capture_ts") or provenance.get("first_capture_ts") or occurred_at,
+            "occurred_at": occurred_at,
+            "resolver_tool": "photo_library_resolve_photo_refs",
+            "attributes": attributes,
+        }
+        asset_refs.append(
+            {
+                key: value
+                for key, value in asset_ref.items()
+                if value not in (None, "", [], {})
+            }
+        )
+
+    return asset_refs
