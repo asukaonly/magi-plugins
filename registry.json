@@ -29,7 +29,7 @@
       "name_i18n": {
         "zh-CN": "Chrome 浏览历史"
       },
-      "version": "0.4.2",
+      "version": "0.4.3",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {

@@ -42,7 +42,6 @@ class ChromeHistoryTimelineSensor(SensorBase):
         *,
         retention_mode: str | None = None,
         source_path: str | None = None,
-        fetch_page_content: bool = False,
         profile: str = "Default",
         merge_window_minutes: int = 30,
         reader: ChromeHistoryReader | None = None,
@@ -50,7 +49,6 @@ class ChromeHistoryTimelineSensor(SensorBase):
         super().__init__()
         self.retention_mode = retention_mode or "analyze_only"
         self.source_path = source_path
-        self.fetch_page_content = fetch_page_content
         self.profile = profile
         self.merge_window_minutes = merge_window_minutes
         self._reader = reader or ChromeHistoryReader()
@@ -176,8 +174,6 @@ class ChromeHistoryTimelineSensor(SensorBase):
         ]
         if title:
             content_blocks.append(ContentBlock(kind="text", value=title))
-        if self.fetch_page_content and item.get("page_content"):
-            content_blocks.append(ContentBlock(kind="text", value=str(item["page_content"])))
         return self._build_output(
             source_item_id=self.source_item_identity(item),
             activity=self._build_activity(

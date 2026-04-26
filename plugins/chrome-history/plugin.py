@@ -12,14 +12,13 @@ from .sensor import ChromeHistoryTimelineSensor
 
 DEFAULT_SETTINGS = {
     "enabled": False,
-    "sync_mode": "manual",
+    "sync_mode": "interval",
     "sync_interval_minutes": 30,
     "default_retention_mode": "analyze_only",
     "storage_mode": "managed",
     "profile": "Default",
     "merge_window_minutes": 30,
-    "max_items_per_sync": 200,
-    "fetch_page_content": False,
+    "max_items_per_sync": 1000,
     "initial_sync_policy": "lookback_days",
     "initial_sync_lookback_days": 7,
     "initial_sync_configured": False,
@@ -99,7 +98,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             type="select",
             label="Sync Mode",
             description="How Chrome history should be synchronized.",
-            default="manual",
+            default="interval",
             required=True,
             options=[
                 ExtensionFieldOption(label="Manual", value="manual"),
@@ -139,20 +138,10 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             type="number",
             label="Max Items Per Sync",
             description="Maximum number of history records to ingest per run.",
-            default=200,
-            section="general",
-            surface="timeline",
-            order=60,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.fetch_page_content",
-            type="switch",
-            label="Fetch Page Content",
-            description="Reserved for future page-content capture. Disabled in v1.",
-            default=False,
+            default=1000,
             section="analysis",
             surface="timeline",
-            order=70,
+            order=60,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.filter_domains",
@@ -162,7 +151,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             default=[],
             section="filters",
             surface="timeline",
-            order=80,
+            order=70,
             placeholder="e.g. ^mail\\.|\\.bank\\.com$",
         ),
         ExtensionFieldSpec(
@@ -173,7 +162,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             default=[],
             section="filters",
             surface="timeline",
-            order=90,
+            order=80,
             placeholder="e.g. password reset",
         ),
     ]
@@ -190,7 +179,6 @@ class ChromeHistoryPlugin(Plugin):
         sensor = ChromeHistoryTimelineSensor(
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             source_path=str(settings.get("source_path") or _default_chrome_root()),
-            fetch_page_content=bool(settings.get("fetch_page_content", DEFAULT_SETTINGS["fetch_page_content"])),
             profile=str(settings.get("profile") or DEFAULT_SETTINGS["profile"]),
             merge_window_minutes=int(
                 settings.get("merge_window_minutes", DEFAULT_SETTINGS["merge_window_minutes"])
