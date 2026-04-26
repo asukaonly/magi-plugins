@@ -37,10 +37,22 @@ def chrome_time_to_unix_seconds(value: int | float | str | None) -> float:
     return max(0.0, (numeric / 1_000_000.0) - WINDOWS_TO_UNIX_EPOCH_SECONDS)
 
 
-def normalize_title(value: str | None) -> str:
-    """Return a whitespace-normalized title string."""
+_UNREAD_COUNT_PREFIX = re.compile(r"^(?:\(\d+\)\s*)+")
 
-    return " ".join(str(value or "").split()).strip()
+
+def normalize_title(value: str | None) -> str:
+    """Return a whitespace-normalized title string.
+
+    Strips leading unread-count prefixes such as ``(46)`` that many web apps
+    (Discord, Gmail, Slack, …) prepend to the page title — those numbers churn
+    on every notification and would otherwise prevent burst-merging the same
+    page across visits.
+    """
+
+    collapsed = " ".join(str(value or "").split()).strip()
+    if not collapsed:
+        return collapsed
+    return _UNREAD_COUNT_PREFIX.sub("", collapsed).strip()
 
 
 def normalize_domain(url: str) -> str:
@@ -74,23 +86,22 @@ def canonicalize_url(url: str) -> str:
 def burst_merge_key(url: str, title: str | None) -> str:
     """Return the semantic merge key used for burst grouping.
 
-    This intentionally ignores query-string churn and relies on the stable
-    host/path shape plus the normalized title. Search result pages and similar
-    navigation surfaces often mutate query parameters while remaining the same
-    user-visible page.
+    Single-page apps such as Discord, Slack, and Notion encode their current
+    state (channel, thread, message id, …) in the URL **path** rather than in
+    query parameters, so two visits to "the same page" frequently differ in
+    path. To keep burst-merging working across these surfaces the key uses
+    only the hostname plus the normalized title, which already captures the
+    user-visible page identity. Search-result and other pages whose title
+    rarely changes are still distinguished by ``normalize_title``.
     """
 
-    parsed = urlparse(str(url or "").strip())
     hostname = normalize_domain(url)
     if not hostname:
         return ""
-    path = parsed.path or "/"
-    if path != "/":
-        path = path.rstrip("/") or "/"
     normalized_title = normalize_title(title)
     if not normalized_title:
         return ""
-    return f"https://{hostname}{path}|{normalized_title.lower()}"
+    return f"{hostname}|{normalized_title.lower()}"
 
 
 def site_node_id(domain: str) -> str:
