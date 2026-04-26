@@ -17,6 +17,20 @@ from .normalizers import (
     should_merge_visit,
 )
 
+# Chrome's PageTransition core type & qualifier flags. Match the filter the
+# built-in chrome://history UI applies (see Chromium
+# components/history/core/browser/visit_database.cc): exclude AUTO_SUBFRAME
+# (iframe auto-loads) and require CHAIN_END (the visit is the user-visible
+# end of a redirect chain, so middle redirects like Cloudflare 5s challenge
+# pages are skipped).
+PAGE_TRANSITION_CORE_MASK = 0xFF
+PAGE_TRANSITION_AUTO_SUBFRAME = 3
+PAGE_TRANSITION_CHAIN_END = 0x20000000
+_VISIT_FILTER_SQL = (
+    " AND (visits.transition & 255) != 3"
+    " AND (visits.transition & 536870912) != 0"
+)
+
 DEFAULT_MACOS_CHROME_ROOT = "~/Library/Application Support/Google/Chrome"
 DEFAULT_WINDOWS_CHROME_ROOT = "~/AppData/Local/Google/Chrome/User Data"
 DEFAULT_LINUX_CHROME_ROOT = "~/.config/google-chrome"
@@ -125,6 +139,8 @@ class ChromeHistoryReader:
                     FROM visits
                     JOIN urls ON visits.url = urls.id
                     WHERE visits.id > ?
+                      AND (visits.transition & 255) != 3
+                      AND (visits.transition & 536870912) != 0
                     ORDER BY visits.id ASC
                     LIMIT ?
                     """,
@@ -151,6 +167,8 @@ class ChromeHistoryReader:
                             JOIN urls ON visits.url = urls.id
                             WHERE visits.id <= ?
                               AND visits.visit_time >= ?
+                              AND (visits.transition & 255) != 3
+                              AND (visits.transition & 536870912) != 0
                             ORDER BY visits.id ASC
                             """,
                             (last_visit_id, earliest_new_visit_time - merge_window_microseconds),
@@ -175,6 +193,8 @@ class ChromeHistoryReader:
                         SELECT COALESCE(MAX(visit_time), 0) - ?
                         FROM visits
                     )
+                      AND (visits.transition & 255) != 3
+                      AND (visits.transition & 536870912) != 0
                     ORDER BY visits.id ASC
                     LIMIT ?
                     """,
@@ -194,6 +214,8 @@ class ChromeHistoryReader:
                         visits.transition AS transition
                     FROM visits
                     JOIN urls ON visits.url = urls.id
+                    WHERE (visits.transition & 255) != 3
+                      AND (visits.transition & 536870912) != 0
                     ORDER BY visits.id ASC
                     LIMIT ?
                     """,
