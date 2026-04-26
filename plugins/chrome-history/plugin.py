@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec, SummaryProfileSpec
 
 from .chrome_reader import _default_chrome_root
 from .sensor import ChromeHistoryTimelineSensor
@@ -17,7 +17,7 @@ DEFAULT_SETTINGS = {
     "default_retention_mode": "analyze_only",
     "storage_mode": "managed",
     "profile": "Default",
-    "lookback_hours": 24,
+    "merge_window_minutes": 30,
     "max_items_per_sync": 200,
     "fetch_page_content": False,
     "initial_sync_policy": "lookback_days",
@@ -122,11 +122,14 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             depends_on_values=["interval"],
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.lookback_hours",
+            key=f"{prefix}.merge_window_minutes",
             type="number",
-            label="Lookback Hours",
-            description="Initial lookback window used before a cursor exists.",
-            default=24,
+            label="Merge Window (minutes)",
+            description=(
+                "Raw visits to the same page within this window are merged into one timeline item, "
+                "even when other pages appear between them."
+            ),
+            default=30,
             section="general",
             surface="timeline",
             order=50,
@@ -189,7 +192,9 @@ class ChromeHistoryPlugin(Plugin):
             source_path=str(settings.get("source_path") or _default_chrome_root()),
             fetch_page_content=bool(settings.get("fetch_page_content", DEFAULT_SETTINGS["fetch_page_content"])),
             profile=str(settings.get("profile") or DEFAULT_SETTINGS["profile"]),
-            lookback_hours=int(settings.get("lookback_hours", DEFAULT_SETTINGS["lookback_hours"])),
+            merge_window_minutes=int(
+                settings.get("merge_window_minutes", DEFAULT_SETTINGS["merge_window_minutes"])
+            ),
         )
         return [
             (
@@ -210,6 +215,38 @@ class ChromeHistoryPlugin(Plugin):
                         "activation_flow": _activation_flow("sensors.chrome_history").model_dump(),
                     },
                 ),
+            )
+        ]
+
+    def get_summary_profiles(self) -> list[SummaryProfileSpec]:
+        """Declare a daily browser_activity summary profile.
+
+        The host runs this profile on a settle-window cadence and stores
+        results under summary_category="browser_activity", which the
+        activity_summary retrieval mode looks up directly.
+        """
+        return [
+            SummaryProfileSpec(
+                profile_id="chrome-history:browser_activity",
+                summary_category="browser_activity",
+                source_types=["chrome_history"],
+                windows=["day"],
+                settle_window_seconds=300,
+                min_events=8,
+                intent_verbs=[
+                    "浏览",
+                    "看了",
+                    "看过",
+                    "查了",
+                    "搜了",
+                    "搜过",
+                    "browse",
+                    "browsing",
+                    "visited",
+                    "watched",
+                    "read",
+                ],
+                prompt_hints={"category": "browser_activity"},
             )
         ]
 

@@ -1,7 +1,6 @@
 """Timeline sensor for local Chrome history."""
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import time
@@ -37,7 +36,6 @@ class ChromeHistoryTimelineSensor(SensorBase):
     supports_pull_sync = True
 
     memory_policy = SensorMemoryPolicy()  # defaults match design
-    _catch_up_shard_count = 8
 
     def __init__(
         self,
@@ -46,7 +44,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
         source_path: str | None = None,
         fetch_page_content: bool = False,
         profile: str = "Default",
-        lookback_hours: int = 24,
+        merge_window_minutes: int = 30,
         reader: ChromeHistoryReader | None = None,
     ) -> None:
         super().__init__()
@@ -54,7 +52,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
         self.source_path = source_path
         self.fetch_page_content = fetch_page_content
         self.profile = profile
-        self.lookback_hours = lookback_hours
+        self.merge_window_minutes = merge_window_minutes
         self._reader = reader or ChromeHistoryReader()
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
@@ -71,25 +69,19 @@ class ChromeHistoryTimelineSensor(SensorBase):
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
         profile = str(output.provenance.get("profile") or self.profile or "").strip()
-        domain = str(output.provenance.get("domain") or "").strip().lower()
-        parts = [self.source_type, profile or "default"]
-        if domain:
-            parts.append(domain)
-        catch_up_owner = None
-        if domain:
-            shard = self._catch_up_shard_for_domain(domain)
-            catch_up_owner = f"{self.source_type}:{profile or 'default'}:catchup:{shard}"
+        ts = output.occurred_at or output.captured_at or time.time()
+        try:
+            day = time.strftime("%Y%m%d", time.localtime(ts))
+        except (OSError, OverflowError, ValueError):
+            day = "unknown"
+        owner = f"{self.source_type}:{profile or 'default'}:{day}"
         return L2BatchPolicy(
-            owner=":".join(parts),
-            catch_up_owner=catch_up_owner,
+            owner=owner,
+            catch_up_owner=f"{self.source_type}:{profile or 'default'}:catchup",
             max_events=20,
             min_ready_events=8,
-            max_wait_seconds=180,
+            max_wait_seconds=300,
         )
-
-    def _catch_up_shard_for_domain(self, domain: str) -> int:
-        digest = hashlib.sha1(domain.strip().lower().encode("utf-8")).hexdigest()
-        return int(digest[:8], 16) % self._catch_up_shard_count
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         sensor_settings = (
@@ -99,7 +91,10 @@ class ChromeHistoryTimelineSensor(SensorBase):
         )
         source_path = str(sensor_settings.get("source_path") or self.source_path or _default_chrome_root())
         profile = str(sensor_settings.get("profile") or self.profile or "Default")
-        lookback_hours = int(sensor_settings.get("lookback_hours", self.lookback_hours))
+        merge_window_minutes = max(
+            1,
+            int(sensor_settings.get("merge_window_minutes", self.merge_window_minutes)),
+        )
         initial_sync_policy = str(sensor_settings.get("initial_sync_policy") or "lookback_days")
         initial_sync_lookback_days = max(1, int(sensor_settings.get("initial_sync_lookback_days", 7)))
         initial_lookback_hours: int | None = max(1, initial_sync_lookback_days) * 24
@@ -119,22 +114,25 @@ class ChromeHistoryTimelineSensor(SensorBase):
                         "initial_sync_policy": initial_sync_policy,
                     },
                 )
-        items = self._reader.read_visits(
+        raw_items = self._reader.read_visits(
             source_path=source_path,
             profile=profile,
             limit=max(1, context.limit),
             last_cursor=context.last_cursor,
-            lookback_hours=max(1, lookback_hours) if context.last_cursor is not None else initial_lookback_hours,
+            initial_lookback_hours=initial_lookback_hours,
+            merge_window_seconds=float(merge_window_minutes) * 60.0,
         )
         next_cursor = context.last_cursor
         watermark_ts = context.last_success_at
-        if items:
+        if raw_items:
             raw_max_visit_id = max(
                 int(item.get("last_visit_id") or item.get("visit_id") or 0)
-                for item in items
+                for item in raw_items
             )
             next_cursor = str(raw_max_visit_id) if raw_max_visit_id > 0 else context.last_cursor
-            watermark_ts = max(float(item.get("visit_time") or 0.0) for item in items)
+            watermark_ts = max(float(item.get("visit_time") or 0.0) for item in raw_items)
+        continued_count = sum(1 for item in raw_items if not item.get("_emit_item", True))
+        items = [item for item in raw_items if item.get("_emit_item", True)]
         filter_domains_raw = sensor_settings.get("filter_domains") or []
         filter_keywords_raw = sensor_settings.get("filter_keywords") or []
         domain_patterns = _compile_domain_patterns(filter_domains_raw)
@@ -158,6 +156,8 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "raw_count": sum(int(item.get("merged_visit_count") or 1) for item in items),
                 "initial_sync_policy": initial_sync_policy if context.last_cursor is None else "incremental",
                 "filtered_count": filtered_count,
+                "continued_count": continued_count,
+                "merge_window_minutes": merge_window_minutes,
             },
         )
 
@@ -212,6 +212,8 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "first_visit_id": str(item.get("first_visit_id") or item.get("visit_id") or ""),
                 "last_visit_id": str(item.get("last_visit_id") or item.get("visit_id") or ""),
                 "merged_visit_count": merged_visit_count,
+                "burst_start_time": float(item.get("burst_start_time") or item.get("visit_time") or 0.0),
+                "burst_end_time": float(item.get("burst_end_time") or item.get("visit_time") or 0.0),
                 "domain": domain,
                 "from_visit": str(item.get("from_visit") or ""),
                 "transition": str(item.get("transition") or ""),

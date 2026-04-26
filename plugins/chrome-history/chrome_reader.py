@@ -61,7 +61,8 @@ class ChromeHistoryReader:
         profile: str = "Default",
         limit: int = 200,
         last_cursor: str | None = None,
-        lookback_hours: int | None = 24,
+        initial_lookback_hours: int | None = 24,
+        merge_window_seconds: float = 30 * 60.0,
     ) -> list[dict[str, Any]]:
         profile_dir = self.resolve_profile_dir(source_path=source_path, profile=profile)
         copy_path = self._copy_history_database(profile_dir)
@@ -71,7 +72,8 @@ class ChromeHistoryReader:
                 profile=profile,
                 limit=limit,
                 last_cursor=last_cursor,
-                lookback_hours=lookback_hours,
+                initial_lookback_hours=initial_lookback_hours,
+                merge_window_seconds=merge_window_seconds,
             )
         finally:
             shutil.rmtree(copy_path.parent, ignore_errors=True)
@@ -102,14 +104,15 @@ class ChromeHistoryReader:
         profile: str,
         limit: int,
         last_cursor: str | None,
-        lookback_hours: int | None,
+        initial_lookback_hours: int | None,
+        merge_window_seconds: float,
     ) -> list[dict[str, Any]]:
         last_visit_id = int(last_cursor) if str(last_cursor or "").isdigit() else 0
         connection = sqlite3.connect(str(copy_path))
         connection.row_factory = sqlite3.Row
         try:
             if last_visit_id > 0:
-                cursor = connection.execute(
+                new_cursor = connection.execute(
                     """
                     SELECT
                         visits.id AS visit_id,
@@ -127,8 +130,35 @@ class ChromeHistoryReader:
                     """,
                     (last_visit_id, max(1, limit)),
                 )
-            elif lookback_hours is not None:
-                lookback_microseconds = max(1, lookback_hours) * 3600 * 1_000_000
+                new_rows = new_cursor.fetchall()
+                rows = []
+                if new_rows:
+                    earliest_new_visit_time = min(int(row["raw_visit_time"] or 0) for row in new_rows)
+                    seed_rows: list[sqlite3.Row] = []
+                    if merge_window_seconds > 0 and earliest_new_visit_time > 0:
+                        merge_window_microseconds = int(max(1.0, merge_window_seconds) * 1_000_000)
+                        seed_cursor = connection.execute(
+                            """
+                            SELECT
+                                visits.id AS visit_id,
+                                urls.url AS url,
+                                urls.title AS title,
+                                urls.visit_count AS visit_count,
+                                visits.visit_time AS raw_visit_time,
+                                visits.from_visit AS from_visit,
+                                visits.transition AS transition
+                            FROM visits
+                            JOIN urls ON visits.url = urls.id
+                            WHERE visits.id <= ?
+                              AND visits.visit_time >= ?
+                            ORDER BY visits.id ASC
+                            """,
+                            (last_visit_id, earliest_new_visit_time - merge_window_microseconds),
+                        )
+                        seed_rows = seed_cursor.fetchall()
+                    rows = [*seed_rows, *new_rows]
+            elif initial_lookback_hours is not None:
+                lookback_microseconds = max(1, initial_lookback_hours) * 3600 * 1_000_000
                 cursor = connection.execute(
                     """
                     SELECT
@@ -150,6 +180,7 @@ class ChromeHistoryReader:
                     """,
                     (lookback_microseconds, max(1, limit)),
                 )
+                rows = cursor.fetchall()
             else:
                 cursor = connection.execute(
                     """
@@ -168,7 +199,7 @@ class ChromeHistoryReader:
                     """,
                     (max(1, limit),),
                 )
-            rows = cursor.fetchall()
+                rows = cursor.fetchall()
         finally:
             connection.close()
 
@@ -190,29 +221,54 @@ class ChromeHistoryReader:
                     "transition": str(row["transition"] or ""),
                     "profile": profile,
                     "domain": normalize_domain(url),
+                    "_is_new_visit": last_visit_id <= 0 or int(row["visit_id"] or 0) > last_visit_id,
                 }
             )
-        return self._aggregate_visits(visits)
+        return self._aggregate_visits(
+            visits,
+            merge_window_seconds=merge_window_seconds,
+        )
 
-    def _aggregate_visits(self, visits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _aggregate_visits(
+        self,
+        visits: list[dict[str, Any]],
+        *,
+        merge_window_seconds: float = 30 * 60.0,
+    ) -> list[dict[str, Any]]:
         if not visits:
             return []
 
         aggregated: list[dict[str, Any]] = []
-        current: dict[str, Any] | None = None
+        latest_group_by_key: dict[str, int] = {}
         for visit in visits:
-            if current is None:
-                current = self._new_group(visit)
+            merge_key = str(visit.get("burst_merge_key") or "")
+            group_index = latest_group_by_key.get(merge_key) if merge_key else None
+            if group_index is None:
+                group = self._new_group(visit)
+                aggregated.append(group)
+                if merge_key:
+                    latest_group_by_key[merge_key] = len(aggregated) - 1
                 continue
-            if should_merge_visit(current, visit):
-                current = self._merge_group(current, visit)
+            current = aggregated[group_index]
+            if should_merge_visit(
+                current,
+                visit,
+                burst_window_seconds=merge_window_seconds,
+            ):
+                aggregated[group_index] = self._merge_group(current, visit)
                 continue
-            aggregated.append(current)
-            current = self._new_group(visit)
 
-        if current is not None:
-            aggregated.append(current)
-        return aggregated
+            group = self._new_group(visit)
+            aggregated.append(group)
+            latest_group_by_key[merge_key] = len(aggregated) - 1
+
+        result: list[dict[str, Any]] = []
+        for group in aggregated:
+            if not group.get("_has_new_visit", True):
+                continue
+            group["_emit_item"] = not bool(group.get("_started_before_cursor"))
+            result.append(group)
+        return result
 
     def _new_group(self, visit: dict[str, Any]) -> dict[str, Any]:
         visit_id = str(visit.get("visit_id") or "")
@@ -225,6 +281,8 @@ class ChromeHistoryReader:
                 "merged_visit_count": 1,
                 "burst_start_time": float(visit.get("visit_time") or 0.0),
                 "burst_end_time": float(visit.get("visit_time") or 0.0),
+                "_has_new_visit": bool(visit.get("_is_new_visit", True)),
+                "_started_before_cursor": not bool(visit.get("_is_new_visit", True)),
             }
         )
         if item.get("canonical_url"):
@@ -258,6 +316,9 @@ class ChromeHistoryReader:
                     or ""
                 ),
                 "canonical_url": str(visit.get("canonical_url") or current.get("canonical_url") or ""),
+                "_has_new_visit": bool(current.get("_has_new_visit", True))
+                or bool(visit.get("_is_new_visit", True)),
+                "_started_before_cursor": bool(current.get("_started_before_cursor", False)),
             }
         )
         if merged.get("canonical_url"):

@@ -6,7 +6,7 @@ from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 WINDOWS_TO_UNIX_EPOCH_SECONDS = 11644473600
-BURST_WINDOW_SECONDS = 60.0
+BURST_WINDOW_SECONDS = 30 * 60.0
 NOISE_PATH_TOKENS = (
     "login",
     "signin",
