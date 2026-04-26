@@ -141,9 +141,7 @@ class EventKitReader:
 
         if sys.platform != "darwin":
             logger.warning(
-                "Calendar EventKit bridge unavailable",
-                reason="platform_not_supported",
-                platform=sys.platform,
+                f"Calendar EventKit bridge unavailable reason=platform_not_supported platform={sys.platform}"
             )
             self._is_available = False
             return False
@@ -153,17 +151,13 @@ class EventKitReader:
             self._is_available = (self._ek_module or {}).get("EKEventStore") is not None
             if not self._is_available:
                 logger.warning(
-                    "Calendar EventKit bridge unavailable",
-                    reason="missing_eventkit_bridge",
-                    platform=sys.platform,
+                    f"Calendar EventKit bridge unavailable reason=missing_eventkit_bridge platform={sys.platform}"
                 )
             return bool(self._is_available)
         except Exception as exc:
             logger.warning(
-                "Calendar EventKit bridge unavailable",
-                reason="eventkit_import_failed",
-                platform=sys.platform,
-                error=str(exc),
+                f"Calendar EventKit bridge unavailable reason=eventkit_import_failed "
+                f"platform={sys.platform} error={exc}"
             )
             self._is_available = False
             return False
@@ -177,8 +171,7 @@ class EventKitReader:
         """
         if not self.is_available():
             logger.warning(
-                "Calendar authorization status unavailable",
-                reason="eventkit_unavailable",
+                "Calendar authorization status unavailable reason=eventkit_unavailable"
             )
             return "unavailable"
 
@@ -186,15 +179,13 @@ class EventKitReader:
             entity_type = (self._ek_module or {}).get("EKEntityTypeEvent")
             if entity_type is None:
                 logger.warning(
-                    "Calendar authorization status unavailable",
-                    reason="missing_event_entity_type",
+                    "Calendar authorization status unavailable reason=missing_event_entity_type"
                 )
                 return "unavailable"
             ek_event_store = (self._ek_module or {}).get("EKEventStore")
             if ek_event_store is None:
                 logger.warning(
-                    "Calendar authorization status unavailable",
-                    reason="missing_event_store_class",
+                    "Calendar authorization status unavailable reason=missing_event_store_class"
                 )
                 return "unavailable"
             status = self._call_selector(
@@ -216,16 +207,12 @@ class EventKitReader:
             }:
                 return "denied"
             logger.warning(
-                "Calendar authorization status unavailable",
-                reason="unknown_authorization_status",
-                status_value=status,
+                f"Calendar authorization status unavailable reason=unknown_authorization_status status_value={status}"
             )
             return "unavailable"
         except Exception as exc:
             logger.warning(
-                "Calendar authorization status unavailable",
-                reason="authorization_status_query_failed",
-                error=str(exc),
+                f"Calendar authorization status unavailable reason=authorization_status_query_failed error={exc}"
             )
             return "unavailable"
 
@@ -258,8 +245,7 @@ class EventKitReader:
         """
         if not self.is_available():
             logger.warning(
-                "Calendar authorization request skipped",
-                reason="eventkit_unavailable",
+                "Calendar authorization request skipped reason=eventkit_unavailable"
             )
             return False
 
@@ -267,15 +253,13 @@ class EventKitReader:
             granted, error = self._request_calendar_access()
             if error is not None or not granted:
                 logger.warning(
-                    "Calendar authorization request was not granted",
-                    granted=bool(granted),
-                    error=str(error) if error is not None else None,
+                    f"Calendar authorization request was not granted granted={bool(granted)} "
+                    f"error={str(error) if error is not None else None}"
                 )
             return bool(granted) and error is None
         except Exception as exc:
             logger.warning(
-                "Calendar authorization request failed",
-                error=str(exc),
+                f"Calendar authorization request failed error={exc}"
             )
             return False
 
@@ -344,17 +328,11 @@ class EventKitReader:
             "url": url,
         }
         logger.info(
-            "Calendar event serialized",
-            event_id=serialized["event_id"],
-            title=serialized["title"],
-            start_time=start_time.isoformat(),
-            end_time=end_time.isoformat(),
-            is_all_day=serialized["is_all_day"],
-            calendar_name=serialized["calendar_name"],
-            location=serialized["location"],
-            has_notes=bool(serialized["notes"]),
-            participant_count=len(serialized["participants"]),
-            is_recurring=serialized["is_recurring"],
+            f"Calendar event serialized event_id={serialized['event_id']} title={serialized['title']} "
+            f"start_time={start_time.isoformat()} end_time={end_time.isoformat()} "
+            f"is_all_day={serialized['is_all_day']} calendar_name={serialized['calendar_name']} "
+            f"location={serialized['location']} has_notes={bool(serialized['notes'])} "
+            f"participant_count={len(serialized['participants'])} is_recurring={serialized['is_recurring']}"
         )
         return serialized
 
@@ -466,11 +444,8 @@ class EventKitReader:
 
         rows = self._execute_events_query(start_date, end_date, calendar_ids)
         logger.info(
-            "Calendar events query completed",
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
-            requested_calendar_count=len(calendar_ids or []),
-            row_count=len(rows),
+            f"Calendar events query completed start_date={start_date.isoformat()} end_date={end_date.isoformat()} "
+            f"requested_calendar_count={len(calendar_ids or [])} row_count={len(rows)}"
         )
         events: list[CalendarEvent] = []
         for row in rows:

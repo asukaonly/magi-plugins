@@ -361,8 +361,28 @@ class PhotoLibraryTimelineSensor(SensorBase):
 
         return self._build_output(
             source_item_id=str(item.get("session_key") or ""),
-            title=title,
-            summary=summary,
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="photos",
+                    i18n_key="activity.source.photos",
+                    fallback="Photos",
+                    embedding_fallback="照片",
+                ),
+                action=self._build_activity_facet(
+                    code="capture",
+                    i18n_key="activity.action.capture",
+                    fallback="Capture",
+                    embedding_fallback="拍摄",
+                ),
+                object=self._build_activity_facet(
+                    code="photo",
+                    i18n_key="activity.object.photo",
+                    fallback="Photo",
+                    embedding_fallback="照片",
+                ),
+                qualifiers={"session_type": "photo_session"},
+            ),
+            narration=self._build_narration(title=title, body=summary),
             occurred_at=first_ts,
             raw_payload_ref=None,
             content_blocks=content_blocks,

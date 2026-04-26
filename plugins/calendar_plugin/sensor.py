@@ -52,8 +52,6 @@ class CalendarTimelineSensor(SensorBase):
     def reader(self) -> EventKitReader:
         """Get or create EventKitReader instance (lazy initialization)."""
         if self._reader is None:
-            if sys.platform != "darwin":
-                raise PlatformNotSupportedError()
             self._reader = EventKitReader()
         return self._reader
 
@@ -118,11 +116,9 @@ class CalendarTimelineSensor(SensorBase):
         auth_status = self.reader.get_authorization_status()
         if auth_status != "authorized":
             logger.warning(
-                "Skipping calendar sync because calendar authorization is unavailable",
-                authorization_status=auth_status,
-                source_type=self.source_type,
-                manual=context.manual,
-                initial_sync=context.last_cursor is None,
+                f"Skipping calendar sync because calendar authorization is unavailable "
+                f"authorization_status={auth_status} source_type={self.source_type} "
+                f"manual={context.manual} initial_sync={context.last_cursor is None}"
             )
             return SensorSyncResult(
                 items=[],
@@ -142,13 +138,9 @@ class CalendarTimelineSensor(SensorBase):
             selected_calendar_ids if isinstance(selected_calendar_ids, list) and selected_calendar_ids else None,
         )
         logger.info(
-            "Calendar sensor collected events",
-            source_type=self.source_type,
-            manual=context.manual,
-            initial_sync=context.last_cursor is None,
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
-            event_count=len(events),
+            f"Calendar sensor collected events source_type={self.source_type} manual={context.manual} "
+            f"initial_sync={context.last_cursor is None} start_date={start_date.isoformat()} "
+            f"end_date={end_date.isoformat()} event_count={len(events)}"
         )
 
         # Convert to items
@@ -174,14 +166,9 @@ class CalendarTimelineSensor(SensorBase):
             }
             items.append(item)
             logger.info(
-                "Calendar sensor prepared source item",
-                event_id=item["event_id"],
-                title=item["title"],
-                start_time=item["start_time"],
-                end_time=item["end_time"],
-                location=item["location"],
-                has_notes=bool(item["notes"]),
-                participant_count=len(item["participants"]),
+                f"Calendar sensor prepared source item event_id={item['event_id']} title={item['title']} "
+                f"start_time={item['start_time']} end_time={item['end_time']} location={item['location']} "
+                f"has_notes={bool(item['notes'])} participant_count={len(item['participants'])}"
             )
 
         # Sort items by start time
@@ -239,19 +226,32 @@ class CalendarTimelineSensor(SensorBase):
         # Normalize
         normalized_data = normalize_calendar_event(event, self)
         logger.info(
-            "Calendar sensor built output",
-            event_id=event.event_id,
-            source_item_id=normalized_data["source_item_id"],
-            output_title=normalized_data["title"],
-            output_summary=normalized_data["summary"],
-            content_block_count=len(normalized_data["content_blocks"]),
-            tag_count=len(normalized_data["tags"]),
+            f"Calendar sensor built output event_id={event.event_id} "
+            f"source_item_id={normalized_data['source_item_id']} output_title={normalized_data['title']} "
+            f"output_summary={normalized_data['summary']} "
+            f"content_block_count={len(normalized_data['content_blocks'])} tag_count={len(normalized_data['tags'])}"
         )
 
         return self._build_output(
             source_item_id=normalized_data["source_item_id"],
-            title=normalized_data["title"],
-            summary=normalized_data["summary"],
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="calendar",
+                    i18n_key="activity.source.calendar",
+                    fallback="Calendar",
+                    embedding_fallback="日历",
+                ),
+                action=self._build_activity_facet(
+                    code="event",
+                    i18n_key="activity.action.event",
+                    fallback="Event",
+                    embedding_fallback="日程",
+                ),
+            ),
+            narration=self._build_narration(
+                title=normalized_data["title"],
+                body=normalized_data["summary"],
+            ),
             occurred_at=normalized_data["occurred_at"],
             content_blocks=[
                 ContentBlock(kind=block["kind"], value=block["value"])

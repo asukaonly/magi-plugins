@@ -180,8 +180,27 @@ class ChromeHistoryTimelineSensor(SensorBase):
             content_blocks.append(ContentBlock(kind="text", value=str(item["page_content"])))
         return self._build_output(
             source_item_id=self.source_item_identity(item),
-            title=title,
-            summary=summary,
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="chrome",
+                    i18n_key="activity.source.chrome",
+                    fallback="Chrome",
+                    embedding_fallback="Chrome",
+                ),
+                action=self._build_activity_facet(
+                    code="browse",
+                    i18n_key="activity.action.browse",
+                    fallback="Browsing",
+                    embedding_fallback="浏览",
+                ),
+                object=self._build_activity_facet(
+                    code="web_page",
+                    i18n_key="activity.object.page",
+                    fallback="Page",
+                    embedding_fallback="网页",
+                ),
+            ),
+            narration=self._build_narration(title=title, body=summary),
             occurred_at=float(item.get("visit_time") or 0.0),
             content_blocks=content_blocks,
             tags=[tag for tag in ("chrome_history", domain) if tag],

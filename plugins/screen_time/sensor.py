@@ -94,8 +94,21 @@ class ScreenTimeTimelineSensor(SensorBase):
 
         return self._build_output(
             source_item_id=self.source_item_identity(item),
-            title=title,
-            summary=summary,
+                activity=self._build_activity(
+                    source=self._build_activity_facet(
+                        code=bundle_id or app_name.lower().replace(" ", "_") or "unknown_app",
+                        i18n_key=f"apps.{bundle_id or 'unknown'}",
+                        fallback=app_name,
+                        embedding_fallback=app_name,
+                    ),
+                    action=self._build_activity_facet(
+                        code="usage",
+                        i18n_key="activity.action.usage",
+                        fallback="Usage",
+                        embedding_fallback="使用",
+                    ),
+                ),
+                narration=self._build_narration(title=title, body=summary),
             occurred_at=bucket_start.timestamp(),
             content_blocks=[
                 ContentBlock(kind="text", value=f"App: {app_name}"),

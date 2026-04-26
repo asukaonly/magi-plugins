@@ -18,6 +18,17 @@
     "evening": "evening",
     "night": "night"
   },
+  "activity": {
+    "source": {
+      "photos": "Photos"
+    },
+    "action": {
+      "capture": "Capture"
+    },
+    "object": {
+      "photo": "Photo"
+    }
+  },
   "summary": {
     "place_unknown": "somewhere",
     "photo_count_one": "{count} photo",

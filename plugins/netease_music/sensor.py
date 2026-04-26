@@ -215,8 +215,27 @@ class NeteaseMusicTimelineSensor(SensorBase):
 
         return self._build_output(
             source_item_id=self.source_item_identity(item),
-            title=title,
-            summary=summary,
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="netease_music",
+                    i18n_key="activity.source.netease_music",
+                    fallback="NetEase Music",
+                    embedding_fallback="网易云音乐",
+                ),
+                action=self._build_activity_facet(
+                    code="listen_music",
+                    i18n_key="activity.action.listen_music",
+                    fallback="Listening",
+                    embedding_fallback="听歌",
+                ),
+                object=self._build_activity_facet(
+                    code="song",
+                    i18n_key="activity.object.song",
+                    fallback="Song",
+                    embedding_fallback="歌曲",
+                ),
+            ),
+            narration=self._build_narration(title=title, body=summary),
             occurred_at=occurred_at,
             content_blocks=content_blocks,
             tags=tags,

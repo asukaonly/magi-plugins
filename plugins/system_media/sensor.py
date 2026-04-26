@@ -120,8 +120,21 @@ class SystemMediaTimelineSensor(SensorBase):
 
         return self._build_output(
             source_item_id=self.source_item_identity(item),
-            title=headline,
-            summary=summary,
+                activity=self._build_activity(
+                    source=self._build_activity_facet(
+                        code=app_id or app_name.lower().replace(" ", "_") or "media_app",
+                        i18n_key=f"apps.{app_id or 'media'}",
+                        fallback=app_name or app_id or "Media",
+                        embedding_fallback=app_name or app_id or "媒体",
+                    ),
+                    action=self._build_activity_facet(
+                        code="playback",
+                        i18n_key="activity.action.playback",
+                        fallback="Playback",
+                        embedding_fallback="播放",
+                    ),
+                ),
+                narration=self._build_narration(title=headline, body=summary),
             occurred_at=started_at.timestamp(),
             content_blocks=blocks,
             tags=["media", "music", "listening"],

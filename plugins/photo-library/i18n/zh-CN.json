@@ -18,6 +18,17 @@
     "evening": "傍晚",
     "night": "夜晚"
   },
+  "activity": {
+    "source": {
+      "photos": "照片"
+    },
+    "action": {
+      "capture": "拍摄"
+    },
+    "object": {
+      "photo": "照片"
+    }
+  },
   "summary": {
     "place_unknown": "某处",
     "photo_count_one": "{count} 张照片",

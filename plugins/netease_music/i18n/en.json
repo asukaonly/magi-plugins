@@ -3,6 +3,17 @@
     "name": "NetEase Cloud Music",
     "description": "Play history from NetEase Cloud Music app"
   },
+  "activity": {
+    "source": {
+      "netease_music": "NetEase Music"
+    },
+    "action": {
+      "listen_music": "Listening"
+    },
+    "object": {
+      "song": "Song"
+    }
+  },
   "summary": {
     "listened": "Listened to \u300a{track_name}\u300b by {artist_name} (album: {album_name}) on NetEase Cloud Music for {duration_min} min",
     "listened_with_alias": "Listened to \u300a{track_name}\u300b by {artist_name} ({alias}) on NetEase Cloud Music for {duration_min} min",

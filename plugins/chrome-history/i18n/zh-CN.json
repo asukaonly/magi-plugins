@@ -3,6 +3,17 @@
     "name": "Chrome 浏览历史",
     "description": "本地 Google Chrome 浏览历史接入时间线"
   },
+  "activity": {
+    "source": {
+      "chrome": "Chrome"
+    },
+    "action": {
+      "browse": "浏览"
+    },
+    "object": {
+      "page": "网页"
+    }
+  },
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title}（访问 {count} 次）"

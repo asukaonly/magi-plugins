@@ -245,8 +245,24 @@ class GitActivitySensor(SensorBase):
 
         return self._build_output(
             source_item_id=normalized_data["source_item_id"],
-            title=normalized_data["title"],
-            summary=normalized_data["summary"],
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="git",
+                    i18n_key="activity.source.git",
+                    fallback="Git",
+                    embedding_fallback="Git",
+                ),
+                action=self._build_activity_facet(
+                    code=activity_type,
+                    i18n_key=f"activity_types.{activity_type}",
+                    fallback=activity_type_name,
+                    embedding_fallback=activity_type_name,
+                ),
+            ),
+            narration=self._build_narration(
+                title=normalized_data["title"],
+                body=normalized_data["summary"],
+            ),
             occurred_at=occurred_at,
             content_blocks=content_blocks,
             tags=normalized_data["tags"],

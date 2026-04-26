@@ -3,6 +3,17 @@
     "name": "网易云音乐",
     "description": "网易云音乐播放记录接入时间线"
   },
+  "activity": {
+    "source": {
+      "netease_music": "网易云音乐"
+    },
+    "action": {
+      "listen_music": "听歌"
+    },
+    "object": {
+      "song": "歌曲"
+    }
+  },
   "summary": {
     "listened": "在网易云音乐听了{artist_name}的《{track_name}》（{album_name}），播放了{duration_min}分钟",
     "listened_with_alias": "在网易云音乐听了{artist_name}的《{track_name}》（{alias}），播放了{duration_min}分钟",

@@ -3,6 +3,17 @@
     "name": "Chrome History",
     "description": "Local Google Chrome browsing history ingestion for the timeline"
   },
+  "activity": {
+    "source": {
+      "chrome": "Chrome"
+    },
+    "action": {
+      "browse": "Browsing"
+    },
+    "object": {
+      "page": "Page"
+    }
+  },
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title} ({count} visits)"

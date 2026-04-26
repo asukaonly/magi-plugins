@@ -229,8 +229,24 @@ class TerminalHistorySensor(SensorBase):
 
         return self._build_output(
             source_item_id=normalized_data["source_item_id"],
-            title=normalized_data["title"],
-            summary=normalized_data["summary"],
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code="terminal",
+                    i18n_key="activity.source.terminal",
+                    fallback="Terminal",
+                    embedding_fallback="终端",
+                ),
+                action=self._build_activity_facet(
+                    code="command",
+                    i18n_key="activity.action.command",
+                    fallback="Command",
+                    embedding_fallback="命令",
+                ),
+            ),
+            narration=self._build_narration(
+                title=normalized_data["title"],
+                body=normalized_data["summary"],
+            ),
             occurred_at=occurred_at,
             content_blocks=[
                 ContentBlock(kind=block["kind"], value=block["value"])
