@@ -139,7 +139,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Max Items Per Sync",
             description="Maximum number of history records to ingest per run.",
             default=1000,
-            section="analysis",
+            section="sync",
             surface="timeline",
             order=60,
         ),

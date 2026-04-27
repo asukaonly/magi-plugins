@@ -3,6 +3,53 @@
     "name": "Git Activity",
     "description": "Git repository activity ingestion for the timeline"
   },
+  "fields": {
+    "timeline": {
+      "git_activity": {
+        "sensors": {
+          "git_activity": {
+            "enabled": {
+              "label": "Enabled",
+              "description": "Whether Git activity sync is active."
+            },
+            "repos": {
+              "label": "Repository Folders",
+              "description": "Select one or more Git repository folders to monitor."
+            },
+            "sync_interval_minutes": {
+              "label": "Sync Interval (minutes)",
+              "description": "How often to check for new Git activity."
+            },
+            "initial_sync_policy": {
+              "label": "Initial Sync Scope",
+              "description": "How much history to import the first time this source runs.",
+              "options": {
+                "full": "Sync full history",
+                "lookback_days": "Sync recent days",
+                "from_now": "Only new records from now on"
+              }
+            },
+            "initial_sync_lookback_days": {
+              "label": "Lookback Days",
+              "description": "Used when the initial sync scope is set to recent days."
+            },
+            "sensitive_mode": {
+              "label": "Sensitive Content Handling",
+              "description": "How to handle commit messages containing sensitive content.",
+              "options": {
+                "redact": "Redact sensitive content",
+                "block": "Skip the whole commit"
+              }
+            },
+            "sensitive_keywords": {
+              "label": "Additional Sensitive Keywords",
+              "description": "Commit messages matching these keywords use the sensitive-content rule above. Built-in keywords include password, secret, token, and more."
+            }
+          }
+        }
+      }
+    }
+  },
   "content_blocks": {
     "repo": "Repository: {repo_path}",
     "operation": "Operation: {operation_type}",

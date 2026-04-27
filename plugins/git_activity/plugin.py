@@ -21,7 +21,6 @@ DEFAULT_SETTINGS = {
     "initial_sync_lookback_days": 30,
     "sensitive_mode": "redact",
     "sensitive_keywords": [],
-    "default_retention_mode": "analyze_only",
 }
 
 
@@ -40,9 +39,9 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.repos",
-            type="tags",
+            type="path",
             label="Repositories",
-            description="Git repository paths to monitor (e.g., ~/code/magi, ~/projects/app).",
+            description="Select one or more Git repository folders to monitor.",
             default=[],
             section="general",
             surface="timeline",
@@ -61,20 +60,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=30,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.default_retention_mode",
-            type="select",
-            label="Retention Mode",
-            description="How git activity data should be retained.",
-            default="analyze_only",
-            options=[
-                ExtensionFieldOption(label="Analyze Only", value="analyze_only"),
-                ExtensionFieldOption(label="Full Retention", value="full"),
-            ],
-            section="retention",
-            surface="timeline",
-            order=40,
-        ),
-        ExtensionFieldSpec(
             key=f"{prefix}.initial_sync_policy",
             type="select",
             label="Initial Sync Policy",
@@ -87,7 +72,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             ],
             section="sync",
             surface="timeline",
-            order=50,
+            order=40,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.initial_sync_lookback_days",
@@ -99,7 +84,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             max=365,
             section="sync",
             surface="timeline",
-            order=60,
+            order=50,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sensitive_mode",
@@ -113,7 +98,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             ],
             section="privacy",
             surface="timeline",
-            order=70,
+            order=60,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sensitive_keywords",
@@ -123,7 +108,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             default=[],
             section="privacy",
             surface="timeline",
-            order=80,
+            order=70,
         ),
     ]
 
@@ -154,7 +139,7 @@ class GitActivityPlugin(Plugin):
 
         # Create sensor with available repos (may be empty)
         sensor = GitActivitySensor(
-            retention_mode=str(settings.get("default_retention_mode", DEFAULT_SETTINGS["default_retention_mode"])),
+            retention_mode="analyze_only",
             repos=valid_repos,
         )
 

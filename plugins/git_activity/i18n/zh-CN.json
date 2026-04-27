@@ -3,6 +3,53 @@
     "name": "Git 活动",
     "description": "Git 仓库活动接入时间线"
   },
+  "fields": {
+    "timeline": {
+      "git_activity": {
+        "sensors": {
+          "git_activity": {
+            "enabled": {
+              "label": "启用",
+              "description": "是否启用 Git 活动同步。"
+            },
+            "repos": {
+              "label": "仓库目录",
+              "description": "选择一个或多个要监控的 Git 仓库文件夹。"
+            },
+            "sync_interval_minutes": {
+              "label": "同步间隔（分钟）",
+              "description": "多久检查一次新的 Git 活动。"
+            },
+            "initial_sync_policy": {
+              "label": "首次同步范围",
+              "description": "首次启用时要导入多少历史记录。",
+              "options": {
+                "full": "同步全部历史",
+                "lookback_days": "同步最近几天",
+                "from_now": "仅同步之后的新记录"
+              }
+            },
+            "initial_sync_lookback_days": {
+              "label": "回溯天数",
+              "description": "首次同步范围设为“最近几天”时使用。"
+            },
+            "sensitive_mode": {
+              "label": "敏感内容处理",
+              "description": "如何处理包含敏感内容的提交信息。",
+              "options": {
+                "redact": "脱敏敏感内容",
+                "block": "整条跳过"
+              }
+            },
+            "sensitive_keywords": {
+              "label": "额外敏感关键词",
+              "description": "提交信息里命中这些关键词时会按上面的敏感策略处理。内置关键词包括 password、secret、token 等。"
+            }
+          }
+        }
+      }
+    }
+  },
   "content_blocks": {
     "repo": "仓库：{repo_path}",
     "operation": "操作：{operation_type}",

@@ -3,6 +3,63 @@
     "name": "NetEase Cloud Music",
     "description": "Play history from NetEase Cloud Music app"
   },
+  "fields": {
+    "timeline": {
+      "netease_music": {
+        "sensors": {
+          "netease_music": {
+            "enabled": {
+              "label": "Enabled",
+              "description": "Whether NetEase Cloud Music history sync is active."
+            },
+            "sync_mode": {
+              "label": "Sync Mode",
+              "description": "How NetEase Cloud Music history should be synchronized.",
+              "options": {
+                "manual": "Manual",
+                "interval": "Interval",
+                "watch": "Watch"
+              }
+            },
+            "sync_interval_minutes": {
+              "label": "Sync Interval (minutes)",
+              "description": "Polling interval used for interval-based sync."
+            },
+            "min_play_duration": {
+              "label": "Minimum Play Duration (seconds)",
+              "description": "Tracks played for less than this are ignored so quick skips do not become timeline items."
+            },
+            "db_path": {
+              "label": "Database Path",
+              "description": "Path to the NetEase Cloud Music `local.db` playback database."
+            },
+            "initial_sync_policy": {
+              "label": "Initial Sync Scope",
+              "description": "How much history to seed into the timeline on the first sync.",
+              "options": {
+                "full": "Backfill all history",
+                "lookback_days": "Sync recent days",
+                "from_now": "Only new records from now on"
+              }
+            },
+            "tag_strategy": {
+              "label": "Genre Tag Source",
+              "description": "How genre or style tags are added to listened tracks.",
+              "options": {
+                "off": "Off",
+                "builtin": "Built-in (local alias data, limited coverage)",
+                "lastfm": "Last.fm"
+              }
+            },
+            "lastfm_api_key": {
+              "label": "Last.fm API Key",
+              "description": "Required when Genre Tag Source is set to Last.fm. Apply for a free key at last.fm/api/account/create."
+            }
+          }
+        }
+      }
+    }
+  },
   "activity": {
     "source": {
       "netease_music": "NetEase Music"
@@ -20,7 +77,7 @@
     "listened_no_album": "Listened to \u300a{track_name}\u300b by {artist_name} on NetEase Cloud Music for {duration_min} min",
     "listened_no_artist": "Listened to \u300a{track_name}\u300b on NetEase Cloud Music for {duration_min} min"
   },
-  "fields": {
+  "legacy_fields": {
     "tag_strategy_label": "Tag Extraction Strategy",
     "tag_strategy_desc": "How to extract genre/style tags for listened tracks",
     "tag_strategy_off": "Off",
