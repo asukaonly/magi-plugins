@@ -55,6 +55,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="general",
             surface="timeline",
             order=30,
+            depends_on_key=f"{prefix}.sync_mode",
+            depends_on_values=["interval"],
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.min_play_duration",
@@ -66,16 +68,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="general",
             surface="timeline",
             order=40,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.db_path",
-            type="path",
-            label="Database Path",
-            description="Path to NetEase Cloud Music local.db file.",
-            default=DEFAULT_DB_PATH,
-            section="general",
-            surface="timeline",
-            order=50,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.initial_sync_policy",

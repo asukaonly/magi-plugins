@@ -29,10 +29,6 @@
               "label": "Minimum Play Duration (seconds)",
               "description": "Tracks played for less than this are ignored so quick skips do not become timeline items."
             },
-            "db_path": {
-              "label": "Database Path",
-              "description": "Path to the NetEase Cloud Music `local.db` playback database."
-            },
             "initial_sync_policy": {
               "label": "Initial Sync Scope",
               "description": "How much history to seed into the timeline on the first sync.",

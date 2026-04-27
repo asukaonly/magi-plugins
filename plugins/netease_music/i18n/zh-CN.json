@@ -29,10 +29,6 @@
               "label": "最短播放时长（秒）",
               "description": "播放少于这个时长的曲目会被忽略，避免把点开就切走的内容写进时间线。"
             },
-            "db_path": {
-              "label": "数据库路径",
-              "description": "网易云音乐本地播放数据库 `local.db` 的路径。"
-            },
             "initial_sync_policy": {
               "label": "首次同步范围",
               "description": "首次同步时，先把多少历史记录写入时间线。",

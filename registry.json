@@ -73,7 +73,7 @@
       "name_i18n": {
         "zh-CN": "网易云音乐"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/netease_music",
       "description": "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits.",
       "description_i18n": {
