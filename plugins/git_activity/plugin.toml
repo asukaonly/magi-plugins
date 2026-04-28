@@ -2,7 +2,7 @@
 id = "git-activity"
 name = "Git Activity"
 name_i18n = { "zh-CN" = "Git 活动" }
-version = "0.1.0"
+version = "0.1.1"
 description = "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow."
 description_i18n = { "zh-CN" = "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流" }
 author = "Magi Team"

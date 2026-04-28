@@ -8,7 +8,7 @@
       "name_i18n": {
         "zh-CN": "日历"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
@@ -51,7 +51,7 @@
       "name_i18n": {
         "zh-CN": "Git 活动"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
@@ -118,7 +118,7 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits.",
       "description_i18n": {
@@ -139,7 +139,7 @@
       "name_i18n": {
         "zh-CN": "系统媒体"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/system_media",
       "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch.",
       "description_i18n": {
@@ -161,7 +161,7 @@
       "name_i18n": {
         "zh-CN": "Telegram"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -183,7 +183,7 @@
       "name_i18n": {
         "zh-CN": "终端历史"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/terminal_history",
       "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
       "description_i18n": {

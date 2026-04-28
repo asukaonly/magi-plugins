@@ -1,6 +1,7 @@
 """Git Activity timeline plugin."""
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import (
@@ -22,6 +23,40 @@ DEFAULT_SETTINGS = {
     "sensitive_mode": "redact",
     "sensitive_keywords": [],
 }
+
+
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _event_provenance(event: dict[str, Any]) -> dict[str, Any]:
+    metadata = event.get("metadata_json")
+    if not isinstance(metadata, dict):
+        return {}
+    timeline = metadata.get("timeline")
+    if not isinstance(timeline, dict):
+        return {}
+    provenance = timeline.get("provenance")
+    return provenance if isinstance(provenance, dict) else {}
+
+
+def _repo_name(repo_path: str) -> str:
+    normalized = repo_path.replace("\\", "/").rstrip("/")
+    return normalized.rsplit("/", 1)[-1] if normalized else "unknown"
+
+
+def _event_id(event: dict[str, Any]) -> str | None:
+    value = str(event.get("event_id") or "").strip()
+    return value or None
 
 
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
@@ -115,6 +150,84 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class GitActivityPlugin(Plugin):
     """Registers the Git Activity timeline source."""
+
+    def build_temporal_summary_features(
+        self,
+        *,
+        source_type: str,
+        events: list[dict[str, Any]],
+        summary_category: str,
+        period_start: float,
+        period_end: float,
+        budget: object | None = None,
+    ) -> dict[str, object] | None:
+        """Aggregate repository-local activity features for L3 summaries."""
+        _ = summary_category, period_start, period_end
+        if source_type != "git_activity" or not events:
+            return None
+
+        repo_counter: Counter[str] = Counter()
+        operation_counter: Counter[str] = Counter()
+        author_counter: Counter[str] = Counter()
+        representative_event_ids: list[str] = []
+
+        for event in events:
+            provenance = _event_provenance(event)
+            repo_path = str(provenance.get("repo_path") or "").strip()
+            if repo_path:
+                repo_counter[_repo_name(repo_path)] += 1
+            operation = str(provenance.get("activity_type") or "other").strip() or "other"
+            operation_counter[operation] += 1
+            author = str(provenance.get("author") or "").strip()
+            if author:
+                author_counter[author] += 1
+            event_id = _event_id(event)
+            if event_id and len(representative_event_ids) < 8:
+                representative_event_ids.append(event_id)
+
+        covered_event_count = len(events)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        top_repos = [
+            {"repo": repo, "event_count": count}
+            for repo, count in repo_counter.most_common(5)
+        ]
+        top_operations = [
+            {"operation": operation, "event_count": count}
+            for operation, count in operation_counter.most_common(5)
+        ]
+
+        summary_lines = [
+            f"Git feature coverage used {covered_event_count} events across {len(repo_counter)} repositories."
+        ]
+        if top_repos:
+            joined = ", ".join(f"{item['repo']} ({item['event_count']})" for item in top_repos[:3])
+            summary_lines.append(f"Most active repositories: {joined}.")
+        if top_operations:
+            joined = ", ".join(f"{item['operation']} ({item['event_count']})" for item in top_operations[:3])
+            summary_lines.append(f"Git operations clustered around: {joined}.")
+        if author_counter:
+            summary_lines.append(f"Git activity involved {len(author_counter)} authors in the covered events.")
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Git feature coverage used {covered_event_count} representative events; {omitted_event_count} additional events were compacted."
+            )
+
+        return {
+            "feature_type": "git_activity",
+            "event_count": covered_event_count,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
+            "repo_count": len(repo_counter),
+            "operation_count": len(operation_counter),
+            "top_entities": [{"type": "repository", **item} for item in top_repos],
+            "top_operations": top_operations,
+            "author_count": len(author_counter),
+            "representative_event_ids": representative_event_ids,
+            "summary_lines": summary_lines,
+        }
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         """Get sensor specifications for Git Activity.

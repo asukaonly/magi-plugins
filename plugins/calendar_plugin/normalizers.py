@@ -93,6 +93,9 @@ def normalize_calendar_event(event: CalendarEvent, sensor: Any) -> dict[str, Any
     provenance = {
         "sensor_id": sensor.sensor_id,
         "event_id": event.event_id,
+        "title": event.title,
+        "location": event.location,
+        "participant_count": len(event.participants),
         "calendar_name": event.calendar_name,
         "calendar_color": event.calendar_color,
         "is_recurring": event.is_recurring,

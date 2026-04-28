@@ -1,6 +1,7 @@
 """Terminal History timeline plugin."""
 from __future__ import annotations
 
+from collections import Counter
 import sys
 from typing import Any
 
@@ -27,6 +28,65 @@ DEFAULT_SETTINGS = {
     "dedup_window_seconds": 60,
     "default_retention_mode": "analyze_only",
 }
+
+
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _event_provenance(event: dict[str, Any]) -> dict[str, Any]:
+    metadata = event.get("metadata_json")
+    if not isinstance(metadata, dict):
+        return {}
+    timeline = metadata.get("timeline")
+    if not isinstance(timeline, dict):
+        return {}
+    provenance = timeline.get("provenance")
+    return provenance if isinstance(provenance, dict) else {}
+
+
+def _event_text(event: dict[str, Any]) -> str:
+    metadata = event.get("metadata_json")
+    timeline = metadata.get("timeline") if isinstance(metadata, dict) else None
+    timeline_text = ""
+    if isinstance(timeline, dict):
+        timeline_text = str(timeline.get("title") or timeline.get("summary") or "")
+    return str(event.get("content") or event.get("title") or event.get("summary") or timeline_text or "")
+
+
+def _command_family(event: dict[str, Any]) -> str | None:
+    text = _event_text(event).strip()
+    if not text:
+        return None
+    for marker in ("命令：", "Command:", "command:", "$ "):
+        if marker in text:
+            text = text.split(marker, 1)[1].strip()
+            break
+    text = text.splitlines()[0]
+    text = text.split(" @ ", 1)[0].strip()
+    if not text:
+        return None
+    tokens = [token.strip() for token in text.replace(";", " ").replace("&&", " ").split() if token.strip()]
+    while tokens and tokens[0] in {"sudo", "env", "time", "command", "builtin"}:
+        tokens.pop(0)
+    if not tokens:
+        return None
+    command = tokens[0].rsplit("/", 1)[-1]
+    return command[:48] or None
+
+
+def _event_id(event: dict[str, Any]) -> str | None:
+    value = str(event.get("event_id") or "").strip()
+    return value or None
 
 
 def _activation_flow(prefix: str) -> ActivationFlowSpec:
@@ -153,6 +213,86 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class TerminalHistoryPlugin(Plugin):
     """Registers the Terminal History timeline source."""
+
+    def build_temporal_summary_features(
+        self,
+        *,
+        source_type: str,
+        events: list[dict[str, Any]],
+        summary_category: str,
+        period_start: float,
+        period_end: float,
+        budget: object | None = None,
+    ) -> dict[str, object] | None:
+        """Aggregate command-family features without exposing full commands."""
+        _ = summary_category, period_start, period_end
+        if source_type != "terminal_history" or not events:
+            return None
+
+        shell_counter: Counter[str] = Counter()
+        command_counter: Counter[str] = Counter()
+        long_command_count = 0
+        representative_event_ids: list[str] = []
+
+        for event in events:
+            provenance = _event_provenance(event)
+            shell = str(provenance.get("shell") or "unknown").strip() or "unknown"
+            shell_counter[shell] += 1
+            try:
+                command_length = int(provenance.get("command_length") or 0)
+            except (TypeError, ValueError):
+                command_length = 0
+            if command_length >= 120:
+                long_command_count += 1
+            command = _command_family(event)
+            if command:
+                command_counter[command] += 1
+            event_id = _event_id(event)
+            if event_id and len(representative_event_ids) < 8:
+                representative_event_ids.append(event_id)
+
+        covered_event_count = len(events)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        top_commands = [
+            {"command_family": command, "event_count": count}
+            for command, count in command_counter.most_common(6)
+        ]
+        top_shells = [
+            {"shell": shell, "event_count": count}
+            for shell, count in shell_counter.most_common(4)
+        ]
+
+        summary_lines = [
+            f"Terminal feature coverage used {covered_event_count} commands across {len(shell_counter)} shells."
+        ]
+        if top_commands:
+            joined = ", ".join(f"{item['command_family']} ({item['event_count']})" for item in top_commands[:4])
+            summary_lines.append(f"Common command families: {joined}.")
+        if top_shells:
+            joined = ", ".join(f"{item['shell']} ({item['event_count']})" for item in top_shells[:3])
+            summary_lines.append(f"Terminal shells represented: {joined}.")
+        if long_command_count:
+            summary_lines.append(f"Long-form commands appeared {long_command_count} times in the covered events.")
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Terminal feature coverage used {covered_event_count} representative commands; {omitted_event_count} additional commands were compacted."
+            )
+
+        return {
+            "feature_type": "terminal_history",
+            "event_count": covered_event_count,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
+            "shell_count": len(shell_counter),
+            "top_entities": [{"type": "command_family", **item} for item in top_commands],
+            "top_shells": top_shells,
+            "long_command_count": long_command_count,
+            "representative_event_ids": representative_event_ids,
+            "summary_lines": summary_lines,
+        }
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         """Get sensor specifications for Terminal History.

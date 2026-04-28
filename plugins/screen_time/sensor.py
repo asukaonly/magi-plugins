@@ -124,6 +124,8 @@ class ScreenTimeTimelineSensor(SensorBase):
                 "bucket_end": bucket_end.isoformat(),
                 "bundle_id": bundle_id,
                 "app_name": app_name,
+                "duration_seconds": duration_seconds,
+                "session_count": session_count,
             },
             domain_payload={
                 "retention_mode": "analyze_only",

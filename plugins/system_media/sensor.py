@@ -147,6 +147,7 @@ class SystemMediaTimelineSensor(SensorBase):
                 "album": album,
                 "started_at": str(item.get("started_at", "")),
                 "ended_at": str(item.get("ended_at", "")),
+                "duration_seconds": duration_seconds,
             },
             domain_payload={
                 "retention_mode": "analyze_only",
