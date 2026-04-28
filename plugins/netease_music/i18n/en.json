@@ -73,6 +73,10 @@
     "listened_no_album": "Listened to \u300a{track_name}\u300b by {artist_name} on NetEase Cloud Music for {duration_min} min",
     "listened_no_artist": "Listened to \u300a{track_name}\u300b on NetEase Cloud Music for {duration_min} min"
   },
+  "summary_features": {
+    "genre_coverage": "Genre tags appeared on {tagged_events} of {total_events} listening events.",
+    "top_tags": "Top genre signals: {top_tags}."
+  },
   "legacy_fields": {
     "tag_strategy_label": "Tag Extraction Strategy",
     "tag_strategy_desc": "How to extract genre/style tags for listened tracks",

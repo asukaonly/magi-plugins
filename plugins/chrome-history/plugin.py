@@ -28,6 +28,19 @@ DEFAULT_SETTINGS = {
 _SESSION_GAP_SECONDS = 30 * 60
 
 
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+
+
 def _activation_flow(prefix: str) -> ActivationFlowSpec:
     return ActivationFlowSpec(
         title="Enable Chrome History",
@@ -246,6 +259,7 @@ class ChromeHistoryPlugin(Plugin):
         summary_category: str,
         period_start: float,
         period_end: float,
+        budget: object | None = None,
     ) -> dict[str, object] | None:
         """Build browser-specific temporal summary features from Chrome history events."""
 
@@ -312,10 +326,21 @@ class ChromeHistoryPlugin(Plugin):
             summary_lines.append("Browsing stayed within a small set of sites.")
         if session_count >= 2:
             summary_lines.append(f"Browsing unfolded across {session_count} distinct sessions.")
+        covered_event_count = len(events)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Browser feature coverage used {covered_event_count} representative events; {omitted_event_count} additional events were compacted."
+            )
 
         return {
             "feature_type": "chrome_history",
-            "event_count": len(events),
+            "event_count": covered_event_count,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
             "visit_count": visit_count,
             "unique_domain_count": unique_domain_count,
             "focus_domain": top_domain,

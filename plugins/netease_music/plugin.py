@@ -6,6 +6,7 @@ import sys
 from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 from .reader import DEFAULT_DB_PATH
 from .sensor import NeteaseMusicTimelineSensor
+from .summary_features import build_netease_temporal_summary_features
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -17,6 +18,19 @@ DEFAULT_SETTINGS = {
     "storage_mode": "managed",
     "initial_sync_policy": "from_now",
 }
+
+
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
 
 
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
@@ -123,6 +137,66 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class NeteaseMusicPlugin(Plugin):
     """Registers the NetEase Music timeline source."""
+
+    def build_temporal_summary_features(
+        self,
+        *,
+        source_type: str,
+        events: list[dict[str, object]],
+        summary_category: str,
+        period_start: float,
+        period_end: float,
+        budget: object | None = None,
+    ) -> dict[str, object]:
+        """Expose genre-oriented summary hints for L3 temporal summaries."""
+
+        _ = (summary_category, period_start, period_end)
+        if source_type != "netease_music":
+            return {}
+
+        features = build_netease_temporal_summary_features(events)
+        top_tags = features.get("top_tags") or []
+        if not top_tags:
+            return {}
+
+        formatted_tags = ", ".join(
+            f"{item['tag']} ({item['count']})"
+            for item in top_tags
+            if isinstance(item, dict) and item.get("tag")
+        )
+        if not formatted_tags:
+            return {}
+
+        tagged_event_count = int(features.get("tagged_event_count") or 0)
+        covered_event_count = int(features.get("total_event_count") or 0)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        summary_lines = [
+            self.t(
+                "summary_features.genre_coverage",
+                tagged_events=tagged_event_count,
+                total_events=covered_event_count,
+                fallback=f"Genre tags appeared on {tagged_event_count} of {covered_event_count} covered listening events.",
+            ),
+            self.t(
+                "summary_features.top_tags",
+                top_tags=formatted_tags,
+                fallback=f"Top genre signals: {formatted_tags}.",
+            ),
+        ]
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Music feature coverage used {covered_event_count} representative events; {omitted_event_count} additional events were compacted."
+            )
+
+        return {
+            **features,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
+            "summary_lines": [line for line in summary_lines if str(line).strip()],
+        }
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         if sys.platform not in ("darwin", "win32"):

@@ -21,6 +21,19 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 }
 
 
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+
+
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
@@ -215,6 +228,7 @@ class PhotoLibraryPlugin(Plugin):
         summary_category: str,
         period_start: float,
         period_end: float,
+        budget: object | None = None,
     ) -> dict[str, object] | None:
         """Aggregate session events into period-level features."""
         _ = summary_category, period_start, period_end
@@ -275,10 +289,21 @@ class PhotoLibraryPlugin(Plugin):
         if top_locations:
             joined_locs = ", ".join(loc["location"] for loc in top_locations[:3])
             summary_lines.append(f"Visited: {joined_locs}.")
+        covered_event_count = len(events)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Photo feature coverage used {covered_event_count} representative sessions; {omitted_event_count} additional sessions were compacted."
+            )
 
         return {
             "feature_type": "photo_library",
-            "session_count": len(events),
+            "session_count": covered_event_count,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
             "photo_total": photo_total,
             "active_days": len(days_active),
             "devices": top_devices,

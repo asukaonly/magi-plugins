@@ -73,6 +73,10 @@
     "listened_no_album": "在网易云音乐听了{artist_name}的《{track_name}》，播放了{duration_min}分钟",
     "listened_no_artist": "在网易云音乐听了《{track_name}》，播放了{duration_min}分钟"
   },
+  "summary_features": {
+    "genre_coverage": "曲风标签覆盖了 {tagged_events}/{total_events} 条听歌事件。",
+    "top_tags": "主要曲风信号：{top_tags}。"
+  },
   "legacy_fields": {
     "tag_strategy_label": "标签提取策略",
     "tag_strategy_desc": "为播放记录提取风格/流派标签的方式",
