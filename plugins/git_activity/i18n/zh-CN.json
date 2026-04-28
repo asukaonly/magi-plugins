@@ -33,6 +33,18 @@
               "label": "回溯天数",
               "description": "首次同步范围设为“最近几天”时使用。"
             },
+            "session_window_minutes": {
+              "label": "会话窗口（分钟）",
+              "description": "同一仓库中落在该时间窗口内的 Git 操作会合并为一条时间线会话。"
+            },
+            "max_messages_per_session": {
+              "label": "每个会话保留消息数",
+              "description": "每条聚合时间线会话最多保留多少条代表性 Git 消息。"
+            },
+            "l3_summary_enabled": {
+              "label": "纳入 L3 摘要",
+              "description": "允许聚合后的 Git 会话参与时间段记忆摘要。"
+            },
             "sensitive_mode": {
               "label": "敏感内容处理",
               "description": "如何处理包含敏感内容的提交信息。",
@@ -53,9 +65,14 @@
   "content_blocks": {
     "repo": "仓库：{repo_path}",
     "operation": "操作：{operation_type}",
-    "commit": "提交：{old_sha}..{new_sha}"
+    "operations": "操作：{operations}",
+    "commit": "提交：{old_sha}..{new_sha}",
+    "commit_range": "提交：{first_sha}..{last_sha}",
+    "time_range": "时间：{time_range}",
+    "messages": "消息：{messages}"
   },
   "activity_types": {
+    "session": "会话",
     "checkout": "检出",
     "commit": "提交",
     "merge": "合并",

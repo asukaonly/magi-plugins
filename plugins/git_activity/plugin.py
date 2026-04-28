@@ -20,6 +20,9 @@ DEFAULT_SETTINGS = {
     "sync_interval_minutes": 30,
     "initial_sync_policy": "lookback_days",
     "initial_sync_lookback_days": 30,
+    "session_window_minutes": 30,
+    "max_messages_per_session": 5,
+    "l3_summary_enabled": True,
     "sensitive_mode": "redact",
     "sensitive_keywords": [],
 }
@@ -57,6 +60,27 @@ def _repo_name(repo_path: str) -> str:
 def _event_id(event: dict[str, Any]) -> str | None:
     value = str(event.get("event_id") or "").strip()
     return value or None
+
+
+def _int_from_mapping(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _operation_counts(provenance: dict[str, Any]) -> dict[str, int]:
+    raw_counts = provenance.get("operation_counts")
+    if not isinstance(raw_counts, dict):
+        operation = str(provenance.get("activity_type") or "other").strip() or "other"
+        return {operation: 1}
+    counts: dict[str, int] = {}
+    for operation, count in raw_counts.items():
+        normalized = str(operation or "other").strip() or "other"
+        amount = _int_from_mapping(count)
+        if amount > 0:
+            counts[normalized] = counts.get(normalized, 0) + amount
+    return counts
 
 
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
@@ -122,6 +146,40 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=50,
         ),
         ExtensionFieldSpec(
+            key=f"{prefix}.session_window_minutes",
+            type="number",
+            label="Session Window (minutes)",
+            description="Git operations in the same repository within this window are grouped into one timeline session.",
+            default=30,
+            min=5,
+            max=240,
+            section="sync",
+            surface="timeline",
+            order=55,
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.max_messages_per_session",
+            type="number",
+            label="Messages per Session",
+            description="Maximum representative Git messages kept in each aggregated timeline session.",
+            default=5,
+            min=0,
+            max=20,
+            section="sync",
+            surface="timeline",
+            order=56,
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.l3_summary_enabled",
+            type="switch",
+            label="Include in L3 Summaries",
+            description="Allow aggregated Git sessions to inform temporal memory summaries.",
+            default=True,
+            section="retention",
+            surface="timeline",
+            order=57,
+        ),
+        ExtensionFieldSpec(
             key=f"{prefix}.sensitive_mode",
             type="select",
             label="Sensitive Message Mode",
@@ -170,17 +228,27 @@ class GitActivityPlugin(Plugin):
         operation_counter: Counter[str] = Counter()
         author_counter: Counter[str] = Counter()
         representative_event_ids: list[str] = []
+        total_activity_count = 0
 
         for event in events:
             provenance = _event_provenance(event)
             repo_path = str(provenance.get("repo_path") or "").strip()
+            activity_count = max(1, _int_from_mapping(provenance.get("activity_count"), 1))
+            total_activity_count += activity_count
+            for operation, count in _operation_counts(provenance).items():
+                operation_counter[operation] += count
             if repo_path:
-                repo_counter[_repo_name(repo_path)] += 1
-            operation = str(provenance.get("activity_type") or "other").strip() or "other"
-            operation_counter[operation] += 1
-            author = str(provenance.get("author") or "").strip()
-            if author:
-                author_counter[author] += 1
+                repo_counter[_repo_name(repo_path)] += activity_count
+            authors = provenance.get("authors")
+            if isinstance(authors, list):
+                for author in authors:
+                    author_text = str(author or "").strip()
+                    if author_text:
+                        author_counter[author_text] += 1
+            else:
+                author = str(provenance.get("author") or "").strip()
+                if author:
+                    author_counter[author] += 1
             event_id = _event_id(event)
             if event_id and len(representative_event_ids) < 8:
                 representative_event_ids.append(event_id)
@@ -189,22 +257,22 @@ class GitActivityPlugin(Plugin):
         total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
         omitted_event_count = max(0, total_event_count - covered_event_count)
         top_repos = [
-            {"repo": repo, "event_count": count}
+            {"repo": repo, "operation_count": count, "event_count": count}
             for repo, count in repo_counter.most_common(5)
         ]
         top_operations = [
-            {"operation": operation, "event_count": count}
+            {"operation": operation, "operation_count": count, "event_count": count}
             for operation, count in operation_counter.most_common(5)
         ]
 
         summary_lines = [
-            f"Git feature coverage used {covered_event_count} events across {len(repo_counter)} repositories."
+            f"Git feature coverage used {covered_event_count} timeline sessions covering {total_activity_count} Git operations across {len(repo_counter)} repositories."
         ]
         if top_repos:
-            joined = ", ".join(f"{item['repo']} ({item['event_count']})" for item in top_repos[:3])
-            summary_lines.append(f"Most active repositories: {joined}.")
+            joined = ", ".join(f"{item['repo']} ({item['operation_count']})" for item in top_repos[:3])
+            summary_lines.append(f"Most active repositories by Git operation count: {joined}.")
         if top_operations:
-            joined = ", ".join(f"{item['operation']} ({item['event_count']})" for item in top_operations[:3])
+            joined = ", ".join(f"{item['operation']} ({item['operation_count']})" for item in top_operations[:3])
             summary_lines.append(f"Git operations clustered around: {joined}.")
         if author_counter:
             summary_lines.append(f"Git activity involved {len(author_counter)} authors in the covered events.")
@@ -216,6 +284,9 @@ class GitActivityPlugin(Plugin):
         return {
             "feature_type": "git_activity",
             "event_count": covered_event_count,
+            "session_count": covered_event_count,
+            "activity_count": total_activity_count,
+            "git_operation_count": total_activity_count,
             "total_event_count": total_event_count,
             "covered_event_count": covered_event_count,
             "omitted_event_count": omitted_event_count,
@@ -254,6 +325,7 @@ class GitActivityPlugin(Plugin):
         sensor = GitActivitySensor(
             retention_mode="analyze_only",
             repos=valid_repos,
+            l3_summary_enabled=bool(settings.get("l3_summary_enabled", DEFAULT_SETTINGS["l3_summary_enabled"])),
         )
 
         # Get sync interval

@@ -75,7 +75,10 @@
   },
   "summary_features": {
     "genre_coverage": "曲风标签覆盖了 {tagged_events}/{total_events} 条听歌事件。",
-    "top_tags": "主要曲风信号：{top_tags}。"
+    "top_tags": "主要曲风信号：{top_tags}。",
+    "top_artists": "高频歌手：{top_artists}。",
+    "top_tracks": "高频歌曲：{top_tracks}。",
+    "top_albums": "高频专辑：{top_albums}。"
   },
   "legacy_fields": {
     "tag_strategy_label": "标签提取策略",

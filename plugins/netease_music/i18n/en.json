@@ -75,7 +75,10 @@
   },
   "summary_features": {
     "genre_coverage": "Genre tags appeared on {tagged_events} of {total_events} listening events.",
-    "top_tags": "Top genre signals: {top_tags}."
+    "top_tags": "Top genre signals: {top_tags}.",
+    "top_artists": "Top artists: {top_artists}.",
+    "top_tracks": "Top tracks: {top_tracks}.",
+    "top_albums": "Top albums: {top_albums}."
   },
   "legacy_fields": {
     "tag_strategy_label": "Tag Extraction Strategy",

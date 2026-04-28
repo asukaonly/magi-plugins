@@ -247,6 +247,7 @@ class NeteaseMusicTimelineSensor(SensorBase):
         """Extract entity hints, relation candidates, and genre tags."""
         track_name = str(item.get("track_name", ""))
         artist_name = str(item.get("artist_name", ""))
+        album_name = str(item.get("album_name", ""))
 
         # Entity hints for L2 Phase 1 anchor injection
         entities: list[dict[str, Any]] = []
@@ -261,6 +262,12 @@ class NeteaseMusicTimelineSensor(SensorBase):
                 "mention_text": artist_name,
                 "entity_type": "person",
                 "canonical_name_hint": artist_name,
+            })
+        if album_name:
+            entities.append({
+                "mention_text": album_name,
+                "entity_type": "media",
+                "canonical_name_hint": album_name,
             })
 
         # Direct-write LISTENED edge (rule-based, no LLM needed)

@@ -156,7 +156,10 @@ class NeteaseMusicPlugin(Plugin):
 
         features = build_netease_temporal_summary_features(events)
         top_tags = features.get("top_tags") or []
-        if not top_tags:
+        top_tracks = features.get("top_tracks") or []
+        top_artists = features.get("top_artists") or []
+        top_albums = features.get("top_albums") or []
+        if not any((top_tags, top_tracks, top_artists, top_albums)):
             return {}
 
         formatted_tags = ", ".join(
@@ -164,26 +167,66 @@ class NeteaseMusicPlugin(Plugin):
             for item in top_tags
             if isinstance(item, dict) and item.get("tag")
         )
-        if not formatted_tags:
-            return {}
+        formatted_tracks = ", ".join(
+            f"{item['track']} ({item['count']})"
+            for item in top_tracks
+            if isinstance(item, dict) and item.get("track")
+        )
+        formatted_artists = ", ".join(
+            f"{item['artist']} ({item['count']})"
+            for item in top_artists
+            if isinstance(item, dict) and item.get("artist")
+        )
+        formatted_albums = ", ".join(
+            f"{item['album']} ({item['count']})"
+            for item in top_albums
+            if isinstance(item, dict) and item.get("album")
+        )
 
         tagged_event_count = int(features.get("tagged_event_count") or 0)
         covered_event_count = int(features.get("total_event_count") or 0)
         total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
         omitted_event_count = max(0, total_event_count - covered_event_count)
-        summary_lines = [
+        summary_lines: list[str] = [
             self.t(
                 "summary_features.genre_coverage",
                 tagged_events=tagged_event_count,
                 total_events=covered_event_count,
                 fallback=f"Genre tags appeared on {tagged_event_count} of {covered_event_count} covered listening events.",
             ),
-            self.t(
-                "summary_features.top_tags",
-                top_tags=formatted_tags,
-                fallback=f"Top genre signals: {formatted_tags}.",
-            ),
         ]
+        if formatted_tags:
+            summary_lines.append(
+                self.t(
+                    "summary_features.top_tags",
+                    top_tags=formatted_tags,
+                    fallback=f"Top genre signals: {formatted_tags}.",
+                )
+            )
+        if formatted_artists:
+            summary_lines.append(
+                self.t(
+                    "summary_features.top_artists",
+                    top_artists=formatted_artists,
+                    fallback=f"Top artists: {formatted_artists}.",
+                )
+            )
+        if formatted_tracks:
+            summary_lines.append(
+                self.t(
+                    "summary_features.top_tracks",
+                    top_tracks=formatted_tracks,
+                    fallback=f"Top tracks: {formatted_tracks}.",
+                )
+            )
+        if formatted_albums:
+            summary_lines.append(
+                self.t(
+                    "summary_features.top_albums",
+                    top_albums=formatted_albums,
+                    fallback=f"Top albums: {formatted_albums}.",
+                )
+            )
         if omitted_event_count > 0:
             summary_lines.append(
                 f"Music feature coverage used {covered_event_count} representative events; {omitted_event_count} additional events were compacted."
@@ -195,6 +238,23 @@ class NeteaseMusicPlugin(Plugin):
             "covered_event_count": covered_event_count,
             "omitted_event_count": omitted_event_count,
             "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
+            "top_entities": [
+                *[
+                    {"type": "artist", "name": item["artist"], "count": item["count"]}
+                    for item in top_artists
+                    if isinstance(item, dict) and item.get("artist")
+                ],
+                *[
+                    {"type": "track", "name": item["track"], "count": item["count"]}
+                    for item in top_tracks
+                    if isinstance(item, dict) and item.get("track")
+                ],
+                *[
+                    {"type": "album", "name": item["album"], "count": item["count"]}
+                    for item in top_albums
+                    if isinstance(item, dict) and item.get("album")
+                ],
+            ],
             "summary_lines": [line for line in summary_lines if str(line).strip()],
         }
 

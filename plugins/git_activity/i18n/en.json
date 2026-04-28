@@ -33,6 +33,18 @@
               "label": "Lookback Days",
               "description": "Used when the initial sync scope is set to recent days."
             },
+            "session_window_minutes": {
+              "label": "Session Window (minutes)",
+              "description": "Git operations in the same repository within this window are grouped into one timeline session."
+            },
+            "max_messages_per_session": {
+              "label": "Messages per Session",
+              "description": "Maximum representative Git messages kept in each aggregated timeline session."
+            },
+            "l3_summary_enabled": {
+              "label": "Include in L3 Summaries",
+              "description": "Allow aggregated Git sessions to inform temporal memory summaries."
+            },
             "sensitive_mode": {
               "label": "Sensitive Content Handling",
               "description": "How to handle commit messages containing sensitive content.",
@@ -53,9 +65,14 @@
   "content_blocks": {
     "repo": "Repository: {repo_path}",
     "operation": "Operation: {operation_type}",
-    "commit": "Commit: {old_sha}..{new_sha}"
+    "operations": "Operations: {operations}",
+    "commit": "Commit: {old_sha}..{new_sha}",
+    "commit_range": "Commits: {first_sha}..{last_sha}",
+    "time_range": "Time: {time_range}",
+    "messages": "Messages: {messages}"
   },
   "activity_types": {
+    "session": "Session",
     "checkout": "Checkout",
     "commit": "Commit",
     "merge": "Merge",

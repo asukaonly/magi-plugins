@@ -14,6 +14,9 @@ def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dic
     tagged_event_count = 0
     liked_event_count = 0
     tag_counter: Counter[str] = Counter()
+    track_counter: Counter[str] = Counter()
+    artist_counter: Counter[str] = Counter()
+    album_counter: Counter[str] = Counter()
 
     for event in events:
         if not isinstance(event, dict):
@@ -22,6 +25,17 @@ def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dic
         metadata = _coerce_mapping(event.get("metadata_json"))
         timeline = _coerce_mapping(metadata.get("timeline"))
         provenance = _coerce_mapping(timeline.get("provenance"))
+
+        track_name = _normalized_value(provenance.get("track_name"))
+        artist_name = _normalized_value(provenance.get("artist_name"))
+        album_name = _normalized_value(provenance.get("album_name"))
+
+        if track_name:
+            track_counter[track_name] += 1
+        if artist_name:
+            artist_counter[artist_name] += 1
+        if album_name:
+            album_counter[album_name] += 1
 
         if bool(provenance.get("is_liked")):
             liked_event_count += 1
@@ -37,6 +51,18 @@ def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dic
         {"tag": tag, "count": count}
         for tag, count in tag_counter.most_common(5)
     ]
+    top_tracks = [
+        {"track": track, "count": count}
+        for track, count in track_counter.most_common(5)
+    ]
+    top_artists = [
+        {"artist": artist, "count": count}
+        for artist, count in artist_counter.most_common(5)
+    ]
+    top_albums = [
+        {"album": album, "count": count}
+        for album, count in album_counter.most_common(5)
+    ]
     coverage_ratio = (tagged_event_count / total_event_count) if total_event_count else 0.0
     return {
         "total_event_count": total_event_count,
@@ -44,6 +70,9 @@ def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dic
         "liked_event_count": liked_event_count,
         "coverage_ratio": round(coverage_ratio, 4),
         "top_tags": top_tags,
+        "top_tracks": top_tracks,
+        "top_artists": top_artists,
+        "top_albums": top_albums,
     }
 
 
@@ -89,3 +118,7 @@ def _normalize_terms(value: Any) -> list[str]:
         seen.add(key)
         normalized.append(term)
     return normalized
+
+
+def _normalized_value(value: Any) -> str:
+    return " ".join(str(value or "").strip().split())
