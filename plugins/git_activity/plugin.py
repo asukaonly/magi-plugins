@@ -22,7 +22,6 @@ DEFAULT_SETTINGS = {
     "initial_sync_lookback_days": 30,
     "session_window_minutes": 30,
     "max_messages_per_session": 5,
-    "l3_summary_enabled": True,
     "sensitive_mode": "redact",
     "sensitive_keywords": [],
 }
@@ -144,40 +143,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="sync",
             surface="timeline",
             order=50,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.session_window_minutes",
-            type="number",
-            label="Session Window (minutes)",
-            description="Git operations in the same repository within this window are grouped into one timeline session.",
-            default=30,
-            min=5,
-            max=240,
-            section="sync",
-            surface="timeline",
-            order=55,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.max_messages_per_session",
-            type="number",
-            label="Messages per Session",
-            description="Maximum representative Git messages kept in each aggregated timeline session.",
-            default=5,
-            min=0,
-            max=20,
-            section="sync",
-            surface="timeline",
-            order=56,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.l3_summary_enabled",
-            type="switch",
-            label="Include in L3 Summaries",
-            description="Allow aggregated Git sessions to inform temporal memory summaries.",
-            default=True,
-            section="retention",
-            surface="timeline",
-            order=57,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sensitive_mode",
@@ -325,7 +290,7 @@ class GitActivityPlugin(Plugin):
         sensor = GitActivitySensor(
             retention_mode="analyze_only",
             repos=valid_repos,
-            l3_summary_enabled=bool(settings.get("l3_summary_enabled", DEFAULT_SETTINGS["l3_summary_enabled"])),
+            l3_summary_enabled=True,
         )
 
         # Get sync interval

@@ -33,18 +33,6 @@
               "label": "回溯天数",
               "description": "首次同步范围设为“最近几天”时使用。"
             },
-            "session_window_minutes": {
-              "label": "会话窗口（分钟）",
-              "description": "同一仓库中落在该时间窗口内的 Git 操作会合并为一条时间线会话。"
-            },
-            "max_messages_per_session": {
-              "label": "每个会话保留消息数",
-              "description": "每条聚合时间线会话最多保留多少条代表性 Git 消息。"
-            },
-            "l3_summary_enabled": {
-              "label": "纳入 L3 摘要",
-              "description": "允许聚合后的 Git 会话参与时间段记忆摘要。"
-            },
             "sensitive_mode": {
               "label": "敏感内容处理",
               "description": "如何处理包含敏感内容的提交信息。",

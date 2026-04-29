@@ -33,6 +33,15 @@ def _budget_int(budget: object | None, key: str, default: int) -> int:
         return int(default)
 
 
+def _normalize_sync_mode(value: object | None) -> str:
+    mode = str(value or DEFAULT_SETTINGS["sync_mode"]).strip().lower()
+    if mode == "watch":
+        return "interval"
+    if mode in {"manual", "interval"}:
+        return mode
+    return str(DEFAULT_SETTINGS["sync_mode"])
+
+
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
@@ -54,7 +63,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             options=[
                 ExtensionFieldOption(label="Manual", value="manual"),
                 ExtensionFieldOption(label="Interval", value="interval"),
-                ExtensionFieldOption(label="Watch", value="watch"),
             ],
             section="general",
             surface="timeline",
@@ -266,6 +274,7 @@ class NeteaseMusicPlugin(Plugin):
         sensors_settings = self.settings.get("sensors", {})
         if isinstance(sensors_settings, dict):
             settings = dict(sensors_settings.get("netease_music", {}))
+        resolved_sync_mode = _normalize_sync_mode(settings.get("sync_mode"))
 
         sensor = NeteaseMusicTimelineSensor(
             min_play_duration=int(settings.get("min_play_duration") or DEFAULT_SETTINGS["min_play_duration"]),
@@ -285,7 +294,7 @@ class NeteaseMusicPlugin(Plugin):
                     description="Local NetEase Cloud Music play history ingestion for the timeline.",
                     domain="timeline",
                     surface="timeline",
-                    sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
+                    sync_mode=resolved_sync_mode,
                     polling_mode=getattr(sensor, "polling_mode", "interval"),
                     fields=_fields("sensors.netease_music"),
                     metadata={
