@@ -5,6 +5,7 @@ from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import (
+    ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,
     Plugin,
@@ -20,6 +21,7 @@ DEFAULT_SETTINGS = {
     "sync_interval_minutes": 30,
     "initial_sync_policy": "lookback_days",
     "initial_sync_lookback_days": 30,
+    "initial_sync_configured": False,
     "session_window_minutes": 30,
     "max_messages_per_session": 5,
     "sensitive_mode": "redact",
@@ -82,6 +84,51 @@ def _operation_counts(provenance: dict[str, Any]) -> dict[str, int]:
     return counts
 
 
+def _activation_flow(prefix: str) -> ActivationFlowSpec:
+    return ActivationFlowSpec(
+        title="Enable Git Activity",
+        description=(
+            "Git activity can reveal repository names and local work patterns. "
+            "Choose how the first sync should seed the timeline before this source starts running."
+        ),
+        confirm_label="Enable source",
+        cancel_label="Not now",
+        enabled_key=f"{prefix}.enabled",
+        configured_key=f"{prefix}.initial_sync_configured",
+        fields=[
+            ExtensionFieldSpec(
+                key=f"{prefix}.initial_sync_policy",
+                type="select",
+                label="First Sync Scope",
+                description="Decide how much Git history should be imported when this source is enabled for the first time.",
+                default="lookback_days",
+                options=[
+                    ExtensionFieldOption(label="Sync full history", value="full"),
+                    ExtensionFieldOption(label="Sync recent days", value="lookback_days"),
+                    ExtensionFieldOption(label="Only new records from now on", value="from_now"),
+                ],
+                section="activation",
+                surface="timeline",
+                order=10,
+            ),
+            ExtensionFieldSpec(
+                key=f"{prefix}.initial_sync_lookback_days",
+                type="number",
+                label="Recent Days",
+                description="Used when the first-sync scope is set to recent days.",
+                default=30,
+                min=1,
+                max=365,
+                section="activation",
+                surface="timeline",
+                order=20,
+                depends_on_key=f"{prefix}.initial_sync_policy",
+                depends_on_values=["lookback_days"],
+            ),
+        ],
+    )
+
+
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
     """Define all settings fields for the Git Activity plugin."""
     return [
@@ -116,33 +163,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="general",
             surface="timeline",
             order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.initial_sync_policy",
-            type="select",
-            label="Initial Sync Policy",
-            description="How much history to import on first sync.",
-            default="lookback_days",
-            options=[
-                ExtensionFieldOption(label="Full history", value="full"),
-                ExtensionFieldOption(label="Lookback days", value="lookback_days"),
-                ExtensionFieldOption(label="From now only", value="from_now"),
-            ],
-            section="sync",
-            surface="timeline",
-            order=40,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.initial_sync_lookback_days",
-            type="number",
-            label="Lookback Days",
-            description="Days of history to import on first sync.",
-            default=30,
-            min=1,
-            max=365,
-            section="sync",
-            surface="timeline",
-            order=50,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sensitive_mode",
@@ -312,6 +332,7 @@ class GitActivityPlugin(Plugin):
                     metadata={
                         "source_type": "git_activity",
                         "default_settings": dict(DEFAULT_SETTINGS),
+                        "activation_flow": _activation_flow("sensors.git_activity").model_dump(),
                         "sync_interval_minutes": sync_interval_minutes,
                     },
                 ),

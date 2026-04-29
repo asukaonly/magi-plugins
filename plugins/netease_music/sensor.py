@@ -79,27 +79,32 @@ class NeteaseMusicTimelineSensor(SensorBase):
         source_path = str(sensor_settings.get("source_path") or self.source_path or DEFAULT_DB_PATH)
         initial_sync_policy = str(sensor_settings.get("initial_sync_policy") or "lookback_days")
         initial_sync_lookback_days = max(1, int(sensor_settings.get("initial_sync_lookback_days", 7)))
+        initial_lookback_days: int | None = None
 
         # Handle initial sync policy "from_now"
-        if context.last_cursor is None and initial_sync_policy == "from_now":
-            latest_update_time = self._reader.get_latest_update_time(source_path=source_path)
-            return SensorSyncResult(
-                items=[],
-                next_cursor=str(latest_update_time) if latest_update_time > 0 else None,
-                watermark_ts=context.last_success_at or time.time(),
-                stats={
-                    "count": 0,
-                    "source_path": source_path,
-                    "min_play_duration": self.min_play_duration,
-                    "initial_sync_policy": initial_sync_policy,
-                },
-            )
+        if context.last_cursor is None:
+            if initial_sync_policy == "from_now":
+                latest_update_time = self._reader.get_latest_update_time(source_path=source_path)
+                return SensorSyncResult(
+                    items=[],
+                    next_cursor=str(latest_update_time) if latest_update_time > 0 else None,
+                    watermark_ts=context.last_success_at or time.time(),
+                    stats={
+                        "count": 0,
+                        "source_path": source_path,
+                        "min_play_duration": self.min_play_duration,
+                        "initial_sync_policy": initial_sync_policy,
+                    },
+                )
+            if initial_sync_policy == "lookback_days":
+                initial_lookback_days = initial_sync_lookback_days
 
         items = self._reader.read_play_records(
             source_path=source_path,
             min_play_duration=self.min_play_duration,
             limit=max(1, context.limit),
             last_cursor=int(context.last_cursor) if context.last_cursor else None,
+            initial_lookback_days=initial_lookback_days,
         )
 
         next_cursor = context.last_cursor

@@ -3,20 +3,22 @@ from __future__ import annotations
 
 import sys
 
-from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 from .reader import DEFAULT_DB_PATH
 from .sensor import NeteaseMusicTimelineSensor
 from .summary_features import build_netease_temporal_summary_features
 
 DEFAULT_SETTINGS = {
     "enabled": False,
-    "sync_mode": "manual",
-    "sync_interval_minutes": 30,
+    "sync_mode": "interval",
+    "sync_interval_minutes": 10,
     "min_play_duration": 20,
     "db_path": DEFAULT_DB_PATH,
     "default_retention_mode": "analyze_only",
     "storage_mode": "managed",
-    "initial_sync_policy": "from_now",
+    "initial_sync_policy": "lookback_days",
+    "initial_sync_lookback_days": 7,
+    "initial_sync_configured": False,
 }
 
 
@@ -42,6 +44,50 @@ def _normalize_sync_mode(value: object | None) -> str:
     return str(DEFAULT_SETTINGS["sync_mode"])
 
 
+def _activation_flow(prefix: str) -> ActivationFlowSpec:
+    return ActivationFlowSpec(
+        title="Enable NetEase Cloud Music",
+        description=(
+            "NetEase Cloud Music history reveals your listening habits. Choose how the first sync should seed "
+            "the timeline before this source starts running."
+        ),
+        confirm_label="Enable source",
+        cancel_label="Not now",
+        enabled_key=f"{prefix}.enabled",
+        configured_key=f"{prefix}.initial_sync_configured",
+        fields=[
+            ExtensionFieldSpec(
+                key=f"{prefix}.initial_sync_policy",
+                type="select",
+                label="First Sync Scope",
+                description="Decide how much listening history should be imported when this source is enabled for the first time.",
+                default="lookback_days",
+                options=[
+                    ExtensionFieldOption(label="Sync full history", value="full"),
+                    ExtensionFieldOption(label="Sync recent days", value="lookback_days"),
+                    ExtensionFieldOption(label="Only new records from now on", value="from_now"),
+                ],
+                section="activation",
+                surface="timeline",
+                order=10,
+            ),
+            ExtensionFieldSpec(
+                key=f"{prefix}.initial_sync_lookback_days",
+                type="number",
+                label="Recent Days",
+                description="Used when the first-sync scope is set to recent days.",
+                default=7,
+                min=1,
+                section="activation",
+                surface="timeline",
+                order=20,
+                depends_on_key=f"{prefix}.initial_sync_policy",
+                depends_on_values=["lookback_days"],
+            ),
+        ],
+    )
+
+
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
@@ -59,7 +105,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             type="select",
             label="Sync Mode",
             description="How NetEase Music history should be synchronized.",
-            default="manual",
+            default="interval",
             options=[
                 ExtensionFieldOption(label="Manual", value="manual"),
                 ExtensionFieldOption(label="Interval", value="interval"),
@@ -73,7 +119,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             type="number",
             label="Sync Interval (minutes)",
             description="Polling interval used for interval-based sync.",
-            default=30,
+            default=10,
             section="general",
             surface="timeline",
             order=30,
@@ -90,21 +136,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="general",
             surface="timeline",
             order=40,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.initial_sync_policy",
-            type="select",
-            label="Initial Sync Policy",
-            description="How the first sync should seed the timeline before running.",
-            default="from_now",
-            options=[
-                ExtensionFieldOption(label="Backfill all history", value="full"),
-                ExtensionFieldOption(label="Sync recent days", value="lookback_days"),
-                ExtensionFieldOption(label="Only new records from now on", value="from_now"),
-            ],
-            section="activation",
-            surface="timeline",
-            order=80,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.tag_strategy",
@@ -300,6 +331,7 @@ class NeteaseMusicPlugin(Plugin):
                     metadata={
                         "source_type": "netease_music",
                         "default_settings": dict(DEFAULT_SETTINGS),
+                        "activation_flow": _activation_flow("sensors.netease_music").model_dump(),
                     },
                 ),
             )

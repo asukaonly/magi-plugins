@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -78,6 +79,7 @@ class NeteaseMusicReader:
         min_play_duration: int = 20,
         limit: int = 200,
         last_cursor: str | None = None,
+        initial_lookback_days: int | None = None,
     ) -> list[dict[str, Any]]:
         """Read play records with track info and liked status."""
         # Copy database to avoid lock issues
@@ -105,6 +107,14 @@ class NeteaseMusicReader:
         if last_cursor:
             query += " AND pc.updateTime > ?"
             params.append(int(last_cursor))
+        elif initial_lookback_days is not None:
+            cutoff_seconds = int(time.time() - max(1, initial_lookback_days) * 24 * 60 * 60)
+            cutoff_millis = cutoff_seconds * 1000
+            query += (
+                " AND ((pc.updateTime < 1000000000000 AND pc.updateTime >= ?)"
+                " OR (pc.updateTime >= 1000000000000 AND pc.updateTime >= ?))"
+            )
+            params.extend([cutoff_seconds, cutoff_millis])
 
         query += " ORDER BY pc.updateTime ASC LIMIT ?"
         params.append(limit)
