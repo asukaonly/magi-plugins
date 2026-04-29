@@ -31,8 +31,8 @@
   },
   "filters": {
     "domains_label": "过滤域名（正则）",
-    "domains_description": "命中以下任一正则表达式的域名将不会被 AI 分析。",
+    "domains_description": "标准化后的域名只要被任一正则部分匹配到，就不会被 AI 分析；如需精确匹配，请使用 ^...$。",
     "keywords_label": "过滤关键词",
-    "keywords_description": "URL 或标题中包含任一关键词的记录将不会被 AI 分析，匹配时不区分大小写。"
+    "keywords_description": "URL 或标题中只要包含任一关键词，记录就不会被 AI 分析；这是不区分大小写的子串匹配，不是正则。"
   }
 }

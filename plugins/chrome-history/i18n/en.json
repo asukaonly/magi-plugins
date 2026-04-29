@@ -31,8 +31,8 @@
   },
   "filters": {
     "domains_label": "Filter Domains (Regex)",
-    "domains_description": "Visits whose domain matches any of these regular expressions are skipped before AI analysis.",
+    "domains_description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
     "keywords_label": "Filter Keywords",
-    "keywords_description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match."
+    "keywords_description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
   }
 }
