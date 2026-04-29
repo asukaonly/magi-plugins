@@ -77,7 +77,7 @@ def _normalize_git_session(
     end_ts = _coerce_timestamp(item.get("session_end_ts")) or start_ts
     operation_counts = _normalize_counts(item.get("operation_counts"))
     activity_count = int(item.get("activity_count") or sum(operation_counts.values()) or 0)
-    operation_summary = str(item.get("operation_summary") or _operation_summary(operation_counts))
+    operation_summary = _operation_summary(operation_counts, sensor)
     time_range = str(item.get("time_range") or _format_time_range(start_ts, end_ts))
     representative_messages = _normalize_string_list(item.get("representative_messages"), limit=5)
     authors = _normalize_string_list(item.get("authors"), limit=8)
@@ -85,10 +85,34 @@ def _normalize_git_session(
     last_sha = str(item.get("last_sha") or item.get("new_sha") or "")
     event_id = str(item.get("source_item_id") or _session_event_id(repo_path, start_ts, end_ts))
 
-    title = f"Git activity · {repo_name}"
-    summary = f"Worked in {repo_name}: {operation_summary}."
-    if activity_count > 1:
-        summary = f"Worked in {repo_name}: {operation_summary} across {activity_count} Git operations."
+    title = sensor.t(
+        "narration.session_title",
+        repo_name=repo_name,
+        fallback=repo_name,
+    )
+    if activity_count > 1 and len(operation_counts) == 1:
+        summary = sensor.t(
+            "narration.session_summary_multiple_single_kind",
+            repo_name=repo_name,
+            operations=operation_summary,
+            count=activity_count,
+            fallback=f"Worked in {repo_name}: {operation_summary}.",
+        )
+    elif activity_count > 1:
+        summary = sensor.t(
+            "narration.session_summary_multiple",
+            repo_name=repo_name,
+            operations=operation_summary,
+            count=activity_count,
+            fallback=f"Worked in {repo_name}: {operation_summary} across {activity_count} Git operations.",
+        )
+    else:
+        summary = sensor.t(
+            "narration.session_summary_single",
+            repo_name=repo_name,
+            operations=operation_summary,
+            fallback=f"Worked in {repo_name}: {operation_summary}.",
+        )
 
     tags = ["git", "git_session", repo_name]
     tags.extend(operation for operation in operation_counts if operation not in tags)
@@ -174,13 +198,59 @@ def _normalize_counts(value: Any) -> dict[str, int]:
     return dict(counts)
 
 
-def _operation_summary(operation_counts: dict[str, int]) -> str:
+def _operation_summary(operation_counts: dict[str, int], sensor: Any) -> str:
     parts = []
+    force_counts = len(operation_counts) > 1
     for operation, count in Counter(operation_counts).most_common():
         if count <= 0:
             continue
-        parts.append(operation if count == 1 else f"{operation} {count}")
-    return ", ".join(parts) if parts else "activity"
+        label = sensor.t(
+            f"activity_types.{operation}",
+            fallback=operation,
+        )
+        label = _operation_label_for_summary(label)
+        if count == 1 and not force_counts:
+            parts.append(
+                sensor.t(
+                    "operation_summary.single",
+                    operation=label,
+                    fallback=label,
+                )
+            )
+            continue
+        parts.append(
+            sensor.t(
+                "operation_summary.multiple",
+                count=count,
+                operation=_pluralize_operation(label) if count != 1 else label,
+                fallback=f"{count} {_pluralize_operation(label) if count != 1 else label}",
+            )
+        )
+    separator = sensor.t("operation_summary.separator", fallback=", ")
+    return separator.join(parts) if parts else "activity"
+
+
+def _operation_label_for_summary(label: str) -> str:
+    normalized = str(label or "").strip()
+    if normalized.isascii():
+        return normalized.lower()
+    return normalized
+
+
+def _pluralize_operation(label: str) -> str:
+    if not label.isascii():
+        return label
+    normalized = label.strip()
+    if not normalized:
+        return label
+    lowered = normalized.lower()
+    if lowered.endswith("s"):
+        return normalized
+    if lowered.endswith("ch") or lowered.endswith("sh") or lowered.endswith("x"):
+        return f"{normalized}es"
+    if lowered.endswith("y") and len(normalized) > 1 and lowered[-2] not in "aeiou":
+        return f"{normalized[:-1]}ies"
+    return f"{normalized}s"
 
 
 def _format_time_range(start_ts: float, end_ts: float) -> str:

@@ -59,6 +59,17 @@
     "time_range": "Time: {time_range}",
     "messages": "Messages: {messages}"
   },
+  "narration": {
+    "session_title": "{repo_name}",
+    "session_summary_single": "Worked in {repo_name}: {operations}.",
+    "session_summary_multiple_single_kind": "Worked in {repo_name}: {operations}.",
+    "session_summary_multiple": "Worked in {repo_name}: {operations} across {count} Git operations."
+  },
+  "operation_summary": {
+    "single": "{operation}",
+    "multiple": "{count} {operation}",
+    "separator": ", "
+  },
   "activity_types": {
     "session": "Session",
     "checkout": "Checkout",

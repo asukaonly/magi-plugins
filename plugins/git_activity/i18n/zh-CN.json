@@ -59,6 +59,17 @@
     "time_range": "时间：{time_range}",
     "messages": "消息：{messages}"
   },
+  "narration": {
+    "session_title": "{repo_name}",
+    "session_summary_single": "在 {repo_name} 中进行了{operations}。",
+    "session_summary_multiple_single_kind": "在 {repo_name} 中进行了 {operations}。",
+    "session_summary_multiple": "在 {repo_name} 中进行了 {operations}，共 {count} 次 Git 操作。"
+  },
+  "operation_summary": {
+    "single": "{operation}",
+    "multiple": "{count} 次{operation}",
+    "separator": "、"
+  },
   "activity_types": {
     "session": "会话",
     "checkout": "检出",

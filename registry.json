@@ -51,7 +51,7 @@
       "name_i18n": {
         "zh-CN": "Git 活动"
       },
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
