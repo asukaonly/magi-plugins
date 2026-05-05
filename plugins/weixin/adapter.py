@@ -12,6 +12,7 @@ from typing import Any
 from magi_plugin_sdk import get_logger
 from magi_plugin_sdk.channels import (
     Channel,
+    ChannelAttachmentStoreProtocol,
     ChannelMessageDispatcherProtocol,
     ChannelSessionMapperProtocol,
     ChannelTarget,
@@ -28,6 +29,7 @@ from .api import (
     SESSION_EXPIRED_ERRCODE,
     WeixinApiClient,
 )
+from .media import collect_media_attachments
 from .normalizers import body_from_item_list
 from .state import WeixinCredentials, WeixinStateStore
 
@@ -79,6 +81,7 @@ class WeixinChannel(Channel):
         self._config = config
         self._session_mapper = session_mapper
         self._message_dispatcher = message_dispatcher
+        self._attachment_store: ChannelAttachmentStoreProtocol | None = None
         self._state = WeixinStateStore(config.state_dir)
         self._credentials: WeixinCredentials | None = None
         self._api: WeixinApiClient | None = None
@@ -96,6 +99,9 @@ class WeixinChannel(Channel):
 
     def bind_message_dispatcher(self, dispatcher: ChannelMessageDispatcherProtocol) -> None:
         self._message_dispatcher = dispatcher
+
+    def bind_attachment_store(self, attachment_store: ChannelAttachmentStoreProtocol) -> None:
+        self._attachment_store = attachment_store
 
     async def start(self) -> None:
         self._state.update_channel_status(state="starting", running=False, configured=False, last_error="")
@@ -152,16 +158,18 @@ class WeixinChannel(Channel):
         text = (content.text or "").strip()
         if not text:
             return
-        if len(text) > self._config.max_message_length:
-            text = text[: self._config.max_message_length - 3] + "..."
         context_token = self._context_tokens.get(target.external_chat_id)
+        client_ids: list[str] = []
         try:
-            client_id = await self._api.send_text_message(
-                to_user_id=target.external_chat_id,
-                text=text,
-                context_token=context_token,
-                timeout_ms=self._config.request_timeout_ms,
-            )
+            for chunk in self._split_text(text):
+                client_ids.append(
+                    await self._api.send_text_message(
+                        to_user_id=target.external_chat_id,
+                        text=chunk,
+                        context_token=context_token,
+                        timeout_ms=self._config.request_timeout_ms,
+                    )
+                )
         except Exception as exc:
             self._state.update_channel_status(
                 state="degraded",
@@ -175,13 +183,14 @@ class WeixinChannel(Channel):
             running=True,
             last_outbound_at_ms=_now_ms(),
             last_outbound_chat_id=target.external_chat_id,
-            last_outbound_client_id=client_id,
+            last_outbound_client_id=client_ids[-1] if client_ids else "",
+            last_outbound_part_count=len(client_ids),
             last_error="",
         )
         logger.info(
             "Weixin outbound sent to_user_id=%s client_id=%s chars=%s",
             target.external_chat_id,
-            client_id,
+            client_ids[-1] if client_ids else "",
             len(text),
         )
 
@@ -302,9 +311,8 @@ class WeixinChannel(Channel):
 
         raw_items = message.get("item_list")
         text = body_from_item_list(raw_items if isinstance(raw_items, list) else None).strip()
-        if not text:
-            logger.info("Skipping unsupported Weixin message from_user_id=%s", from_user_id)
-            return True
+        message_key = self._message_key(message)
+        client_turn_id = self._client_turn_id(message_key)
 
         context_token = str(message.get("context_token") or "").strip()
         if context_token:
@@ -328,20 +336,51 @@ class WeixinChannel(Channel):
             ChannelTarget(channel_type=self.channel_type, external_chat_id=from_user_id)
         )
 
+        attachments: list[dict[str, Any]] = []
+        media_errors: list[str] = []
+        if self._attachment_store is not None and isinstance(raw_items, list):
+            media_result = await collect_media_attachments(
+                raw_items,
+                attachment_store=self._attachment_store,
+                cdn_base_url=self._config.cdn_base_url,
+                session_id=mapping.magi_session_id,
+                turn_id=client_turn_id,
+                message_key=message_key,
+            )
+            attachments = media_result.attachments
+            media_errors = media_result.errors
+
+        if not text and not attachments:
+            logger.info("Skipping unsupported Weixin message from_user_id=%s", from_user_id)
+            return True
+
+        reply_to_external_id = self._reply_to_external_id(raw_items if isinstance(raw_items, list) else None)
+        reply_to_message_id = (
+            self._state.lookup_message_id_mapping(self._credentials.account_id, reply_to_external_id)
+            if reply_to_external_id
+            else None
+        )
+
         metadata = {
             "channel_type": self.channel_type,
             "account_id": self._credentials.account_id,
             "external_chat_id": from_user_id,
             "external_user_id": from_user_id,
-            "external_message_id": str(message.get("message_id") or message.get("seq") or ""),
+            "external_message_id": self._external_message_id(message),
+            "reply_to_external_id": reply_to_external_id or "",
             "context_token": context_token,
             "is_group": False,
+            "attachment_count": len(attachments),
+            "media_errors": media_errors,
         }
         outcome = await self._message_dispatcher.dispatch_user_message(
             source=self.channel_type,
             user_id=mapping.magi_user_id,
             session_id=mapping.magi_session_id,
             message=text,
+            attachments=attachments,
+            reply_to_message_id=reply_to_message_id,
+            client_turn_id=client_turn_id,
             metadata=metadata,
         )
         if not outcome.success:
@@ -357,6 +396,10 @@ class WeixinChannel(Channel):
                 last_error_at_ms=_now_ms(),
             )
             return False
+        magi_message_id = str(getattr(outcome, "message_id", "") or "").strip()
+        external_message_id = self._external_message_id(message)
+        if magi_message_id and external_message_id:
+            self._state.save_message_id_mapping(self._credentials.account_id, external_message_id, magi_message_id)
         self._state.update_channel_status(
             state="running",
             running=True,
@@ -427,6 +470,55 @@ class WeixinChannel(Channel):
                 return value
         raw = json.dumps(message, ensure_ascii=False, sort_keys=True, default=str)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _split_text(self, text: str) -> list[str]:
+        limit = max(1, int(self._config.max_message_length or 4000))
+        if len(text) <= limit:
+            return [text]
+        chunks: list[str] = []
+        remaining = text
+        while remaining:
+            if len(remaining) <= limit:
+                chunks.append(remaining)
+                break
+            split_at = remaining.rfind("\n", 0, limit + 1)
+            if split_at < max(1, limit // 2):
+                split_at = remaining.rfind(" ", 0, limit + 1)
+            if split_at < max(1, limit // 2):
+                split_at = limit
+            chunks.append(remaining[:split_at].strip())
+            remaining = remaining[split_at:].strip()
+        return [chunk for chunk in chunks if chunk]
+
+    @staticmethod
+    def _external_message_id(message: dict[str, Any]) -> str:
+        for key in ("message_id", "seq", "client_id"):
+            value = str(message.get(key) or "").strip()
+            if value:
+                return value
+        return ""
+
+    @staticmethod
+    def _client_turn_id(message_key: str) -> str:
+        digest = hashlib.sha256(message_key.encode("utf-8")).hexdigest()[:24]
+        return f"weixin_{digest}"
+
+    @staticmethod
+    def _reply_to_external_id(item_list: list[dict[str, Any]] | None) -> str:
+        for item in item_list or []:
+            ref = item.get("ref_msg")
+            if not isinstance(ref, dict):
+                continue
+            candidates: list[dict[str, Any]] = [ref]
+            message_item = ref.get("message_item")
+            if isinstance(message_item, dict):
+                candidates.append(message_item)
+            for candidate in candidates:
+                for key in ("message_id", "msg_id", "seq", "client_id"):
+                    value = str(candidate.get(key) or "").strip()
+                    if value:
+                        return value
+        return ""
 
     def _is_stopping(self) -> bool:
         return bool(self._stop_event and self._stop_event.is_set())

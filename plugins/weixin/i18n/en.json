@@ -67,6 +67,21 @@
       "label": "Validate Credentials",
       "description": "Check the saved Weixin credentials and gateway connection.",
       "button_label": "Test Connection"
+    },
+    "reset_cursor": {
+      "label": "Reset Cursor",
+      "description": "Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
+      "button_label": "Reset Cursor"
+    },
+    "clear_processed_messages": {
+      "label": "Clear Message Dedupe",
+      "description": "Clear the local processed-message cache used for Weixin retry safety.",
+      "button_label": "Clear Dedupe"
+    },
+    "logout": {
+      "label": "Logout Weixin",
+      "description": "Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
+      "button_label": "Logout"
     }
   },
   "action_messages": {
@@ -85,6 +100,9 @@
     "validate_missing_credentials": "No Weixin credentials are configured yet.",
     "validate_succeeded": "Weixin credentials are valid.",
     "validate_failed": "Weixin credential validation failed: {error}",
+    "reset_cursor_succeeded": "Weixin cursor reset. The channel will reconnect.",
+    "clear_processed_succeeded": "Weixin processed-message cache cleared. The channel will reconnect.",
+    "logout_succeeded": "Weixin credentials removed. Run QR login to connect again.",
     "unexpected_status": "Unexpected Weixin login status: {status}"
   }
 }

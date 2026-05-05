@@ -1,16 +1,20 @@
 # Weixin
 
-Text-only Weixin channel for Magi, based on Tencent's iLink bot gateway protocol used by `openclaw-weixin`.
+Weixin channel for Magi, based on Tencent's iLink bot gateway protocol used by `openclaw-weixin`.
 
 ## Scope
 
 - QR login helper that stores bot credentials locally.
 - Direct-message text ingestion through `getupdates` long polling.
 - Text replies through `sendmessage`.
+- Inbound image, file, voice, and video attachments through Weixin CDN download/decryption.
 - Context token persistence for replies.
 - Optional typing indicator through `getconfig` and `sendtyping`.
+- Maintenance actions for connection validation, cursor reset, dedupe reset, and logout.
 
-Media messages are intentionally out of scope for the first version.
+Inbound media is stored as Magi chat attachments. Images and files are available to Magi's normal attachment pipeline. Voice and video are preserved as attachments, but the plugin does not transcribe audio or analyze video frames by itself; when Weixin provides `voice_item.text`, that transcript is included in the message text.
+
+Outbound media upload is not implemented yet. Magi replies are sent as text and split into multiple Weixin messages when they exceed the configured maximum message length.
 
 ## Settings QR Login
 

@@ -34,7 +34,11 @@ from .state import WeixinCredentials, WeixinStateStore
 
 QR_LOGIN_ACTION_ID = "qr_login"
 VALIDATE_CREDENTIALS_ACTION_ID = "validate_credentials"
+RESET_CURSOR_ACTION_ID = "reset_cursor"
+CLEAR_PROCESSED_MESSAGES_ACTION_ID = "clear_processed_messages"
+LOGOUT_ACTION_ID = "logout"
 CHANNEL_STATUS_RESOURCE_NAME = "channel_status"
+ACCOUNTS_RESOURCE_NAME = "accounts"
 QR_STATUS_POLL_TIMEOUT_MS = 8_000
 VALIDATE_CREDENTIALS_TIMEOUT_MS = 3_000
 
@@ -225,6 +229,46 @@ class WeixinPlugin(Plugin):
                 timeout_ms=30_000,
                 persist_settings_on_success=False,
             ),
+            PluginSettingsActionSpec(
+                action_id=RESET_CURSOR_ACTION_ID,
+                label="Reset Cursor",
+                description="Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
+                button_label="Reset Cursor",
+                presentation="inline",
+                surface="extensions",
+                contribution_type=ContributionType.CHANNEL,
+                order=2,
+                poll_interval_ms=2_000,
+                timeout_ms=30_000,
+                persist_settings_on_success=False,
+            ),
+            PluginSettingsActionSpec(
+                action_id=CLEAR_PROCESSED_MESSAGES_ACTION_ID,
+                label="Clear Message Dedupe",
+                description="Clear the local processed-message cache used for Weixin retry safety.",
+                button_label="Clear Dedupe",
+                presentation="inline",
+                surface="extensions",
+                contribution_type=ContributionType.CHANNEL,
+                order=3,
+                poll_interval_ms=2_000,
+                timeout_ms=30_000,
+                persist_settings_on_success=False,
+            ),
+            PluginSettingsActionSpec(
+                action_id=LOGOUT_ACTION_ID,
+                label="Logout Weixin",
+                description="Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
+                button_label="Logout",
+                presentation="inline",
+                surface="extensions",
+                contribution_type=ContributionType.CHANNEL,
+                order=4,
+                destructive=True,
+                poll_interval_ms=2_000,
+                timeout_ms=30_000,
+                persist_settings_on_success=True,
+            ),
         ]
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
@@ -233,14 +277,33 @@ class WeixinPlugin(Plugin):
                 resource_name=CHANNEL_STATUS_RESOURCE_NAME,
                 resource_type="channel_status",
                 description="Latest Weixin channel runtime status.",
+            ),
+            PluginSettingsResourceSpec(
+                resource_name=ACCOUNTS_RESOURCE_NAME,
+                resource_type="collection",
+                description="Saved Weixin accounts in the configured state directory.",
             )
         ]
 
     def read_settings_resource(self, resource_name: str) -> Any:
+        state_dir = str(self.settings.get("state_dir") or "~/.magi/weixin")
+        store = WeixinStateStore(state_dir)
+        if resource_name == ACCOUNTS_RESOURCE_NAME:
+            return {
+                "groups": [
+                    {
+                        "group_id": "accounts",
+                        "label": "Accounts",
+                        "items": [
+                            {"item_id": account_id, "label": account_id}
+                            for account_id in store.list_account_ids()
+                        ],
+                    }
+                ]
+            }
         if resource_name != CHANNEL_STATUS_RESOURCE_NAME:
             raise KeyError(resource_name)
-        state_dir = str(self.settings.get("state_dir") or "~/.magi/weixin")
-        status = WeixinStateStore(state_dir).load_channel_status()
+        status = store.load_channel_status()
         status.setdefault("state", "stopped")
         status.setdefault("running", False)
         status.setdefault("configured", bool(self.settings.get("account_id") or self.settings.get("credentials_path")))
@@ -256,6 +319,12 @@ class WeixinPlugin(Plugin):
         if action_id != QR_LOGIN_ACTION_ID:
             if action_id == VALIDATE_CREDENTIALS_ACTION_ID:
                 return await self._validate_credentials(field_values)
+            if action_id == RESET_CURSOR_ACTION_ID:
+                return self._reset_cursor(field_values)
+            if action_id == CLEAR_PROCESSED_MESSAGES_ACTION_ID:
+                return self._clear_processed_messages(field_values)
+            if action_id == LOGOUT_ACTION_ID:
+                return self._logout(field_values)
             raise KeyError(action_id)
 
         session = await self._create_qr_login_session(field_values)
@@ -394,6 +463,51 @@ class WeixinPlugin(Plugin):
             status="succeeded",
             message=self.t("action_messages.validate_succeeded"),
             data={"account_id": credentials.account_id, "base_url": client.base_url},
+        )
+
+    def _resolve_action_credentials(
+        self,
+        field_values: dict[str, Any] | None,
+    ) -> tuple[WeixinStateStore, WeixinCredentials | None, str]:
+        state_dir = _settings_str(field_values, self.settings, "state_dir", "~/.magi/weixin")
+        account_id = _settings_str(field_values, self.settings, "account_id", "")
+        credentials_path = _settings_str(field_values, self.settings, "credentials_path", "")
+        store = WeixinStateStore(state_dir)
+        return store, store.load_credentials(account_id=account_id, credentials_path=credentials_path), credentials_path
+
+    def _reset_cursor(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
+        store, credentials, _ = self._resolve_action_credentials(field_values)
+        if credentials is None:
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
+        store.clear_sync_buf(credentials.account_id)
+        return PluginSettingsActionResult(
+            status="succeeded",
+            message=self.t("action_messages.reset_cursor_succeeded"),
+            data={"account_id": credentials.account_id, "refresh_channels": True},
+        )
+
+    def _clear_processed_messages(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
+        store, credentials, _ = self._resolve_action_credentials(field_values)
+        if credentials is None:
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
+        store.clear_processed_message_ids(credentials.account_id)
+        return PluginSettingsActionResult(
+            status="succeeded",
+            message=self.t("action_messages.clear_processed_succeeded"),
+            data={"account_id": credentials.account_id, "refresh_channels": True},
+        )
+
+    def _logout(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
+        store, credentials, credentials_path = self._resolve_action_credentials(field_values)
+        if credentials is None:
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
+        store.delete_credentials(credentials.account_id, credentials_path=credentials_path)
+        store.update_channel_status(state="unconfigured", running=False, configured=False, account_id="", last_error="")
+        return PluginSettingsActionResult(
+            status="succeeded",
+            message=self.t("action_messages.logout_succeeded"),
+            data={"account_id": credentials.account_id, "refresh_channels": True},
+            settings_updates={"account_id": "", "credentials_path": "", "bot_token": ""},
         )
 
     async def _refresh_qr_login_session(self, session: _QrLoginSession) -> PluginSettingsActionResult:

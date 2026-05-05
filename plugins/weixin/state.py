@@ -89,6 +89,28 @@ class WeixinStateStore:
         self.register_account_id(credentials.account_id)
         return path
 
+    def delete_credentials(self, account_id: str, *, credentials_path: str = "") -> None:
+        selected_account_id = account_id.strip()
+        if credentials_path.strip():
+            try:
+                Path(credentials_path).expanduser().unlink()
+            except OSError:
+                pass
+        if not selected_account_id:
+            return
+        for path in (
+            self.account_path(selected_account_id),
+            self.sync_path(selected_account_id),
+            self.context_tokens_path(selected_account_id),
+            self.processed_messages_path(selected_account_id),
+            self.message_map_path(selected_account_id),
+        ):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+        self.unregister_account_id(selected_account_id)
+
     def list_account_ids(self) -> list[str]:
         try:
             parsed = json.loads(self.account_index_path.read_text(encoding="utf-8"))
@@ -108,6 +130,17 @@ class WeixinStateStore:
             encoding="utf-8",
         )
 
+    def unregister_account_id(self, account_id: str) -> None:
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        target = account_id.strip()
+        if not target:
+            return
+        remaining = [item for item in self.list_account_ids() if item != target]
+        self.account_index_path.write_text(
+            json.dumps(remaining, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
     def account_path(self, account_id: str) -> Path:
         return self.accounts_dir / f"{safe_key(account_id)}.json"
 
@@ -119,6 +152,9 @@ class WeixinStateStore:
 
     def processed_messages_path(self, account_id: str) -> Path:
         return self.accounts_dir / f"{safe_key(account_id)}.processed-messages.json"
+
+    def message_map_path(self, account_id: str) -> Path:
+        return self.accounts_dir / f"{safe_key(account_id)}.message-map.json"
 
     def load_sync_buf(self, account_id: str) -> str:
         try:
@@ -133,6 +169,12 @@ class WeixinStateStore:
             json.dumps({"get_updates_buf": get_updates_buf}, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
+
+    def clear_sync_buf(self, account_id: str) -> None:
+        try:
+            self.sync_path(account_id).unlink()
+        except OSError:
+            pass
 
     def load_context_tokens(self, account_id: str) -> dict[str, str]:
         try:
@@ -161,11 +203,47 @@ class WeixinStateStore:
 
     def save_processed_message_ids(self, account_id: str, message_ids: set[str], *, limit: int = 1000) -> None:
         self.accounts_dir.mkdir(parents=True, exist_ok=True)
-        items = list(message_ids)[-limit:]
+        items = sorted(message_ids)[-limit:]
         self.processed_messages_path(account_id).write_text(
             json.dumps(items, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
+
+    def clear_processed_message_ids(self, account_id: str) -> None:
+        try:
+            self.processed_messages_path(account_id).unlink()
+        except OSError:
+            pass
+
+    def load_message_id_map(self, account_id: str) -> dict[str, str]:
+        try:
+            parsed = json.loads(self.message_map_path(account_id).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if not isinstance(parsed, dict):
+            return {}
+        return {str(key): str(value) for key, value in parsed.items() if str(key) and str(value)}
+
+    def save_message_id_map(self, account_id: str, mapping: dict[str, str], *, limit: int = 2000) -> None:
+        self.accounts_dir.mkdir(parents=True, exist_ok=True)
+        items = list(mapping.items())[-limit:]
+        self.message_map_path(account_id).write_text(
+            json.dumps(dict(items), ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+
+    def save_message_id_mapping(self, account_id: str, external_message_id: str, magi_message_id: str) -> None:
+        key = external_message_id.strip()
+        value = magi_message_id.strip()
+        if not key or not value:
+            return
+        mapping = self.load_message_id_map(account_id)
+        mapping[key] = value
+        self.save_message_id_map(account_id, mapping)
+
+    def lookup_message_id_mapping(self, account_id: str, external_message_id: str) -> str | None:
+        value = self.load_message_id_map(account_id).get(external_message_id.strip())
+        return value.strip() if value else None
 
     def load_channel_status(self) -> dict[str, Any]:
         try:

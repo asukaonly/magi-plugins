@@ -67,6 +67,21 @@
       "label": "校验微信连接",
       "description": "检查已保存的微信凭据和网关连接是否可用。",
       "button_label": "测试连接"
+    },
+    "reset_cursor": {
+      "label": "重置游标",
+      "description": "清除已保存的微信 getUpdates 游标，并从网关的下一位置重新连接。",
+      "button_label": "重置游标"
+    },
+    "clear_processed_messages": {
+      "label": "清除消息去重",
+      "description": "清除用于微信重试安全的本地已处理消息缓存。",
+      "button_label": "清除去重"
+    },
+    "logout": {
+      "label": "退出微信登录",
+      "description": "移除该账号已保存的微信凭据，直到重新扫码登录前停止通道。",
+      "button_label": "退出登录"
     }
   },
   "action_messages": {
@@ -85,6 +100,9 @@
     "validate_missing_credentials": "还没有配置微信凭据。",
     "validate_succeeded": "微信凭据可用。",
     "validate_failed": "微信凭据校验失败：{error}",
+    "reset_cursor_succeeded": "微信游标已重置，通道将重新连接。",
+    "clear_processed_succeeded": "微信已处理消息缓存已清除，通道将重新连接。",
+    "logout_succeeded": "微信凭据已移除，请重新扫码登录后再连接。",
     "unexpected_status": "未知的微信登录状态：{status}"
   }
 }
