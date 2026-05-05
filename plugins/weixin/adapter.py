@@ -108,7 +108,7 @@ class WeixinChannel(Channel):
         self._context_tokens = self._state.load_context_tokens(credentials.account_id)
         self._stop_event = asyncio.Event()
         self._poll_task = asyncio.create_task(self._poll_loop())
-        logger.info("Weixin channel started", account_id=credentials.account_id)
+        logger.info("Weixin channel started account_id=%s", credentials.account_id)
 
     async def stop(self) -> None:
         if self._stop_event is not None:
@@ -203,9 +203,9 @@ class WeixinChannel(Channel):
             except Exception:
                 consecutive_failures += 1
                 logger.exception(
-                    "Weixin polling failed",
-                    account_id=account_id,
-                    consecutive_failures=consecutive_failures,
+                    "Weixin polling failed account_id=%s consecutive_failures=%s",
+                    account_id,
+                    consecutive_failures,
                 )
                 await self._sleep_or_stop(30_000 if consecutive_failures >= 3 else 2_000)
                 if consecutive_failures >= 3:
@@ -224,7 +224,7 @@ class WeixinChannel(Channel):
         raw_items = message.get("item_list")
         text = body_from_item_list(raw_items if isinstance(raw_items, list) else None).strip()
         if not text:
-            logger.info("Skipping unsupported Weixin message", from_user_id=from_user_id)
+            logger.info("Skipping unsupported Weixin message from_user_id=%s", from_user_id)
             return
 
         context_token = str(message.get("context_token") or "").strip()
@@ -267,9 +267,9 @@ class WeixinChannel(Channel):
         )
         if not outcome.success:
             logger.warning(
-                "Weixin dispatch failed",
-                error_code=outcome.error_code,
-                error_message=outcome.error_message,
+                "Weixin dispatch failed error_code=%s error_message=%s",
+                outcome.error_code,
+                outcome.error_message,
             )
 
     async def _get_typing_ticket(self, user_id: str, context_token: str | None) -> str:
@@ -302,12 +302,12 @@ class WeixinChannel(Channel):
         errcode = response.get("errcode")
         ret = response.get("ret")
         if errcode == SESSION_EXPIRED_ERRCODE or ret == SESSION_EXPIRED_ERRCODE:
-            logger.error("Weixin session expired; polling paused", response=response)
+            logger.error("Weixin session expired; polling paused response=%s", response)
             return self._config.session_expired_pause_ms
         logger.error(
-            "Weixin getUpdates returned an error",
-            response=response,
-            consecutive_failures=consecutive_failures + 1,
+            "Weixin getUpdates returned an error response=%s consecutive_failures=%s",
+            response,
+            consecutive_failures + 1,
         )
         return 30_000 if consecutive_failures >= 2 else 2_000
 
