@@ -36,6 +36,7 @@ magi-plugins/
 │   ├── netease_music/             # NetEase Cloud Music history sensor
 │   ├── photo-library/             # Local photo library sensor
 │   ├── screen_time/               # App usage tracking sensor (macOS)
+│   ├── steam_play_history/        # Steam gameplay history sensor
 │   ├── system_media/              # Cross-platform media playback sensor
 │   └── terminal_history/          # Terminal command history sensor (macOS)
 ├── scripts/

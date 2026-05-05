@@ -1,0 +1,29 @@
+{
+  "steam_play_history": {
+    "name": "Steam Play History",
+    "description": "Steam gameplay sessions inferred from local Steam playtime changes"
+  },
+  "activity": {
+    "source": {
+      "steam": "Steam"
+    },
+    "action": {
+      "play": "Played"
+    },
+    "object": {
+      "game": "Game"
+    }
+  },
+  "narration": {
+    "session_title": "Played {game_name} for {duration}",
+    "session_summary": "Played {game_name} on Steam for {duration}.",
+    "recent_title": "Recently played {game_name}",
+    "recent_summary": "Steam reports {game_name} was played recently, with {total_playtime} total playtime."
+  },
+  "activation": {
+    "title": "Enable Steam Play History",
+    "description": "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before this source starts running.",
+    "confirm_label": "Enable source",
+    "cancel_label": "Not now"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "steam_play_history": {
+    "name": "Steam 游玩历史",
+    "description": "根据本地 Steam 游玩时长变化推断游戏会话"
+  },
+  "activity": {
+    "source": {
+      "steam": "Steam"
+    },
+    "action": {
+      "play": "游玩"
+    },
+    "object": {
+      "game": "游戏"
+    }
+  },
+  "narration": {
+    "session_title": "游玩 {game_name} {duration}",
+    "session_summary": "在 Steam 上游玩 {game_name}，持续 {duration}。",
+    "recent_title": "最近玩过 {game_name}",
+    "recent_summary": "Steam 显示最近玩过 {game_name}，累计游玩时长为 {total_playtime}。"
+  },
+  "activation": {
+    "title": "启用 Steam 游玩历史",
+    "description": "Steam 游玩历史会体现你的游戏习惯。请选择首次同步如何初始化时间线数据。",
+    "confirm_label": "启用来源",
+    "cancel_label": "暂不启用"
+  }
+}
