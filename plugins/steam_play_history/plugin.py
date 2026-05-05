@@ -7,6 +7,7 @@ from typing import Any
 
 from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 
+from .reader import detect_steam_root
 from .sensor import SteamPlayHistoryTimelineSensor
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
 
@@ -15,15 +16,12 @@ DEFAULT_SETTINGS = {
     "sync_mode": "interval",
     "sync_interval_minutes": 10,
     "steam_path": "",
-    "account_id": "auto",
-    "include_uninstalled_games": False,
     "max_items_per_sync": 500,
     "min_session_seconds": DEFAULT_MIN_SESSION_S,
     "idle_timeout_minutes": 15,
     "initial_sync_policy": "lookback_days",
     "initial_sync_lookback_days": 14,
     "initial_sync_configured": False,
-    "excluded_appids": [],
     "excluded_keywords": [],
     "default_retention_mode": "analyze_only",
 }
@@ -134,7 +132,7 @@ def _activation_flow(prefix: str, t: Any) -> ActivationFlowSpec:
     )
 
 
-def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
+def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
@@ -154,23 +152,10 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
                 "settings.steam_path.description",
                 fallback="Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
             ),
-            default="",
+            default=detected_steam_path,
             section="general",
             surface="timeline",
             order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.account_id",
-            type="input",
-            label=t("settings.account_id.label", fallback="Steam Account"),
-            description=t(
-                "settings.account_id.description",
-                fallback="Local account id, account name, or auto for the most recently used local account.",
-            ),
-            default="auto",
-            section="general",
-            surface="timeline",
-            order=30,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sync_mode",
@@ -184,7 +169,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             ],
             section="sync",
             surface="timeline",
-            order=40,
+            order=30,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sync_interval_minutes",
@@ -195,7 +180,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             min=1,
             section="sync",
             surface="timeline",
-            order=50,
+            order=40,
             depends_on_key=f"{prefix}.sync_mode",
             depends_on_values=["interval"],
         ),
@@ -208,7 +193,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             min=60,
             section="sync",
             surface="timeline",
-            order=60,
+            order=50,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.idle_timeout_minutes",
@@ -222,7 +207,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             min=2,
             section="sync",
             surface="timeline",
-            order=70,
+            order=60,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.max_items_per_sync",
@@ -233,31 +218,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             min=1,
             section="sync",
             surface="timeline",
-            order=80,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.include_uninstalled_games",
-            type="switch",
-            label=t("settings.include_uninstalled_games.label", fallback="Include Uninstalled Local Apps"),
-            description=t(
-                "settings.include_uninstalled_games.description",
-                fallback="Include local playtime entries for apps that are no longer installed. Names may be unavailable.",
-            ),
-            default=False,
-            section="privacy",
-            surface="timeline",
-            order=90,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.excluded_appids",
-            type="tags",
-            label=t("settings.excluded_appids.label", fallback="Excluded Steam App IDs"),
-            description=t("settings.excluded_appids.description", fallback="Steam app ids that should never be written to timeline memory."),
-            default=[],
-            section="privacy",
-            surface="timeline",
-            order=100,
-            placeholder="e.g. 413150",
+            order=70,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.excluded_keywords",
@@ -270,7 +231,7 @@ def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
             default=[],
             section="privacy",
             surface="timeline",
-            order=110,
+            order=80,
             placeholder="e.g. private",
         ),
     ]
@@ -373,6 +334,8 @@ class SteamPlayHistoryPlugin(Plugin):
         min_session_s = int(settings.get("min_session_seconds", DEFAULT_SETTINGS["min_session_seconds"]))
         idle_timeout_minutes = int(settings.get("idle_timeout_minutes", DEFAULT_SETTINGS["idle_timeout_minutes"]))
         sync_interval = int(settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
+        configured_steam_path = str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"])
+        detected_steam_path = str(detect_steam_root(configured_steam_path) or configured_steam_path or "")
 
         sensor = SteamPlayHistoryTimelineSensor(
             state_store=SteamPlayStateStore(
@@ -380,11 +343,8 @@ class SteamPlayHistoryPlugin(Plugin):
                 min_session_s=min_session_s,
             ),
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
-            steam_path=str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"]),
-            account_id=str(settings.get("account_id") or DEFAULT_SETTINGS["account_id"]),
-            include_uninstalled_games=bool(
-                settings.get("include_uninstalled_games", DEFAULT_SETTINGS["include_uninstalled_games"])
-            ),
+            steam_path=configured_steam_path,
+            account_id=str(settings.get("account_id") or "auto"),
         )
 
         return [
@@ -402,7 +362,11 @@ class SteamPlayHistoryPlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode="interval",
-                    fields=_fields("sensors.steam_play_history", self.t),
+                    fields=_fields(
+                        "sensors.steam_play_history",
+                        self.t,
+                        detected_steam_path=detected_steam_path,
+                    ),
                     metadata={
                         "source_type": "steam_play_history",
                         "default_settings": dict(DEFAULT_SETTINGS),

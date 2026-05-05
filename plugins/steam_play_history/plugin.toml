@@ -2,7 +2,7 @@
 id = "steam-play-history"
 name = "Steam Play History"
 name_i18n = { "zh-CN" = "Steam 游玩历史" }
-version = "0.1.1"
+version = "0.1.2"
 description = "Infers Steam gameplay sessions from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏会话" }
 author = "Magi Team"

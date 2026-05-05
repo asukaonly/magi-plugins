@@ -65,12 +65,10 @@ class SteamReader:
         *,
         steam_path: str | None = None,
         account_id: str | None = None,
-        include_uninstalled_games: bool = False,
     ) -> SteamSnapshot:
         return self._read_local_snapshot(
             steam_path=steam_path,
             account_id=account_id,
-            include_uninstalled_games=include_uninstalled_games,
         )
 
     def _read_local_snapshot(
@@ -78,7 +76,6 @@ class SteamReader:
         *,
         steam_path: str | None,
         account_id: str | None,
-        include_uninstalled_games: bool,
     ) -> SteamSnapshot:
         root = _resolve_steam_root(steam_path)
         if root is None:
@@ -97,9 +94,6 @@ class SteamReader:
         for appid, values in playtime_by_app.items():
             if appid in games_by_appid:
                 game = games_by_appid[appid]
-            elif include_uninstalled_games:
-                game = SteamGameRecord(appid=appid, name=f"Steam app {appid}", source="local_vdf")
-                games_by_appid[appid] = game
             else:
                 continue
 
@@ -133,6 +127,12 @@ def _resolve_steam_root(steam_path: str | None) -> Path | None:
         if _looks_like_steam_root(candidate):
             return candidate
     return None
+
+
+def detect_steam_root(steam_path: str | None = None) -> Path | None:
+    """Expose Steam root detection for settings/UI defaults."""
+
+    return _resolve_steam_root(steam_path)
 
 
 def _looks_like_steam_root(path: Path) -> bool:

@@ -52,7 +52,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         retention_mode: str = "analyze_only",
         steam_path: str = "",
         account_id: str = "auto",
-        include_uninstalled_games: bool = False,
     ) -> None:
         super().__init__()
         self._reader = reader or SteamReader()
@@ -60,7 +59,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         self.retention_mode = retention_mode or "analyze_only"
         self.steam_path = steam_path
         self.account_id = account_id or "auto"
-        self.include_uninstalled_games = include_uninstalled_games
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
         event_kind = str(item.get("event_kind") or "play_session")
@@ -100,7 +98,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         now = datetime.now(timezone.utc)
         steam_path = str(settings.get("steam_path") or self.steam_path or "")
         account_id = str(settings.get("account_id") or self.account_id or "auto")
-        include_uninstalled_games = bool(settings.get("include_uninstalled_games", self.include_uninstalled_games))
         initial_sync_policy = str(settings.get("initial_sync_policy") or "lookback_days")
         initial_sync_lookback_days = max(1, int(settings.get("initial_sync_lookback_days") or 14))
         max_items = max(1, int(settings.get("max_items_per_sync") or context.limit or 500))
@@ -108,7 +105,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         snapshot = self._reader.read_snapshot(
             steam_path=steam_path,
             account_id=account_id,
-            include_uninstalled_games=include_uninstalled_games,
         )
         account_hash = snapshot.account.account_hash if snapshot.account else "unknown"
         initial_items: list[dict[str, Any]] = []
