@@ -1,0 +1,82 @@
+{
+  "weixin": {
+    "name": "微信",
+    "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。"
+  },
+  "contributions": {
+    "weixin:channel": {
+      "display_name": "微信",
+      "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。"
+    }
+  },
+  "fields": {
+    "weixin:channel": {
+      "bot_token": {
+        "label": "机器人 Token",
+        "description": "微信扫码登录流程返回的 iLink bot token。使用凭据文件时可以留空。"
+      },
+      "account_id": {
+        "label": "账号 ID",
+        "description": "iLink 机器人账号 ID。当状态目录里只有一个已登录账号时可以留空。"
+      },
+      "credentials_path": {
+        "label": "凭据文件",
+        "description": "可选的 JSON 凭据文件，包含 token、account_id、base_url 和 user_id 字段。"
+      },
+      "state_dir": {
+        "label": "状态目录",
+        "description": "用于保存扫码登录凭据、getUpdates 游标和 context token 的目录。"
+      },
+      "allowed_user_ids": {
+        "label": "允许的微信用户 ID",
+        "description": "微信用户 ID 白名单。留空表示允许所有能给这个机器人发消息的用户。"
+      },
+      "enable_typing_indicator": {
+        "label": "输入状态提示",
+        "description": "Magi 处理消息时向微信发送正在输入状态。"
+      },
+      "base_url": {
+        "label": "API Base URL",
+        "description": "微信 iLink API 基础地址。"
+      },
+      "bot_type": {
+        "label": "Bot Type",
+        "description": "扫码登录 helper 使用的 iLink bot_type 值。"
+      },
+      "route_tag": {
+        "label": "Route Tag",
+        "description": "可选的 SKRouteTag 请求头，用于内部路由。"
+      },
+      "max_message_length": {
+        "label": "最大消息长度",
+        "description": "单条微信出站文本消息的最大字符数。"
+      },
+      "poll_timeout_ms": {
+        "label": "轮询超时",
+        "description": "getUpdates 长轮询超时时间，单位毫秒。"
+      }
+    }
+  },
+  "actions": {
+    "qr_login": {
+      "label": "微信扫码登录",
+      "description": "用微信扫描二维码完成授权，无需手动粘贴机器人 Token。",
+      "button_label": "开始扫码登录"
+    }
+  },
+  "action_messages": {
+    "scan": "请用微信扫描这个二维码。",
+    "waiting": "正在等待微信扫码。",
+    "scanned": "已扫码，请在微信里确认登录。",
+    "redirecting": "已扫码，正在跟随微信登录跳转。",
+    "session_missing": "扫码登录会话不存在。",
+    "cancelled": "微信扫码登录已取消。",
+    "no_qr": "微信网关没有返回二维码。",
+    "expired_too_many": "二维码过期次数过多，请重新开始登录。",
+    "refresh_failed": "微信网关没有刷新二维码。",
+    "refreshed": "二维码已刷新，请扫描新的二维码。",
+    "missing_credentials": "登录已确认，但缺少账号凭据。",
+    "succeeded": "微信登录成功。",
+    "unexpected_status": "未知的微信登录状态：{status}"
+  }
+}

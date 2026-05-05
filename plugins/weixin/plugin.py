@@ -203,7 +203,7 @@ class WeixinPlugin(Plugin):
 
         session = await self._create_qr_login_session(field_values)
         self._qr_login_sessions[session_id] = session
-        return _qr_pending_result(session, "Scan this QR code with Weixin.", "waiting")
+        return _qr_pending_result(session, self.t("action_messages.scan"), "waiting")
 
     async def poll_settings_action(
         self,
@@ -218,25 +218,28 @@ class WeixinPlugin(Plugin):
 
         session = self._qr_login_sessions.get(session_id)
         if session is None:
-            return PluginSettingsActionResult(status="failed", message="QR login session not found.")
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.session_missing"))
 
         client = self._qr_api_client(session.current_base_url, session)
         status = await client.get_qr_status(qrcode=session.qrcode, timeout_ms=QR_STATUS_POLL_TIMEOUT_MS)
         status_name = str(status.get("status") or "wait")
         if status_name == "wait":
-            return _qr_pending_result(session, "Waiting for Weixin scan.", "waiting")
+            return _qr_pending_result(session, self.t("action_messages.waiting"), "waiting")
         if status_name == "scaned":
-            return _qr_pending_result(session, "QR code scanned. Confirm the login in Weixin.", "scanned")
+            return _qr_pending_result(session, self.t("action_messages.scanned"), "scanned")
         if status_name == "scaned_but_redirect":
             redirect_host = str(status.get("redirect_host") or "").strip()
             if redirect_host:
                 session.current_base_url = f"https://{redirect_host}"
-            return _qr_pending_result(session, "QR code scanned. Following Weixin login redirect.", "redirecting")
+            return _qr_pending_result(session, self.t("action_messages.redirecting"), "redirecting")
         if status_name == "expired":
             return await self._refresh_qr_login_session(session)
         if status_name == "confirmed":
             return self._finish_qr_login_session(session_id, session, status)
-        return PluginSettingsActionResult(status="failed", message=f"Unexpected Weixin login status: {status_name}")
+        return PluginSettingsActionResult(
+            status="failed",
+            message=self.t("action_messages.unexpected_status", status=status_name),
+        )
 
     async def cancel_settings_action(
         self,
@@ -247,7 +250,7 @@ class WeixinPlugin(Plugin):
         if action_id != QR_LOGIN_ACTION_ID:
             raise KeyError(action_id)
         self._qr_login_sessions.pop(session_id, None)
-        return PluginSettingsActionResult(status="cancelled", message="Weixin QR login cancelled.")
+        return PluginSettingsActionResult(status="cancelled", message=self.t("action_messages.cancelled"))
 
     async def _create_qr_login_session(self, field_values: dict[str, Any] | None) -> _QrLoginSession:
         manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
@@ -266,7 +269,7 @@ class WeixinPlugin(Plugin):
         qrcode = str(qrcode_payload.get("qrcode") or "")
         qr_code_url = str(qrcode_payload.get("qrcode_img_content") or "")
         if not qrcode or not qr_code_url:
-            raise RuntimeError("The Weixin gateway did not return a QR code.")
+            raise RuntimeError(self.t("action_messages.no_qr"))
         return _QrLoginSession(
             qrcode=qrcode,
             qr_code_url=qr_code_url,
@@ -282,14 +285,14 @@ class WeixinPlugin(Plugin):
     async def _refresh_qr_login_session(self, session: _QrLoginSession) -> PluginSettingsActionResult:
         session.refresh_count += 1
         if session.refresh_count > MAX_QR_REFRESH_COUNT:
-            return PluginSettingsActionResult(status="failed", message="The QR code expired too many times.")
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.expired_too_many"))
         payload = await self._qr_api_client(session.base_url, session).get_qr_code(bot_type=session.bot_type)
         session.qrcode = str(payload.get("qrcode") or "")
         session.qr_code_url = str(payload.get("qrcode_img_content") or "")
         session.current_base_url = session.base_url
         if not session.qrcode or not session.qr_code_url:
-            return PluginSettingsActionResult(status="failed", message="The Weixin gateway did not refresh the QR code.")
-        return _qr_pending_result(session, "QR code refreshed. Scan the new code with Weixin.", "refreshed")
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.refresh_failed"))
+        return _qr_pending_result(session, self.t("action_messages.refreshed"), "refreshed")
 
     def _finish_qr_login_session(
         self,
@@ -300,7 +303,7 @@ class WeixinPlugin(Plugin):
         token = str(status.get("bot_token") or "").strip()
         account_id = str(status.get("ilink_bot_id") or "").strip()
         if not token or not account_id:
-            return PluginSettingsActionResult(status="failed", message="Login confirmed, but account credentials were missing.")
+            return PluginSettingsActionResult(status="failed", message=self.t("action_messages.missing_credentials"))
 
         credentials = WeixinCredentials(
             account_id=account_id,
@@ -312,7 +315,7 @@ class WeixinPlugin(Plugin):
         self._qr_login_sessions.pop(session_id, None)
         return PluginSettingsActionResult(
             status="succeeded",
-            message="Weixin login succeeded.",
+            message=self.t("action_messages.succeeded"),
             data={"account_id": account_id, "credentials_path": str(saved_path)},
             settings_updates={
                 "account_id": account_id,

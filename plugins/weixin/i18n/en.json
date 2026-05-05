@@ -1,0 +1,82 @@
+{
+  "weixin": {
+    "name": "Weixin",
+    "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
+  },
+  "contributions": {
+    "weixin:channel": {
+      "display_name": "Weixin",
+      "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
+    }
+  },
+  "fields": {
+    "weixin:channel": {
+      "bot_token": {
+        "label": "Bot Token",
+        "description": "iLink bot token returned by the Weixin QR login flow. Leave empty when using a credentials file."
+      },
+      "account_id": {
+        "label": "Account ID",
+        "description": "iLink bot account ID. Leave empty only when the state directory contains exactly one logged-in account."
+      },
+      "credentials_path": {
+        "label": "Credentials File",
+        "description": "Optional JSON credentials file with token, account_id, base_url, and user_id fields."
+      },
+      "state_dir": {
+        "label": "State Directory",
+        "description": "Directory used for QR-login credentials, getUpdates cursor, and context tokens."
+      },
+      "allowed_user_ids": {
+        "label": "Allowed Weixin User IDs",
+        "description": "Whitelist of Weixin user IDs. Empty means allow all users who can message this bot."
+      },
+      "enable_typing_indicator": {
+        "label": "Typing Indicator",
+        "description": "Send Weixin typing status while Magi is processing a message."
+      },
+      "base_url": {
+        "label": "API Base URL",
+        "description": "Weixin iLink API base URL."
+      },
+      "bot_type": {
+        "label": "Bot Type",
+        "description": "iLink bot_type used by the QR login helper."
+      },
+      "route_tag": {
+        "label": "Route Tag",
+        "description": "Optional SKRouteTag header for internal routing."
+      },
+      "max_message_length": {
+        "label": "Max Message Length",
+        "description": "Maximum characters per Weixin outbound text message."
+      },
+      "poll_timeout_ms": {
+        "label": "Poll Timeout",
+        "description": "Long-poll timeout in milliseconds for getUpdates."
+      }
+    }
+  },
+  "actions": {
+    "qr_login": {
+      "label": "Weixin QR Login",
+      "description": "Scan with Weixin to authorize this channel without pasting a bot token manually.",
+      "button_label": "Start QR Login"
+    }
+  },
+  "action_messages": {
+    "scan": "Scan this QR code with Weixin.",
+    "waiting": "Waiting for Weixin scan.",
+    "scanned": "QR code scanned. Confirm the login in Weixin.",
+    "redirecting": "QR code scanned. Following Weixin login redirect.",
+    "session_missing": "QR login session not found.",
+    "cancelled": "Weixin QR login cancelled.",
+    "no_qr": "The Weixin gateway did not return a QR code.",
+    "expired_too_many": "The QR code expired too many times.",
+    "refresh_failed": "The Weixin gateway did not refresh the QR code.",
+    "refreshed": "QR code refreshed. Scan the new code with Weixin.",
+    "missing_credentials": "Login confirmed, but account credentials were missing.",
+    "succeeded": "Weixin login succeeded.",
+    "unexpected_status": "Unexpected Weixin login status: {status}"
+  }
+}
