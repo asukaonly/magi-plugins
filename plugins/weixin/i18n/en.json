@@ -62,6 +62,11 @@
       "label": "Weixin QR Login",
       "description": "Scan with Weixin to authorize this channel without pasting a bot token manually.",
       "button_label": "Start QR Login"
+    },
+    "validate_credentials": {
+      "label": "Validate Credentials",
+      "description": "Check the saved Weixin credentials and gateway connection.",
+      "button_label": "Test Connection"
     }
   },
   "action_messages": {
@@ -77,6 +82,9 @@
     "refreshed": "QR code refreshed. Scan the new code with Weixin.",
     "missing_credentials": "Login confirmed, but account credentials were missing.",
     "succeeded": "Weixin login succeeded.",
+    "validate_missing_credentials": "No Weixin credentials are configured yet.",
+    "validate_succeeded": "Weixin credentials are valid.",
+    "validate_failed": "Weixin credential validation failed: {error}",
     "unexpected_status": "Unexpected Weixin login status: {status}"
   }
 }

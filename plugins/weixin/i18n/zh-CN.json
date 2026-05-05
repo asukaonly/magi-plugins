@@ -62,6 +62,11 @@
       "label": "微信扫码登录",
       "description": "用微信扫描二维码完成授权，无需手动粘贴机器人 Token。",
       "button_label": "开始扫码登录"
+    },
+    "validate_credentials": {
+      "label": "校验微信连接",
+      "description": "检查已保存的微信凭据和网关连接是否可用。",
+      "button_label": "测试连接"
     }
   },
   "action_messages": {
@@ -77,6 +82,9 @@
     "refreshed": "二维码已刷新，请扫描新的二维码。",
     "missing_credentials": "登录已确认，但缺少账号凭据。",
     "succeeded": "微信登录成功。",
+    "validate_missing_credentials": "还没有配置微信凭据。",
+    "validate_succeeded": "微信凭据可用。",
+    "validate_failed": "微信凭据校验失败：{error}",
     "unexpected_status": "未知的微信登录状态：{status}"
   }
 }

@@ -114,7 +114,7 @@ class WeixinApiClient:
         timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
     ) -> str:
         client_id = f"magi-weixin-{secrets.token_hex(12)}"
-        await self._request_json(
+        response = await self._request_json(
             "POST",
             "ilink/bot/sendmessage",
             body={
@@ -136,6 +136,11 @@ class WeixinApiClient:
             },
             timeout_ms=timeout_ms,
         )
+        ret = response.get("ret")
+        errcode = response.get("errcode")
+        if (ret is not None and ret != 0) or (errcode is not None and errcode != 0):
+            message = response.get("errmsg") or response.get("message") or response
+            raise WeixinApiError(f"Weixin sendmessage returned an error: {message}")
         return client_id
 
     async def get_config(

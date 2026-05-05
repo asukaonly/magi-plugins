@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -30,6 +32,10 @@ from .normalizers import body_from_item_list
 from .state import WeixinCredentials, WeixinStateStore
 
 logger = get_logger(__name__)
+
+
+def _now_ms() -> int:
+    return int(time.time() * 1000)
 
 
 @dataclass(slots=True)
@@ -92,8 +98,16 @@ class WeixinChannel(Channel):
         self._message_dispatcher = dispatcher
 
     async def start(self) -> None:
+        self._state.update_channel_status(state="starting", running=False, configured=False, last_error="")
         credentials = self._load_credentials()
         if credentials is None:
+            self._state.update_channel_status(
+                state="unconfigured",
+                running=False,
+                configured=False,
+                last_error="Weixin credentials are required.",
+                last_error_at_ms=_now_ms(),
+            )
             raise ValueError(
                 "Weixin credentials are required. Run plugins/weixin/login.py or configure bot_token and account_id."
             )
@@ -108,6 +122,15 @@ class WeixinChannel(Channel):
         self._context_tokens = self._state.load_context_tokens(credentials.account_id)
         self._stop_event = asyncio.Event()
         self._poll_task = asyncio.create_task(self._poll_loop())
+        self._state.update_channel_status(
+            state="running",
+            running=True,
+            configured=True,
+            account_id=credentials.account_id,
+            base_url=self._api.base_url,
+            last_start_at_ms=_now_ms(),
+            last_error="",
+        )
         logger.info("Weixin channel started account_id=%s", credentials.account_id)
 
     async def stop(self) -> None:
@@ -120,6 +143,7 @@ class WeixinChannel(Channel):
             except asyncio.CancelledError:
                 pass
             self._poll_task = None
+        self._state.update_channel_status(state="stopped", running=False, last_stop_at_ms=_now_ms())
         logger.info("Weixin channel stopped")
 
     async def send_message(self, target: ChannelTarget, content: OutboundContent) -> None:
@@ -131,11 +155,34 @@ class WeixinChannel(Channel):
         if len(text) > self._config.max_message_length:
             text = text[: self._config.max_message_length - 3] + "..."
         context_token = self._context_tokens.get(target.external_chat_id)
-        await self._api.send_text_message(
-            to_user_id=target.external_chat_id,
-            text=text,
-            context_token=context_token,
-            timeout_ms=self._config.request_timeout_ms,
+        try:
+            client_id = await self._api.send_text_message(
+                to_user_id=target.external_chat_id,
+                text=text,
+                context_token=context_token,
+                timeout_ms=self._config.request_timeout_ms,
+            )
+        except Exception as exc:
+            self._state.update_channel_status(
+                state="degraded",
+                running=True,
+                last_error=str(exc),
+                last_error_at_ms=_now_ms(),
+            )
+            raise
+        self._state.update_channel_status(
+            state="running",
+            running=True,
+            last_outbound_at_ms=_now_ms(),
+            last_outbound_chat_id=target.external_chat_id,
+            last_outbound_client_id=client_id,
+            last_error="",
+        )
+        logger.info(
+            "Weixin outbound sent to_user_id=%s client_id=%s chars=%s",
+            target.external_chat_id,
+            client_id,
+            len(text),
         )
 
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
@@ -169,6 +216,7 @@ class WeixinChannel(Channel):
             return
         account_id = self._credentials.account_id
         get_updates_buf = self._state.load_sync_buf(account_id)
+        processed_message_ids = self._state.load_processed_message_ids(account_id)
         next_timeout_ms = self._config.poll_timeout_ms or DEFAULT_LONG_POLL_TIMEOUT_MS
         consecutive_failures = 0
 
@@ -178,9 +226,17 @@ class WeixinChannel(Channel):
                     get_updates_buf=get_updates_buf,
                     timeout_ms=next_timeout_ms,
                 )
+                self._state.update_channel_status(
+                    state="running",
+                    running=True,
+                    configured=True,
+                    account_id=account_id,
+                    last_poll_at_ms=_now_ms(),
+                    last_error="",
+                )
                 next_timeout_ms = int(response.get("longpolling_timeout_ms") or next_timeout_ms)
                 if self._is_api_error(response):
-                    pause_ms = self._handle_api_error(response, consecutive_failures)
+                    pause_ms = self._handle_api_error(response, consecutive_failures, account_id)
                     consecutive_failures = (
                         0
                         if pause_ms >= self._config.session_expired_pause_ms
@@ -190,18 +246,41 @@ class WeixinChannel(Channel):
                     continue
 
                 consecutive_failures = 0
-                new_buf = response.get("get_updates_buf")
-                if isinstance(new_buf, str) and new_buf:
-                    get_updates_buf = new_buf
-                    self._state.save_sync_buf(account_id, get_updates_buf)
-
+                messages = [message for message in (response.get("msgs") or []) if isinstance(message, dict)]
+                all_processed = True
+                processed_changed = False
                 for message in response.get("msgs") or []:
                     if isinstance(message, dict):
-                        await self._process_inbound_message(message)
+                        message_key = self._message_key(message)
+                        if message_key and message_key in processed_message_ids:
+                            continue
+                        processed = await self._process_inbound_message(message)
+                        if not processed:
+                            all_processed = False
+                            break
+                        if message_key:
+                            processed_message_ids.add(message_key)
+                            processed_changed = True
+
+                if processed_changed:
+                    self._state.save_processed_message_ids(account_id, processed_message_ids)
+
+                new_buf = response.get("get_updates_buf")
+                if isinstance(new_buf, str) and new_buf and all_processed:
+                    get_updates_buf = new_buf
+                    self._state.save_sync_buf(account_id, get_updates_buf)
+                elif isinstance(new_buf, str) and new_buf and messages:
+                    logger.warning("Weixin getUpdates cursor not advanced because a message was not processed")
             except asyncio.CancelledError:
                 raise
-            except Exception:
+            except Exception as exc:
                 consecutive_failures += 1
+                self._state.update_channel_status(
+                    state="degraded",
+                    running=True,
+                    last_error=str(exc),
+                    last_error_at_ms=_now_ms(),
+                )
                 logger.exception(
                     "Weixin polling failed account_id=%s consecutive_failures=%s",
                     account_id,
@@ -211,21 +290,21 @@ class WeixinChannel(Channel):
                 if consecutive_failures >= 3:
                     consecutive_failures = 0
 
-    async def _process_inbound_message(self, message: dict[str, Any]) -> None:
+    async def _process_inbound_message(self, message: dict[str, Any]) -> bool:
         if self._credentials is None:
-            return
+            return False
         if message.get("message_type") == MESSAGE_TYPE_BOT:
-            return
+            return True
 
         from_user_id = str(message.get("from_user_id") or "").strip()
         if not from_user_id or not self._is_user_allowed(from_user_id):
-            return
+            return True
 
         raw_items = message.get("item_list")
         text = body_from_item_list(raw_items if isinstance(raw_items, list) else None).strip()
         if not text:
             logger.info("Skipping unsupported Weixin message from_user_id=%s", from_user_id)
-            return
+            return True
 
         context_token = str(message.get("context_token") or "").strip()
         if context_token:
@@ -271,6 +350,21 @@ class WeixinChannel(Channel):
                 outcome.error_code,
                 outcome.error_message,
             )
+            self._state.update_channel_status(
+                state="degraded",
+                running=True,
+                last_error=outcome.error_message or outcome.error_code or "Weixin dispatch failed",
+                last_error_at_ms=_now_ms(),
+            )
+            return False
+        self._state.update_channel_status(
+            state="running",
+            running=True,
+            last_inbound_at_ms=_now_ms(),
+            last_inbound_chat_id=from_user_id,
+            last_error="",
+        )
+        return True
 
     async def _get_typing_ticket(self, user_id: str, context_token: str | None) -> str:
         if self._api is None:
@@ -298,18 +392,41 @@ class WeixinChannel(Channel):
         errcode = response.get("errcode")
         return (ret is not None and ret != 0) or (errcode is not None and errcode != 0)
 
-    def _handle_api_error(self, response: dict[str, Any], consecutive_failures: int) -> int:
+    def _handle_api_error(self, response: dict[str, Any], consecutive_failures: int, account_id: str) -> int:
         errcode = response.get("errcode")
         ret = response.get("ret")
         if errcode == SESSION_EXPIRED_ERRCODE or ret == SESSION_EXPIRED_ERRCODE:
+            self._state.update_channel_status(
+                state="failed",
+                running=False,
+                account_id=account_id,
+                last_error="Weixin session expired. Run QR login again.",
+                last_error_at_ms=_now_ms(),
+            )
             logger.error("Weixin session expired; polling paused response=%s", response)
             return self._config.session_expired_pause_ms
+        self._state.update_channel_status(
+            state="degraded",
+            running=True,
+            account_id=account_id,
+            last_error=str(response),
+            last_error_at_ms=_now_ms(),
+        )
         logger.error(
             "Weixin getUpdates returned an error response=%s consecutive_failures=%s",
             response,
             consecutive_failures + 1,
         )
         return 30_000 if consecutive_failures >= 2 else 2_000
+
+    @staticmethod
+    def _message_key(message: dict[str, Any]) -> str:
+        for key in ("message_id", "seq", "client_id"):
+            value = str(message.get(key) or "").strip()
+            if value:
+                return value
+        raw = json.dumps(message, ensure_ascii=False, sort_keys=True, default=str)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def _is_stopping(self) -> bool:
         return bool(self._stop_event and self._stop_event.is_set())

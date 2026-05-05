@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,10 @@ class WeixinStateStore:
     @property
     def account_index_path(self) -> Path:
         return self.state_dir / "accounts.json"
+
+    @property
+    def channel_status_path(self) -> Path:
+        return self.state_dir / "channel_status.json"
 
     def load_credentials(
         self,
@@ -112,6 +117,9 @@ class WeixinStateStore:
     def context_tokens_path(self, account_id: str) -> Path:
         return self.accounts_dir / f"{safe_key(account_id)}.context-tokens.json"
 
+    def processed_messages_path(self, account_id: str) -> Path:
+        return self.accounts_dir / f"{safe_key(account_id)}.processed-messages.json"
+
     def load_sync_buf(self, account_id: str) -> str:
         try:
             parsed = json.loads(self.sync_path(account_id).read_text(encoding="utf-8"))
@@ -141,6 +149,41 @@ class WeixinStateStore:
             json.dumps(tokens, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
+
+    def load_processed_message_ids(self, account_id: str) -> set[str]:
+        try:
+            parsed = json.loads(self.processed_messages_path(account_id).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return set()
+        if not isinstance(parsed, list):
+            return set()
+        return {str(item) for item in parsed if str(item)}
+
+    def save_processed_message_ids(self, account_id: str, message_ids: set[str], *, limit: int = 1000) -> None:
+        self.accounts_dir.mkdir(parents=True, exist_ok=True)
+        items = list(message_ids)[-limit:]
+        self.processed_messages_path(account_id).write_text(
+            json.dumps(items, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+
+    def load_channel_status(self) -> dict[str, Any]:
+        try:
+            parsed = json.loads(self.channel_status_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {"state": "stopped", "running": False, "configured": False}
+        return parsed if isinstance(parsed, dict) else {"state": "stopped", "running": False, "configured": False}
+
+    def update_channel_status(self, **updates: Any) -> dict[str, Any]:
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        status = self.load_channel_status()
+        status.update(updates)
+        status["updated_at_ms"] = int(time.time() * 1000)
+        self.channel_status_path.write_text(
+            json.dumps(status, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return status
 
     def _read_credentials_file(
         self,

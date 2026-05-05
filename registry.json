@@ -227,7 +227,7 @@
       "name_i18n": {
         "zh-CN": "微信"
       },
-      "version": "0.1.4",
+      "version": "0.1.5",
       "path": "plugins/weixin",
       "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
       "description_i18n": {
