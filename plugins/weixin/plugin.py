@@ -1,0 +1,438 @@
+"""Weixin channel plugin entrypoint."""
+
+from __future__ import annotations
+
+from collections import Counter
+from dataclasses import dataclass
+from typing import Any
+
+from magi_plugin_sdk import (
+    ContributionType,
+    ExtensionFieldSpec,
+    Plugin,
+    PluginSettingsActionResult,
+    PluginSettingsActionSpec,
+)
+from magi_plugin_sdk.channels import Channel
+
+from .adapter import WeixinChannel, WeixinChannelConfig
+from .api import (
+    DEFAULT_BASE_URL,
+    DEFAULT_BOT_TYPE,
+    DEFAULT_CDN_BASE_URL,
+    DEFAULT_LONG_POLL_TIMEOUT_MS,
+    WeixinApiClient,
+)
+from .auth import DEFAULT_LOGIN_TIMEOUT_MS, MAX_QR_REFRESH_COUNT
+from .state import WeixinCredentials, WeixinStateStore
+
+
+QR_LOGIN_ACTION_ID = "qr_login"
+QR_STATUS_POLL_TIMEOUT_MS = 8_000
+
+
+def _budget_int(budget: object | None, key: str, default: int) -> int:
+    if budget is None:
+        return int(default)
+    if isinstance(budget, dict):
+        raw = budget.get(key, default)
+    else:
+        raw = getattr(budget, key, default)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _weixin_metadata(event: dict[str, Any]) -> dict[str, Any]:
+    metadata = event.get("metadata_json")
+    if not isinstance(metadata, dict):
+        return {}
+    if metadata.get("external_chat_id") or metadata.get("channel_type") == "weixin":
+        return metadata
+    channel = metadata.get("channel")
+    if isinstance(channel, dict):
+        return channel
+    timeline = metadata.get("timeline")
+    if isinstance(timeline, dict):
+        provenance = timeline.get("provenance")
+        if isinstance(provenance, dict):
+            return provenance
+    return metadata
+
+
+@dataclass(slots=True)
+class _QrLoginSession:
+    qrcode: str
+    qr_code_url: str
+    base_url: str
+    current_base_url: str
+    bot_type: str
+    state_dir: str
+    channel_version: str
+    ilink_app_id: str
+    route_tag: str
+    refresh_count: int = 1
+
+
+def _settings_str(
+    field_values: dict[str, Any] | None,
+    settings: dict[str, Any],
+    key: str,
+    default: str,
+) -> str:
+    if field_values and field_values.get(key) not in (None, ""):
+        return str(field_values.get(key) or default).strip() or default
+    return str(settings.get(key) or default).strip() or default
+
+
+def _qr_pending_result(session: _QrLoginSession, message: str, status: str) -> PluginSettingsActionResult:
+    return PluginSettingsActionResult(
+        status="pending",
+        message=message,
+        data={
+            "qr_code_url": session.qr_code_url,
+            "qrcode": session.qrcode,
+            "status": status,
+        },
+    )
+
+
+class WeixinPlugin(Plugin):
+    """Weixin direct-message channel plugin."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._qr_login_sessions: dict[str, _QrLoginSession] = {}
+
+    def build_temporal_summary_features(
+        self,
+        *,
+        source_type: str,
+        events: list[dict[str, Any]],
+        summary_category: str,
+        period_start: float,
+        period_end: float,
+        budget: object | None = None,
+    ) -> dict[str, object] | None:
+        _ = summary_category, period_start, period_end
+        if source_type != "weixin" or not events:
+            return None
+
+        chat_counter: Counter[str] = Counter()
+        representative_event_ids: list[str] = []
+        for event in events:
+            channel_metadata = _weixin_metadata(event)
+            chat_id = str(channel_metadata.get("external_chat_id") or "unknown").strip() or "unknown"
+            chat_counter[chat_id] += 1
+            event_id = str(event.get("event_id") or "").strip()
+            if event_id and len(representative_event_ids) < 8:
+                representative_event_ids.append(event_id)
+
+        covered_event_count = len(events)
+        total_event_count = _budget_int(budget, "total_event_count", covered_event_count)
+        omitted_event_count = max(0, total_event_count - covered_event_count)
+        summary_lines = [
+            f"Weixin feature coverage used {covered_event_count} messages across {len(chat_counter)} direct chats."
+        ]
+
+        if omitted_event_count > 0:
+            summary_lines.append(
+                f"Weixin feature coverage used {covered_event_count} representative messages; {omitted_event_count} additional messages were compacted."
+            )
+
+        return {
+            "feature_type": "weixin_channel",
+            "message_count": covered_event_count,
+            "total_event_count": total_event_count,
+            "covered_event_count": covered_event_count,
+            "omitted_event_count": omitted_event_count,
+            "coverage_ratio": (covered_event_count / total_event_count) if total_event_count else None,
+            "chat_count": len(chat_counter),
+            "representative_event_ids": representative_event_ids,
+            "summary_lines": summary_lines,
+        }
+
+    def get_channel(self) -> Channel:
+        manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
+        config = WeixinChannelConfig(
+            bot_token=self.settings.get("bot_token", ""),
+            account_id=self.settings.get("account_id", ""),
+            credentials_path=self.settings.get("credentials_path", ""),
+            state_dir=self.settings.get("state_dir", "~/.magi/weixin"),
+            base_url=self.settings.get("base_url", DEFAULT_BASE_URL),
+            cdn_base_url=self.settings.get("cdn_base_url", DEFAULT_CDN_BASE_URL),
+            bot_type=self.settings.get("bot_type", DEFAULT_BOT_TYPE),
+            ilink_app_id=self.settings.get("ilink_app_id", "bot"),
+            route_tag=str(self.settings.get("route_tag", "") or ""),
+            allowed_user_ids=list(self.settings.get("allowed_user_ids") or []),
+            max_message_length=int(self.settings.get("max_message_length", 4000)),
+            poll_timeout_ms=int(self.settings.get("poll_timeout_ms", DEFAULT_LONG_POLL_TIMEOUT_MS)),
+            request_timeout_ms=int(self.settings.get("request_timeout_ms", 15_000)),
+            enable_typing_indicator=bool(self.settings.get("enable_typing_indicator", True)),
+            channel_version=manifest_version,
+        )
+        return WeixinChannel(config=config)
+
+    def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
+        return [
+            PluginSettingsActionSpec(
+                action_id=QR_LOGIN_ACTION_ID,
+                label="Weixin QR Login",
+                description="Scan with Weixin to authorize this channel without pasting a bot token manually.",
+                button_label="Start QR Login",
+                presentation="qr_code",
+                surface="extensions",
+                contribution_type=ContributionType.CHANNEL,
+                order=0,
+                poll_interval_ms=2_000,
+                timeout_ms=DEFAULT_LOGIN_TIMEOUT_MS,
+                persist_settings_on_success=True,
+            )
+        ]
+
+    async def start_settings_action(
+        self,
+        action_id: str,
+        *,
+        session_id: str,
+        field_values: dict[str, Any] | None = None,
+    ) -> PluginSettingsActionResult:
+        if action_id != QR_LOGIN_ACTION_ID:
+            raise KeyError(action_id)
+
+        session = await self._create_qr_login_session(field_values)
+        self._qr_login_sessions[session_id] = session
+        return _qr_pending_result(session, "Scan this QR code with Weixin.", "waiting")
+
+    async def poll_settings_action(
+        self,
+        action_id: str,
+        *,
+        session_id: str,
+        field_values: dict[str, Any] | None = None,
+    ) -> PluginSettingsActionResult:
+        _ = field_values
+        if action_id != QR_LOGIN_ACTION_ID:
+            raise KeyError(action_id)
+
+        session = self._qr_login_sessions.get(session_id)
+        if session is None:
+            return PluginSettingsActionResult(status="failed", message="QR login session not found.")
+
+        client = self._qr_api_client(session.current_base_url, session)
+        status = await client.get_qr_status(qrcode=session.qrcode, timeout_ms=QR_STATUS_POLL_TIMEOUT_MS)
+        status_name = str(status.get("status") or "wait")
+        if status_name == "wait":
+            return _qr_pending_result(session, "Waiting for Weixin scan.", "waiting")
+        if status_name == "scaned":
+            return _qr_pending_result(session, "QR code scanned. Confirm the login in Weixin.", "scanned")
+        if status_name == "scaned_but_redirect":
+            redirect_host = str(status.get("redirect_host") or "").strip()
+            if redirect_host:
+                session.current_base_url = f"https://{redirect_host}"
+            return _qr_pending_result(session, "QR code scanned. Following Weixin login redirect.", "redirecting")
+        if status_name == "expired":
+            return await self._refresh_qr_login_session(session)
+        if status_name == "confirmed":
+            return self._finish_qr_login_session(session_id, session, status)
+        return PluginSettingsActionResult(status="failed", message=f"Unexpected Weixin login status: {status_name}")
+
+    async def cancel_settings_action(
+        self,
+        action_id: str,
+        *,
+        session_id: str,
+    ) -> PluginSettingsActionResult:
+        if action_id != QR_LOGIN_ACTION_ID:
+            raise KeyError(action_id)
+        self._qr_login_sessions.pop(session_id, None)
+        return PluginSettingsActionResult(status="cancelled", message="Weixin QR login cancelled.")
+
+    async def _create_qr_login_session(self, field_values: dict[str, Any] | None) -> _QrLoginSession:
+        manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
+        base_url = _settings_str(field_values, self.settings, "base_url", DEFAULT_BASE_URL)
+        bot_type = _settings_str(field_values, self.settings, "bot_type", DEFAULT_BOT_TYPE)
+        state_dir = _settings_str(field_values, self.settings, "state_dir", "~/.magi/weixin")
+        ilink_app_id = _settings_str(field_values, self.settings, "ilink_app_id", "bot")
+        route_tag = _settings_str(field_values, self.settings, "route_tag", "")
+        client = WeixinApiClient(
+            base_url=base_url,
+            channel_version=manifest_version,
+            ilink_app_id=ilink_app_id,
+            route_tag=route_tag,
+        )
+        qrcode_payload = await client.get_qr_code(bot_type=bot_type)
+        qrcode = str(qrcode_payload.get("qrcode") or "")
+        qr_code_url = str(qrcode_payload.get("qrcode_img_content") or "")
+        if not qrcode or not qr_code_url:
+            raise RuntimeError("The Weixin gateway did not return a QR code.")
+        return _QrLoginSession(
+            qrcode=qrcode,
+            qr_code_url=qr_code_url,
+            base_url=base_url,
+            current_base_url=base_url,
+            bot_type=bot_type,
+            state_dir=state_dir,
+            channel_version=manifest_version,
+            ilink_app_id=ilink_app_id,
+            route_tag=route_tag,
+        )
+
+    async def _refresh_qr_login_session(self, session: _QrLoginSession) -> PluginSettingsActionResult:
+        session.refresh_count += 1
+        if session.refresh_count > MAX_QR_REFRESH_COUNT:
+            return PluginSettingsActionResult(status="failed", message="The QR code expired too many times.")
+        payload = await self._qr_api_client(session.base_url, session).get_qr_code(bot_type=session.bot_type)
+        session.qrcode = str(payload.get("qrcode") or "")
+        session.qr_code_url = str(payload.get("qrcode_img_content") or "")
+        session.current_base_url = session.base_url
+        if not session.qrcode or not session.qr_code_url:
+            return PluginSettingsActionResult(status="failed", message="The Weixin gateway did not refresh the QR code.")
+        return _qr_pending_result(session, "QR code refreshed. Scan the new code with Weixin.", "refreshed")
+
+    def _finish_qr_login_session(
+        self,
+        session_id: str,
+        session: _QrLoginSession,
+        status: dict[str, Any],
+    ) -> PluginSettingsActionResult:
+        token = str(status.get("bot_token") or "").strip()
+        account_id = str(status.get("ilink_bot_id") or "").strip()
+        if not token or not account_id:
+            return PluginSettingsActionResult(status="failed", message="Login confirmed, but account credentials were missing.")
+
+        credentials = WeixinCredentials(
+            account_id=account_id,
+            token=token,
+            base_url=str(status.get("baseurl") or session.current_base_url or DEFAULT_BASE_URL),
+            user_id=str(status.get("ilink_user_id") or ""),
+        )
+        saved_path = WeixinStateStore(session.state_dir).save_credentials(credentials)
+        self._qr_login_sessions.pop(session_id, None)
+        return PluginSettingsActionResult(
+            status="succeeded",
+            message="Weixin login succeeded.",
+            data={"account_id": account_id, "credentials_path": str(saved_path)},
+            settings_updates={
+                "account_id": account_id,
+                "credentials_path": str(saved_path),
+                "state_dir": session.state_dir,
+                "base_url": credentials.base_url,
+                "bot_token": "",
+            },
+        )
+
+    @staticmethod
+    def _qr_api_client(base_url: str, session: _QrLoginSession) -> WeixinApiClient:
+        return WeixinApiClient(
+            base_url=base_url,
+            channel_version=session.channel_version,
+            ilink_app_id=session.ilink_app_id,
+            route_tag=session.route_tag,
+        )
+
+    def get_channel_fields(self) -> list[ExtensionFieldSpec]:
+        return [
+            ExtensionFieldSpec(
+                key="bot_token",
+                type="secret",
+                label="Bot Token",
+                description="iLink bot token returned by the Weixin QR login flow. Leave empty when using a credentials file.",
+                default="",
+                surface="extensions",
+                order=0,
+            ),
+            ExtensionFieldSpec(
+                key="account_id",
+                type="input",
+                label="Account ID",
+                description="iLink bot account ID. Leave empty only when the state directory contains exactly one logged-in account.",
+                default="",
+                placeholder="example@im.bot",
+                surface="extensions",
+                order=1,
+            ),
+            ExtensionFieldSpec(
+                key="credentials_path",
+                type="path",
+                label="Credentials File",
+                description="Optional JSON credentials file with token, account_id, base_url, and user_id fields.",
+                default="",
+                placeholder="~/.magi/weixin/accounts/example@im.bot.json",
+                surface="extensions",
+                order=2,
+            ),
+            ExtensionFieldSpec(
+                key="state_dir",
+                type="path",
+                label="State Directory",
+                description="Directory used for QR-login credentials, getUpdates cursor, and context tokens.",
+                default="~/.magi/weixin",
+                surface="extensions",
+                order=3,
+            ),
+            ExtensionFieldSpec(
+                key="allowed_user_ids",
+                type="tags",
+                label="Allowed Weixin User IDs",
+                description="Whitelist of Weixin user IDs. Empty means allow all users who can message this bot.",
+                default=[],
+                surface="extensions",
+                order=4,
+            ),
+            ExtensionFieldSpec(
+                key="enable_typing_indicator",
+                type="switch",
+                label="Typing Indicator",
+                description="Send Weixin typing status while Magi is processing a message.",
+                default=True,
+                surface="extensions",
+                order=5,
+            ),
+            ExtensionFieldSpec(
+                key="base_url",
+                type="input",
+                label="API Base URL",
+                description="Weixin iLink API base URL.",
+                default=DEFAULT_BASE_URL,
+                surface="extensions",
+                order=6,
+            ),
+            ExtensionFieldSpec(
+                key="bot_type",
+                type="input",
+                label="Bot Type",
+                description="iLink bot_type used by the QR login helper.",
+                default=DEFAULT_BOT_TYPE,
+                surface="extensions",
+                order=7,
+            ),
+            ExtensionFieldSpec(
+                key="route_tag",
+                type="input",
+                label="Route Tag",
+                description="Optional SKRouteTag header for internal routing.",
+                default="",
+                surface="extensions",
+                order=8,
+            ),
+            ExtensionFieldSpec(
+                key="max_message_length",
+                type="number",
+                label="Max Message Length",
+                description="Maximum characters per Weixin outbound text message.",
+                default=4000,
+                surface="extensions",
+                order=9,
+            ),
+            ExtensionFieldSpec(
+                key="poll_timeout_ms",
+                type="number",
+                label="Poll Timeout",
+                description="Long-poll timeout in milliseconds for getUpdates.",
+                default=DEFAULT_LONG_POLL_TIMEOUT_MS,
+                surface="extensions",
+                order=10,
+            ),
+        ]

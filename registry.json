@@ -197,6 +197,28 @@
       "platforms": [
         "macos"
       ]
+    },
+    {
+      "plugin_id": "weixin",
+      "name": "Weixin",
+      "name_i18n": {
+        "zh-CN": "微信"
+      },
+      "version": "0.1.0",
+      "path": "plugins/weixin",
+      "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
+      "description_i18n": {
+        "zh-CN": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "channel"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
     }
   ]
 }
