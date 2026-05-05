@@ -7,7 +7,6 @@ from typing import Any
 
 from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 
-from .reader import detect_steam_root
 from .sensor import SteamPlayHistoryTimelineSensor
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
 
@@ -25,6 +24,31 @@ DEFAULT_SETTINGS = {
     "excluded_keywords": [],
     "default_retention_mode": "analyze_only",
 }
+
+
+def _detect_steam_root_compat(steam_path: str) -> str:
+    """Resolve the default Steam path without breaking updates from older plugin versions."""
+
+    try:
+        from . import reader as reader_module
+    except Exception:
+        return steam_path
+
+    detect = getattr(reader_module, "detect_steam_root", None)
+    if callable(detect):
+        try:
+            return str(detect(steam_path) or steam_path or "")
+        except Exception:
+            return steam_path
+
+    legacy_resolve = getattr(reader_module, "_resolve_steam_root", None)
+    if callable(legacy_resolve):
+        try:
+            return str(legacy_resolve(steam_path) or steam_path or "")
+        except Exception:
+            return steam_path
+
+    return steam_path
 
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
@@ -335,7 +359,7 @@ class SteamPlayHistoryPlugin(Plugin):
         idle_timeout_minutes = int(settings.get("idle_timeout_minutes", DEFAULT_SETTINGS["idle_timeout_minutes"]))
         sync_interval = int(settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
         configured_steam_path = str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"])
-        detected_steam_path = str(detect_steam_root(configured_steam_path) or configured_steam_path or "")
+        detected_steam_path = _detect_steam_root_compat(configured_steam_path)
 
         sensor = SteamPlayHistoryTimelineSensor(
             state_store=SteamPlayStateStore(

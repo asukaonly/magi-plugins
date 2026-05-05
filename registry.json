@@ -139,7 +139,7 @@
       "name_i18n": {
         "zh-CN": "Steam 游玩历史"
       },
-      "version": "0.1.2",
+      "version": "0.1.3",
       "path": "plugins/steam_play_history",
       "description": "Infers Steam gameplay sessions from local Steam files and playtime changes.",
       "description_i18n": {
