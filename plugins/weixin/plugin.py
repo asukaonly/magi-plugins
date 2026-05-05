@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from base64 import b64encode
 from collections import Counter
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any
 
 from magi_plugin_sdk import (
@@ -65,6 +67,7 @@ def _weixin_metadata(event: dict[str, Any]) -> dict[str, Any]:
 class _QrLoginSession:
     qrcode: str
     qr_code_url: str
+    qr_code_image_url: str
     base_url: str
     current_base_url: str
     bot_type: str
@@ -86,12 +89,26 @@ def _settings_str(
     return str(settings.get(key) or default).strip() or default
 
 
+def _qr_code_data_url(content: str) -> str:
+    try:
+        import segno
+    except ImportError as exc:
+        raise RuntimeError("The Weixin QR login action requires the 'segno' package.") from exc
+
+    output = BytesIO()
+    segno.make(content, error="m").save(output, kind="svg", scale=8, border=2, xmldecl=False)
+    encoded = b64encode(output.getvalue()).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
 def _qr_pending_result(session: _QrLoginSession, message: str, status: str) -> PluginSettingsActionResult:
     return PluginSettingsActionResult(
         status="pending",
         message=message,
         data={
-            "qr_code_url": session.qr_code_url,
+            "qr_code_url": session.qr_code_image_url,
+            "qr_code_text": session.qr_code_url,
+            "qr_code_link": session.qr_code_url,
             "qrcode": session.qrcode,
             "status": status,
         },
@@ -270,9 +287,11 @@ class WeixinPlugin(Plugin):
         qr_code_url = str(qrcode_payload.get("qrcode_img_content") or "")
         if not qrcode or not qr_code_url:
             raise RuntimeError(self.t("action_messages.no_qr"))
+        qr_code_image_url = _qr_code_data_url(qr_code_url)
         return _QrLoginSession(
             qrcode=qrcode,
             qr_code_url=qr_code_url,
+            qr_code_image_url=qr_code_image_url,
             base_url=base_url,
             current_base_url=base_url,
             bot_type=bot_type,
@@ -289,8 +308,9 @@ class WeixinPlugin(Plugin):
         payload = await self._qr_api_client(session.base_url, session).get_qr_code(bot_type=session.bot_type)
         session.qrcode = str(payload.get("qrcode") or "")
         session.qr_code_url = str(payload.get("qrcode_img_content") or "")
+        session.qr_code_image_url = _qr_code_data_url(session.qr_code_url) if session.qr_code_url else ""
         session.current_base_url = session.base_url
-        if not session.qrcode or not session.qr_code_url:
+        if not session.qrcode or not session.qr_code_url or not session.qr_code_image_url:
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.refresh_failed"))
         return _qr_pending_result(session, self.t("action_messages.refreshed"), "refreshed")
 
