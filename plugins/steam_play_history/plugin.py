@@ -8,7 +8,7 @@ from typing import Any
 from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
 
 from .sensor import SteamPlayHistoryTimelineSensor
-from .state import DEFAULT_IDLE_TIMEOUT_S, DEFAULT_MIN_SESSION_S, SteamPlayStateStore
+from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -16,9 +16,6 @@ DEFAULT_SETTINGS = {
     "sync_interval_minutes": 10,
     "steam_path": "",
     "account_id": "auto",
-    "source_mode": "local",
-    "steamid64": "",
-    "steam_web_api_key": "",
     "include_uninstalled_games": False,
     "max_items_per_sync": 500,
     "min_session_seconds": DEFAULT_MIN_SESSION_S,
@@ -72,28 +69,46 @@ def _format_minutes(seconds: int) -> str:
     return f"{minutes}m"
 
 
-def _activation_flow(prefix: str) -> ActivationFlowSpec:
+def _activation_flow(prefix: str, t: Any) -> ActivationFlowSpec:
     return ActivationFlowSpec(
-        title="Enable Steam Play History",
-        description=(
-            "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before "
-            "this source starts running. Exact sessions are inferred only after the source is enabled."
+        title=t("activation.title", fallback="Enable Steam Play History"),
+        description=t(
+            "activation.description",
+            fallback=(
+                "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before "
+                "this source starts running. Exact sessions are inferred only after the source is enabled."
+            ),
         ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
+        confirm_label=t("activation.confirm_label", fallback="Enable source"),
+        cancel_label=t("activation.cancel_label", fallback="Not now"),
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
         fields=[
             ExtensionFieldSpec(
                 key=f"{prefix}.initial_sync_policy",
                 type="select",
-                label="First Sync Scope",
-                description="Decide how much previous Steam activity should be imported.",
+                label=t("settings.initial_sync_policy.label", fallback="First Sync Scope"),
+                description=t(
+                    "settings.initial_sync_policy.description",
+                    fallback="Decide how much previous Steam activity should be imported.",
+                ),
                 default="lookback_days",
                 options=[
-                    ExtensionFieldOption(label="Import all last-played summaries", value="full"),
-                    ExtensionFieldOption(label="Import recent last-played summaries", value="lookback_days"),
-                    ExtensionFieldOption(label="Only record play from now on", value="from_now"),
+                    ExtensionFieldOption(
+                        label=t("settings.initial_sync_policy.options.full", fallback="Import all last-played summaries"),
+                        value="full",
+                    ),
+                    ExtensionFieldOption(
+                        label=t(
+                            "settings.initial_sync_policy.options.lookback_days",
+                            fallback="Import recent last-played summaries",
+                        ),
+                        value="lookback_days",
+                    ),
+                    ExtensionFieldOption(
+                        label=t("settings.initial_sync_policy.options.from_now", fallback="Only record play from now on"),
+                        value="from_now",
+                    ),
                 ],
                 section="activation",
                 surface="timeline",
@@ -102,8 +117,11 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
             ExtensionFieldSpec(
                 key=f"{prefix}.initial_sync_lookback_days",
                 type="number",
-                label="Recent Days",
-                description="Used when the first-sync scope is set to recent summaries.",
+                label=t("settings.initial_sync_lookback_days.label", fallback="Recent Days"),
+                description=t(
+                    "settings.initial_sync_lookback_days.description",
+                    fallback="Used when the first-sync scope is set to recent summaries.",
+                ),
                 default=14,
                 min=1,
                 section="activation",
@@ -116,167 +134,143 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
     )
 
 
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
+def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
             type="switch",
-            label="Enabled",
-            description="Whether Steam play history sync is active.",
+            label=t("settings.enabled.label", fallback="Enabled"),
+            description=t("settings.enabled.description", fallback="Whether Steam play history sync is active."),
             default=False,
             section="general",
             surface="timeline",
             order=10,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.source_mode",
-            type="select",
-            label="Data Source",
-            description="Local files need no credentials; hybrid can use Steam Web API to enrich game names and playtime.",
-            default="local",
-            options=[
-                ExtensionFieldOption(label="Local Steam files", value="local"),
-                ExtensionFieldOption(label="Local files + Steam Web API", value="hybrid"),
-                ExtensionFieldOption(label="Steam Web API only", value="web_api"),
-            ],
+            key=f"{prefix}.steam_path",
+            type="path",
+            label=t("settings.steam_path.label", fallback="Steam Path"),
+            description=t(
+                "settings.steam_path.description",
+                fallback="Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
+            ),
+            default="",
             section="general",
             surface="timeline",
             order=20,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.steam_path",
-            type="path",
-            label="Steam Path",
-            description="Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
-            default="",
+            key=f"{prefix}.account_id",
+            type="input",
+            label=t("settings.account_id.label", fallback="Steam Account"),
+            description=t(
+                "settings.account_id.description",
+                fallback="Local account id, account name, or auto for the most recently used local account.",
+            ),
+            default="auto",
             section="general",
             surface="timeline",
             order=30,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.account_id",
-            type="input",
-            label="Steam Account",
-            description="Local account id, SteamID64, account name, or auto for the most recently used local account.",
-            default="auto",
-            section="general",
+            key=f"{prefix}.sync_mode",
+            type="select",
+            label=t("settings.sync_mode.label", fallback="Sync Mode"),
+            description=t("settings.sync_mode.description", fallback="How Steam play history should be synchronized."),
+            default="interval",
+            options=[
+                ExtensionFieldOption(label=t("settings.sync_mode.options.manual", fallback="Manual"), value="manual"),
+                ExtensionFieldOption(label=t("settings.sync_mode.options.interval", fallback="Interval"), value="interval"),
+            ],
+            section="sync",
             surface="timeline",
             order=40,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.steamid64",
-            type="input",
-            label="SteamID64",
-            description="Required for Steam Web API only mode; hybrid mode can derive it from the selected local account.",
-            default="",
-            section="general",
-            surface="timeline",
-            order=50,
-            depends_on_key=f"{prefix}.source_mode",
-            depends_on_values=["hybrid", "web_api"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.steam_web_api_key",
-            type="secret",
-            label="Steam Web API Key",
-            description="Optional key used only for Steam Web API reads. It is never written to timeline memory.",
-            default="",
-            section="general",
-            surface="timeline",
-            order=60,
-            depends_on_key=f"{prefix}.source_mode",
-            depends_on_values=["hybrid", "web_api"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_mode",
-            type="select",
-            label="Sync Mode",
-            description="How Steam play history should be synchronized.",
-            default="interval",
-            options=[
-                ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
-            ],
-            section="sync",
-            surface="timeline",
-            order=70,
-        ),
-        ExtensionFieldSpec(
             key=f"{prefix}.sync_interval_minutes",
             type="number",
-            label="Sync Interval (minutes)",
-            description="How often to poll Steam playtime changes.",
+            label=t("settings.sync_interval_minutes.label", fallback="Sync Interval (minutes)"),
+            description=t("settings.sync_interval_minutes.description", fallback="How often to poll Steam playtime changes."),
             default=10,
             min=1,
             section="sync",
             surface="timeline",
-            order=80,
+            order=50,
             depends_on_key=f"{prefix}.sync_mode",
             depends_on_values=["interval"],
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.min_session_seconds",
             type="number",
-            label="Minimum Session Duration (seconds)",
-            description="Inferred play sessions shorter than this are ignored.",
+            label=t("settings.min_session_seconds.label", fallback="Minimum Session Duration (seconds)"),
+            description=t("settings.min_session_seconds.description", fallback="Inferred play sessions shorter than this are ignored."),
             default=DEFAULT_MIN_SESSION_S,
             min=60,
             section="sync",
             surface="timeline",
-            order=90,
+            order=60,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.idle_timeout_minutes",
             type="number",
-            label="Idle Timeout (minutes)",
-            description="A session is closed after this many minutes without additional Steam playtime.",
+            label=t("settings.idle_timeout_minutes.label", fallback="Idle Timeout (minutes)"),
+            description=t(
+                "settings.idle_timeout_minutes.description",
+                fallback="A session is closed after this many minutes without additional Steam playtime.",
+            ),
             default=15,
             min=2,
             section="sync",
             surface="timeline",
-            order=100,
+            order=70,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.max_items_per_sync",
             type="number",
-            label="Max Items Per Sync",
-            description="Maximum number of Steam records to emit per sync.",
+            label=t("settings.max_items_per_sync.label", fallback="Max Items Per Sync"),
+            description=t("settings.max_items_per_sync.description", fallback="Maximum number of Steam records to emit per sync."),
             default=500,
             min=1,
             section="sync",
             surface="timeline",
-            order=110,
+            order=80,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.include_uninstalled_games",
             type="switch",
-            label="Include Uninstalled Local Apps",
-            description="Include local playtime entries for apps that are no longer installed. Names may be unavailable without Web API.",
+            label=t("settings.include_uninstalled_games.label", fallback="Include Uninstalled Local Apps"),
+            description=t(
+                "settings.include_uninstalled_games.description",
+                fallback="Include local playtime entries for apps that are no longer installed. Names may be unavailable.",
+            ),
             default=False,
             section="privacy",
             surface="timeline",
-            order=120,
+            order=90,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.excluded_appids",
             type="tags",
-            label="Excluded Steam App IDs",
-            description="Steam app ids that should never be written to timeline memory.",
+            label=t("settings.excluded_appids.label", fallback="Excluded Steam App IDs"),
+            description=t("settings.excluded_appids.description", fallback="Steam app ids that should never be written to timeline memory."),
             default=[],
             section="privacy",
             surface="timeline",
-            order=130,
+            order=100,
             placeholder="e.g. 413150",
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.excluded_keywords",
             type="tags",
-            label="Excluded Game Keywords",
-            description="Game names containing these case-insensitive keywords are skipped before AI analysis.",
+            label=t("settings.excluded_keywords.label", fallback="Excluded Game Keywords"),
+            description=t(
+                "settings.excluded_keywords.description",
+                fallback="Game names containing these case-insensitive keywords are skipped before AI analysis.",
+            ),
             default=[],
             section="privacy",
             surface="timeline",
-            order=140,
+            order=110,
             placeholder="e.g. private",
         ),
     ]
@@ -388,9 +382,6 @@ class SteamPlayHistoryPlugin(Plugin):
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             steam_path=str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"]),
             account_id=str(settings.get("account_id") or DEFAULT_SETTINGS["account_id"]),
-            source_mode=str(settings.get("source_mode") or DEFAULT_SETTINGS["source_mode"]),
-            steamid64=str(settings.get("steamid64") or DEFAULT_SETTINGS["steamid64"]),
-            web_api_key=str(settings.get("steam_web_api_key") or DEFAULT_SETTINGS["steam_web_api_key"]),
             include_uninstalled_games=bool(
                 settings.get("include_uninstalled_games", DEFAULT_SETTINGS["include_uninstalled_games"])
             ),
@@ -402,18 +393,21 @@ class SteamPlayHistoryPlugin(Plugin):
                 sensor,
                 SensorSpec(
                     sensor_id="timeline.steam_play_history",
-                    display_name="Steam Play History",
-                    description="Steam gameplay sessions inferred from local playtime changes and optional Steam Web API data.",
+                    display_name=self.t("steam_play_history.name", fallback="Steam Play History"),
+                    description=self.t(
+                        "steam_play_history.description",
+                        fallback="Steam gameplay sessions inferred from local Steam playtime changes.",
+                    ),
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode="interval",
-                    fields=_fields("sensors.steam_play_history"),
+                    fields=_fields("sensors.steam_play_history", self.t),
                     metadata={
                         "source_type": "steam_play_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "sync_interval_minutes": sync_interval,
-                        "activation_flow": _activation_flow("sensors.steam_play_history").model_dump(),
+                        "activation_flow": _activation_flow("sensors.steam_play_history", self.t).model_dump(),
                     },
                 ),
             )

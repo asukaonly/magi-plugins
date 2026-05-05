@@ -1,7 +1,7 @@
 {
   "steam_play_history": {
     "name": "Steam 游玩历史",
-    "description": "根据本地 Steam 游玩时长变化推断游戏会话"
+    "description": "根据本地 Steam 文件推断游戏会话"
   },
   "activity": {
     "source": {
@@ -22,8 +22,71 @@
   },
   "activation": {
     "title": "启用 Steam 游玩历史",
-    "description": "Steam 游玩历史会体现你的游戏习惯。请选择首次同步如何初始化时间线数据。",
+    "description": "Steam 游玩历史会体现你的游戏习惯。请选择首次同步如何初始化时间线数据。精确游玩会话只会在启用后根据本地时长变化推断。",
     "confirm_label": "启用来源",
     "cancel_label": "暂不启用"
+  },
+  "settings": {
+    "enabled": {
+      "label": "启用",
+      "description": "是否启用 Steam 游玩历史同步。"
+    },
+    "steam_path": {
+      "label": "Steam 路径",
+      "description": "可选的 Steam 安装路径。留空时会自动查找本机 Steam 目录。"
+    },
+    "account_id": {
+      "label": "Steam 账号",
+      "description": "本地账号 ID、账号名，或使用 auto 自动选择最近登录的本地账号。"
+    },
+    "sync_mode": {
+      "label": "同步模式",
+      "description": "Steam 游玩历史的同步方式。",
+      "options": {
+        "manual": "手动",
+        "interval": "定时"
+      }
+    },
+    "sync_interval_minutes": {
+      "label": "同步间隔（分钟）",
+      "description": "检查 Steam 游玩时长变化的频率。"
+    },
+    "min_session_seconds": {
+      "label": "最短会话时长（秒）",
+      "description": "短于该时长的推断游玩会话会被忽略。"
+    },
+    "idle_timeout_minutes": {
+      "label": "空闲结束时间（分钟）",
+      "description": "超过该时间没有新增 Steam 游玩时长时，当前会话会被结束并写入。"
+    },
+    "max_items_per_sync": {
+      "label": "单次最大记录数",
+      "description": "每次同步最多写入的 Steam 记录数量。"
+    },
+    "include_uninstalled_games": {
+      "label": "包含已卸载的本地应用",
+      "description": "包含本地仍有游玩时长记录、但当前未安装的应用；这类记录可能只有 App ID，没有游戏名。"
+    },
+    "excluded_appids": {
+      "label": "排除的 Steam App ID",
+      "description": "这些 Steam App ID 不会写入时间线记忆。"
+    },
+    "excluded_keywords": {
+      "label": "排除的游戏关键词",
+      "description": "游戏名包含这些关键词时，会在 AI 分析前跳过。匹配不区分大小写。"
+    },
+    "initial_sync_policy": {
+      "label": "首次同步范围",
+      "description": "选择首次启用时导入多少历史 Steam 活动。",
+      "options": {
+        "full": "导入全部最后游玩摘要",
+        "lookback_days": "导入最近的最后游玩摘要",
+        "from_now": "只记录启用后的游玩"
+      }
+    },
+    "initial_sync_lookback_days": {
+      "label": "最近天数",
+      "description": "当首次同步范围设置为最近摘要时使用。"
+    }
   }
 }

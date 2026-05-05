@@ -21,7 +21,7 @@ from .state import SteamPlayStateStore
 
 
 class SteamPlayHistoryTimelineSensor(SensorBase):
-    """Pull-sync sensor backed by local Steam files and optional Web API data."""
+    """Pull-sync sensor backed by local Steam files."""
 
     sensor_id = "timeline.steam_play_history"
     display_name = "Steam Play History"
@@ -52,9 +52,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         retention_mode: str = "analyze_only",
         steam_path: str = "",
         account_id: str = "auto",
-        source_mode: str = "local",
-        steamid64: str = "",
-        web_api_key: str = "",
         include_uninstalled_games: bool = False,
     ) -> None:
         super().__init__()
@@ -63,9 +60,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         self.retention_mode = retention_mode or "analyze_only"
         self.steam_path = steam_path
         self.account_id = account_id or "auto"
-        self.source_mode = source_mode or "local"
-        self.steamid64 = steamid64
-        self.web_api_key = web_api_key
         self.include_uninstalled_games = include_uninstalled_games
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
@@ -106,9 +100,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         now = datetime.now(timezone.utc)
         steam_path = str(settings.get("steam_path") or self.steam_path or "")
         account_id = str(settings.get("account_id") or self.account_id or "auto")
-        source_mode = str(settings.get("source_mode") or self.source_mode or "local")
-        steamid64 = str(settings.get("steamid64") or self.steamid64 or "")
-        web_api_key = str(settings.get("steam_web_api_key") or self.web_api_key or "")
         include_uninstalled_games = bool(settings.get("include_uninstalled_games", self.include_uninstalled_games))
         initial_sync_policy = str(settings.get("initial_sync_policy") or "lookback_days")
         initial_sync_lookback_days = max(1, int(settings.get("initial_sync_lookback_days") or 14))
@@ -117,9 +108,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         snapshot = self._reader.read_snapshot(
             steam_path=steam_path,
             account_id=account_id,
-            source_mode=source_mode,
-            steamid64=steamid64,
-            web_api_key=web_api_key,
             include_uninstalled_games=include_uninstalled_games,
         )
         account_hash = snapshot.account.account_hash if snapshot.account else "unknown"

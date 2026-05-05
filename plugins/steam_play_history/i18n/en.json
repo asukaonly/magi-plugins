@@ -1,7 +1,7 @@
 {
   "steam_play_history": {
     "name": "Steam Play History",
-    "description": "Steam gameplay sessions inferred from local Steam playtime changes"
+    "description": "Steam gameplay sessions inferred from local Steam files"
   },
   "activity": {
     "source": {
@@ -22,8 +22,71 @@
   },
   "activation": {
     "title": "Enable Steam Play History",
-    "description": "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before this source starts running.",
+    "description": "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before this source starts running. Exact sessions are inferred only after the source is enabled.",
     "confirm_label": "Enable source",
     "cancel_label": "Not now"
+  },
+  "settings": {
+    "enabled": {
+      "label": "Enabled",
+      "description": "Whether Steam play history sync is active."
+    },
+    "steam_path": {
+      "label": "Steam Path",
+      "description": "Optional Steam install path. Leave empty to auto-detect the local Steam folder."
+    },
+    "account_id": {
+      "label": "Steam Account",
+      "description": "Local account id, account name, or auto for the most recently used local account."
+    },
+    "sync_mode": {
+      "label": "Sync Mode",
+      "description": "How Steam play history should be synchronized.",
+      "options": {
+        "manual": "Manual",
+        "interval": "Interval"
+      }
+    },
+    "sync_interval_minutes": {
+      "label": "Sync Interval (minutes)",
+      "description": "How often to poll Steam playtime changes."
+    },
+    "min_session_seconds": {
+      "label": "Minimum Session Duration (seconds)",
+      "description": "Inferred play sessions shorter than this are ignored."
+    },
+    "idle_timeout_minutes": {
+      "label": "Idle Timeout (minutes)",
+      "description": "A session is closed after this many minutes without additional Steam playtime."
+    },
+    "max_items_per_sync": {
+      "label": "Max Items Per Sync",
+      "description": "Maximum number of Steam records to emit per sync."
+    },
+    "include_uninstalled_games": {
+      "label": "Include Uninstalled Local Apps",
+      "description": "Include local playtime entries for apps that are no longer installed. Names may be unavailable."
+    },
+    "excluded_appids": {
+      "label": "Excluded Steam App IDs",
+      "description": "Steam app ids that should never be written to timeline memory."
+    },
+    "excluded_keywords": {
+      "label": "Excluded Game Keywords",
+      "description": "Game names containing these case-insensitive keywords are skipped before AI analysis."
+    },
+    "initial_sync_policy": {
+      "label": "First Sync Scope",
+      "description": "Decide how much previous Steam activity should be imported.",
+      "options": {
+        "full": "Import all last-played summaries",
+        "lookback_days": "Import recent last-played summaries",
+        "from_now": "Only record play from now on"
+      }
+    },
+    "initial_sync_lookback_days": {
+      "label": "Recent Days",
+      "description": "Used when the first-sync scope is set to recent summaries."
+    }
   }
 }

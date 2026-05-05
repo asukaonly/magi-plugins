@@ -1,16 +1,13 @@
-"""Readers for local Steam play history and optional Steam Web API data."""
+"""Readers for local Steam play history data."""
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 import sys
 from typing import Any
-from urllib.parse import urlencode
-from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +44,6 @@ class SteamGameRecord:
     install_dir: str = ""
     size_on_disk: int = 0
     source: str = "local_vdf"
-    icon_url: str = ""
 
 
 @dataclass(slots=True)
@@ -62,44 +58,20 @@ class SteamSnapshot:
 
 
 class SteamReader:
-    """Read Steam playtime data from local Steam files and optional Web API."""
+    """Read Steam playtime data from local Steam files."""
 
     def read_snapshot(
         self,
         *,
         steam_path: str | None = None,
         account_id: str | None = None,
-        source_mode: str = "local",
-        steamid64: str | None = None,
-        web_api_key: str | None = None,
         include_uninstalled_games: bool = False,
     ) -> SteamSnapshot:
-        mode = _normalize_source_mode(source_mode)
-        errors: list[str] = []
-
-        local_snapshot = self._read_local_snapshot(
+        return self._read_local_snapshot(
             steam_path=steam_path,
             account_id=account_id,
             include_uninstalled_games=include_uninstalled_games,
         )
-        errors.extend(local_snapshot.errors)
-
-        resolved_steamid64 = steamid64 or (local_snapshot.account.steamid64 if local_snapshot.account else "")
-        if mode == "local" or not web_api_key or not resolved_steamid64:
-            return local_snapshot
-
-        api_snapshot = self._read_api_snapshot(
-            steamid64=resolved_steamid64,
-            web_api_key=web_api_key,
-        )
-        errors.extend(api_snapshot.errors)
-        if mode == "web_api":
-            api_snapshot.errors = errors
-            return api_snapshot
-
-        merged = _merge_snapshots(local_snapshot, api_snapshot)
-        merged.errors = errors
-        return merged
 
     def _read_local_snapshot(
         self,
@@ -150,65 +122,6 @@ class SteamReader:
             steam_path=str(root),
             source="local_vdf",
         )
-
-    def _read_api_snapshot(self, *, steamid64: str, web_api_key: str) -> SteamSnapshot:
-        params = urlencode({
-            "key": web_api_key,
-            "steamid": steamid64,
-            "format": "json",
-            "include_appinfo": "true",
-            "include_played_free_games": "true",
-        })
-        url = f"https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?{params}"
-        try:
-            with urlopen(url, timeout=10) as response:  # noqa: S310 - user-supplied Steam API endpoint only.
-                payload = json.loads(response.read().decode("utf-8"))
-        except Exception as exc:  # pragma: no cover - depends on network and user credentials.
-            logger.warning("Failed to read Steam Web API data: %s", exc)
-            return SteamSnapshot(
-                account=_account_from_steamid64(steamid64),
-                source="steam_web_api",
-                errors=["Steam Web API request failed."],
-            )
-
-        response = payload.get("response") if isinstance(payload, dict) else {}
-        raw_games = response.get("games") if isinstance(response, dict) else []
-        games: list[SteamGameRecord] = []
-        if isinstance(raw_games, list):
-            for raw in raw_games:
-                if not isinstance(raw, dict):
-                    continue
-                appid = str(raw.get("appid") or "").strip()
-                if not appid:
-                    continue
-                icon_hash = str(raw.get("img_icon_url") or "").strip()
-                games.append(
-                    SteamGameRecord(
-                        appid=appid,
-                        name=str(raw.get("name") or f"Steam app {appid}"),
-                        playtime_forever_minutes=_int_value(raw.get("playtime_forever")),
-                        playtime_two_weeks_minutes=_int_value(raw.get("playtime_2weeks")),
-                        last_played_ts=_float_or_none(raw.get("rtime_last_played")),
-                        installed=False,
-                        source="steam_web_api",
-                        icon_url=(
-                            f"https://media.steampowered.com/steamcommunity/public/images/apps/{appid}/{icon_hash}.jpg"
-                            if icon_hash else ""
-                        ),
-                    )
-                )
-
-        return SteamSnapshot(
-            account=_account_from_steamid64(steamid64),
-            games=sorted(games, key=_game_sort_key),
-            source="steam_web_api",
-        )
-
-
-def _normalize_source_mode(value: str | None) -> str:
-    mode = str(value or "local").strip().lower()
-    return mode if mode in {"local", "hybrid", "web_api"} else "local"
-
 
 def _resolve_steam_root(steam_path: str | None) -> Path | None:
     if steam_path:
@@ -321,13 +234,6 @@ def _select_account(accounts: list[SteamAccount], account_id: str | None) -> Ste
         if account.most_recent:
             return account
     return accounts[0] if accounts else None
-
-
-def _account_from_steamid64(steamid64: str) -> SteamAccount:
-    return SteamAccount(
-        account_id=_account_id_from_steamid64(steamid64),
-        steamid64=str(steamid64),
-    )
 
 
 def _account_id_from_steamid64(steamid64: str) -> str:
@@ -524,30 +430,3 @@ def _game_sort_key(game: SteamGameRecord) -> tuple[float, int, str]:
     return (-(game.last_played_ts or 0.0), -game.playtime_forever_minutes, game.name.lower())
 
 
-def _merge_snapshots(local: SteamSnapshot, api: SteamSnapshot) -> SteamSnapshot:
-    games: dict[str, SteamGameRecord] = {game.appid: game for game in local.games}
-    for api_game in api.games:
-        local_game = games.get(api_game.appid)
-        if local_game is None:
-            games[api_game.appid] = api_game
-            continue
-        local_game.name = api_game.name or local_game.name
-        local_game.playtime_forever_minutes = max(
-            local_game.playtime_forever_minutes,
-            api_game.playtime_forever_minutes,
-        )
-        local_game.playtime_two_weeks_minutes = max(
-            local_game.playtime_two_weeks_minutes,
-            api_game.playtime_two_weeks_minutes,
-        )
-        if api_game.last_played_ts:
-            local_game.last_played_ts = api_game.last_played_ts
-        local_game.icon_url = api_game.icon_url or local_game.icon_url
-        local_game.source = "hybrid"
-
-    return SteamSnapshot(
-        account=local.account or api.account,
-        games=sorted(games.values(), key=_game_sort_key),
-        steam_path=local.steam_path,
-        source="hybrid",
-    )
