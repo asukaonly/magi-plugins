@@ -7,7 +7,7 @@ import time
 import uuid
 from dataclasses import dataclass
 
-from .api import DEFAULT_BASE_URL, DEFAULT_BOT_TYPE, WeixinApiClient
+from .api import DEFAULT_BASE_URL, DEFAULT_BOT_TYPE, WeixinApiClient, WeixinApiTimeout
 from .state import WeixinCredentials, WeixinStateStore
 
 
@@ -55,10 +55,14 @@ async def login_with_qr(
     scanned_printed = False
 
     while time.monotonic() < deadline:
-        status = await client.with_token("", current_base_url).get_qr_status(
-            qrcode=qrcode,
-            timeout_ms=QR_LONG_POLL_TIMEOUT_MS,
-        )
+        try:
+            status = await client.with_token("", current_base_url).get_qr_status(
+                qrcode=qrcode,
+                timeout_ms=QR_LONG_POLL_TIMEOUT_MS,
+            )
+        except WeixinApiTimeout:
+            await asyncio.sleep(1)
+            continue
         status_name = str(status.get("status") or "wait")
         if status_name == "wait":
             await asyncio.sleep(1)

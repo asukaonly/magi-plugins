@@ -24,6 +24,7 @@ from .api import (
     DEFAULT_CDN_BASE_URL,
     DEFAULT_LONG_POLL_TIMEOUT_MS,
     WeixinApiClient,
+    WeixinApiTimeout,
 )
 from .auth import DEFAULT_LOGIN_TIMEOUT_MS, MAX_QR_REFRESH_COUNT
 from .state import WeixinCredentials, WeixinStateStore
@@ -238,7 +239,10 @@ class WeixinPlugin(Plugin):
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.session_missing"))
 
         client = self._qr_api_client(session.current_base_url, session)
-        status = await client.get_qr_status(qrcode=session.qrcode, timeout_ms=QR_STATUS_POLL_TIMEOUT_MS)
+        try:
+            status = await client.get_qr_status(qrcode=session.qrcode, timeout_ms=QR_STATUS_POLL_TIMEOUT_MS)
+        except WeixinApiTimeout:
+            return _qr_pending_result(session, self.t("action_messages.waiting"), "waiting")
         status_name = str(status.get("status") or "wait")
         if status_name == "wait":
             return _qr_pending_result(session, self.t("action_messages.waiting"), "waiting")
