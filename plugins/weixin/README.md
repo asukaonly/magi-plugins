@@ -20,7 +20,7 @@ Outbound media upload is not implemented yet. Magi replies are sent as text and 
 
 When the installed Magi host supports plugin settings actions, open Settings -> Channels, select Weixin, and run the Weixin QR Login action. The host renders the QR code generically; this plugin owns the iLink login protocol and stores credentials locally.
 
-On success, the plugin saves credentials under the configured state directory and returns safe settings updates (`account_id`, `credentials_path`, `state_dir`, and `base_url`) for Magi to persist.
+On success, the plugin saves credentials under the configured state directory and returns safe settings updates (`account_id`, `credentials_path`, `state_dir`, and `base_url`) for Magi to persist. The bot token remains in the credentials file and is not copied into the manual `bot_token` setting.
 
 ## CLI QR Login Helper
 
@@ -40,7 +40,7 @@ If exactly one account is saved in the state directory, the channel can load it 
 
 ## Manual Credentials
 
-You can also configure `bot_token` and `account_id` directly in the extension settings, or point `credentials_path` at a JSON file:
+You can also configure the manual `bot_token` and `account_id` directly in the extension settings, or point `credentials_path` at a JSON file:
 
 ```json
 {
