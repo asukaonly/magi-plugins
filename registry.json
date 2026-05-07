@@ -8,7 +8,7 @@
       "name_i18n": {
         "zh-CN": "日历"
       },
-      "version": "0.1.1",
+      "version": "0.1.0",
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
@@ -29,7 +29,7 @@
       "name_i18n": {
         "zh-CN": "Chrome 浏览历史"
       },
-      "version": "0.4.3",
+      "version": "0.1.0",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -51,7 +51,7 @@
       "name_i18n": {
         "zh-CN": "Git 活动"
       },
-      "version": "0.2.1",
+      "version": "0.1.0",
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
@@ -73,7 +73,7 @@
       "name_i18n": {
         "zh-CN": "网易云音乐"
       },
-      "version": "0.1.3",
+      "version": "0.1.0",
       "path": "plugins/netease_music",
       "description": "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits.",
       "description_i18n": {
@@ -95,7 +95,7 @@
       "name_i18n": {
         "zh-CN": "照片库"
       },
-      "version": "2.1.3",
+      "version": "0.1.0",
       "path": "plugins/photo-library",
       "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
       "description_i18n": {
@@ -118,7 +118,7 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "version": "0.1.1",
+      "version": "0.1.0",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits.",
       "description_i18n": {
@@ -139,7 +139,7 @@
       "name_i18n": {
         "zh-CN": "Steam 游玩历史"
       },
-      "version": "0.1.3",
+      "version": "0.1.0",
       "path": "plugins/steam_play_history",
       "description": "Infers Steam gameplay sessions from local Steam files and playtime changes.",
       "description_i18n": {
@@ -162,7 +162,7 @@
       "name_i18n": {
         "zh-CN": "系统媒体"
       },
-      "version": "0.1.1",
+      "version": "0.1.0",
       "path": "plugins/system_media",
       "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch.",
       "description_i18n": {
@@ -184,7 +184,7 @@
       "name_i18n": {
         "zh-CN": "Telegram"
       },
-      "version": "0.1.1",
+      "version": "0.1.0",
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -206,7 +206,7 @@
       "name_i18n": {
         "zh-CN": "终端历史"
       },
-      "version": "0.1.1",
+      "version": "0.1.0",
       "path": "plugins/terminal_history",
       "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
       "description_i18n": {
@@ -227,7 +227,7 @@
       "name_i18n": {
         "zh-CN": "微信"
       },
-      "version": "0.2.2",
+      "version": "0.1.0",
       "path": "plugins/weixin",
       "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
       "description_i18n": {
