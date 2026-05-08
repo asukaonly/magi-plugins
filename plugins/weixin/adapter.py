@@ -111,12 +111,10 @@ class WeixinChannel(Channel):
                 state="unconfigured",
                 running=False,
                 configured=False,
-                last_error="Weixin credentials are required.",
-                last_error_at_ms=_now_ms(),
+                last_error="",
             )
-            raise ValueError(
-                "Weixin credentials are required. Run plugins/weixin/login.py or configure bot_token and account_id."
-            )
+            logger.info("Weixin channel is not configured; run QR login or set credentials_path/manual token")
+            return
         self._credentials = credentials
         self._api = WeixinApiClient(
             base_url=credentials.base_url or self._config.base_url or DEFAULT_BASE_URL,

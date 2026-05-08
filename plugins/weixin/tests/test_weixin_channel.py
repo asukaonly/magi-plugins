@@ -145,6 +145,25 @@ def _plugin(tmp_path: Path) -> WeixinPlugin:
 
 
 @pytest.mark.asyncio
+async def test_start_without_credentials_marks_channel_unconfigured(tmp_path: Path) -> None:
+    channel = WeixinChannel(
+        config=WeixinChannelConfig(
+            state_dir=str(tmp_path),
+            enable_typing_indicator=False,
+        )
+    )
+
+    await channel.start()
+
+    status = WeixinStateStore(str(tmp_path)).load_channel_status()
+    assert status["state"] == "unconfigured"
+    assert status["running"] is False
+    assert status["configured"] is False
+    assert status.get("last_error", "") == ""
+    assert channel._poll_task is None
+
+
+@pytest.mark.asyncio
 async def test_send_text_message_raises_on_protocol_error(monkeypatch) -> None:
     client = WeixinApiClient(token="token")
 

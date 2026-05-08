@@ -12,8 +12,8 @@
   "fields": {
     "weixin:channel": {
       "bot_token": {
-        "label": "Bot Token",
-        "description": "iLink bot token returned by the Weixin QR login flow. Leave empty when using a credentials file."
+        "label": "Manual Bot Token",
+        "description": "Manual iLink bot token override. QR login stores the token in the credentials file instead, so this field normally stays empty."
       },
       "account_id": {
         "label": "Account ID",
@@ -60,7 +60,7 @@
   "actions": {
     "qr_login": {
       "label": "Weixin QR Login",
-      "description": "Scan with Weixin to authorize this channel without pasting a bot token manually.",
+      "description": "Scan with Weixin to authorize this channel. The token is saved to a credentials file and is not pasted into the manual token field.",
       "button_label": "Start QR Login"
     },
     "validate_credentials": {

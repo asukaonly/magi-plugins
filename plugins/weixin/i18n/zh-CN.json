@@ -12,8 +12,8 @@
   "fields": {
     "weixin:channel": {
       "bot_token": {
-        "label": "机器人 Token",
-        "description": "微信扫码登录流程返回的 iLink bot token。使用凭据文件时可以留空。"
+        "label": "手动机器人 Token",
+        "description": "手动填写的 iLink bot token 备用项。扫码登录会把 token 保存到凭据文件里，因此这里通常保持为空。"
       },
       "account_id": {
         "label": "账号 ID",
@@ -60,7 +60,7 @@
   "actions": {
     "qr_login": {
       "label": "微信扫码登录",
-      "description": "用微信扫描二维码完成授权，无需手动粘贴机器人 Token。",
+      "description": "用微信扫描二维码完成授权。token 会保存到凭据文件，不会填入手动 Token 字段。",
       "button_label": "开始扫码登录"
     },
     "validate_credentials": {
