@@ -174,6 +174,7 @@ def build_relation_candidates(item: dict[str, Any]) -> list[dict[str, Any]]:
 _TITLE_SEPARATORS = re.compile(r"\s+[\-–—|]\s+")
 
 KNOWN_PLATFORM_DOMAINS: dict[str, str] = {
+    "fandom.com": "Fandom",
     "github.com": "GitHub",
     "youtube.com": "YouTube",
     "bilibili.com": "Bilibili",
@@ -186,6 +187,7 @@ KNOWN_PLATFORM_DOMAINS: dict[str, str] = {
     "medium.com": "Medium",
     "stackoverflow.com": "Stack Overflow",
     "wikipedia.org": "Wikipedia",
+    "wiki.gg": "Wiki.gg",
     "google.com": "Google",
     "last.fm": "Last.fm",
     "spotify.com": "Spotify",
@@ -213,7 +215,50 @@ _PLATFORM_SUFFIX_VARIANTS.update({
     "小红书": "Xiaohongshu",
     "google search": "Google",
     "google 搜索": "Google",
+    "fandom": "Fandom",
+    "wiki.gg": "Wiki.gg",
 })
+
+_WIKI_CONTEXT_SUFFIX = re.compile(r"\s*(?:wiki|维基|百科)\s*$", re.IGNORECASE)
+
+
+def _append_entity_hint(
+    hints: list[dict[str, Any]],
+    *,
+    mention_text: str,
+    entity_type: str,
+) -> None:
+    """Append an entity hint while preserving order and avoiding duplicates."""
+
+    cleaned = mention_text.strip()
+    if len(cleaned) < 2:
+        return
+    key = (cleaned.casefold(), entity_type)
+    existing = {
+        (str(item.get("mention_text") or "").casefold(), str(item.get("entity_type") or ""))
+        for item in hints
+    }
+    if key in existing:
+        return
+    hints.append(
+        {
+            "mention_text": cleaned,
+            "entity_type": entity_type,
+            "canonical_name_hint": cleaned,
+        }
+    )
+
+
+def _strip_wiki_context_suffix(segment: str) -> str | None:
+    """Return the readable work/site subject from a Wiki/Fandom context segment."""
+
+    cleaned = segment.strip()
+    if not cleaned:
+        return None
+    without_suffix = _WIKI_CONTEXT_SUFFIX.sub("", cleaned).strip()
+    if without_suffix and without_suffix != cleaned:
+        return without_suffix
+    return None
 
 
 def _match_platform_suffix(segment: str) -> str | None:
@@ -252,35 +297,41 @@ def parse_title_entities(
             break
 
     # Split the title by common separators and check the last segment
-    segments = _TITLE_SEPARATORS.split(normalized)
+    segments = [
+        segment.strip()
+        for segment in _TITLE_SEPARATORS.split(normalized)
+        if segment.strip()
+    ]
     detected_platform: str | None = None
     content_part: str = normalized
+    wiki_context: str | None = None
 
     if len(segments) >= 2:
         last_segment = segments[-1].strip()
         platform_match = _match_platform_suffix(last_segment)
         if platform_match:
             detected_platform = platform_match
-            content_part = _TITLE_SEPARATORS.split(normalized, maxsplit=len(segments) - 2)[0].strip()
+            content_segments = segments[:-1]
+            content_part = content_segments[0].strip()
+            if len(content_segments) >= 2:
+                wiki_context = _strip_wiki_context_suffix(content_segments[-1])
             if not content_part:
                 content_part = normalized
+        elif domain_platform and len(segments) >= 2:
+            content_part = segments[0].strip()
+            wiki_context = _strip_wiki_context_suffix(segments[-1])
 
     platform = detected_platform or domain_platform
     if platform:
-        hints.append({
-            "mention_text": platform,
-            "entity_type": "software",
-            "canonical_name_hint": platform,
-        })
+        _append_entity_hint(hints, mention_text=platform, entity_type="software")
 
     # Content entity: only if title had a separator and content part is meaningful
-    if detected_platform and content_part and content_part != normalized:
-        if len(content_part) >= 2:
-            hints.append({
-                "mention_text": content_part,
-                "entity_type": "media",
-                "canonical_name_hint": content_part,
-            })
+    if platform and content_part and content_part != normalized:
+        content_type = "topic" if platform in {"Fandom", "Wiki.gg"} else "media"
+        _append_entity_hint(hints, mention_text=content_part, entity_type=content_type)
+
+    if wiki_context and wiki_context != content_part:
+        _append_entity_hint(hints, mention_text=wiki_context, entity_type="media")
 
     return hints
 
