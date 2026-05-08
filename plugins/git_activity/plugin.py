@@ -8,6 +8,7 @@ from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,
+    ExtractionProfileSpec,
     Plugin,
     SensorSpec,
 )
@@ -193,6 +194,34 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class GitActivityPlugin(Plugin):
     """Registers the Git Activity timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.git_activity",
+                source_types=["git_activity"],
+                allowed_entity_types=["software", "technology", "topic"],
+                allowed_predicates=["COMMITTED", "CHECKED_OUT", "MERGED", "REBASED", "WORKS_WITH", "USES"],
+                structured_allowed_entity_types=["software", "technology", "topic"],
+                structured_allowed_predicates=["COMMITTED", "CHECKED_OUT", "MERGED", "REBASED", "WORKS_WITH", "USES"],
+                allow_graph=True,
+                allow_assertion=False,
+                extraction_instructions=(
+                    "These events are git operations (commits, checkouts, merges, rebases).\n"
+                    "Focus on extracting the repository/project as a `software` entity and\n"
+                    "any technologies or frameworks mentioned in commit messages.\n\n"
+                    "Entity extraction rules:\n"
+                    "- Extract the repository name as a `software` entity.\n"
+                    "- Extract programming languages and frameworks as `technology` entities\n"
+                    "  only when clearly visible in commit context.\n"
+                    "- COMMITTED: for commit operations.\n"
+                    "- WORKS_WITH: for technologies used in the project.\n"
+                    "- USES: for tools and platforms (GitHub, GitLab).\n"
+                    "- Do NOT extract individual file paths, function names, or branch names\n"
+                    "  as entities."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

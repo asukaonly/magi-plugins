@@ -9,6 +9,7 @@ from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,
+    ExtractionProfileSpec,
     Plugin,
     SensorSpec,
 )
@@ -213,6 +214,35 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class TerminalHistoryPlugin(Plugin):
     """Registers the Terminal History timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.terminal_history",
+                source_types=["terminal_history"],
+                allowed_entity_types=["software", "technology"],
+                allowed_predicates=["EXECUTED", "USED", "USES"],
+                structured_allowed_entity_types=["software", "technology"],
+                structured_allowed_predicates=["EXECUTED", "USED", "USES"],
+                allow_graph=True,
+                allow_assertion=False,
+                extraction_instructions=(
+                    "These events are shell command executions. Extract meaningful tool usage\n"
+                    "patterns, not individual commands.\n\n"
+                    "Entity extraction rules:\n"
+                    "- Extract CLI tools and package managers as `software` entities\n"
+                    "  (e.g., docker, kubectl, npm, brew).\n"
+                    "- Extract programming runtimes as `technology` entities\n"
+                    "  (e.g., python, node, rust).\n"
+                    "- USES: for recurring tool usage patterns.\n"
+                    "- EXECUTED: for specific tool invocations.\n"
+                    "- Do NOT extract arguments, file paths, environment variables,\n"
+                    "  or shell builtins (cd, ls, cat) as entities.\n"
+                    "- Be SELECTIVE: skip noise commands and focus on tools that reveal\n"
+                    "  the user's technical stack and workflow."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

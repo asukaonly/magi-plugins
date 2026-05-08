@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
 from .reader import DEFAULT_DB_PATH
 from .sensor import NeteaseMusicTimelineSensor
 from .summary_features import build_netease_temporal_summary_features
@@ -176,6 +176,40 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class NeteaseMusicPlugin(Plugin):
     """Registers the NetEase Music timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.netease_music",
+                source_types=["netease_music"],
+                allowed_entity_types=["media", "person", "group"],
+                allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
+                structured_allowed_entity_types=["media", "person", "group"],
+                structured_allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
+                allowed_assertion_families=["taste_profile", "preference_profile"],
+                allow_graph=True,
+                allow_assertion=True,
+                extraction_instructions=(
+                    "These events are music play records from NetEase Cloud Music. Each event\n"
+                    "represents one track playback with track name, artist, and album info.\n\n"
+                    "Entity extraction rules:\n"
+                    "- Extract the artist as a `person` (solo) or `group` (band/group) entity.\n"
+                    "- Extract the track/album as a `media` entity only when it reveals a\n"
+                    "  genuine listening pattern - skip one-off plays.\n"
+                    "- LISTENED: for individual track plays (graph edge).\n"
+                    "- LIKES: when the user explicitly liked a track (is_liked flag in provenance).\n"
+                    "- INTERESTED_IN: only for recurring artists or genres.\n"
+                    "- Keep entity names concise: use the canonical artist name, not\n"
+                    "  'artist_name - track_name'.\n\n"
+                    "Assertion rules:\n"
+                    "- taste_profile assertions capture music taste dimensions, e.g.,\n"
+                    "  trait_name: 'music.genre', trait_value: 'indie_rock'.\n"
+                    "- preference_profile assertions capture specific artist/genre preferences.\n"
+                    "- Only assert preferences when there is genuine frequency signal\n"
+                    "  (multiple plays), not from a single listen."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

@@ -9,6 +9,7 @@ from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,
+    ExtractionProfileSpec,
     Plugin,
     PluginSettingsResourceSpec,
     SensorSpec,
@@ -166,6 +167,18 @@ def _settings_ui_blocks(prefix: str) -> list[SettingsUIBlockSpec]:
 
 class CalendarPlugin(Plugin):
     """Registers the Calendar timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.calendar",
+                source_types=["calendar"],
+                allowed_entity_types=["activity", "event", "place", "organization"],
+                allowed_predicates=["ATTENDED", "PLANS_TO", "VISITED"],
+                allow_graph=True,
+                allow_assertion=False,
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

@@ -5,7 +5,7 @@ from collections import Counter
 import sys
 from typing import Any
 
-from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
 from magi_plugin_sdk.ingress import PluginIngressHandlerRegistration
 from magi_plugin_sdk.sensors import PluginRuntimePaths
 
@@ -92,6 +92,32 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class ScreenTimePlugin(Plugin):
     """Registers the frontmost app usage source under the existing package id."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.screen_time",
+                source_types=["screen_time"],
+                allowed_entity_types=["software", "media"],
+                allowed_predicates=["USES", "VIEWED"],
+                structured_allowed_entity_types=["software", "media"],
+                structured_allowed_predicates=["USES", "VIEWED"],
+                allow_graph=True,
+                allow_assertion=False,
+                extraction_instructions=(
+                    "These events are app usage duration records from macOS Screen Time.\n"
+                    "Each event reports how long an app was used in a time window.\n\n"
+                    "Entity extraction rules:\n"
+                    "- Extract the application as a `software` entity.\n"
+                    "- Extract media apps (Netflix, YouTube, etc.) with VIEWED predicate.\n"
+                    "- USES: for productivity and development tools.\n"
+                    "- Only extract apps with meaningful usage duration, skip brief\n"
+                    "  system utility interactions.\n"
+                    "- Normalize app names: use the canonical app name, not the bundle\n"
+                    "  identifier."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

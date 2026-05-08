@@ -4,7 +4,15 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec, SummaryProfileSpec
+from magi_plugin_sdk import (
+    ActivationFlowSpec,
+    ExtensionFieldOption,
+    ExtensionFieldSpec,
+    ExtractionProfileSpec,
+    Plugin,
+    SensorSpec,
+    SummaryProfileSpec,
+)
 
 from .chrome_reader import _default_chrome_root
 from .sensor import ChromeHistoryTimelineSensor
@@ -183,6 +191,102 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class ChromeHistoryPlugin(Plugin):
     """Registers the Chrome history timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.chrome_history",
+                source_types=["chrome_history"],
+                allowed_entity_types=[
+                    "product",
+                    "software",
+                    "technology",
+                    "media",
+                    "person",
+                    "organization",
+                    "topic",
+                ],
+                allowed_predicates=[
+                    "VISITED",
+                    "USES",
+                    "INTERESTED_IN",
+                    "FOLLOWS",
+                    "VIEWED",
+                    "WORKS_WITH",
+                ],
+                structured_allowed_entity_types=[
+                    "presence",
+                    "product",
+                    "software",
+                    "technology",
+                    "media",
+                    "person",
+                    "group",
+                    "organization",
+                    "topic",
+                ],
+                structured_allowed_predicates=[
+                    "VISITED",
+                    "USES",
+                    "INTERESTED_IN",
+                    "FOLLOWS",
+                    "VIEWED",
+                    "WORKS_WITH",
+                    "ON_PLATFORM",
+                    "PRESENCE_OF",
+                    "LOCATED_IN",
+                ],
+                allow_graph=True,
+                allow_assertion=False,
+                extraction_instructions=(
+                    "These events are browser history page titles, NOT user-authored messages.\n"
+                    "Page titles often follow patterns like '{content} - {platform}' or\n"
+                    "'{content} | {platform}'. Treat the platform part (YouTube, 哔哩哔哩,\n"
+                    "GitHub, etc.) as a `software` entity, and the content part as the\n"
+                    "actual subject (media, person, project, topic).\n\n"
+                    "Predicate guidance for browsing behavior:\n"
+                    "- USES: only for tool/platform usage (e.g., user uses GitHub, ChatGPT)\n"
+                    "- INTERESTED_IN: when the user repeatedly browses content on a topic\n"
+                    "  (e.g., AI papers, a TV show, a game)\n"
+                    "- VIEWED: for individual content consumption (a specific video, article)\n"
+                    "- FOLLOWS: when visiting a specific creator or person's page\n"
+                    "- WORKS_WITH: for professional tools/technologies seen in work context\n\n"
+                    "Entity extraction rules (IMPORTANT):\n"
+                    "- Preserve the source title language/script for content entities. Do NOT\n"
+                    "  translate Chinese, Japanese, Korean, or other non-Latin names into\n"
+                    "  English, pinyin, romaji, or URL-style slugs. If a known English title or\n"
+                    "  romanization is useful, put it in alias_signals only.\n"
+                    "- Do NOT infer the content entity name from URL domains or path slugs when\n"
+                    "  the page title contains a readable subject name. Domains such as\n"
+                    "  fandom.com, wiki.gg, wikipedia.org, google.com, and platform hostnames\n"
+                    "  are source/platform context, not the canonical content name.\n"
+                    "- For Fandom/Wiki-style titles such as '{page} | {work} Wiki | Fandom',\n"
+                    "  extract '{page}' and '{work}' in their original language. Treat Fandom\n"
+                    "  or Wiki as the platform/context, not as part of the content entity name.\n"
+                    "- Be SELECTIVE: only extract entities that reveal user interests,\n"
+                    "  habits, or tool usage. Not every page title deserves an entity.\n"
+                    "- SKIP noise: error messages, email addresses, IP addresses,\n"
+                    "  UI element names (Home, Inbox, Schema Panel), authentication pages,\n"
+                    "  and generic navigation titles are NOT entities.\n"
+                    "- MERGE related content: multiple pages about the same game, show,\n"
+                    "  work, project, or topic should map to ONE entity with a concise\n"
+                    "  canonical name, not one entity per page title. Strip page-specific\n"
+                    "  qualifiers such as guides, answer pages, walkthroughs, episode titles,\n"
+                    "  locations, quests, or wiki subpages when they are clearly about the\n"
+                    "  same core subject. E.g., '{work} guide', '{work} answer page',\n"
+                    "  '{work} location walkthrough' -> single entity '{work}'.\n"
+                    "- Keep canonical names SHORT: use the core subject name, not the\n"
+                    "  full page title. E.g., 'Joe Pera Talks With You' not\n"
+                    "  'Joe Pera Talks With You 豆瓣'.\n"
+                    "- Only use allowed entity types: software, product, technology,\n"
+                    "  media, person, organization, topic. Do NOT use virtual_object,\n"
+                    "  activity, concept, skill, food, health_metric, or other.\n"
+                    "- Do NOT use platform names as alias_signals for content entities.\n"
+                    "- Keep entity types consistent: a website/app is always `software`,\n"
+                    "  not `activity` or `organization`."
+                ),
+            )
+        ]
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         settings = {}
