@@ -138,6 +138,20 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=40,
         ),
         ExtensionFieldSpec(
+            key=f"{prefix}.db_path",
+            type="path",
+            label="Cache Database Path",
+            description=(
+                "Defaults to the standard NetEase cache database path. "
+                "Change this if the cache was moved or Windows stores it elsewhere."
+            ),
+            default=DEFAULT_DB_PATH,
+            placeholder=DEFAULT_DB_PATH,
+            section="general",
+            surface="timeline",
+            order=50,
+        ),
+        ExtensionFieldSpec(
             key=f"{prefix}.tag_strategy",
             type="select",
             label="Genre Tag Source",
@@ -340,10 +354,11 @@ class NeteaseMusicPlugin(Plugin):
         if isinstance(sensors_settings, dict):
             settings = dict(sensors_settings.get("netease_music", {}))
         resolved_sync_mode = _normalize_sync_mode(settings.get("sync_mode"))
+        configured_db_path = str(settings.get("db_path") or settings.get("source_path") or DEFAULT_SETTINGS["db_path"])
 
         sensor = NeteaseMusicTimelineSensor(
             min_play_duration=int(settings.get("min_play_duration") or DEFAULT_SETTINGS["min_play_duration"]),
-            source_path=str(settings.get("db_path") or DEFAULT_SETTINGS["db_path"]),
+            source_path=configured_db_path,
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             tag_strategy=str(settings.get("tag_strategy") or "off"),
             lastfm_api_key=str(settings.get("lastfm_api_key") or ""),

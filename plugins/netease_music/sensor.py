@@ -76,7 +76,12 @@ class NeteaseMusicTimelineSensor(SensorBase):
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
             else {}
         )
-        source_path = str(sensor_settings.get("source_path") or self.source_path or DEFAULT_DB_PATH)
+        source_path = str(
+            sensor_settings.get("db_path")
+            or sensor_settings.get("source_path")
+            or self.source_path
+            or DEFAULT_DB_PATH
+        )
         initial_sync_policy = str(sensor_settings.get("initial_sync_policy") or "lookback_days")
         initial_sync_lookback_days = max(1, int(sensor_settings.get("initial_sync_lookback_days", 7)))
         initial_lookback_days: int | None = None
