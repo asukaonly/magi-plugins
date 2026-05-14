@@ -29,6 +29,10 @@
               "label": "Minimum Play Duration (seconds)",
               "description": "Tracks played for less than this are ignored so quick skips do not become timeline items."
             },
+            "db_path": {
+              "label": "Cache Database Path",
+              "description": "Defaults to the standard NetEase cache database path. If NetEase settings show a cache folder such as C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. Choose the database file under the sibling Library directory instead, usually C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat."
+            },
             "initial_sync_policy": {
               "label": "Initial Sync Scope",
               "description": "How much history to seed into the timeline on the first sync.",

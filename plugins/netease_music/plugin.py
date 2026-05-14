@@ -143,7 +143,10 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Cache Database Path",
             description=(
                 "Defaults to the standard NetEase cache database path. "
-                "Change this if the cache was moved or Windows stores it elsewhere."
+                "If NetEase settings show a cache folder such as "
+                "C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. "
+                "Choose the database file under the sibling Library directory instead, usually "
+                "C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat."
             ),
             default=DEFAULT_DB_PATH,
             placeholder=DEFAULT_DB_PATH,

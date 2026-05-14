@@ -2,7 +2,7 @@
 id = "netease-music"
 name = "NetEase Cloud Music"
 name_i18n = { "zh-CN" = "网易云音乐" }
-version = "0.1.1"
+version = "0.1.2"
 description = "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits."
 description_i18n = { "zh-CN" = "读取网易云音乐的收听记录，帮助 Magi 了解你的音乐喜好和收听习惯" }
 author = "Magi Team"

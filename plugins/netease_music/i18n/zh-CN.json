@@ -29,6 +29,10 @@
               "label": "最短播放时长（秒）",
               "description": "播放少于这个时长的曲目会被忽略，避免把点开就切走的内容写进时间线。"
             },
+            "db_path": {
+              "label": "缓存数据库路径",
+              "description": "默认会填入标准的网易云缓存数据库路径。如果你在网易云设置里看到的是类似 C:\\Users\\<你>\\AppData\\Local\\NetEase\\CloudMusic\\cache 这样的缓存目录，不要直接把这个目录填进来。这里需要选择旁边 Library 目录里的数据库文件，通常是 C:\\Users\\<你>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat。"
+            },
             "initial_sync_policy": {
               "label": "首次同步范围",
               "description": "首次同步时，先把多少历史记录写入时间线。",
