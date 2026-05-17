@@ -1,0 +1,11 @@
+{
+  "system_media": {
+    "name": "System Media",
+    "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch."
+  },
+  "activity": {
+    "action": {
+      "playback": "Playback"
+    }
+  }
+}

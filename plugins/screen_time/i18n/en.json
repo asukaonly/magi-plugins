@@ -1,0 +1,11 @@
+{
+  "screen_time": {
+    "name": "App Usage",
+    "description": "Tracks which apps you use and for how long. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends."
+  },
+  "activity": {
+    "action": {
+      "usage": "Usage"
+    }
+  }
+}

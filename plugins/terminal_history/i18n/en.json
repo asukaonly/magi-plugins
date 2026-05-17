@@ -1,0 +1,14 @@
+{
+  "terminal_history": {
+    "name": "Terminal History",
+    "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits."
+  },
+  "activity": {
+    "source": {
+      "terminal": "Terminal"
+    },
+    "action": {
+      "command": "Command"
+    }
+  }
+}

@@ -2,7 +2,7 @@
 id = "telegram"
 name = "Telegram"
 name_i18n = { "zh-CN" = "Telegram" }
-version = "0.1.0"
+version = "0.1.1"
 description = "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram."
 description_i18n = { "zh-CN" = "将 Magi 接入 Telegram，通过机器人与 Magi 对话并接收消息回复" }
 author = "Magi Team"

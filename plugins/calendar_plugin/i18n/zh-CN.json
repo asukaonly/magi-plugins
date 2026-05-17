@@ -1,0 +1,14 @@
+{
+  "calendar": {
+    "name": "日历",
+    "description": "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划"
+  },
+  "activity": {
+    "source": {
+      "calendar": "日历"
+    },
+    "action": {
+      "event": "日程"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "system_media": {
+    "name": "系统媒体",
+    "description": "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容"
+  },
+  "activity": {
+    "action": {
+      "playback": "播放"
+    }
+  }
+}
