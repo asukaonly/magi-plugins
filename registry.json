@@ -118,7 +118,7 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits.",
       "description_i18n": {
@@ -130,7 +130,8 @@
         "sensor"
       ],
       "platforms": [
-        "macos"
+        "macos",
+        "windows"
       ]
     },
     {
