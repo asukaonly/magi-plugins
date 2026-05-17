@@ -65,6 +65,7 @@ class ScreenTimeStateStore:
         platform: str,
         start_at: datetime,
         end_at: datetime,
+        category: str | None = None,
     ) -> None:
         cursor = start_at
         while cursor < end_at:
@@ -86,6 +87,7 @@ class ScreenTimeStateStore:
                     "canonical_id": canonical_id,
                     "display_name": display_name,
                     "platform": platform,
+                    "category": category or "",
                     "duration_seconds": 0,
                     "session_count": 0,
                     "last_session_id": None,
@@ -98,6 +100,11 @@ class ScreenTimeStateStore:
             bucket["app_name"] = app_name or bucket.get("app_name", "")
             bucket["display_name"] = display_name or bucket.get("display_name", "")
             bucket["platform"] = platform or bucket.get("platform", "")
+            # Category is set when the catalog can resolve the app. We only
+            # overwrite a previously-empty category so a catalog miss later
+            # in the same hour does not wipe a known classification.
+            if category and not bucket.get("category"):
+                bucket["category"] = category
             if bucket.get("last_session_id") != session_id:
                 bucket["session_count"] += 1
                 bucket["last_session_id"] = session_id
@@ -131,6 +138,7 @@ class ScreenTimeStateStore:
                 or canonical_id
             ),
             platform=str(last_activation.get("platform") or ""),
+            category=(str(last_activation.get("category") or "") or None),
             start_at=start_at,
             end_at=end_at,
         )
@@ -145,12 +153,15 @@ class ScreenTimeStateStore:
         canonical_id: str | None = None,
         display_name: str | None = None,
         platform: str = "",
+        category: str | None = None,
     ) -> None:
         """Record a new foreground app activation observed at ``occurred_at``.
 
         ``canonical_id`` / ``display_name`` default to ``bundle_id`` / ``app_name``
         when not provided so legacy callers (and tests) keep working without
-        having to wire the catalog.
+        having to wire the catalog. ``category`` is optional and propagates to
+        the L1 event so retrieval can reason about app type (gaming, browser,
+        messaging, ...) without re-resolving the catalog at query time.
         """
         canonical_id = canonical_id or bundle_id
         display_name = display_name or app_name or bundle_id
@@ -202,6 +213,7 @@ class ScreenTimeStateStore:
                     "canonical_id": canonical_id,
                     "display_name": display_name,
                     "platform": platform,
+                    "category": category or "",
                     "observed_at": occurred_at.isoformat(),
                 },
                 "open_buckets": open_buckets,
@@ -254,6 +266,7 @@ class ScreenTimeStateStore:
                                 or ""
                             ),
                             "platform": str(bucket.get("platform", "")),
+                            "category": str(bucket.get("category") or ""),
                             "duration_seconds": int(bucket.get("duration_seconds", 0)),
                             "session_count": int(bucket.get("session_count", 0)),
                         }

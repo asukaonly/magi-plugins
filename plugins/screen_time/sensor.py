@@ -117,6 +117,7 @@ class ScreenTimeTimelineSensor(SensorBase):
         canonical_id = str(item.get("canonical_id") or bundle_id or "unknown")
         display_name = str(item.get("display_name") or raw_app_name or canonical_id)
         platform = str(item.get("platform", ""))
+        category = str(item.get("category") or "")
 
         duration_minutes = max(1, round(duration_seconds / 60))
         local_start = bucket_start.astimezone()
@@ -157,43 +158,120 @@ class ScreenTimeTimelineSensor(SensorBase):
             ),
             narration=self._build_narration(body=body),
             occurred_at=occurred_at_ts,
-            content_blocks=[
-                ContentBlock(kind="text", value=f"App: {display_name}"),
-                ContentBlock(kind="text", value=f"Canonical ID: {canonical_id}"),
-                ContentBlock(kind="text", value=f"Raw ID: {bundle_id}"),
-                ContentBlock(kind="text", value=f"Platform: {platform}"),
-                ContentBlock(kind="text", value=f"Bucket: {bucket_start.isoformat()} to {bucket_end.isoformat()}"),
+            content_blocks=self._build_content_blocks(
+                display_name=display_name,
+                canonical_id=canonical_id,
+                bundle_id=bundle_id,
+                platform=platform,
+                category=category,
+                bucket_start=bucket_start,
+                bucket_end=bucket_end,
+                duration_seconds=duration_seconds,
+                session_count=session_count,
+            ),
+            tags=self._build_tags(category=category),
+            provenance=self._build_metadata(
+                display_name=display_name,
+                canonical_id=canonical_id,
+                bundle_id=bundle_id,
+                raw_app_name=raw_app_name,
+                platform=platform,
+                category=category,
+                bucket_start=bucket_start,
+                bucket_end=bucket_end,
+                duration_seconds=duration_seconds,
+                session_count=session_count,
+                extras={"sensor_id": self.sensor_id},
+            ),
+            domain_payload=self._build_metadata(
+                display_name=display_name,
+                canonical_id=canonical_id,
+                bundle_id=bundle_id,
+                raw_app_name=raw_app_name,
+                platform=platform,
+                category=category,
+                bucket_start=bucket_start,
+                bucket_end=bucket_end,
+                duration_seconds=duration_seconds,
+                session_count=session_count,
+                extras={
+                    "retention_mode": "analyze_only",
+                    "source": "plugin_watcher",
+                },
+            ),
+        )
+
+    @staticmethod
+    def _build_content_blocks(
+        *,
+        display_name: str,
+        canonical_id: str,
+        bundle_id: str,
+        platform: str,
+        category: str,
+        bucket_start: datetime,
+        bucket_end: datetime,
+        duration_seconds: int,
+        session_count: int,
+    ) -> list[ContentBlock]:
+        blocks = [
+            ContentBlock(kind="text", value=f"App: {display_name}"),
+            ContentBlock(kind="text", value=f"Canonical ID: {canonical_id}"),
+            ContentBlock(kind="text", value=f"Raw ID: {bundle_id}"),
+            ContentBlock(kind="text", value=f"Platform: {platform}"),
+        ]
+        if category:
+            # Surfaced as plain text so BM25/keyword retrieval can match a
+            # query like "what was I gaming" against ``Category: gaming``.
+            blocks.append(ContentBlock(kind="text", value=f"Category: {category}"))
+        blocks.extend(
+            [
+                ContentBlock(
+                    kind="text",
+                    value=f"Bucket: {bucket_start.isoformat()} to {bucket_end.isoformat()}",
+                ),
                 ContentBlock(kind="text", value=f"Duration: {duration_seconds} seconds"),
                 ContentBlock(kind="text", value=f"Sessions: {session_count}"),
-            ],
-            tags=["screen_time", "app_usage", "hourly"],
-            provenance={
-                "sensor_id": self.sensor_id,
-                "bucket_start": bucket_start.isoformat(),
-                "bucket_end": bucket_end.isoformat(),
-                "canonical_id": canonical_id,
-                "display_name": display_name,
-                "raw_bundle_id": bundle_id,
-                "raw_app_name": raw_app_name,
-                "platform": platform,
-                "bundle_id": bundle_id,
-                "app_name": display_name,
-                "duration_seconds": duration_seconds,
-                "session_count": session_count,
-            },
-            domain_payload={
-                "retention_mode": "analyze_only",
-                "bucket_start": bucket_start.isoformat(),
-                "bucket_end": bucket_end.isoformat(),
-                "canonical_id": canonical_id,
-                "display_name": display_name,
-                "raw_bundle_id": bundle_id,
-                "raw_app_name": raw_app_name,
-                "platform": platform,
-                "bundle_id": bundle_id,
-                "app_name": display_name,
-                "duration_seconds": duration_seconds,
-                "session_count": session_count,
-                "source": "plugin_watcher",
-            },
+            ]
         )
+        return blocks
+
+    @staticmethod
+    def _build_tags(*, category: str) -> list[str]:
+        tags = ["screen_time", "app_usage", "hourly"]
+        if category:
+            tags.append(f"app_category:{category}")
+        return tags
+
+    @staticmethod
+    def _build_metadata(
+        *,
+        display_name: str,
+        canonical_id: str,
+        bundle_id: str,
+        raw_app_name: str,
+        platform: str,
+        category: str,
+        bucket_start: datetime,
+        bucket_end: datetime,
+        duration_seconds: int,
+        session_count: int,
+        extras: dict[str, Any],
+    ) -> dict[str, Any]:
+        meta: dict[str, Any] = {
+            "bucket_start": bucket_start.isoformat(),
+            "bucket_end": bucket_end.isoformat(),
+            "canonical_id": canonical_id,
+            "display_name": display_name,
+            "raw_bundle_id": bundle_id,
+            "raw_app_name": raw_app_name,
+            "platform": platform,
+            "bundle_id": bundle_id,
+            "app_name": display_name,
+            "duration_seconds": duration_seconds,
+            "session_count": session_count,
+        }
+        if category:
+            meta["category"] = category
+        meta.update(extras)
+        return meta

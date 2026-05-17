@@ -135,6 +135,7 @@ class ForegroundAppWatcher:
             canonical_id=resolved.canonical_id,
             display_name=resolved.display_name,
             platform=self._platform,
+            category=resolved.category,
         )
         self._last_canonical_id = resolved.canonical_id
         return True

@@ -469,6 +469,87 @@
         "macos_bundle_id": ["asuka.magi", "com.magi.desktop"],
         "windows_exe": ["magi.exe", "magi-desktop.exe"]
       }
+    },
+    {
+      "id": "steam",
+      "name": { "en": "Steam", "zh-CN": "Steam" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.valvesoftware.steam"],
+        "windows_exe": ["steam.exe", "steamwebhelper.exe"]
+      }
+    },
+    {
+      "id": "epic_games",
+      "name": { "en": "Epic Games Launcher", "zh-CN": "Epic Games 启动器" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.epicgames.launcher"],
+        "windows_exe": ["EpicGamesLauncher.exe"]
+      }
+    },
+    {
+      "id": "wuthering_waves",
+      "name": { "en": "Wuthering Waves", "zh-CN": "鸣潮" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["Client-Win64-Shipping.exe", "wuthering waves.exe"]
+      }
+    },
+    {
+      "id": "genshin_impact",
+      "name": { "en": "Genshin Impact", "zh-CN": "原神" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["GenshinImpact.exe", "YuanShen.exe"]
+      }
+    },
+    {
+      "id": "honkai_star_rail",
+      "name": { "en": "Honkai: Star Rail", "zh-CN": "崩坏：星穹铁道" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["StarRail.exe"]
+      }
+    },
+    {
+      "id": "zenless_zone_zero",
+      "name": { "en": "Zenless Zone Zero", "zh-CN": "绝区零" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["ZenlessZoneZero.exe"]
+      }
+    },
+    {
+      "id": "league_of_legends",
+      "name": { "en": "League of Legends", "zh-CN": "英雄联盟" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.riotgames.LeagueofLegends"],
+        "windows_exe": ["LeagueClient.exe", "League of Legends.exe"]
+      }
+    },
+    {
+      "id": "valorant",
+      "name": { "en": "VALORANT", "zh-CN": "无畏契约" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["VALORANT.exe", "VALORANT-Win64-Shipping.exe"]
+      }
+    },
+    {
+      "id": "minecraft",
+      "name": { "en": "Minecraft", "zh-CN": "我的世界" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.mojang.minecraftlauncher"],
+        "windows_exe": ["MinecraftLauncher.exe"]
+      }
     }
   ]
 }
