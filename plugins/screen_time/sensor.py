@@ -119,10 +119,14 @@ class ScreenTimeTimelineSensor(SensorBase):
         platform = str(item.get("platform", ""))
 
         duration_minutes = max(1, round(duration_seconds / 60))
-        title = f"{display_name} active for {duration_minutes}m"
-        summary = (
-            f"{display_name} was frontmost for {duration_minutes}m "
-            f"during {bucket_start.strftime('%H:%M')}-{bucket_end.strftime('%H:%M')}."
+        local_start = bucket_start.astimezone()
+        local_end = bucket_end.astimezone()
+        time_range = f"{local_start.strftime('%H:%M')}-{local_end.strftime('%H:%M')}"
+        body = self.t(
+            "summary.hourly_bucket",
+            time_range=time_range,
+            minutes=duration_minutes,
+            fallback=f"{time_range} · {duration_minutes} min",
         )
 
         return self._build_output(
@@ -141,7 +145,7 @@ class ScreenTimeTimelineSensor(SensorBase):
                     embedding_fallback="使用",
                 ),
             ),
-            narration=self._build_narration(title=title, body=summary),
+            narration=self._build_narration(body=body),
             occurred_at=bucket_start.timestamp(),
             content_blocks=[
                 ContentBlock(kind="text", value=f"App: {display_name}"),
