@@ -129,6 +129,16 @@ class ScreenTimeTimelineSensor(SensorBase):
             fallback=f"· {time_range} · {duration_minutes} min",
         )
 
+        # Hour buckets represent a closed interval; we anchor the L1 event
+        # timestamp at the bucket's end (minus 1s) rather than its start so
+        # that "what happened in the last N minutes/hours" queries cover the
+        # just-completed bucket. A query window that ends mid-hour (e.g.
+        # 12:02 asking about the past hour) would otherwise miss the
+        # [11:00, 12:00] bucket because its start (11:00) sits outside the
+        # window. Bucket end is guaranteed to be in the past at emission
+        # time (state.flush_completed only yields fully sealed buckets).
+        occurred_at_ts = bucket_end.timestamp() - 1.0
+
         return self._build_output(
             source_item_id=self.source_item_identity(item),
             activity=self._build_activity(
@@ -146,7 +156,7 @@ class ScreenTimeTimelineSensor(SensorBase):
                 ),
             ),
             narration=self._build_narration(body=body),
-            occurred_at=bucket_start.timestamp(),
+            occurred_at=occurred_at_ts,
             content_blocks=[
                 ContentBlock(kind="text", value=f"App: {display_name}"),
                 ContentBlock(kind="text", value=f"Canonical ID: {canonical_id}"),
