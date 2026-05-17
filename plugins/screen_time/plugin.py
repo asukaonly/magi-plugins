@@ -70,7 +70,12 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.enabled",
             type="switch",
             label="Enable App Usage Sync",
-            description="Track frontmost app activations and write hourly summaries to memory.",
+            description=(
+                "Tracks the foreground app every second and writes one summary per app "
+                "for each clock hour (10:00-11:00, 11:00-12:00, ...). A bucket is only "
+                "written to your timeline after the hour it belongs to has fully ended, "
+                "so the first entry typically appears 0-59 minutes after you enable this."
+            ),
             default=False,
             section="general",
             surface="timeline",
@@ -79,8 +84,13 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
         ExtensionFieldSpec(
             key=f"{prefix}.sync_interval_minutes",
             type="select",
-            label="Flush Interval",
-            description="How often to flush completed hourly app-usage buckets into memory.",
+            label="Check Interval",
+            description=(
+                "How often the plugin checks for hourly buckets that have just ended and "
+                "flushes them to the timeline. This does NOT change how often new entries "
+                "appear (always one per app per clock hour); a smaller value only reduces "
+                "the delay between an hour ending and its records becoming visible."
+            ),
             default=5,
             options=[
                 ExtensionFieldOption(label="Every minute", value="1"),
@@ -238,7 +248,10 @@ class ScreenTimePlugin(Plugin):
                 SensorSpec(
                     sensor_id="timeline.screen_time",
                     display_name="App Usage",
-                    description="In-plugin foreground app polling aggregated into hourly summaries.",
+                    description=(
+                        "Polls the foreground app each second and emits one summary per "
+                        "app per clock hour, flushed shortly after each hour ends."
+                    ),
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
