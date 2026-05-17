@@ -126,7 +126,7 @@ class ScreenTimeTimelineSensor(SensorBase):
             "summary.hourly_bucket",
             time_range=time_range,
             minutes=duration_minutes,
-            fallback=f"{time_range} · {duration_minutes} min",
+            fallback=f"· {time_range} · {duration_minutes} min",
         )
 
         return self._build_output(

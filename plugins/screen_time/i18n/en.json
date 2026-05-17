@@ -9,6 +9,6 @@
     }
   },
   "summary": {
-    "hourly_bucket": "{time_range} \u00b7 {minutes} min"
+    "hourly_bucket": "\u00b7 {time_range} \u00b7 {minutes} min"
   }
 }

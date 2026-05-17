@@ -118,7 +118,7 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "version": "0.2.3",
+      "version": "0.2.4",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
       "description_i18n": {
