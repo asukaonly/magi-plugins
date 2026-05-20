@@ -67,7 +67,6 @@ class _OpenBurst:
     captures: list[Capture] = field(default_factory=list)
     seen_lines: list[str] = field(default_factory=list)
     seen_line_set: set[str] = field(default_factory=set)
-    raw_text_length: int = 0
     trigger_counts: dict[str, int] = field(default_factory=lambda: {
         "timer": 0, "window_switch": 0, "keyboard": 0, "manual": 0
     })
@@ -148,7 +147,6 @@ class BurstAggregator:
         self._open.last_unix = cap.captured_at
         self._open.trigger_counts[cap.trigger] = self._open.trigger_counts.get(cap.trigger, 0) + 1
         raw = cap.ocr_text or ""
-        self._open.raw_text_length += len(raw)
         for line in raw.splitlines():
             stripped = line.strip()
             if not stripped:
@@ -192,9 +190,7 @@ class BurstAggregator:
     def _compose_union(self, ob: _OpenBurst) -> str:
         parts = [ob.window_title or ""] + ob.seen_lines
         text = "\n".join(parts)
-        # Truncate if the post-dedup text exceeds the cap, or if the raw OCR
-        # input already exceeded the cap (signalling that dedup hid the overflow).
-        if len(text) > self.content_char_cap or ob.raw_text_length > self.content_char_cap:
+        if len(text) > self.content_char_cap:
             text = text[: self.content_char_cap] + "\n[truncated]"
         return text
 
