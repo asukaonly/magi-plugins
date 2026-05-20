@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import time
 from pathlib import Path
 from types import ModuleType
@@ -12,6 +13,7 @@ def _load_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("screenshot_timeline_ids", module_path)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod  # required for @dataclass under Python 3.12
     spec.loader.exec_module(mod)
     return mod
 

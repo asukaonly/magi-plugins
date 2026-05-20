@@ -3,22 +3,7 @@ from __future__ import annotations
 
 import fnmatch
 import re
-import sys
 from dataclasses import dataclass, field
-
-# When loaded via importlib.util.spec_from_file_location (e.g. from tests), the
-# module may not yet be registered in sys.modules, which breaks @dataclass
-# annotation resolution on Python 3.12 (dataclasses looks up cls.__module__ in
-# sys.modules). Self-register the executing module so that lookup succeeds.
-if __name__ not in sys.modules:
-    _frame = sys._getframe()
-    _mod = sys.modules.get(_frame.f_globals.get("__name__", ""))
-    if _mod is None:
-        import types as _types
-        _mod = _types.ModuleType(__name__)
-        _mod.__dict__.update(_frame.f_globals)
-        sys.modules[__name__] = _mod
-    del _frame
 
 DEFAULT_APP_BLOCKLIST: tuple[str, ...] = (
     "com.agilebits.onepassword*",
