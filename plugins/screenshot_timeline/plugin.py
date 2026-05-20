@@ -5,14 +5,17 @@ from typing import Any
 
 from magi_plugin_sdk import Plugin, SensorSpec
 
+# Module-level defaults are the established sibling-plugin pattern
+# (see plugins/calendar_plugin/plugin.py). Task 12 fills this in.
+DEFAULT_SETTINGS: dict[str, Any] = {
+    "enabled": False,
+}
+
 
 class ScreenshotTimelinePlugin(Plugin):
     """Captures screen content with local OCR and feeds magi L1."""
 
-    def sensors(self) -> list[SensorSpec]:
-        # Will be filled in Task 10.
+    def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
+        # Returns (sensor_id, sensor_instance, sensor_spec) tuples.
+        # Will be filled in Task 10 + Task 12.
         return []
-
-    def get_default_settings(self) -> dict[str, Any]:
-        # Will be filled in Task 12.
-        return {"enabled": False}
