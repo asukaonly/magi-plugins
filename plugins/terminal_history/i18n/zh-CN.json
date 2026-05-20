@@ -1,0 +1,14 @@
+{
+  "terminal_history": {
+    "name": "终端历史",
+    "description": "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯"
+  },
+  "activity": {
+    "source": {
+      "terminal": "终端"
+    },
+    "action": {
+      "command": "命令"
+    }
+  }
+}

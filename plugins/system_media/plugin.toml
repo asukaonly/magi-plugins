@@ -2,9 +2,9 @@
 id = "system-media"
 name = "System Media"
 name_i18n = { "zh-CN" = "系统媒体" }
-version = "0.1.0"
-description = "Tracks music and video playback from apps that expose system media controls. Support varies by player, and some apps such as NetEase Cloud Music or QQ Music may not be detected."
-description_i18n = { "zh-CN" = "记录支持系统媒体控制的应用中的音乐和视频播放。实际支持范围取决于播放器实现，部分应用如网易云音乐或 QQ 音乐可能无法检测。" }
+version = "0.1.1"
+description = "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch."
+description_i18n = { "zh-CN" = "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SystemMediaPlugin"

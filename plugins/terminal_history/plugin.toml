@@ -2,7 +2,7 @@
 id = "terminal-history"
 name = "Terminal History"
 name_i18n = { "zh-CN" = "终端历史" }
-version = "0.1.0"
+version = "0.1.1"
 description = "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits."
 description_i18n = { "zh-CN" = "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯" }
 author = "Magi Team"

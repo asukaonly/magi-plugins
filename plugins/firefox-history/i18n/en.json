@@ -1,0 +1,38 @@
+{
+  "firefox_history": {
+    "name": "Firefox History",
+    "description": "Local Firefox browsing history ingestion for the timeline"
+  },
+  "activity": {
+    "source": {
+      "firefox": "Firefox"
+    },
+    "action": {
+      "browse": "Browsing"
+    },
+    "object": {
+      "page": "Page"
+    }
+  },
+  "summary": {
+    "single_visit": "{title}",
+    "multiple_visits": "{title} ({count} visits)"
+  },
+  "activation": {
+    "title": "Enable Firefox History",
+    "description": "Firefox history contains sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+    "confirm_label": "Enable source",
+    "cancel_label": "Not now"
+  },
+  "initial_sync_policy": {
+    "full": "Sync full history",
+    "lookback_days": "Sync recent days",
+    "from_now": "Only new records from now on"
+  },
+  "filters": {
+    "domains_label": "Filter Domains (Regex)",
+    "domains_description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+    "keywords_label": "Filter Keywords",
+    "keywords_description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+  }
+}

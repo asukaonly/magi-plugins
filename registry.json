@@ -8,7 +8,7 @@
       "name_i18n": {
         "zh-CN": "日历"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
@@ -43,6 +43,49 @@
       "platforms": [
         "macos",
         "windows"
+      ]
+    },
+    {
+      "plugin_id": "edge-history",
+      "name": "Edge History",
+      "name_i18n": {
+        "zh-CN": "Edge 浏览历史"
+      },
+      "version": "0.1.0",
+      "path": "plugins/edge-history",
+      "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description_i18n": {
+        "zh-CN": "读取本地 Microsoft Edge 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "windows"
+      ]
+    },
+    {
+      "plugin_id": "firefox-history",
+      "name": "Firefox History",
+      "name_i18n": {
+        "zh-CN": "Firefox 浏览历史"
+      },
+      "version": "0.1.0",
+      "path": "plugins/firefox-history",
+      "description": "Reads your local Firefox browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description_i18n": {
+        "zh-CN": "读取本地 Firefox 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
       ]
     },
     {
@@ -118,11 +161,11 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "version": "0.1.0",
+      "version": "0.2.6",
       "path": "plugins/screen_time",
-      "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits.",
+      "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
       "description_i18n": {
-        "zh-CN": "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯"
+        "zh-CN": "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯。数据按整点小时聚合，第一条记录会在当前所在的整点小时结束后才出现在时间线上。"
       },
       "author": "Magi Team",
       "official": true,
@@ -130,7 +173,8 @@
         "sensor"
       ],
       "platforms": [
-        "macos"
+        "macos",
+        "windows"
       ]
     },
     {
@@ -162,11 +206,11 @@
       "name_i18n": {
         "zh-CN": "系统媒体"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/system_media",
-      "description": "Tracks music and video playback from apps that expose system media controls. Support varies by player, and some apps such as NetEase Cloud Music or QQ Music may not be detected.",
+      "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch.",
       "description_i18n": {
-        "zh-CN": "记录支持系统媒体控制的应用中的音乐和视频播放。实际支持范围取决于播放器实现，部分应用如网易云音乐或 QQ 音乐可能无法检测。"
+        "zh-CN": "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容"
       },
       "author": "Magi Team",
       "official": true,
@@ -184,7 +228,7 @@
       "name_i18n": {
         "zh-CN": "Telegram"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -206,7 +250,7 @@
       "name_i18n": {
         "zh-CN": "终端历史"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/terminal_history",
       "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
       "description_i18n": {

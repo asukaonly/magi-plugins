@@ -1,0 +1,555 @@
+{
+  "version": 1,
+  "comment": "Canonical app catalog. Match keys: macos_bundle_id (NSRunningApplication.bundleIdentifier), windows_exe (executable basename, case-insensitive). Add entries via PR or via apps.local.json in the plugin cache directory.",
+  "apps": [
+    {
+      "id": "chrome",
+      "name": { "en": "Google Chrome", "zh-CN": "Google Chrome" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["com.google.Chrome"],
+        "windows_exe": ["chrome.exe"]
+      }
+    },
+    {
+      "id": "edge",
+      "name": { "en": "Microsoft Edge", "zh-CN": "Microsoft Edge" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.edgemac"],
+        "windows_exe": ["msedge.exe"]
+      }
+    },
+    {
+      "id": "safari",
+      "name": { "en": "Safari", "zh-CN": "Safari" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["com.apple.Safari"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "firefox",
+      "name": { "en": "Firefox", "zh-CN": "Firefox" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["org.mozilla.firefox"],
+        "windows_exe": ["firefox.exe"]
+      }
+    },
+    {
+      "id": "arc",
+      "name": { "en": "Arc", "zh-CN": "Arc" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["company.thebrowser.Browser"],
+        "windows_exe": ["Arc.exe"]
+      }
+    },
+    {
+      "id": "brave",
+      "name": { "en": "Brave", "zh-CN": "Brave" },
+      "category": "browser",
+      "match": {
+        "macos_bundle_id": ["com.brave.Browser"],
+        "windows_exe": ["brave.exe"]
+      }
+    },
+    {
+      "id": "vscode",
+      "name": { "en": "Visual Studio Code", "zh-CN": "Visual Studio Code" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.VSCode"],
+        "windows_exe": ["Code.exe"]
+      }
+    },
+    {
+      "id": "cursor",
+      "name": { "en": "Cursor", "zh-CN": "Cursor" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.todesktop.230313mzl4w4u92"],
+        "windows_exe": ["Cursor.exe"]
+      }
+    },
+    {
+      "id": "windsurf",
+      "name": { "en": "Windsurf", "zh-CN": "Windsurf" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.exafunction.windsurf"],
+        "windows_exe": ["Windsurf.exe"]
+      }
+    },
+    {
+      "id": "xcode",
+      "name": { "en": "Xcode", "zh-CN": "Xcode" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.apple.dt.Xcode"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "intellij",
+      "name": { "en": "IntelliJ IDEA", "zh-CN": "IntelliJ IDEA" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.jetbrains.intellij", "com.jetbrains.intellij.ce"],
+        "windows_exe": ["idea64.exe", "idea.exe"]
+      }
+    },
+    {
+      "id": "pycharm",
+      "name": { "en": "PyCharm", "zh-CN": "PyCharm" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.jetbrains.pycharm", "com.jetbrains.pycharm.ce"],
+        "windows_exe": ["pycharm64.exe", "pycharm.exe"]
+      }
+    },
+    {
+      "id": "webstorm",
+      "name": { "en": "WebStorm", "zh-CN": "WebStorm" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.jetbrains.WebStorm"],
+        "windows_exe": ["webstorm64.exe", "webstorm.exe"]
+      }
+    },
+    {
+      "id": "goland",
+      "name": { "en": "GoLand", "zh-CN": "GoLand" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["com.jetbrains.goland"],
+        "windows_exe": ["goland64.exe", "goland.exe"]
+      }
+    },
+    {
+      "id": "zed",
+      "name": { "en": "Zed", "zh-CN": "Zed" },
+      "category": "ide",
+      "match": {
+        "macos_bundle_id": ["dev.zed.Zed", "dev.zed.Zed-Preview"],
+        "windows_exe": ["Zed.exe"]
+      }
+    },
+    {
+      "id": "sublime_text",
+      "name": { "en": "Sublime Text", "zh-CN": "Sublime Text" },
+      "category": "editor",
+      "match": {
+        "macos_bundle_id": ["com.sublimetext.4", "com.sublimetext.3"],
+        "windows_exe": ["sublime_text.exe"]
+      }
+    },
+    {
+      "id": "neovim",
+      "name": { "en": "Neovim", "zh-CN": "Neovim" },
+      "category": "editor",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["nvim.exe", "nvim-qt.exe"]
+      }
+    },
+    {
+      "id": "wechat",
+      "name": { "en": "WeChat", "zh-CN": "微信" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.tencent.xinWeChat"],
+        "windows_exe": ["WeChat.exe", "Weixin.exe"]
+      }
+    },
+    {
+      "id": "qq",
+      "name": { "en": "QQ", "zh-CN": "QQ" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.tencent.qq"],
+        "windows_exe": ["QQ.exe", "QQscLauncher.exe"]
+      }
+    },
+    {
+      "id": "dingtalk",
+      "name": { "en": "DingTalk", "zh-CN": "钉钉" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.alibaba.DingTalkMac"],
+        "windows_exe": ["DingTalk.exe"]
+      }
+    },
+    {
+      "id": "feishu",
+      "name": { "en": "Lark", "zh-CN": "飞书" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.electron.lark", "com.bytedance.feishu"],
+        "windows_exe": ["Feishu.exe", "Lark.exe"]
+      }
+    },
+    {
+      "id": "telegram",
+      "name": { "en": "Telegram", "zh-CN": "Telegram" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["ru.keepcoder.Telegram", "org.telegram.desktop"],
+        "windows_exe": ["Telegram.exe"]
+      }
+    },
+    {
+      "id": "slack",
+      "name": { "en": "Slack", "zh-CN": "Slack" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.tinyspeck.slackmacgap"],
+        "windows_exe": ["slack.exe"]
+      }
+    },
+    {
+      "id": "discord",
+      "name": { "en": "Discord", "zh-CN": "Discord" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.hnc.Discord"],
+        "windows_exe": ["Discord.exe"]
+      }
+    },
+    {
+      "id": "teams",
+      "name": { "en": "Microsoft Teams", "zh-CN": "Microsoft Teams" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.teams2", "com.microsoft.teams"],
+        "windows_exe": ["ms-teams.exe", "Teams.exe"]
+      }
+    },
+    {
+      "id": "zoom",
+      "name": { "en": "Zoom", "zh-CN": "Zoom" },
+      "category": "messaging",
+      "match": {
+        "macos_bundle_id": ["us.zoom.xos"],
+        "windows_exe": ["Zoom.exe"]
+      }
+    },
+    {
+      "id": "iterm2",
+      "name": { "en": "iTerm2", "zh-CN": "iTerm2" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": ["com.googlecode.iterm2"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "apple_terminal",
+      "name": { "en": "Terminal", "zh-CN": "终端" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": ["com.apple.Terminal"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "wezterm",
+      "name": { "en": "WezTerm", "zh-CN": "WezTerm" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": ["com.github.wez.wezterm"],
+        "windows_exe": ["wezterm-gui.exe", "wezterm.exe"]
+      }
+    },
+    {
+      "id": "alacritty",
+      "name": { "en": "Alacritty", "zh-CN": "Alacritty" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": ["io.alacritty"],
+        "windows_exe": ["alacritty.exe"]
+      }
+    },
+    {
+      "id": "windows_terminal",
+      "name": { "en": "Windows Terminal", "zh-CN": "Windows 终端" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["WindowsTerminal.exe"]
+      }
+    },
+    {
+      "id": "powershell",
+      "name": { "en": "PowerShell", "zh-CN": "PowerShell" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["pwsh.exe", "powershell.exe"]
+      }
+    },
+    {
+      "id": "cmd",
+      "name": { "en": "Command Prompt", "zh-CN": "命令提示符" },
+      "category": "terminal",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["cmd.exe"]
+      }
+    },
+    {
+      "id": "spotify",
+      "name": { "en": "Spotify", "zh-CN": "Spotify" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["com.spotify.client"],
+        "windows_exe": ["Spotify.exe"]
+      }
+    },
+    {
+      "id": "apple_music",
+      "name": { "en": "Music", "zh-CN": "音乐" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["com.apple.Music"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "netease_music",
+      "name": { "en": "NetEase Cloud Music", "zh-CN": "网易云音乐" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["com.netease.163music"],
+        "windows_exe": ["cloudmusic.exe"]
+      }
+    },
+    {
+      "id": "qq_music",
+      "name": { "en": "QQ Music", "zh-CN": "QQ 音乐" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["com.tencent.QQMusicMac"],
+        "windows_exe": ["QQMusic.exe"]
+      }
+    },
+    {
+      "id": "vlc",
+      "name": { "en": "VLC", "zh-CN": "VLC" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["org.videolan.vlc"],
+        "windows_exe": ["vlc.exe"]
+      }
+    },
+    {
+      "id": "iina",
+      "name": { "en": "IINA", "zh-CN": "IINA" },
+      "category": "media",
+      "match": {
+        "macos_bundle_id": ["com.colliderli.iina"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "notion",
+      "name": { "en": "Notion", "zh-CN": "Notion" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["notion.id"],
+        "windows_exe": ["Notion.exe"]
+      }
+    },
+    {
+      "id": "obsidian",
+      "name": { "en": "Obsidian", "zh-CN": "Obsidian" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["md.obsidian"],
+        "windows_exe": ["Obsidian.exe"]
+      }
+    },
+    {
+      "id": "feishu_docs",
+      "name": { "en": "Lark Docs", "zh-CN": "飞书文档" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["com.electron.lark.docs"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "word",
+      "name": { "en": "Microsoft Word", "zh-CN": "Microsoft Word" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.Word"],
+        "windows_exe": ["WINWORD.EXE"]
+      }
+    },
+    {
+      "id": "excel",
+      "name": { "en": "Microsoft Excel", "zh-CN": "Microsoft Excel" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.Excel"],
+        "windows_exe": ["EXCEL.EXE"]
+      }
+    },
+    {
+      "id": "powerpoint",
+      "name": { "en": "Microsoft PowerPoint", "zh-CN": "Microsoft PowerPoint" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["com.microsoft.Powerpoint"],
+        "windows_exe": ["POWERPNT.EXE"]
+      }
+    },
+    {
+      "id": "wps",
+      "name": { "en": "WPS Office", "zh-CN": "WPS Office" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["com.kingsoft.wpsoffice.mac"],
+        "windows_exe": ["wps.exe", "et.exe", "wpp.exe", "wpscloudsvr.exe"]
+      }
+    },
+    {
+      "id": "finder",
+      "name": { "en": "Finder", "zh-CN": "访达" },
+      "category": "system",
+      "match": {
+        "macos_bundle_id": ["com.apple.finder"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "explorer",
+      "name": { "en": "File Explorer", "zh-CN": "文件资源管理器" },
+      "category": "system",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["explorer.exe"]
+      }
+    },
+    {
+      "id": "system_settings",
+      "name": { "en": "System Settings", "zh-CN": "系统设置" },
+      "category": "system",
+      "match": {
+        "macos_bundle_id": ["com.apple.systempreferences"],
+        "windows_exe": ["SystemSettings.exe"]
+      }
+    },
+    {
+      "id": "activity_monitor",
+      "name": { "en": "Activity Monitor", "zh-CN": "活动监视器" },
+      "category": "system",
+      "match": {
+        "macos_bundle_id": ["com.apple.ActivityMonitor"],
+        "windows_exe": []
+      }
+    },
+    {
+      "id": "task_manager",
+      "name": { "en": "Task Manager", "zh-CN": "任务管理器" },
+      "category": "system",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["Taskmgr.exe"]
+      }
+    },
+    {
+      "id": "magi",
+      "name": { "en": "Magi", "zh-CN": "Magi" },
+      "category": "productivity",
+      "match": {
+        "macos_bundle_id": ["asuka.magi", "com.magi.desktop"],
+        "windows_exe": ["magi.exe", "magi-desktop.exe"]
+      }
+    },
+    {
+      "id": "steam",
+      "name": { "en": "Steam", "zh-CN": "Steam" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.valvesoftware.steam"],
+        "windows_exe": ["steam.exe", "steamwebhelper.exe"]
+      }
+    },
+    {
+      "id": "epic_games",
+      "name": { "en": "Epic Games Launcher", "zh-CN": "Epic Games 启动器" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.epicgames.launcher"],
+        "windows_exe": ["EpicGamesLauncher.exe"]
+      }
+    },
+    {
+      "id": "wuthering_waves",
+      "name": { "en": "Wuthering Waves", "zh-CN": "鸣潮" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["Client-Win64-Shipping.exe", "wuthering waves.exe"]
+      }
+    },
+    {
+      "id": "genshin_impact",
+      "name": { "en": "Genshin Impact", "zh-CN": "原神" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["GenshinImpact.exe", "YuanShen.exe"]
+      }
+    },
+    {
+      "id": "honkai_star_rail",
+      "name": { "en": "Honkai: Star Rail", "zh-CN": "崩坏：星穹铁道" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["StarRail.exe"]
+      }
+    },
+    {
+      "id": "zenless_zone_zero",
+      "name": { "en": "Zenless Zone Zero", "zh-CN": "绝区零" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["ZenlessZoneZero.exe"]
+      }
+    },
+    {
+      "id": "league_of_legends",
+      "name": { "en": "League of Legends", "zh-CN": "英雄联盟" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.riotgames.LeagueofLegends"],
+        "windows_exe": ["LeagueClient.exe", "League of Legends.exe"]
+      }
+    },
+    {
+      "id": "valorant",
+      "name": { "en": "VALORANT", "zh-CN": "无畏契约" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": [],
+        "windows_exe": ["VALORANT.exe", "VALORANT-Win64-Shipping.exe"]
+      }
+    },
+    {
+      "id": "minecraft",
+      "name": { "en": "Minecraft", "zh-CN": "我的世界" },
+      "category": "gaming",
+      "match": {
+        "macos_bundle_id": ["com.mojang.minecraftlauncher"],
+        "windows_exe": ["MinecraftLauncher.exe"]
+      }
+    }
+  ]
+}

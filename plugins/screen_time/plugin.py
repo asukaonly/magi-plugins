@@ -1,21 +1,26 @@
-"""Frontmost app usage timeline plugin."""
+"""Foreground app usage timeline plugin (cross-platform)."""
 from __future__ import annotations
 
-from collections import Counter
 import sys
+from collections import Counter
 from typing import Any
 
-from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
-from magi_plugin_sdk.ingress import PluginIngressHandlerRegistration
-from magi_plugin_sdk.sensors import PluginRuntimePaths
+from magi_plugin_sdk import (
+    ExtensionFieldOption,
+    ExtensionFieldSpec,
+    ExtractionProfileSpec,
+    Plugin,
+    SensorSpec,
+)
 
-from .ingress import ScreenTimePluginIngressHandler
 from .sensor import ScreenTimeTimelineSensor
 
 DEFAULT_SETTINGS = {
     "enabled": False,
     "sync_interval_minutes": 5,
 }
+
+SUPPORTED_PLATFORMS = ("darwin", "win32")
 
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
@@ -59,13 +64,18 @@ def _format_minutes(seconds: int) -> str:
 
 
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    """Define all settings fields for the frontmost app usage plugin."""
+    """Define all settings fields for the foreground app usage plugin."""
     return [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
             type="switch",
             label="Enable App Usage Sync",
-            description="Track frontmost app activation events and write hourly summaries to memory.",
+            description=(
+                "Tracks the foreground app every second and writes one summary per app "
+                "for each clock hour (10:00-11:00, 11:00-12:00, ...). A bucket is only "
+                "written to your timeline after the hour it belongs to has fully ended, "
+                "so the first entry typically appears 0-59 minutes after you enable this."
+            ),
             default=False,
             section="general",
             surface="timeline",
@@ -74,8 +84,13 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
         ExtensionFieldSpec(
             key=f"{prefix}.sync_interval_minutes",
             type="select",
-            label="Flush Interval",
-            description="How often to flush completed hourly app-usage buckets into memory.",
+            label="Check Interval",
+            description=(
+                "How often the plugin checks for hourly buckets that have just ended and "
+                "flushes them to the timeline. This does NOT change how often new entries "
+                "appear (always one per app per clock hour); a smaller value only reduces "
+                "the delay between an hour ending and its records becoming visible."
+            ),
             default=5,
             options=[
                 ExtensionFieldOption(label="Every minute", value="1"),
@@ -91,7 +106,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 
 class ScreenTimePlugin(Plugin):
-    """Registers the frontmost app usage source under the existing package id."""
+    """Registers the cross-platform foreground app usage source."""
 
     def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
         return [
@@ -105,16 +120,18 @@ class ScreenTimePlugin(Plugin):
                 allow_graph=True,
                 allow_assertion=False,
                 extraction_instructions=(
-                    "These events are app usage duration records from macOS Screen Time.\n"
-                    "Each event reports how long an app was used in a time window.\n\n"
+                    "These events are foreground-app usage duration records.\n"
+                    "Each event reports how long an app was frontmost in a time window.\n\n"
                     "Entity extraction rules:\n"
-                    "- Extract the application as a `software` entity.\n"
-                    "- Extract media apps (Netflix, YouTube, etc.) with VIEWED predicate.\n"
-                    "- USES: for productivity and development tools.\n"
-                    "- Only extract apps with meaningful usage duration, skip brief\n"
-                    "  system utility interactions.\n"
-                    "- Normalize app names: use the canonical app name, not the bundle\n"
-                    "  identifier."
+                    "- Extract the application as a `software` entity using the\n"
+                    "  `display_name` field (already localized and human-friendly).\n"
+                    "- Treat `canonical_id` as the stable cross-platform identifier\n"
+                    "  for the same logical app; never expose the raw bundle_id or\n"
+                    "  Windows executable path to the user.\n"
+                    "- Extract media-centric apps (Netflix, YouTube, Spotify, etc.)\n"
+                    "  with the VIEWED predicate; use USES for productivity and\n"
+                    "  development tools.\n"
+                    "- Skip extractions for very brief system utility interactions."
                 ),
             )
         ]
@@ -136,17 +153,29 @@ class ScreenTimePlugin(Plugin):
 
         app_duration: Counter[str] = Counter()
         app_sessions: Counter[str] = Counter()
+        display_name_by_id: dict[str, str] = {}
         representative_event_ids: list[str] = []
         total_duration_seconds = 0
         total_session_count = 0
 
         for event in events:
             provenance = _event_provenance(event)
-            app_name = str(provenance.get("app_name") or provenance.get("bundle_id") or "Unknown App").strip()
+            canonical_id = str(
+                provenance.get("canonical_id")
+                or provenance.get("bundle_id")
+                or "unknown"
+            ).strip() or "unknown"
+            display_name = str(
+                provenance.get("display_name")
+                or provenance.get("app_name")
+                or canonical_id
+            ).strip()
             duration_seconds = _int_value(provenance, "duration_seconds")
             session_count = _int_value(provenance, "session_count")
-            app_duration[app_name] += duration_seconds
-            app_sessions[app_name] += session_count
+            app_duration[canonical_id] += duration_seconds
+            app_sessions[canonical_id] += session_count
+            if display_name and canonical_id not in display_name_by_id:
+                display_name_by_id[canonical_id] = display_name
             total_duration_seconds += duration_seconds
             total_session_count += session_count
             event_id = str(event.get("event_id") or "").strip()
@@ -158,21 +187,27 @@ class ScreenTimePlugin(Plugin):
         omitted_event_count = max(0, total_event_count - covered_event_count)
         top_apps = [
             {
-                "app": app,
+                "canonical_id": canonical_id,
+                "app": display_name_by_id.get(canonical_id, canonical_id),
                 "duration_seconds": int(seconds),
-                "session_count": int(app_sessions.get(app, 0)),
+                "session_count": int(app_sessions.get(canonical_id, 0)),
             }
-            for app, seconds in app_duration.most_common(6)
+            for canonical_id, seconds in app_duration.most_common(6)
         ]
 
         summary_lines = [
             f"App usage feature coverage used {covered_event_count} hourly app buckets covering {_format_minutes(total_duration_seconds)}."
         ]
         if top_apps:
-            joined = ", ".join(f"{item['app']} ({_format_minutes(int(item['duration_seconds']))})" for item in top_apps[:4])
+            joined = ", ".join(
+                f"{item['app']} ({_format_minutes(int(item['duration_seconds']))})"
+                for item in top_apps[:4]
+            )
             summary_lines.append(f"Most active apps: {joined}.")
         if total_session_count:
-            summary_lines.append(f"App usage included {total_session_count} frontmost sessions in the covered buckets.")
+            summary_lines.append(
+                f"App usage included {total_session_count} frontmost sessions in the covered buckets."
+            )
         if omitted_event_count > 0:
             summary_lines.append(
                 f"App usage feature coverage used {covered_event_count} representative buckets; {omitted_event_count} additional buckets were compacted."
@@ -192,33 +227,19 @@ class ScreenTimePlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_plugin_ingress_registrations(
-        self,
-        *,
-        runtime_paths: PluginRuntimePaths,
-    ) -> list[PluginIngressHandlerRegistration]:
-        if sys.platform != "darwin":
-            return []
-
-        return [
-            PluginIngressHandlerRegistration(
-                plugin_target="screen_time",
-                event_type="frontmost_app_activated",
-                handler=ScreenTimePluginIngressHandler(runtime_paths=runtime_paths),
-            )
-        ]
-
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        if sys.platform != "darwin":
+        if sys.platform not in SUPPORTED_PLATFORMS:
             return []
 
-        settings = {}
+        settings: dict[str, Any] = {}
         sensors_settings = self.settings.get("sensors", {})
         if isinstance(sensors_settings, dict):
             settings = dict(sensors_settings.get("screen_time", {}))
 
         sensor = ScreenTimeTimelineSensor()
-        sync_interval_minutes = int(settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
+        sync_interval_minutes = int(
+            settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"])
+        )
 
         return [
             (
@@ -227,7 +248,10 @@ class ScreenTimePlugin(Plugin):
                 SensorSpec(
                     sensor_id="timeline.screen_time",
                     display_name="App Usage",
-                    description="Event-driven frontmost app usage aggregated into hourly summaries.",
+                    description=(
+                        "Polls the foreground app each second and emits one summary per "
+                        "app per clock hour, flushed shortly after each hour ends."
+                    ),
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",

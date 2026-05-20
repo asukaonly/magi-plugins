@@ -1,0 +1,6 @@
+{
+  "telegram": {
+    "name": "Telegram",
+    "description": "将 Magi 接入 Telegram，通过机器人与 Magi 对话并接收消息回复"
+  }
+}

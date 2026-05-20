@@ -1,0 +1,14 @@
+{
+  "calendar": {
+    "name": "Calendar",
+    "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
+  },
+  "activity": {
+    "source": {
+      "calendar": "Calendar"
+    },
+    "action": {
+      "event": "Event"
+    }
+  }
+}
