@@ -119,6 +119,8 @@ class ScreenshotSensor(SensorBase):
             await self._helper.start()
 
     async def stop(self) -> None:
+        # Drain any open burst before tearing down the helper subprocess
+        await self.flush_pending_bursts()
         if self._helper is not None:
             await self._helper.shutdown()
 
@@ -140,7 +142,9 @@ class ScreenshotSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
-        items = await self.flush_pending_bursts()
+        """Harvest naturally-closed bursts; do NOT force-close the open one."""
+        items = list(self._pending_closed)
+        self._pending_closed.clear()
         return SensorSyncResult(items=items)
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:

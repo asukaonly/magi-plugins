@@ -75,3 +75,36 @@ async def test_blocked_app_skips_capture(tmp_path: Path) -> None:
         assert items == []
     finally:
         await sensor.stop()
+
+
+@pytest.mark.asyncio
+async def test_collect_items_does_not_force_close_open_burst(tmp_path: Path) -> None:
+    """collect_items must NOT prematurely close a burst that's still accumulating.
+
+    A naive flush_all-on-every-poll would chop a long reading session into many
+    small bursts. The real-time loop should harvest only naturally-closed bursts.
+    """
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(
+        helper_argv=[sys.executable, str(_FIXTURE)],
+        resources_root=tmp_path,
+        gap_minutes=5,
+        max_minutes=30,
+        retention_days=30,
+    )
+    await sensor.start()
+    try:
+        # Two captures of the same window — burst still OPEN
+        await sensor.trigger_once("timer")
+        await sensor.trigger_once("timer")
+
+        # Production pull-sync poll: should return 0 items because the burst hasn't closed
+        result = await sensor.collect_items(context=None)  # type: ignore[arg-type]
+        assert result.items == []
+
+        # Force-flush (e.g. on shutdown) returns the 1 burst
+        items = await sensor.flush_pending_bursts()
+        assert len(items) == 1
+        assert items[0]["capture_count"] == 2
+    finally:
+        await sensor.stop()
