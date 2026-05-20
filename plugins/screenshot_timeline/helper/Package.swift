@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MagiVisionHelper",
-    platforms: [.macOS(.v12)],
+    platforms: [.macOS(.v14)],
     products: [
         .executable(name: "magi-vision-helper", targets: ["MagiVisionHelper"]),
     ],

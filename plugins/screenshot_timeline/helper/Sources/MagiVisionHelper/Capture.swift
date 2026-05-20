@@ -26,7 +26,6 @@ func captureScope(scope: String?) -> CaptureScope {
     }
 }
 
-@available(macOS 14.0, *)
 func performCapture(scope: CaptureScope) async throws -> CGImage {
     let content: SCShareableContent
     do {
