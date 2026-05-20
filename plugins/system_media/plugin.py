@@ -65,7 +65,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.enabled",
             type="switch",
             label="Enable Media Recording",
-            description="Automatically detect and record music and videos playing on your device.",
+            description="Automatically detect and record playback from apps that expose OS media controls. Some players may not be supported.",
             default=False,
             section="general",
             surface="timeline",
@@ -222,7 +222,7 @@ class SystemMediaPlugin(Plugin):
                 SensorSpec(
                     sensor_id="timeline.system_media",
                     display_name="System Media",
-                    description="Cross-platform media playback tracking via OS transport controls.",
+                    description="Tracks playback from apps that expose OS media controls. Support varies by player, and some apps may not be detected.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
