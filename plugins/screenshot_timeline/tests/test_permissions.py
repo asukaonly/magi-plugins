@@ -1,10 +1,15 @@
-"""Smoke tests for permissions module."""
+"""Tests for the helper-delegated permissions module."""
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from unittest.mock import patch
+
+import pytest
 
 
 def _load() -> ModuleType:
@@ -17,21 +22,61 @@ def _load() -> ModuleType:
     return mod
 
 
-def test_screen_recording_status_returns_known_value() -> None:
-    mod = _load()
-    status = mod.screen_recording_status()
-    assert status in {"granted", "denied", "not_determined", "unknown"}
+def _mock_helper_response(status: str) -> object:
+    """Return a CompletedProcess-like object whose stdout has one JSON probe line."""
+    stdout = json.dumps({"id": "p", "ok": True, "permission_status": status}) + "\n"
+    return subprocess.CompletedProcess(args=["helper"], returncode=0, stdout=stdout, stderr="")
 
 
-def test_accessibility_status_returns_known_value() -> None:
+def test_screen_recording_status_returns_granted_when_helper_says_granted() -> None:
     mod = _load()
-    status = mod.accessibility_status()
-    assert status in {"granted", "denied", "not_determined", "unknown"}
+    with patch.object(mod.subprocess, "run", return_value=_mock_helper_response("granted")):
+        assert mod.screen_recording_status() == "granted"
+
+
+def test_screen_recording_status_returns_denied_when_helper_says_denied() -> None:
+    mod = _load()
+    with patch.object(mod.subprocess, "run", return_value=_mock_helper_response("denied")):
+        assert mod.screen_recording_status() == "denied"
+
+
+def test_accessibility_status_returns_granted() -> None:
+    mod = _load()
+    with patch.object(mod.subprocess, "run", return_value=_mock_helper_response("granted")):
+        assert mod.accessibility_status() == "granted"
+
+
+def test_helper_unknown_status_collapses_to_unknown() -> None:
+    mod = _load()
+    stdout = json.dumps({"id": "p", "ok": True, "permission_status": "weird"}) + "\n"
+    mock_proc = subprocess.CompletedProcess(args=["helper"], returncode=0, stdout=stdout, stderr="")
+    with patch.object(mod.subprocess, "run", return_value=mock_proc):
+        assert mod.screen_recording_status() == "unknown"
+
+
+def test_helper_error_response_returns_unknown() -> None:
+    mod = _load()
+    stdout = json.dumps({"id": "p", "ok": False, "error": {"code": "BOOM", "message": ""}}) + "\n"
+    mock_proc = subprocess.CompletedProcess(args=["helper"], returncode=1, stdout=stdout, stderr="")
+    with patch.object(mod.subprocess, "run", return_value=mock_proc):
+        assert mod.screen_recording_status() == "unknown"
+
+
+def test_helper_timeout_returns_unknown() -> None:
+    mod = _load()
+    with patch.object(mod.subprocess, "run", side_effect=subprocess.TimeoutExpired(cmd="x", timeout=1)):
+        assert mod.screen_recording_status() == "unknown"
+
+
+def test_helper_missing_returns_unknown(monkeypatch) -> None:
+    mod = _load()
+    monkeypatch.setattr(mod, "_helper_binary_path", lambda: None)
+    assert mod.screen_recording_status() == "unknown"
 
 
 def test_all_statuses_shape() -> None:
     mod = _load()
-    statuses = mod.all_statuses()
-    assert set(statuses.keys()) == {"screen_recording", "accessibility"}
-    for v in statuses.values():
-        assert v in {"granted", "denied", "not_determined", "unknown"}
+    with patch.object(mod.subprocess, "run", return_value=_mock_helper_response("granted")):
+        s = mod.all_statuses()
+        assert set(s.keys()) == {"screen_recording", "accessibility"}
+        assert all(v == "granted" for v in s.values())

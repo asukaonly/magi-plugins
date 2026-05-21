@@ -79,9 +79,16 @@ async def test_blocked_app_skips_capture(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sensor_active_window_timer_fires_capture(tmp_path: Path) -> None:
+async def test_sensor_active_window_timer_fires_capture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """With a short interval, the active-window timer should drive at least one capture."""
     sensor_mod = _load("sensor")
+    # Force the permission probe to report "granted" so start() actually wires up
+    # the orchestrator + timer. The real probe now spawns the Swift helper binary,
+    # which has its own per-binary TCC entry that may not be granted on dev/CI machines.
+    monkeypatch.setattr(sensor_mod, "screen_recording_status", lambda: "granted")
+    monkeypatch.setattr(sensor_mod, "request_screen_recording", lambda: "granted")
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,

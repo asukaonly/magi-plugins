@@ -74,6 +74,20 @@ while let line = readLine(strippingNewline: true) {
             }
             semaphore.wait()
 
+        case "probe_screen_recording":
+            writeResponse(.permission(id: req.id, status: checkScreenRecordingPermission()))
+
+        case "request_screen_recording":
+            requestScreenRecordingPermission()
+            writeResponse(.permission(id: req.id, status: checkScreenRecordingPermission()))
+
+        case "probe_accessibility":
+            writeResponse(.permission(id: req.id, status: checkAccessibilityPermission()))
+
+        case "request_accessibility":
+            requestAccessibilityPermission()
+            writeResponse(.permission(id: req.id, status: checkAccessibilityPermission()))
+
         default:
             writeResponse(.error(id: req.id, code: "NOT_IMPLEMENTED",
                                  message: "op \(req.op) not implemented yet"))
