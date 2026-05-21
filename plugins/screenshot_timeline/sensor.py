@@ -24,6 +24,7 @@ try:
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
     from .privacy_guard import PrivacyGuard
+    from .retention import purge_orphan_originals
     from .trigger_orchestrator import (
         IntervalTimer,
         TriggerOrchestrator,
@@ -54,6 +55,8 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     new_capture_id = _ids.new_capture_id
     _pg = _load_sibling("privacy_guard")
     PrivacyGuard = _pg.PrivacyGuard
+    _ret = _load_sibling("retention")
+    purge_orphan_originals = _ret.purge_orphan_originals
     _to = _load_sibling("trigger_orchestrator")
     IntervalTimer = _to.IntervalTimer
     TriggerOrchestrator = _to.TriggerOrchestrator
@@ -131,6 +134,7 @@ class ScreenshotSensor(SensorBase):
         self._active_timer: IntervalTimer | None = None
         self._full_screen_timer: IntervalTimer | None = None
         self._workspace_handle: object | None = None
+        self._retention_task: asyncio.Task | None = None
 
     # ------- Lifecycle -------
 
@@ -178,7 +182,18 @@ class ScreenshotSensor(SensorBase):
 
         self._workspace_handle = install_nsworkspace_observer(_on_window_switch)
 
+        self._retention_task = asyncio.create_task(self._retention_loop())
+
     async def stop(self) -> None:
+        # Cancel retention sweep first so it cannot race with helper shutdown.
+        if self._retention_task is not None:
+            self._retention_task.cancel()
+            try:
+                await asyncio.wait_for(self._retention_task, timeout=2.0)
+            except (asyncio.CancelledError, asyncio.TimeoutError):
+                pass
+            self._retention_task = None
+
         # Stop drivers first so no new captures are issued mid-shutdown.
         if self._active_timer is not None:
             await self._active_timer.stop()
@@ -395,6 +410,28 @@ class ScreenshotSensor(SensorBase):
         out = list(self._pending_closed)
         self._pending_closed.clear()
         return out
+
+    async def _retention_loop(self) -> None:
+        """Run retention.purge_orphan_originals every 24h until cancelled."""
+        interval = 24 * 3600.0
+        # First sweep ~30s after startup (snappy onboarding without fighting a
+        # fresh enable storm), then daily.
+        first_delay = 30.0
+        try:
+            await asyncio.sleep(first_delay)
+            while True:
+                try:
+                    stats = purge_orphan_originals(
+                        self.resources_root,
+                        retention_days=self.retention_days,
+                    )
+                    if stats["deleted"] > 0 or stats["errors"] > 0:
+                        logger.info("retention.sweep stats=%s", stats)
+                except Exception:  # noqa: BLE001
+                    logger.exception("retention.sweep_failed")
+                await asyncio.sleep(interval)
+        except asyncio.CancelledError:
+            return
 
 
 def _closed_burst_to_dict(burst: "ClosedBurst") -> dict[str, Any]:

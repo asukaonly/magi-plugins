@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import time as _time
+from pathlib import Path as _Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+_ORIG_FILE_RE = re.compile(r"^cap_[A-Z0-9]+_orig\.jpg$")
 
 
 def select_expired(metadata: dict[str, Any], *, now: float) -> list[dict[str, Any]]:
@@ -48,4 +53,52 @@ def purge_expired(metadata: dict[str, Any], *, now: float) -> int:
     return total_bytes
 
 
-__all__ = ["select_expired", "purge_expired"]
+def purge_orphan_originals(
+    resources_root: str | _Path,
+    *,
+    retention_days: int,
+    now: float | None = None,
+) -> dict:
+    """Walk the resources tree and delete *_orig.jpg files older than retention_days.
+
+    Returns a stats dict: {scanned: int, deleted: int, deleted_bytes: int, errors: int}.
+
+    Thumbnails are never touched. The match is filename-based so we don't risk
+    deleting unrelated files. If `resources_root` doesn't exist, returns zero stats.
+    """
+    root = _Path(resources_root)
+    now_ts = _time.time() if now is None else float(now)
+    cutoff = now_ts - max(0, int(retention_days)) * 86400.0
+
+    stats = {"scanned": 0, "deleted": 0, "deleted_bytes": 0, "errors": 0}
+    if not root.exists():
+        return stats
+
+    for path in root.rglob("cap_*_orig.jpg"):
+        if not _ORIG_FILE_RE.match(path.name):
+            continue
+        stats["scanned"] += 1
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            stats["errors"] += 1
+            continue
+        if mtime > cutoff:
+            continue
+        try:
+            size = path.stat().st_size
+        except OSError:
+            size = 0
+        try:
+            path.unlink()
+        except OSError as exc:
+            logger.warning("retention.unlink_failed path=%s err=%s", path, exc)
+            stats["errors"] += 1
+            continue
+        stats["deleted"] += 1
+        stats["deleted_bytes"] += size
+
+    return stats
+
+
+__all__ = ["select_expired", "purge_expired", "purge_orphan_originals"]
