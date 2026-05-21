@@ -15,3 +15,11 @@ dependencies = [
     "pyobjc-framework-EventKit>=10.0",
     "pyobjc-framework-Cocoa>=10.0",
 ]
+
+[plugin.default_settings.sensors.calendar]
+enabled = false
+sync_mode = "interval"
+sync_interval_minutes = 30
+lookback_days = 30
+recurring_expansion_days = 30
+default_retention_mode = "full"

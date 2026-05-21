@@ -11,3 +11,13 @@ entry_class = "GitActivityPlugin"
 official = true
 contribution_types = ["sensor"]
 platforms = ["macos", "windows"]
+
+[plugin.default_settings.sensors.git_activity]
+enabled = false
+repos = []
+sync_interval_minutes = 30
+initial_sync_policy = "lookback_days"
+initial_sync_lookback_days = 30
+sensitive_mode = "redact"
+sensitive_keywords = []
+default_retention_mode = "analyze_only"

@@ -11,3 +11,14 @@ entry_class = "PhotoLibraryPlugin"
 official = true
 contribution_types = ["sensor", "tool"]
 platforms = ["macos", "windows"]
+
+[plugin.default_settings.sensors.photo_library]
+enabled = false
+sync_mode = "manual"
+sync_interval_minutes = 60
+default_retention_mode = "analyze_only"
+storage_mode = "external_reference"
+source_paths = []
+exclude_patterns = []
+analysis_features = ["exif"]
+edge_whitelist = ["CAPTURED", "RELATED_TO", "INTERACTED_WITH", "CREATED"]
