@@ -11,6 +11,8 @@ from magi_plugin_sdk import (
     Plugin,
     PluginSettingsActionResult,
     PluginSettingsActionSpec,
+    PluginSettingsResourceSpec,
+    SettingsUIBlockSpec,
 )
 from magi_plugin_sdk.sensors import SensorSpec
 
@@ -62,6 +64,24 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
         configured_key=f"{prefix}.initial_sync_configured",
         fields=[],  # Capture scope / retention live in the regular settings panel.
     )
+
+
+def _settings_ui_blocks(prefix: str) -> list[SettingsUIBlockSpec]:
+    """Host-rendered custom blocks for the Screenshot Timeline plugin."""
+    return [
+        SettingsUIBlockSpec(
+            block_id="macos_permissions",
+            type="resource_picker",
+            title="macOS Permissions",
+            description=(
+                "Screen Recording is required for capture. Accessibility is optional, "
+                "needed only for keyboard triggers and the panic hotkey."
+            ),
+            resource_name="permissions",
+            value_key="_readonly",
+            presentation="permission_status",
+        ),
+    ]
 
 
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
@@ -277,10 +297,51 @@ class ScreenshotTimelinePlugin(Plugin):
                         "source_type": "screenshot_timeline",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "activation_flow": _activation_flow("sensors.timeline").model_dump(),
+                        "settings_ui_blocks": [
+                            block.model_dump() for block in _settings_ui_blocks("sensors.timeline")
+                        ],
                     },
                 ),
             )
         ]
+
+    def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
+        return [
+            PluginSettingsResourceSpec(
+                resource_name="permissions",
+                resource_type="channel_status",
+                description="Live macOS permission grants required by the screenshot timeline plugin.",
+            ),
+        ]
+
+    def read_settings_resource(self, resource_name: str) -> Any:
+        if resource_name != "permissions":
+            raise KeyError(resource_name)
+        from .permissions import all_statuses
+
+        statuses = all_statuses()
+        return {
+            "items": [
+                {
+                    "id": "screen_recording",
+                    "label": "Screen Recording",
+                    "label_i18n_key": "settings.plugins.screenshot_timeline.permissions.screen_recording.label",
+                    "description": "Required to capture screen content.",
+                    "description_i18n_key": "settings.plugins.screenshot_timeline.permissions.screen_recording.description",
+                    "status": statuses["screen_recording"],
+                    "required": True,
+                },
+                {
+                    "id": "accessibility",
+                    "label": "Accessibility",
+                    "label_i18n_key": "settings.plugins.screenshot_timeline.permissions.accessibility.label",
+                    "description": "Required for keyboard triggers and the panic hotkey (optional).",
+                    "description_i18n_key": "settings.plugins.screenshot_timeline.permissions.accessibility.description",
+                    "status": statuses["accessibility"],
+                    "required": False,
+                },
+            ],
+        }
 
     def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
         return [
