@@ -88,6 +88,9 @@ while let line = readLine(strippingNewline: true) {
             requestAccessibilityPermission()
             writeResponse(.permission(id: req.id, status: checkAccessibilityPermission()))
 
+        case "probe_screen_lock":
+            writeResponse(.screenLock(id: req.id, locked: checkScreenLocked()))
+
         default:
             writeResponse(.error(id: req.id, code: "NOT_IMPLEMENTED",
                                  message: "op \(req.op) not implemented yet"))

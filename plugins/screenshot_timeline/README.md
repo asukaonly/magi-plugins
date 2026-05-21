@@ -81,7 +81,7 @@ Use after a fresh install to verify end-to-end behavior:
 - Helper binary is committed unsigned in the dev tree; release builds will use a signed/notarized binary distributed via `magi-plugins` GitHub Releases (separate workflow)
 - Keyboard triggers UI is declared but the `CGEventTap` listener isn't wired yet — toggle is harmless but has no effect (follow-up work)
 - Retention deletes expired originals via filesystem-walk; L1 metadata still references the (now-missing) `original_path` and readers must handle gracefully. Proper L1 metadata patching needs an SDK hook that doesn't exist yet
-- Lockscreen pause uses `Quartz.CGSessionCopyCurrentDictionary`; if Quartz isn't available the sensor degrades to "assume unlocked"
+- Lockscreen pause uses `CGSessionCopyCurrentDictionary` inside the Swift helper; if the probe fails (no helper, timeout) the sensor degrades to "assume unlocked"
 
 ## Development
 
