@@ -59,11 +59,17 @@ class IntervalTimer:
             self._task = None
 
     async def _loop(self) -> None:
+        logger.warning(
+            "timer.loop_started label=%s interval_s=%s",
+            self.trigger_label, self.interval_seconds,
+        )
         while not self._stop.is_set():
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=self.interval_seconds)
+                logger.warning("timer.loop_stopped label=%s", self.trigger_label)
                 return
             except asyncio.TimeoutError:
+                logger.warning("timer.tick label=%s", self.trigger_label)
                 try:
                     await self.on_tick(self.trigger_label)
                 except Exception:  # noqa: BLE001
@@ -82,7 +88,9 @@ class TriggerOrchestrator:
     async def emit(self, trigger: str, *, now: float | None = None) -> None:
         when = now if now is not None else time.time()
         if not self._global_debouncer.accept(now=when):
+            logger.warning("orchestrator.debounced trigger=%s", trigger)
             return
+        logger.warning("orchestrator.emit trigger=%s", trigger)
         await self.on_capture(trigger)
 
 
