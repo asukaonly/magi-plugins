@@ -33,6 +33,9 @@ def main() -> None:
         if op == "shutdown":
             emit({"id": rid, "ok": True})
             return
+        if op == "probe_screen_lock":
+            emit({"id": rid, "ok": True, "screen_locked": False})
+            continue
         if op == "probe_active_window":
             emit({
                 "id": rid, "ok": True,

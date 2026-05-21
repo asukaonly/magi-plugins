@@ -86,6 +86,7 @@ public struct HelperResponse: Codable {
     public let filesWritten: FilesWritten?
     public let error: ErrorPayload?
     public let permissionStatus: String?
+    public let screenLocked: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, ok
@@ -96,6 +97,7 @@ public struct HelperResponse: Codable {
         case filesWritten = "files_written"
         case error
         case permissionStatus = "permission_status"
+        case screenLocked = "screen_locked"
     }
 
     public static func success(
@@ -109,7 +111,7 @@ public struct HelperResponse: Codable {
         HelperResponse(
             id: id, ok: true, capturedAt: capturedAt, dimensions: dimensions,
             activeWindow: activeWindow, ocr: ocr, filesWritten: filesWritten, error: nil,
-            permissionStatus: nil
+            permissionStatus: nil, screenLocked: nil
         )
     }
 
@@ -118,7 +120,7 @@ public struct HelperResponse: Codable {
             id: id, ok: false, capturedAt: nil, dimensions: nil,
             activeWindow: nil, ocr: nil, filesWritten: nil,
             error: ErrorPayload(code: code, message: message),
-            permissionStatus: nil
+            permissionStatus: nil, screenLocked: nil
         )
     }
 
@@ -126,7 +128,15 @@ public struct HelperResponse: Codable {
         HelperResponse(
             id: id, ok: true, capturedAt: nil, dimensions: nil,
             activeWindow: nil, ocr: nil, filesWritten: nil, error: nil,
-            permissionStatus: status
+            permissionStatus: status, screenLocked: nil
+        )
+    }
+
+    public static func screenLock(id: String, locked: Bool) -> HelperResponse {
+        HelperResponse(
+            id: id, ok: true, capturedAt: nil, dimensions: nil,
+            activeWindow: nil, ocr: nil, filesWritten: nil, error: nil,
+            permissionStatus: nil, screenLocked: locked
         )
     }
 }

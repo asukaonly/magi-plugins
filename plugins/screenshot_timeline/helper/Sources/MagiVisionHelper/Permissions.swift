@@ -26,3 +26,21 @@ func requestAccessibilityPermission() {
     let options = [promptKey: true] as CFDictionary
     _ = AXIsProcessTrustedWithOptions(options)
 }
+
+/// Returns true if the macOS screen is currently locked.
+///
+/// Uses `CGSessionCopyCurrentDictionary` and looks at `CGSSessionScreenIsLocked`.
+/// Not gated by TCC — any binary can call this. Returns false on any failure so
+/// capture is not falsely suppressed.
+func checkScreenLocked() -> Bool {
+    guard let session = CGSessionCopyCurrentDictionary() as? [String: Any] else {
+        return false
+    }
+    if let value = session["CGSSessionScreenIsLocked"] as? Bool {
+        return value
+    }
+    if let value = session["CGSSessionScreenIsLocked"] as? Int {
+        return value != 0
+    }
+    return false
+}

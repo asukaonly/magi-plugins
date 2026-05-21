@@ -26,7 +26,6 @@ try:
     from .permissions import request_screen_recording, screen_recording_status
     from .privacy_guard import PrivacyGuard
     from .retention import purge_orphan_originals
-    from .screen_lock import is_screen_locked
     from .trigger_orchestrator import (
         IntervalTimer,
         TriggerOrchestrator,
@@ -62,8 +61,6 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     PrivacyGuard = _pg.PrivacyGuard
     _ret = _load_sibling("retention")
     purge_orphan_originals = _ret.purge_orphan_originals
-    _sl = _load_sibling("screen_lock")
-    is_screen_locked = _sl.is_screen_locked
     _to = _load_sibling("trigger_orchestrator")
     IntervalTimer = _to.IntervalTimer
     TriggerOrchestrator = _to.TriggerOrchestrator
@@ -380,7 +377,7 @@ class ScreenshotSensor(SensorBase):
         skip_reason = self._guard.should_skip_capture(
             app_bundle=str(win.get("app_bundle_id") or ""),
             window_title=str(win.get("window_title") or ""),
-            screen_locked=is_screen_locked(),
+            screen_locked=await self._probe_screen_lock(),
             now=time.time(),
         )
         if skip_reason is not None:
@@ -435,6 +432,27 @@ class ScreenshotSensor(SensorBase):
         closed = self._aggregator.ingest(payload)
         for burst in closed:
             self._pending_closed.append(_closed_burst_to_dict(burst))
+
+    async def _probe_screen_lock(self) -> bool:
+        """Probe whether the macOS screen is locked, via the long-running helper.
+
+        Reuses the existing HelperClient subprocess (held in ``self._helper``) so
+        every capture cycle doesn't pay the ~50ms cost of spawning a fresh
+        helper. Returns False on any failure (no helper, crash, timeout, ok=False
+        response) so capture is not falsely suppressed.
+        """
+        if self._helper is None:
+            return False
+        try:
+            resp = await self._helper.request({
+                "id": f"lock_{int(time.time() * 1000)}",
+                "op": "probe_screen_lock",
+            })
+        except (HelperCrashedError, HelperTimeoutError):
+            return False
+        if not resp.get("ok"):
+            return False
+        return bool(resp.get("screen_locked", False))
 
     async def flush_pending_bursts(self) -> list[dict[str, Any]]:
         """Force-close any open burst and return all pending burst dicts."""
