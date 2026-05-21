@@ -79,8 +79,9 @@ Use after a fresh install to verify end-to-end behavior:
 - Browser URL extraction is intentionally conservative — only window titles
 - Pass-2 vision-LLM enrichment is reserved in the metadata schema but not exposed
 - Helper binary is committed unsigned in the dev tree; release builds will use a signed/notarized binary distributed via `magi-plugins` GitHub Releases (separate workflow)
-- The full-screen interval timer is declared in settings but not separately wired in v1 — hybrid mode currently treats every tick as `active_window` (follow-up work)
 - Keyboard triggers UI is declared but the `CGEventTap` listener isn't wired yet — toggle is harmless but has no effect (follow-up work)
+- Retention deletes expired originals via filesystem-walk; L1 metadata still references the (now-missing) `original_path` and readers must handle gracefully. Proper L1 metadata patching needs an SDK hook that doesn't exist yet
+- Lockscreen pause uses `Quartz.CGSessionCopyCurrentDictionary`; if Quartz isn't available the sensor degrades to "assume unlocked"
 
 ## Development
 
