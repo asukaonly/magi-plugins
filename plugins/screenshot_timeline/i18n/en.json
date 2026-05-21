@@ -91,6 +91,12 @@
         "label": "Accessibility",
         "description": "Required for keyboard triggers and the panic hotkey (optional)."
       }
+    },
+    "activation": {
+      "title": "Enable Screenshot Timeline",
+      "description": "This plugin continuously captures your screen and runs local OCR (via Apple Vision) to feed the recognised text into magi's memory. Captures and thumbnails stay on this Mac — they are not uploaded anywhere. Originals are deleted after 30 days by default; thumbnails are kept indefinitely.\n\nPassword managers, Keychain, and incognito browser windows are skipped by default. You can add more app or window-title rules in Settings after enabling, and the panic hotkey (⌥⇧P) immediately pauses capture for 60 seconds.\n\nmacOS will ask for Screen Recording permission the first time captures start. Accessibility permission is optional (only needed for keyboard triggers and the panic hotkey).",
+      "confirm_label": "I understand — enable",
+      "cancel_label": "Not now"
     }
   },
   "activity": {
@@ -105,11 +111,5 @@
         "unknown": "Unknown App"
       }
     }
-  },
-  "activation": {
-    "title": "Enable Screenshot Timeline",
-    "description": "Continuously captures your screen, runs local OCR via Apple Vision, and feeds the results into magi memory. Screenshots stay on this Mac. Screen Recording permission is required; Accessibility permission is optional (only needed for keyboard triggers and panic hotkey).",
-    "confirm_label": "I understand — enable",
-    "cancel_label": "Not now"
   }
 }

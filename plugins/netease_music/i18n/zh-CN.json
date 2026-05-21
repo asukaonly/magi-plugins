@@ -65,6 +65,12 @@
       "general": "常规",
       "analysis": "分析",
       "activation": "激活"
+    },
+    "activation": {
+      "title": "启用网易云音乐",
+      "description": "网易云音乐播放历史会暴露你的听歌习惯。请选择首次同步如何初始化时间线，再启用该来源。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
     }
   },
   "activity": {

@@ -23,7 +23,7 @@ try:
     from .burst_aggregator import BurstAggregator, ClosedBurst
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
-    from .permissions import request_screen_recording
+    from .permissions import request_screen_recording, screen_recording_status
     from .privacy_guard import PrivacyGuard
     from .retention import purge_orphan_originals
     from .screen_lock import is_screen_locked
@@ -57,6 +57,7 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     new_capture_id = _ids.new_capture_id
     _perm = _load_sibling("permissions")
     request_screen_recording = _perm.request_screen_recording
+    screen_recording_status = _perm.screen_recording_status
     _pg = _load_sibling("privacy_guard")
     PrivacyGuard = _pg.PrivacyGuard
     _ret = _load_sibling("retention")
@@ -146,12 +147,30 @@ class ScreenshotSensor(SensorBase):
 
     async def start(self) -> None:
         # Trigger the Screen Recording prompt on first enable (no-op on subsequent enables;
-        # macOS only shows the dialog once per binary). Non-fatal: if denied, the actual
-        # capture attempts will fail with PERMISSION_DENIED, which is handled gracefully.
+        # macOS only shows the dialog once per binary).
         try:
             request_screen_recording()
         except Exception:
             logger.debug("sensor.permission_request_failed", exc_info=True)
+
+        # Refuse to start the helper / capture loop if Screen Recording is denied.
+        # macOS caches the user's "no" and will not re-prompt, so attempting to run
+        # the helper would just produce a stream of PERMISSION_DENIED errors. We treat
+        # ``unknown`` (probe failed — e.g. Quartz unavailable in tests / non-mac dev
+        # environments) and ``not_determined`` as soft-allow so existing flows and
+        # tests continue to work; only an explicit ``denied`` blocks startup.
+        try:
+            status = screen_recording_status()
+        except Exception:  # noqa: BLE001
+            logger.debug("sensor.permission_probe_failed", exc_info=True)
+            status = "unknown"
+        if status == "denied":
+            logger.warning(
+                "sensor.permission_blocked status=%s — skipping helper start. "
+                "User must grant Screen Recording in System Settings → Privacy & Security.",
+                status,
+            )
+            return
 
         if self._helper is not None:
             await self._helper.start()

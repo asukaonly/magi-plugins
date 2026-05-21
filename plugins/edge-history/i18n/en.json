@@ -1,7 +1,13 @@
 {
   "edge_history": {
     "name": "Edge History",
-    "description": "Local Microsoft Edge browsing history ingestion for the timeline"
+    "description": "Local Microsoft Edge browsing history ingestion for the timeline",
+    "activation": {
+      "title": "Enable Edge History",
+      "description": "Edge history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
+    }
   },
   "activity": {
     "source": {
@@ -17,12 +23,6 @@
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title} ({count} visits)"
-  },
-  "activation": {
-    "title": "Enable Edge History",
-    "description": "Edge history contains sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
-    "confirm_label": "Enable source",
-    "cancel_label": "Not now"
   },
   "initial_sync_policy": {
     "full": "Sync full history",

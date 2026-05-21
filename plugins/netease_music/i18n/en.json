@@ -65,6 +65,12 @@
       "general": "General",
       "analysis": "Analysis",
       "activation": "Activation"
+    },
+    "activation": {
+      "title": "Enable NetEase Cloud Music",
+      "description": "NetEase Cloud Music history reveals your listening habits. Choose how the first sync should seed the timeline before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
     }
   },
   "activity": {

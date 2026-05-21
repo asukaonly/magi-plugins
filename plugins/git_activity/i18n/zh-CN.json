@@ -47,6 +47,12 @@
       "general": "常规",
       "sync": "同步",
       "privacy": "隐私"
+    },
+    "activation": {
+      "title": "启用 Git 活动",
+      "description": "Git 活动会暴露仓库名称和本地工作模式。请选择首次同步如何初始化时间线，再启用该来源。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
     }
   },
   "content_blocks": {

@@ -27,6 +27,12 @@
       "retention": "Retention",
       "privacy": "Privacy",
       "activation": "Activation"
+    },
+    "activation": {
+      "title": "Enable Terminal History",
+      "description": "Terminal history contains commands you've executed. Choose how much history should be imported when this source is enabled for the first time.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
     }
   },
   "activity": {

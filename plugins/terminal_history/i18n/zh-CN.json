@@ -27,6 +27,12 @@
       "retention": "保留策略",
       "privacy": "隐私",
       "activation": "激活"
+    },
+    "activation": {
+      "title": "启用终端历史",
+      "description": "终端历史会记录你执行过的命令。请选择首次启用时要导入多少历史，再开启该来源。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
     }
   },
   "activity": {

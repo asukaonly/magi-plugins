@@ -1,7 +1,13 @@
 {
   "edge_history": {
     "name": "Edge 浏览历史",
-    "description": "本地 Microsoft Edge 浏览历史接入时间线"
+    "description": "本地 Microsoft Edge 浏览历史接入时间线",
+    "activation": {
+      "title": "启用 Edge 浏览历史",
+      "description": "Edge 浏览历史属于敏感的本地数据。请选择首次同步如何初始化时间线，再启用该来源。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
+    }
   },
   "activity": {
     "source": {
@@ -17,12 +23,6 @@
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title}（访问 {count} 次）"
-  },
-  "activation": {
-    "title": "启用 Edge 浏览历史",
-    "description": "Edge 浏览历史包含敏感的本地数据。请选择首次同步如何初始化时间线数据。",
-    "confirm_label": "启用来源",
-    "cancel_label": "暂不启用"
   },
   "initial_sync_policy": {
     "full": "同步全部历史",
