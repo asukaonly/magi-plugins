@@ -26,6 +26,14 @@
       "max_items_per_sync": {
         "label": "单次最大条数",
         "description": "每次同步最多写入多少条浏览记录。"
+      },
+      "filter_domains": {
+        "label": "过滤域名（正则）",
+        "description": "标准化后的域名只要被任一正则部分匹配到，就不会被 AI 分析；如需精确匹配，请使用 ^...$。"
+      },
+      "filter_keywords": {
+        "label": "过滤关键词",
+        "description": "URL 或标题中只要包含任一关键词，记录就不会被 AI 分析；这是不区分大小写的子串匹配，不是正则。"
       }
     },
     "options": {
@@ -59,7 +67,8 @@
       "general": "常规",
       "sync": "同步",
       "storage": "存储",
-      "activation": "激活"
+      "activation": "激活",
+      "filters": "过滤"
     }
   },
   "activity": {
@@ -82,16 +91,5 @@
     "description": "Chrome 浏览历史包含敏感的本地数据。请选择首次同步如何初始化时间线数据。",
     "confirm_label": "启用来源",
     "cancel_label": "暂不启用"
-  },
-  "initial_sync_policy": {
-    "full": "同步全部历史",
-    "lookback_days": "同步最近几天",
-    "from_now": "仅同步新记录"
-  },
-  "filters": {
-    "domains_label": "过滤域名（正则）",
-    "domains_description": "标准化后的域名只要被任一正则部分匹配到，就不会被 AI 分析；如需精确匹配，请使用 ^...$。",
-    "keywords_label": "过滤关键词",
-    "keywords_description": "URL 或标题中只要包含任一关键词，记录就不会被 AI 分析；这是不区分大小写的子串匹配，不是正则。"
   }
 }

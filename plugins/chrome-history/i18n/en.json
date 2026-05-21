@@ -26,6 +26,14 @@
       "max_items_per_sync": {
         "label": "Max Items Per Sync",
         "description": "Maximum number of history records to ingest in one run."
+      },
+      "filter_domains": {
+        "label": "Filter Domains (Regex)",
+        "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
+      },
+      "filter_keywords": {
+        "label": "Filter Keywords",
+        "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
       }
     },
     "options": {
@@ -59,7 +67,8 @@
       "general": "General",
       "sync": "Sync",
       "storage": "Storage",
-      "activation": "Activation"
+      "activation": "Activation",
+      "filters": "Filters"
     }
   },
   "activity": {
@@ -82,16 +91,5 @@
     "description": "Chrome history contains sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
     "confirm_label": "Enable source",
     "cancel_label": "Not now"
-  },
-  "initial_sync_policy": {
-    "full": "Sync full history",
-    "lookback_days": "Sync recent days",
-    "from_now": "Only new records from now on"
-  },
-  "filters": {
-    "domains_label": "Filter Domains (Regex)",
-    "domains_description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
-    "keywords_label": "Filter Keywords",
-    "keywords_description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
   }
 }

@@ -67,63 +67,6 @@
       "activation": "激活"
     }
   },
-  "fields": {
-    "timeline": {
-      "netease_music": {
-        "sensors": {
-          "netease_music": {
-            "enabled": {
-              "label": "启用",
-              "description": "是否启用网易云音乐播放记录同步。"
-            },
-            "sync_mode": {
-              "label": "同步方式",
-              "description": "如何读取并同步网易云音乐播放记录。",
-              "options": {
-                "manual": "手动",
-                "interval": "定时",
-                "watch": "监听"
-              }
-            },
-            "sync_interval_minutes": {
-              "label": "同步间隔（分钟）",
-              "description": "定时同步模式下的轮询间隔。"
-            },
-            "min_play_duration": {
-              "label": "最短播放时长（秒）",
-              "description": "播放少于这个时长的曲目会被忽略，避免把点开就切走的内容写进时间线。"
-            },
-            "db_path": {
-              "label": "缓存数据库路径",
-              "description": "默认会填入标准的网易云缓存数据库路径。如果你在网易云设置里看到的是类似 C:\\Users\\<你>\\AppData\\Local\\NetEase\\CloudMusic\\cache 这样的缓存目录，不要直接把这个目录填进来。这里需要选择旁边 Library 目录里的数据库文件，通常是 C:\\Users\\<你>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat。"
-            },
-            "initial_sync_policy": {
-              "label": "首次同步范围",
-              "description": "首次同步时，先把多少历史记录写入时间线。",
-              "options": {
-                "full": "回填全部历史",
-                "lookback_days": "同步最近几天",
-                "from_now": "仅同步之后的新记录"
-              }
-            },
-            "tag_strategy": {
-              "label": "曲风标签来源",
-              "description": "为播放记录补充曲风/流派标签的方式。",
-              "options": {
-                "off": "关闭",
-                "builtin": "内置（本地别名数据，覆盖率有限）",
-                "lastfm": "Last.fm"
-              }
-            },
-            "lastfm_api_key": {
-              "label": "Last.fm API Key",
-              "description": "当曲风标签来源设为 Last.fm 时必填，可在 last.fm/api/account/create 免费申请。"
-            }
-          }
-        }
-      }
-    }
-  },
   "activity": {
     "source": {
       "netease_music": "网易云音乐"
@@ -147,14 +90,5 @@
     "top_artists": "高频歌手：{top_artists}。",
     "top_tracks": "高频歌曲：{top_tracks}。",
     "top_albums": "高频专辑：{top_albums}。"
-  },
-  "legacy_fields": {
-    "tag_strategy_label": "标签提取策略",
-    "tag_strategy_desc": "为播放记录提取风格/流派标签的方式",
-    "tag_strategy_off": "关闭",
-    "tag_strategy_builtin": "内置（本地别名数据，覆盖率有限）",
-    "tag_strategy_lastfm": "Last.fm",
-    "lastfm_api_key_label": "Last.fm API Key",
-    "lastfm_api_key_desc": "选择 Last.fm 策略时必填，在 last.fm/api/account/create 免费申请"
   }
 }
