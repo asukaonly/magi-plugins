@@ -1,0 +1,25 @@
+[plugin]
+id = "screenshot_timeline"
+name = "Screenshot Timeline"
+name_i18n = { "zh-CN" = "屏幕快照时间线" }
+version = "0.1.0"
+description = "Captures your screen, runs local OCR, and feeds magi memory."
+description_i18n = { "zh-CN" = "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "ScreenshotTimelinePlugin"
+official = true
+contribution_types = ["sensor"]
+platforms = ["macos"]
+min_sdk_version = "0.1.0"
+dependencies = [
+    "pyobjc-framework-Cocoa>=10.0",
+    "pyobjc-framework-Quartz>=10.0",
+]
+
+[plugin.helper]
+binary_relative_path = "bin/magi-vision-helper"
+
+[plugin.permissions]
+declares = ["screen_recording", "accessibility_optional", "fs_write_resources"]
+memory_access = ["write_l1"]
