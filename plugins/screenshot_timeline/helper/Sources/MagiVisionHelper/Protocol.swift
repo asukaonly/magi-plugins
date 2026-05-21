@@ -85,6 +85,7 @@ public struct HelperResponse: Codable {
     public let ocr: OcrResult?
     public let filesWritten: FilesWritten?
     public let error: ErrorPayload?
+    public let permissionStatus: String?
 
     enum CodingKeys: String, CodingKey {
         case id, ok
@@ -94,6 +95,7 @@ public struct HelperResponse: Codable {
         case ocr
         case filesWritten = "files_written"
         case error
+        case permissionStatus = "permission_status"
     }
 
     public static func success(
@@ -106,7 +108,8 @@ public struct HelperResponse: Codable {
     ) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: capturedAt, dimensions: dimensions,
-            activeWindow: activeWindow, ocr: ocr, filesWritten: filesWritten, error: nil
+            activeWindow: activeWindow, ocr: ocr, filesWritten: filesWritten, error: nil,
+            permissionStatus: nil
         )
     }
 
@@ -114,7 +117,16 @@ public struct HelperResponse: Codable {
         HelperResponse(
             id: id, ok: false, capturedAt: nil, dimensions: nil,
             activeWindow: nil, ocr: nil, filesWritten: nil,
-            error: ErrorPayload(code: code, message: message)
+            error: ErrorPayload(code: code, message: message),
+            permissionStatus: nil
+        )
+    }
+
+    public static func permission(id: String, status: String) -> HelperResponse {
+        HelperResponse(
+            id: id, ok: true, capturedAt: nil, dimensions: nil,
+            activeWindow: nil, ocr: nil, filesWritten: nil, error: nil,
+            permissionStatus: status
         )
     }
 }

@@ -1,118 +1,105 @@
-"""macOS permission probes and request helpers for the screenshot_timeline plugin."""
+"""macOS permission probes — delegate to the Swift helper subprocess.
+
+Background: macOS TCC keys per-binary. The Python sidecar and the Swift helper
+are separate binaries with separate TCC entries. We delegate probes to the
+helper because IT is the binary that actually makes ScreenCaptureKit /
+VNRecognizeTextRequest calls, so its TCC entry is the one that matters.
+
+Probes spawn a one-shot helper subprocess; they do NOT reuse the long-lived
+sensor helper because read_settings_resource() runs even when the sensor is
+disabled (and therefore not running).
+"""
 from __future__ import annotations
 
+import json
 import logging
-import os
-import sys
-from typing import Literal
+import subprocess
+from pathlib import Path
+from typing import Literal, Optional
 
 logger = logging.getLogger(__name__)
 
 PermissionStatus = Literal["granted", "denied", "not_determined", "unknown"]
 
+_PROBE_TIMEOUT_SECONDS = 5.0
 
-def _process_diagnostics() -> str:
-    """Return a one-line summary of which binary is actually making the TCC call.
 
-    macOS Privacy is keyed per-binary, so when the result is unexpectedly 'denied'
-    you need to know exactly what path/PID to add in System Settings.
-    """
+def _helper_binary_path() -> Optional[Path]:
+    """Locate the bundled Swift helper binary."""
+    plugin_dir = Path(__file__).resolve().parent
+    candidate = plugin_dir / "bin" / "magi-vision-helper"
+    if candidate.exists() and candidate.is_file():
+        return candidate
+    return None
+
+
+def _probe_via_helper(op: str) -> PermissionStatus:
+    """Run a single probe op through a fresh helper subprocess."""
+    helper = _helper_binary_path()
+    if helper is None:
+        logger.warning("permissions.helper_not_found op=%s", op)
+        return "unknown"
+
+    payload = json.dumps({"id": "p", "op": op}) + "\n"
+    shutdown = json.dumps({"id": "s", "op": "shutdown"}) + "\n"
+
     try:
-        pid = os.getpid()
-        ppid = os.getppid()
-        executable = sys.executable or "<unknown>"
-        argv0 = sys.argv[0] if sys.argv else "<no argv>"
-        return f"pid={pid} ppid={ppid} executable={executable} argv0={argv0}"
-    except Exception:
-        return "(diagnostics unavailable)"
+        proc = subprocess.run(
+            [str(helper)],
+            input=payload + shutdown,
+            capture_output=True,
+            text=True,
+            timeout=_PROBE_TIMEOUT_SECONDS,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        logger.warning("permissions.helper_invoke_failed op=%s err=%r", op, exc)
+        return "unknown"
+
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            resp = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if resp.get("id") != "p":
+            continue
+        if not resp.get("ok"):
+            err = (resp.get("error") or {}).get("code", "")
+            logger.warning("permissions.helper_error op=%s code=%s", op, err)
+            return "unknown"
+        raw = resp.get("permission_status")
+        if raw in ("granted", "denied", "not_determined", "unknown"):
+            return raw  # type: ignore[return-value]
+        logger.warning("permissions.helper_unexpected_status op=%s value=%r", op, raw)
+        return "unknown"
+
+    logger.warning(
+        "permissions.helper_no_response op=%s rc=%s stdout=%r stderr=%r",
+        op, proc.returncode, proc.stdout[:200], proc.stderr[:200],
+    )
+    return "unknown"
 
 
 def screen_recording_status() -> PermissionStatus:
-    """Check Screen Recording permission without triggering a prompt."""
-    diag = _process_diagnostics()
-    try:
-        from Quartz import CGPreflightScreenCaptureAccess  # type: ignore
-    except Exception as exc:
-        logger.warning("permissions.screen_recording.import_failed %s err=%r", diag, exc)
-        return "unknown"
-    try:
-        raw = CGPreflightScreenCaptureAccess()
-        status: PermissionStatus = "granted" if raw else "denied"
-        logger.warning(
-            "permissions.screen_recording.probe status=%s raw=%r %s",
-            status, raw, diag,
-        )
-        return status
-    except Exception as exc:
-        logger.warning("permissions.screen_recording.query_failed %s err=%r", diag, exc)
-        return "unknown"
+    """Check Screen Recording permission as seen by the helper binary."""
+    return _probe_via_helper("probe_screen_recording")
 
 
 def request_screen_recording() -> PermissionStatus:
-    """Trigger the Screen Recording permission prompt (macOS shows it once per binary).
-
-    Returns the immediate status. The actual user decision happens out-of-band; you should
-    poll `screen_recording_status` afterwards.
-    """
-    diag = _process_diagnostics()
-    try:
-        from Quartz import CGRequestScreenCaptureAccess  # type: ignore
-    except Exception as exc:
-        logger.warning("permissions.screen_recording_request.import_failed %s err=%r", diag, exc)
-        return "unknown"
-    try:
-        result = CGRequestScreenCaptureAccess()
-        logger.warning(
-            "permissions.screen_recording_request.invoked result=%r %s",
-            result, diag,
-        )
-    except Exception as exc:
-        logger.warning("permissions.screen_recording_request.failed %s err=%r", diag, exc)
-    return screen_recording_status()
+    """Trigger the Screen Recording permission prompt for the helper binary."""
+    return _probe_via_helper("request_screen_recording")
 
 
 def accessibility_status() -> PermissionStatus:
-    """Check Accessibility permission without triggering a prompt."""
-    diag = _process_diagnostics()
-    try:
-        from ApplicationServices import AXIsProcessTrusted  # type: ignore
-    except Exception as exc:
-        logger.warning("permissions.accessibility.import_failed %s err=%r", diag, exc)
-        return "unknown"
-    try:
-        raw = AXIsProcessTrusted()
-        status: PermissionStatus = "granted" if raw else "denied"
-        logger.warning(
-            "permissions.accessibility.probe status=%s raw=%r %s",
-            status, raw, diag,
-        )
-        return status
-    except Exception as exc:
-        logger.warning("permissions.accessibility.query_failed %s err=%r", diag, exc)
-        return "unknown"
+    """Check Accessibility permission as seen by the helper binary."""
+    return _probe_via_helper("probe_accessibility")
 
 
 def request_accessibility() -> PermissionStatus:
-    """Trigger the Accessibility permission prompt."""
-    diag = _process_diagnostics()
-    try:
-        from ApplicationServices import (  # type: ignore
-            AXIsProcessTrustedWithOptions,
-            kAXTrustedCheckOptionPrompt,
-        )
-    except Exception as exc:
-        logger.warning("permissions.accessibility_request.import_failed %s err=%r", diag, exc)
-        return "unknown"
-    try:
-        options = {kAXTrustedCheckOptionPrompt: True}
-        result = AXIsProcessTrustedWithOptions(options)
-        logger.warning(
-            "permissions.accessibility_request.invoked result=%r %s",
-            result, diag,
-        )
-    except Exception as exc:
-        logger.warning("permissions.accessibility_request.failed %s err=%r", diag, exc)
-    return accessibility_status()
+    """Trigger the Accessibility permission prompt for the helper binary."""
+    return _probe_via_helper("request_accessibility")
 
 
 def all_statuses() -> dict[str, PermissionStatus]:
