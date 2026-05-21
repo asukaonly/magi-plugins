@@ -1,7 +1,57 @@
 {
   "calendar": {
     "name": "Calendar",
-    "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
+    "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
+    "fields": {
+      "enabled": {
+        "label": "Enable",
+        "description": "Turn on calendar sync for the timeline."
+      },
+      "sync_mode": {
+        "label": "Sync Mode",
+        "description": "Choose whether calendar sync runs manually or on a schedule."
+      },
+      "sync_interval_minutes": {
+        "label": "Scheduled Interval",
+        "description": "How often to sync calendar events when scheduled sync is enabled."
+      },
+      "lookback_days": {
+        "label": "Lookback Days",
+        "description": "How many past days to include on first sync."
+      },
+      "recurring_expansion_days": {
+        "label": "Future Recurring Event Window",
+        "description": "How many future days of recurring events should be prefetched so upcoming repeating events are not missed."
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "Manual",
+        "interval": "Scheduled"
+      },
+      "sync_interval_minutes": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "1 hour",
+        "360": "6 hours"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "sync": "Sync"
+    },
+    "ui_blocks": {
+      "selected_calendars": {
+        "title": "Calendars to Sync",
+        "description": "Choose which calendars should be written into the timeline."
+      }
+    },
+    "activation": {
+      "title": "Connect Calendar",
+      "description": "Allow Magi to read your calendar events for timeline sync.",
+      "confirm_label": "Allow calendar access",
+      "cancel_label": "Not now"
+    }
   },
   "activity": {
     "source": {

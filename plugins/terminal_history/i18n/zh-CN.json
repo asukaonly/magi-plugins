@@ -1,7 +1,33 @@
 {
   "terminal_history": {
     "name": "终端历史",
-    "description": "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯"
+    "description": "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯",
+    "options": {
+      "enabled": {
+        "true": "启用",
+        "false": "停用"
+      },
+      "default_retention_mode": {
+        "analyze_only": "仅分析",
+        "retain_raw": "保留原始"
+      },
+      "initial_sync_policy": {
+        "full": "同步全部历史",
+        "lookback_days": "同步最近几天",
+        "from_now": "仅同步新命令"
+      },
+      "sensitive_mode": {
+        "redact": "脱敏敏感内容",
+        "skip": "跳过包含敏感内容的命令",
+        "include": "包含所有内容"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "retention": "保留策略",
+      "privacy": "隐私",
+      "activation": "激活"
+    }
   },
   "activity": {
     "source": {

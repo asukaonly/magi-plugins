@@ -1,7 +1,71 @@
 {
   "netease_music": {
     "name": "网易云音乐",
-    "description": "网易云音乐播放记录接入时间线"
+    "description": "网易云音乐播放记录接入时间线",
+    "fields": {
+      "sync_mode": {
+        "label": "同步方式",
+        "description": "如何读取并同步网易云音乐播放记录。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": "定时同步模式下的轮询间隔。"
+      },
+      "min_play_duration": {
+        "label": "最短播放时长（秒）",
+        "description": "播放少于这个时长的曲目会被忽略，避免把点开就切走的内容写进时间线。"
+      },
+      "db_path": {
+        "label": "数据库路径",
+        "description": "网易云音乐本地播放数据库 local.db 的路径。"
+      },
+      "initial_sync_policy": {
+        "label": "首次同步范围",
+        "description": "首次同步时，先把多少历史记录写入时间线。"
+      },
+      "tag_strategy": {
+        "label": "曲风标签来源",
+        "description": "为播放记录补充曲风或流派标签的方式。"
+      },
+      "lastfm_api_key": {
+        "label": "Last.fm API Key",
+        "description": "当曲风标签来源设为 Last.fm 时必填，可在 last.fm/api/account/create 免费申请。"
+      }
+    },
+    "options": {
+      "enabled": {
+        "true": "启用",
+        "false": "停用"
+      },
+      "sync_mode": {
+        "manual": "手动",
+        "interval": "定时",
+        "watch": "监听"
+      },
+      "default_retention_mode": {
+        "analyze_only": "仅分析",
+        "retain_raw": "保留原始"
+      },
+      "storage_mode": {
+        "managed": "托管",
+        "external_reference": "外部引用"
+      },
+      "initial_sync_policy": {
+        "full": "同步全部历史",
+        "lookback_days": "同步最近几天",
+        "from_now": "仅同步新曲目"
+      },
+      "tag_strategy": {
+        "off": "关闭",
+        "builtin": "内置（本地别名数据，覆盖率有限）",
+        "lastfm": "Last.fm"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "analysis": "分析",
+      "activation": "激活"
+    }
   },
   "fields": {
     "timeline": {

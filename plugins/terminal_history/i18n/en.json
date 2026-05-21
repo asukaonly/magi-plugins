@@ -1,7 +1,33 @@
 {
   "terminal_history": {
     "name": "Terminal History",
-    "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits."
+    "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
+    "options": {
+      "enabled": {
+        "true": "Enabled",
+        "false": "Disabled"
+      },
+      "default_retention_mode": {
+        "analyze_only": "Analyze Only",
+        "retain_raw": "Retain Raw"
+      },
+      "initial_sync_policy": {
+        "full": "Sync full history",
+        "lookback_days": "Sync recent days",
+        "from_now": "Only new commands from now"
+      },
+      "sensitive_mode": {
+        "redact": "Redact sensitive content",
+        "skip": "Skip commands with sensitive content",
+        "include": "Include all content"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "retention": "Retention",
+      "privacy": "Privacy",
+      "activation": "Activation"
+    }
   },
   "activity": {
     "source": {
