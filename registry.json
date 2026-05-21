@@ -183,7 +183,7 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/screenshot_timeline",
       "description": "Captures your screen, runs local OCR, and feeds magi memory.",
       "description_i18n": {
