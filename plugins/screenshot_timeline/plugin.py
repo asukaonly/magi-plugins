@@ -45,42 +45,22 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
     return ActivationFlowSpec(
         title="Enable Screenshot Timeline",
         description=(
-            "Continuously captures your screen, runs local OCR via Apple Vision, "
-            "and feeds the results into magi memory. Screenshots stay on this Mac. "
-            "Screen Recording permission is required; Accessibility permission is "
-            "optional (only needed for keyboard triggers and panic hotkey)."
+            "This plugin continuously captures your screen and runs local OCR (via Apple Vision) "
+            "to feed the recognised text into magi's memory. Captures and thumbnails stay on "
+            "this Mac — they are not uploaded anywhere. Originals are deleted after 30 days "
+            "by default; thumbnails are kept indefinitely.\n\n"
+            "Password managers, Keychain, and incognito browser windows are skipped by default. "
+            "You can add more app or window-title rules in Settings after enabling, and the "
+            "panic hotkey (⌥⇧P) immediately pauses capture for 60 seconds.\n\n"
+            "macOS will ask for Screen Recording permission the first time captures start. "
+            "Accessibility permission is optional (only needed for keyboard triggers and the "
+            "panic hotkey)."
         ),
         confirm_label="I understand — enable",
         cancel_label="Not now",
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.capture_scope",
-                type="select",
-                label="Capture scope",
-                description="What part of the screen to capture each tick.",
-                default="hybrid",
-                options=[
-                    ExtensionFieldOption(label="Active window + periodic full screen", value="hybrid"),
-                    ExtensionFieldOption(label="Active window only", value="active_window"),
-                    ExtensionFieldOption(label="Primary display (full screen)", value="full_screen"),
-                ],
-                section="activation",
-                surface="timeline",
-                order=10,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.original_retention_days",
-                type="number",
-                label="Original retention (days)",
-                description="Originals older than this are deleted; thumbnails are kept permanently.",
-                default=30,
-                section="activation",
-                surface="timeline",
-                order=20,
-            ),
-        ],
+        fields=[],  # Capture scope / retention live in the regular settings panel.
     )
 
 
