@@ -18,7 +18,8 @@ def _load_module() -> ModuleType:
 
 
 def test_default_blocklist_blocks_known_password_apps() -> None:
-    pg = _load_module().PrivacyGuard()
+    mod = _load_module()
+    pg = mod.PrivacyGuard(extra_app_blocklist=mod.DEFAULT_APP_BLOCKLIST)
     for bundle in [
         "com.agilebits.onepassword7",
         "com.1password.1password",
@@ -31,7 +32,8 @@ def test_default_blocklist_blocks_known_password_apps() -> None:
 
 
 def test_default_blocklist_allows_normal_apps() -> None:
-    pg = _load_module().PrivacyGuard()
+    mod = _load_module()
+    pg = mod.PrivacyGuard(extra_app_blocklist=mod.DEFAULT_APP_BLOCKLIST)
     for bundle in [
         "com.apple.Safari",
         "com.google.Chrome",
@@ -39,6 +41,13 @@ def test_default_blocklist_allows_normal_apps() -> None:
         "com.figma.Desktop",
     ]:
         assert pg.is_app_blocked(bundle) is False, bundle
+
+
+def test_empty_blocklist_blocks_nothing() -> None:
+    """When no defaults are passed in, nothing is blocked — defaults live in settings now."""
+    pg = _load_module().PrivacyGuard()
+    assert pg.is_app_blocked("com.1password.1password") is False
+    assert pg.is_app_blocked("com.apple.Safari") is False
 
 
 def test_user_added_blocklist_entries_take_effect() -> None:
@@ -89,7 +98,8 @@ def test_panic_release_clears_state() -> None:
 
 
 def test_should_skip_capture_combines_all_signals() -> None:
-    pg = _load_module().PrivacyGuard()
+    mod = _load_module()
+    pg = mod.PrivacyGuard(extra_app_blocklist=mod.DEFAULT_APP_BLOCKLIST)
     # Allowed
     assert pg.should_skip_capture(
         app_bundle="com.apple.Safari",

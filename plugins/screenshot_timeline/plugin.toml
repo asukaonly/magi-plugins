@@ -15,6 +15,7 @@ min_sdk_version = "0.1.0"
 dependencies = [
     "pyobjc-framework-Cocoa>=10.0",
     "pyobjc-framework-Quartz>=10.0",
+    "pyobjc-framework-ApplicationServices>=10.0",
 ]
 
 [plugin.helper]

@@ -1,28 +1,25 @@
 {
-  "plugin.name": "Screenshot Timeline",
-  "plugin.description": "Captures your screen, runs local OCR, and feeds magi memory.",
-  "section.general": "General",
-  "section.capture": "Capture",
-  "section.ocr": "OCR",
-  "section.storage": "Storage",
-  "section.triggers": "Triggers",
-  "section.privacy": "Privacy",
-  "section.activation": "Activation",
-  "settings.enabled": "Enabled",
-  "settings.capture_scope": "Capture scope",
-  "settings.active_window_interval_sec": "Active window interval (sec)",
-  "settings.full_screen_interval_min": "Full-screen interval (min)",
-  "settings.ocr_languages": "OCR languages",
-  "settings.ocr_level": "OCR recognition level",
-  "settings.original_retention_days": "Original retention (days)",
-  "settings.keyboard_triggers_enabled": "Enable keyboard triggers",
-  "settings.keyboard_trigger_types": "Keyboard trigger keys",
-  "settings.app_blocklist": "App blocklist",
-  "settings.window_title_blocklist": "Window title blocklist",
-  "settings.panic_hotkey": "Panic hotkey",
-  "settings.panic_pause_seconds": "Panic pause duration (sec)",
-  "settings.sync_mode": "Sync mode",
-  "activity.source.screenshot_timeline": "Screenshot Timeline",
-  "activity.action.screen_session": "Screen Session",
-  "activity.object.app.unknown": "Unknown App"
+  "screenshot_timeline": {
+    "name": "Screenshot Timeline",
+    "description": "Captures your screen, runs local OCR, and feeds magi memory."
+  },
+  "activity": {
+    "source": {
+      "screenshot_timeline": "Screenshot Timeline"
+    },
+    "action": {
+      "screen_session": "Screen Session"
+    },
+    "object": {
+      "app": {
+        "unknown": "Unknown App"
+      }
+    }
+  },
+  "activation": {
+    "title": "Enable Screenshot Timeline",
+    "description": "Continuously captures your screen, runs local OCR via Apple Vision, and feeds the results into magi memory. Screenshots stay on this Mac. Screen Recording permission is required; Accessibility permission is optional (only needed for keyboard triggers and panic hotkey).",
+    "confirm_label": "I understand — enable",
+    "cancel_label": "Not now"
+  }
 }
