@@ -330,6 +330,7 @@ class ScreenshotTimelinePlugin(Plugin):
                     "description_i18n_key": "screenshot_timeline.permissions.screen_recording.description",
                     "status": statuses["screen_recording"],
                     "required": True,
+                    "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture",
                 },
                 {
                     "id": "accessibility",
@@ -339,6 +340,7 @@ class ScreenshotTimelinePlugin(Plugin):
                     "description_i18n_key": "screenshot_timeline.permissions.accessibility.description",
                     "status": statuses["accessibility"],
                     "required": False,
+                    "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
                 },
             ],
         }

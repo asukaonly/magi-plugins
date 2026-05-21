@@ -134,3 +134,37 @@ async def test_collect_items_does_not_force_close_open_burst(tmp_path: Path) -> 
         assert items[0]["capture_count"] == 2
     finally:
         await sensor.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_is_skipped_when_screen_recording_denied(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If Screen Recording is denied, start() must not spawn the helper.
+
+    macOS caches a denial — re-running the helper just produces a stream of
+    PERMISSION_DENIED errors, so we refuse to start and leave the sensor idle
+    until the user grants permission in System Settings and toggles the source
+    again.
+    """
+    sensor_mod = _load("sensor")
+    monkeypatch.setattr(sensor_mod, "screen_recording_status", lambda: "denied")
+
+    sensor = sensor_mod.ScreenshotSensor(
+        helper_argv=[sys.executable, str(_FIXTURE)],
+        resources_root=tmp_path,
+        gap_minutes=5,
+        max_minutes=30,
+        retention_days=30,
+    )
+    await sensor.start()
+    try:
+        # Orchestrator/timers/retention task must NOT be wired up if start() bailed
+        assert sensor._orchestrator is None
+        assert sensor._active_timer is None
+        assert sensor._full_screen_timer is None
+        assert sensor._retention_task is None
+        # Helper subprocess must not have been started
+        assert sensor._helper is not None and sensor._helper._proc is None
+    finally:
+        await sensor.stop()

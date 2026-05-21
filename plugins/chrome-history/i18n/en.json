@@ -69,6 +69,12 @@
       "storage": "Storage",
       "activation": "Activation",
       "filters": "Filters"
+    },
+    "activation": {
+      "title": "Enable Chrome History",
+      "description": "Chrome history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
     }
   },
   "activity": {
@@ -85,11 +91,5 @@
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title} ({count} visits)"
-  },
-  "activation": {
-    "title": "Enable Chrome History",
-    "description": "Chrome history contains sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
-    "confirm_label": "Enable source",
-    "cancel_label": "Not now"
   }
 }

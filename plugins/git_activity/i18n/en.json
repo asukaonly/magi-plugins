@@ -47,6 +47,12 @@
       "general": "General",
       "sync": "Sync",
       "privacy": "Privacy"
+    },
+    "activation": {
+      "title": "Enable Git Activity",
+      "description": "Git activity can reveal repository names and local work patterns. Choose how the first sync should seed the timeline before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
     }
   },
   "content_blocks": {

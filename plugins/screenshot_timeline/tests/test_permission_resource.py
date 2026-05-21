@@ -78,12 +78,20 @@ def test_read_settings_resource_permissions_shape() -> None:
     assert screen["status"] in valid_statuses
     assert screen["label_i18n_key"].startswith("screenshot_timeline.permissions.")
     assert screen["description"]
+    # Deep link into the matching macOS Privacy pane so the UI can render an
+    # "Open Settings" button when the permission is not granted.
+    assert screen["settings_url"] == (
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+    )
 
     accessibility = by_id["accessibility"]
     assert accessibility["label"] == "Accessibility"
     assert accessibility["required"] is False
     assert accessibility["status"] in valid_statuses
     assert accessibility["label_i18n_key"].startswith("screenshot_timeline.permissions.")
+    assert accessibility["settings_url"] == (
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+    )
 
 
 def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
