@@ -2,7 +2,7 @@
 id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
-version = "0.1.1"
+version = "0.1.2"
 description = "Captures your screen, runs local OCR, and feeds magi memory."
 description_i18n = { "zh-CN" = "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。" }
 author = "Magi Team"
@@ -23,7 +23,7 @@ binary_relative_path = "bin/magi-vision-helper"
 declares = ["screen_recording", "accessibility_optional", "fs_write_resources"]
 memory_access = ["write_l1"]
 
-[plugin.default_settings.sensors.timeline]
+[plugin.default_settings.sensors.screenshot_timeline]
 enabled = false
 capture_scope = "hybrid"
 active_window_interval_sec = 10

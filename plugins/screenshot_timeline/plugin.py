@@ -253,7 +253,10 @@ class ScreenshotTimelinePlugin(Plugin):
         settings: dict[str, Any] = {}
         sensors_settings = self.settings.get("sensors", {})
         if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("timeline", {}))
+            # The YAML key must match `metadata.source_type` below — the host
+            # scheduler reads `sensors.<source_type>.enabled` to decide whether
+            # to schedule this contribution. Keep them aligned.
+            settings = dict(sensors_settings.get("screenshot_timeline", {}))
 
         plugin_dir = Path(__file__).resolve().parent
         helper_argv = [str(plugin_dir / "bin" / "magi-vision-helper")]
@@ -292,13 +295,13 @@ class ScreenshotTimelinePlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=_fields("sensors.timeline"),
+                    fields=_fields("sensors.screenshot_timeline"),
                     metadata={
                         "source_type": "screenshot_timeline",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.timeline").model_dump(),
+                        "activation_flow": _activation_flow("sensors.screenshot_timeline").model_dump(),
                         "settings_ui_blocks": [
-                            block.model_dump() for block in _settings_ui_blocks("sensors.timeline")
+                            block.model_dump() for block in _settings_ui_blocks("sensors.screenshot_timeline")
                         ],
                     },
                 ),
