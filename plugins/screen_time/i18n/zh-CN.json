@@ -1,7 +1,29 @@
 {
   "screen_time": {
     "name": "屏幕使用",
-    "description": "记录各应用的使用时长。数据按整点小时聚合，第一条记录会在当前所在的整点小时结束后才出现在时间线上。"
+    "description": "记录各应用的使用时长。数据按整点小时聚合，第一条记录会在当前所在的整点小时结束后才出现在时间线上。",
+    "fields": {
+      "enabled": {
+        "label": "启用应用使用同步",
+        "description": "跟踪前台应用激活事件，并把按小时汇总的结果写入记忆。"
+      },
+      "sync_interval_minutes": {
+        "label": "刷新间隔",
+        "description": "已完成的小时应用使用桶，多久刷新一次并写入记忆。"
+      }
+    },
+    "options": {
+      "sync_interval_minutes": {
+        "1": "每 1 分钟",
+        "5": "每 5 分钟",
+        "15": "每 15 分钟",
+        "60": "每 60 分钟"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "sync": "同步"
+    }
   },
   "activity": {
     "action": {
@@ -9,6 +31,6 @@
     }
   },
   "summary": {
-    "hourly_bucket": "\u00b7 {time_range} \u00b7 {minutes} 分钟"
+    "hourly_bucket": "· {time_range} · {minutes} 分钟"
   }
 }

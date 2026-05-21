@@ -1,7 +1,75 @@
 {
   "chrome_history": {
     "name": "Chrome History",
-    "description": "Local Google Chrome browsing history ingestion for the timeline"
+    "description": "Local Google Chrome browsing history ingestion for the timeline",
+    "fields": {
+      "profile": {
+        "label": "Profile",
+        "description": "Chrome profile directory to read, such as Default or Profile 1."
+      },
+      "sync_mode": {
+        "label": "Sync Mode",
+        "description": "Control how Chrome history should be synchronized."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval",
+        "description": "How often Chrome history should be synced on an interval schedule."
+      },
+      "merge_window_minutes": {
+        "label": "Merge Window (minutes)",
+        "description": "Visits to the same page within this window are merged into one timeline item."
+      },
+      "lookback_hours": {
+        "label": "Lookback Hours",
+        "description": "How many hours to backfill before a cursor exists."
+      },
+      "max_items_per_sync": {
+        "label": "Max Items Per Sync",
+        "description": "Maximum number of history records to ingest in one run."
+      },
+      "filter_domains": {
+        "label": "Filter Domains (Regex)",
+        "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
+      },
+      "filter_keywords": {
+        "label": "Filter Keywords",
+        "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+      }
+    },
+    "options": {
+      "enabled": {
+        "true": "Enabled",
+        "false": "Disabled"
+      },
+      "sync_mode": {
+        "manual": "Manual",
+        "interval": "Interval"
+      },
+      "default_retention_mode": {
+        "analyze_only": "Analyze Only",
+        "retain_raw": "Retain Raw"
+      },
+      "storage_mode": {
+        "managed": "Managed",
+        "external_reference": "External Reference"
+      },
+      "initial_sync_policy": {
+        "full": "Sync full history",
+        "lookback_days": "Sync recent days",
+        "from_now": "Only new records from now on"
+      },
+      "fetch_page_content": {
+        "true": "Yes",
+        "false": "No"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "sync": "Sync",
+      "storage": "Storage",
+      "activation": "Activation",
+      "filters": "Filters"
+    }
   },
   "activity": {
     "source": {
@@ -23,16 +91,5 @@
     "description": "Chrome history contains sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
     "confirm_label": "Enable source",
     "cancel_label": "Not now"
-  },
-  "initial_sync_policy": {
-    "full": "Sync full history",
-    "lookback_days": "Sync recent days",
-    "from_now": "Only new records from now on"
-  },
-  "filters": {
-    "domains_label": "Filter Domains (Regex)",
-    "domains_description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
-    "keywords_label": "Filter Keywords",
-    "keywords_description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
   }
 }

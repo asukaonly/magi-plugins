@@ -76,14 +76,14 @@ def test_read_settings_resource_permissions_shape() -> None:
     assert screen["label"] == "Screen Recording"
     assert screen["required"] is True
     assert screen["status"] in valid_statuses
-    assert screen["label_i18n_key"].startswith("settings.plugins.screenshot_timeline.permissions.")
+    assert screen["label_i18n_key"].startswith("screenshot_timeline.permissions.")
     assert screen["description"]
 
     accessibility = by_id["accessibility"]
     assert accessibility["label"] == "Accessibility"
     assert accessibility["required"] is False
     assert accessibility["status"] in valid_statuses
-    assert accessibility["label_i18n_key"].startswith("settings.plugins.screenshot_timeline.permissions.")
+    assert accessibility["label_i18n_key"].startswith("screenshot_timeline.permissions.")
 
 
 def test_read_settings_resource_unknown_resource_raises_key_error() -> None:

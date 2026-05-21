@@ -1,7 +1,97 @@
 {
   "screenshot_timeline": {
     "name": "屏幕快照时间线",
-    "description": "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。"
+    "description": "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。",
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "屏幕快照传感器是否激活。"
+      },
+      "capture_scope": {
+        "label": "捕获范围",
+        "description": "每次捕获屏幕的哪个部分。"
+      },
+      "active_window_interval_sec": {
+        "label": "活动窗口间隔（秒）",
+        "description": "多久捕获一次活动窗口。推荐：10 秒。"
+      },
+      "full_screen_interval_min": {
+        "label": "全屏捕获间隔（分钟）",
+        "description": "周期性全屏捕获的间隔（仅在 hybrid 或 full_screen 模式下生效）。"
+      },
+      "ocr_languages": {
+        "label": "OCR 语言",
+        "description": "Apple Vision 识别语言代码（BCP-47），例如 en-US, zh-Hans, ja。"
+      },
+      "ocr_level": {
+        "label": "OCR 识别级别",
+        "description": "accurate 较慢但更准；fast 反之。"
+      },
+      "original_retention_days": {
+        "label": "原图保留天数",
+        "description": "超过这个天数的原图会被删除。缩略图永久保留。"
+      },
+      "keyboard_triggers_enabled": {
+        "label": "启用键盘触发",
+        "description": "滚动、方向键、空格或删除按下时也触发捕获。需要辅助功能权限。"
+      },
+      "keyboard_trigger_types": {
+        "label": "键盘触发按键",
+        "description": "哪些按键触发捕获。仅在键盘触发启用时生效。"
+      },
+      "app_blocklist": {
+        "label": "应用黑名单（bundle ID）",
+        "description": "永不捕获的 bundle ID。支持通配符（例如 com.example.*）。"
+      },
+      "window_title_blocklist": {
+        "label": "窗口标题黑名单（子串）",
+        "description": "标题包含其中任一字符串的窗口会被跳过。"
+      },
+      "panic_hotkey": {
+        "label": "紧急暂停快捷键",
+        "description": "按下后立即暂停捕获。格式：Modifier+Modifier+Key。"
+      },
+      "panic_pause_seconds": {
+        "label": "紧急暂停时长（秒）",
+        "description": "紧急快捷键按下后暂停的秒数。"
+      },
+      "sync_mode": {
+        "label": "同步模式",
+        "description": "host 如何拉取已封装的 burst。"
+      }
+    },
+    "options": {
+      "capture_scope": {
+        "active_window": "仅活动窗口",
+        "full_screen": "主显示器（全屏）",
+        "hybrid": "活动窗口 + 周期性全屏",
+        "all_displays": "所有连接的显示器"
+      },
+      "ocr_level": {
+        "accurate": "精确",
+        "fast": "快速"
+      },
+      "sync_mode": {
+        "manual": "手动",
+        "interval": "定时"
+      }
+    },
+    "ui_blocks": {
+      "macos_permissions": {
+        "title": "macOS 权限",
+        "description": "屏幕录制为必需权限。辅助功能为可选权限，仅在使用键盘触发和紧急快捷键时需要。"
+      }
+    },
+    "permissions": {
+      "screen_recording": {
+        "label": "屏幕录制",
+        "description": "捕获屏幕内容所必需。"
+      },
+      "accessibility": {
+        "label": "辅助功能",
+        "description": "用于键盘触发和紧急快捷键（可选）。"
+      }
+    }
   },
   "activity": {
     "source": {

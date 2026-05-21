@@ -1,7 +1,59 @@
 {
   "photo_library": {
     "name": "Photo Library",
-    "description": "Scan local photo directories, extract EXIF metadata, and ingest into the timeline"
+    "description": "Scan local photo directories, extract EXIF metadata, and ingest into the timeline",
+    "fields": {
+      "enabled": {
+        "label": "Enable",
+        "description": "Turn on photo library sync for the timeline."
+      },
+      "source_paths": {
+        "label": "Photo Directories",
+        "description": "Local directories containing photos to scan. Add one or more paths."
+      },
+      "exclude_patterns": {
+        "label": "Exclude Patterns",
+        "description": "Glob patterns for directories or files to skip (e.g. thumbnails, .cache).",
+        "placeholder": "**/thumbnails"
+      },
+      "sync_mode": {
+        "label": "Sync Mode",
+        "description": "How photo library should be synchronized."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "Polling interval used for interval-based sync."
+      },
+      "max_items_per_sync": {
+        "label": "Max Items Per Sync",
+        "description": "Maximum number of photos to process per sync run."
+      },
+      "settle_window_hours": {
+        "label": "Session Settle Window (hours)",
+        "description": "How long a burst of continuous shooting must stay quiet before it is treated as a finished session and written to the timeline. Lower values surface results sooner; higher values keep outings grouped more reliably."
+      },
+      "analysis_features": {
+        "label": "Analysis Features",
+        "description": "Metadata extraction capabilities to apply."
+      }
+    },
+    "options": {
+      "enabled": {
+        "true": "Enabled",
+        "false": "Disabled"
+      },
+      "sync_mode": {
+        "manual": "Manual",
+        "interval": "Interval"
+      },
+      "analysis_features": {
+        "exif": "EXIF Metadata",
+        "geocode": "GPS Geocoding"
+      }
+    },
+    "sections": {
+      "general": "General"
+    }
   },
   "weekday": {
     "0": "Monday",
@@ -36,6 +88,6 @@
     "when": "{weekday} {time_of_day} on {date}",
     "session_with_device": "{when}, took {photo_count} at {place} with {device}",
     "session_no_device": "{when}, took {photo_count} at {place}",
-    "with_time_range": "{summary} ({start}\u2013{end})"
+    "with_time_range": "{summary} ({start}–{end})"
   }
 }

@@ -1,7 +1,29 @@
 {
   "screen_time": {
     "name": "App Usage",
-    "description": "Tracks which apps you use and for how long. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends."
+    "description": "Tracks which apps you use and for how long. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
+    "fields": {
+      "enabled": {
+        "label": "Enable App Usage Sync",
+        "description": "Track frontmost-app activation events and write hourly summaries to memory."
+      },
+      "sync_interval_minutes": {
+        "label": "Flush Interval",
+        "description": "How often to flush completed hourly app-usage buckets into memory."
+      }
+    },
+    "options": {
+      "sync_interval_minutes": {
+        "1": "Every 1 minute",
+        "5": "Every 5 minutes",
+        "15": "Every 15 minutes",
+        "60": "Every 60 minutes"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "sync": "Sync"
+    }
   },
   "activity": {
     "action": {
@@ -9,6 +31,6 @@
     }
   },
   "summary": {
-    "hourly_bucket": "\u00b7 {time_range} \u00b7 {minutes} min"
+    "hourly_bucket": "· {time_range} · {minutes} min"
   }
 }
