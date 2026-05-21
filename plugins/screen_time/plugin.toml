@@ -14,3 +14,7 @@ platforms = ["macos", "windows"]
 dependencies = [
     "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
 ]
+
+[plugin.default_settings.sensors.screen_time]
+enabled = false
+sync_interval_minutes = 5
