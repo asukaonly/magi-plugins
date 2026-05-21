@@ -24,3 +24,33 @@ binary_relative_path = "bin/magi-vision-helper"
 [plugin.permissions]
 declares = ["screen_recording", "accessibility_optional", "fs_write_resources"]
 memory_access = ["write_l1"]
+
+[plugin.default_settings.sensors.timeline]
+enabled = false
+capture_scope = "hybrid"
+active_window_interval_sec = 10
+full_screen_interval_min = 5
+ocr_languages = ["en-US", "zh-Hans"]
+ocr_level = "accurate"
+original_retention_days = 30
+keyboard_triggers_enabled = false
+keyboard_trigger_types = ["scroll", "arrow", "space", "delete"]
+app_blocklist = [
+    "com.agilebits.onepassword*",
+    "com.1password.1password*",
+    "com.bitwarden.desktop",
+    "com.apple.keychainaccess",
+    "com.lastpass.LastPassMacDesktop",
+    "com.dashlane.*",
+    "com.apple.SecurityAgent",
+]
+window_title_blocklist = []
+panic_hotkey = "Option+Shift+P"
+panic_pause_seconds = 60
+gap_minutes = 5
+max_minutes = 30
+thumbnail_max_width = 1024
+jpeg_quality_original = 80
+jpeg_quality_thumbnail = 70
+initial_sync_configured = false
+sync_mode = "interval"
