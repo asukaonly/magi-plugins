@@ -89,6 +89,48 @@ class TriggerOrchestrator:
 __all__ = ["Debouncer", "PerKeyDebouncer", "IntervalTimer", "TriggerOrchestrator"]
 
 
+_LISTENER_CLASS_NAME = "_MagiScreenshotNSWorkspaceListener"
+
+
+def _get_listener_class() -> type | None:
+    """Lazily define (and cache) the Obj-C listener class.
+
+    The Obj-C runtime is process-global, so a class can be registered exactly
+    once per process. We cache via `objc.lookUpClass` so that re-imports of
+    this module (e.g. under multiple test loaders) reuse the existing class
+    instead of redefining it (which raises `objc.error`).
+    """
+    try:
+        import objc  # type: ignore[import-not-found]
+        from Foundation import NSObject
+    except Exception:  # noqa: BLE001
+        return None
+
+    try:
+        return objc.lookUpClass(_LISTENER_CLASS_NAME)
+    except Exception:  # noqa: BLE001
+        pass  # not yet registered — define below
+
+    class _MagiScreenshotNSWorkspaceListener(NSObject):  # type: ignore[misc]
+        def initWithCallback_(self, callback):  # noqa: N802
+            self = objc.super(_MagiScreenshotNSWorkspaceListener, self).init()
+            if self is None:
+                return None
+            self._cb = callback
+            return self
+
+        def onActivate_(self, _notification: object) -> None:  # noqa: N802
+            cb = getattr(self, "_cb", None)
+            if cb is None:
+                return
+            try:
+                cb()
+            except Exception:  # noqa: BLE001
+                logger.exception("nsworkspace.callback_failed")
+
+    return _MagiScreenshotNSWorkspaceListener
+
+
 def install_nsworkspace_observer(callback: Callable[[], None]) -> object | None:
     """Install a macOS NSWorkspace observer that fires `callback()` when the
     frontmost application changes. Returns an opaque handle to retain, or None
@@ -99,19 +141,16 @@ def install_nsworkspace_observer(callback: Callable[[], None]) -> object | None:
     """
     try:
         from AppKit import NSWorkspace
-        from Foundation import NSObject
     except Exception:  # noqa: BLE001
         logger.warning("nsworkspace.import_failed")
         return None
 
-    class _Listener(NSObject):  # type: ignore[misc]
-        def onActivate_(self, _notification: object) -> None:  # noqa: N802
-            try:
-                callback()
-            except Exception:  # noqa: BLE001
-                logger.exception("nsworkspace.callback_failed")
+    cls = _get_listener_class()
+    if cls is None:
+        logger.warning("nsworkspace.import_failed")
+        return None
 
-    listener = _Listener.alloc().init()
+    listener = cls.alloc().initWithCallback_(callback)
     nc = NSWorkspace.sharedWorkspace().notificationCenter()
     nc.addObserver_selector_name_object_(
         listener, "onActivate:", "NSWorkspaceDidActivateApplicationNotification", None

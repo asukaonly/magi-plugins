@@ -1,6 +1,7 @@
 """Integration test: sensor with mock helper, drive ticks, expect burst items."""
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 import sys
 from pathlib import Path
@@ -75,6 +76,31 @@ async def test_blocked_app_skips_capture(tmp_path: Path) -> None:
         assert items == []
     finally:
         await sensor.stop()
+
+
+@pytest.mark.asyncio
+async def test_sensor_active_window_timer_fires_capture(tmp_path: Path) -> None:
+    """With a short interval, the active-window timer should drive at least one capture."""
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(
+        helper_argv=[sys.executable, str(_FIXTURE)],
+        resources_root=tmp_path,
+        gap_minutes=5,
+        max_minutes=30,
+        retention_days=30,
+        active_window_interval_sec=0.05,    # fast tick for test
+        full_screen_interval_min=999.0,      # disable in test (also: scope=active_window keeps it off)
+        capture_scope="active_window",
+    )
+    await sensor.start()
+    try:
+        await asyncio.sleep(0.25)  # ~3-5 timer ticks
+    finally:
+        # Force-flush any open burst before stop so we can assert on it
+        items = await sensor.flush_pending_bursts()
+        await sensor.stop()
+    assert len(items) >= 1, "expected at least one burst from timer-driven captures"
+    assert items[0]["capture_count"] >= 1
 
 
 @pytest.mark.asyncio

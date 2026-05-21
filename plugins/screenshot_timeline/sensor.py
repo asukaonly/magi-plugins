@@ -1,6 +1,7 @@
 """Screenshot timeline sensor — orchestrates triggers, helper, privacy, bursts, L1 emission."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -23,6 +24,11 @@ try:
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
     from .privacy_guard import PrivacyGuard
+    from .trigger_orchestrator import (
+        IntervalTimer,
+        TriggerOrchestrator,
+        install_nsworkspace_observer,
+    )
 except ImportError:  # pragma: no cover - exercised when loaded outside package context
     import importlib.util as _imp_util
     import sys as _sys
@@ -48,6 +54,10 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     new_capture_id = _ids.new_capture_id
     _pg = _load_sibling("privacy_guard")
     PrivacyGuard = _pg.PrivacyGuard
+    _to = _load_sibling("trigger_orchestrator")
+    IntervalTimer = _to.IntervalTimer
+    TriggerOrchestrator = _to.TriggerOrchestrator
+    install_nsworkspace_observer = _to.install_nsworkspace_observer
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +90,8 @@ class ScreenshotSensor(SensorBase):
         thumbnail_max_width: int = 1024,
         jpeg_quality_original: int = 80,
         jpeg_quality_thumbnail: int = 70,
+        active_window_interval_sec: float = 10.0,
+        full_screen_interval_min: float = 5.0,
     ) -> None:
         super().__init__()
         self.helper_argv = list(helper_argv or [])
@@ -97,6 +109,8 @@ class ScreenshotSensor(SensorBase):
         self.thumbnail_max_width = thumbnail_max_width
         self.jpeg_quality_original = jpeg_quality_original
         self.jpeg_quality_thumbnail = jpeg_quality_thumbnail
+        self.active_window_interval_sec = float(active_window_interval_sec)
+        self.full_screen_interval_min = float(full_screen_interval_min)
 
         self._helper: HelperClient | None = (
             HelperClient(binary_argv=self.helper_argv) if self.helper_argv else None
@@ -112,13 +126,78 @@ class ScreenshotSensor(SensorBase):
         )
         self._pending_closed: list[dict[str, Any]] = []
 
+        # Wired up in start(), torn down in stop()
+        self._orchestrator: TriggerOrchestrator | None = None
+        self._active_timer: IntervalTimer | None = None
+        self._full_screen_timer: IntervalTimer | None = None
+        self._workspace_handle: object | None = None
+
     # ------- Lifecycle -------
 
     async def start(self) -> None:
         if self._helper is not None:
             await self._helper.start()
 
+        loop = asyncio.get_running_loop()
+        self._orchestrator = TriggerOrchestrator(
+            on_capture=self.trigger_once,
+            global_debounce_seconds=1.5,
+        )
+
+        async def _tick(trigger: str) -> None:
+            if self._orchestrator is None:
+                return
+            await self._orchestrator.emit(trigger)
+
+        self._active_timer = IntervalTimer(
+            interval_seconds=self.active_window_interval_sec,
+            trigger_label="timer",
+            on_tick=_tick,
+        )
+        await self._active_timer.start()
+
+        if self.capture_scope in ("hybrid", "full_screen"):
+            self._full_screen_timer = IntervalTimer(
+                interval_seconds=self.full_screen_interval_min * 60.0,
+                trigger_label="full_screen_timer",
+                on_tick=_tick,
+            )
+            await self._full_screen_timer.start()
+
+        def _on_window_switch() -> None:
+            if self._orchestrator is None:
+                return
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    self._orchestrator.emit("window_switch"),
+                    loop,
+                )
+            except RuntimeError:
+                # Loop closed or not running — swallow; this runs on AppKit thread.
+                pass
+
+        self._workspace_handle = install_nsworkspace_observer(_on_window_switch)
+
     async def stop(self) -> None:
+        # Stop drivers first so no new captures are issued mid-shutdown.
+        if self._active_timer is not None:
+            await self._active_timer.stop()
+            self._active_timer = None
+        if self._full_screen_timer is not None:
+            await self._full_screen_timer.stop()
+            self._full_screen_timer = None
+        if self._workspace_handle is not None:
+            try:
+                from AppKit import NSWorkspace  # type: ignore[import-not-found]
+
+                nc = NSWorkspace.sharedWorkspace().notificationCenter()
+                nc.removeObserver_(self._workspace_handle)
+            except Exception:  # noqa: BLE001
+                # AppKit unavailable or already-released observer — best effort.
+                pass
+            self._workspace_handle = None
+        self._orchestrator = None
+
         # Drain any open burst before tearing down the helper subprocess
         await self.flush_pending_bursts()
         if self._helper is not None:
@@ -351,8 +430,10 @@ def _closed_burst_to_dict(burst: "ClosedBurst") -> dict[str, Any]:
 
 
 def _scope_for_trigger(default_scope: str, trigger: str) -> str:
-    # In hybrid mode every trigger uses active_window; a separate full-screen
-    # timer (future) is responsible for full_screen ticks.
+    # The dedicated full-screen timer emits "full_screen_timer" → always full_screen.
+    if trigger == "full_screen_timer":
+        return "full_screen"
+    # In hybrid mode every other trigger uses active_window.
     if default_scope == "hybrid":
         return "active_window"
     return default_scope

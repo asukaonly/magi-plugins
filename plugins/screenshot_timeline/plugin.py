@@ -273,6 +273,8 @@ class ScreenshotTimelinePlugin(Plugin):
             thumbnail_max_width=int(settings.get("thumbnail_max_width", DEFAULT_SETTINGS["thumbnail_max_width"])),
             jpeg_quality_original=int(settings.get("jpeg_quality_original", DEFAULT_SETTINGS["jpeg_quality_original"])),
             jpeg_quality_thumbnail=int(settings.get("jpeg_quality_thumbnail", DEFAULT_SETTINGS["jpeg_quality_thumbnail"])),
+            active_window_interval_sec=float(settings.get("active_window_interval_sec", DEFAULT_SETTINGS["active_window_interval_sec"])),
+            full_screen_interval_min=float(settings.get("full_screen_interval_min", DEFAULT_SETTINGS["full_screen_interval_min"])),
         )
 
         return [
