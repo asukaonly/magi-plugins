@@ -23,6 +23,7 @@ try:
     from .burst_aggregator import BurstAggregator, ClosedBurst
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
+    from .permissions import request_screen_recording
     from .privacy_guard import PrivacyGuard
     from .retention import purge_orphan_originals
     from .screen_lock import is_screen_locked
@@ -54,6 +55,8 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     HelperTimeoutError = _hc.HelperTimeoutError
     _ids = _load_sibling("ids")
     new_capture_id = _ids.new_capture_id
+    _perm = _load_sibling("permissions")
+    request_screen_recording = _perm.request_screen_recording
     _pg = _load_sibling("privacy_guard")
     PrivacyGuard = _pg.PrivacyGuard
     _ret = _load_sibling("retention")
@@ -142,6 +145,14 @@ class ScreenshotSensor(SensorBase):
     # ------- Lifecycle -------
 
     async def start(self) -> None:
+        # Trigger the Screen Recording prompt on first enable (no-op on subsequent enables;
+        # macOS only shows the dialog once per binary). Non-fatal: if denied, the actual
+        # capture attempts will fail with PERMISSION_DENIED, which is handled gracefully.
+        try:
+            request_screen_recording()
+        except Exception:
+            logger.debug("sensor.permission_request_failed", exc_info=True)
+
         if self._helper is not None:
             await self._helper.start()
 

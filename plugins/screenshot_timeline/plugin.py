@@ -9,9 +9,12 @@ from magi_plugin_sdk import (
     ExtensionFieldOption,
     ExtensionFieldSpec,
     Plugin,
+    PluginSettingsActionResult,
+    PluginSettingsActionSpec,
 )
 from magi_plugin_sdk.sensors import SensorSpec
 
+from .privacy_guard import DEFAULT_APP_BLOCKLIST
 from .sensor import ScreenshotSensor
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -24,7 +27,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "original_retention_days": 30,
     "keyboard_triggers_enabled": False,
     "keyboard_trigger_types": ["scroll", "arrow", "space", "delete"],
-    "app_blocklist": [],
+    "app_blocklist": list(DEFAULT_APP_BLOCKLIST),
     "window_title_blocklist": [],
     "panic_hotkey": "Option+Shift+P",
     "panic_pause_seconds": 60,
@@ -189,8 +192,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.app_blocklist",
             type="tags",
             label="App blocklist (bundle IDs)",
-            description="Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*).",
-            default=[],
+            description="Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*). Defaults block known password managers and the macOS SecurityAgent; remove entries to allow them.",
+            default=list(DEFAULT_APP_BLOCKLIST),
             section="privacy",
             surface="timeline",
             order=100,
@@ -298,6 +301,63 @@ class ScreenshotTimelinePlugin(Plugin):
                 ),
             )
         ]
+
+    def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
+        return [
+            PluginSettingsActionSpec(
+                action_id="request_permissions",
+                label="System permissions",
+                description=(
+                    "Check Screen Recording (required) and Accessibility (optional, for "
+                    "keyboard triggers and panic hotkey) permissions. macOS will prompt "
+                    "if not yet granted."
+                ),
+                button_label="Check & request",
+                presentation="inline",
+                surface="extensions",
+                contribution_id="timeline",
+                requires_enabled=False,
+                order=10,
+            ),
+        ]
+
+    async def start_settings_action(
+        self,
+        action_id: str,
+        *,
+        session_id: str,
+        field_values: dict | None = None,
+    ) -> PluginSettingsActionResult:
+        if action_id != "request_permissions":
+            raise KeyError(action_id)
+        from .permissions import request_accessibility, request_screen_recording
+
+        screen = request_screen_recording()
+        accessibility = request_accessibility()
+        parts = [
+            f"Screen Recording: {screen}",
+            f"Accessibility: {accessibility}",
+        ]
+        if screen == "granted":
+            status = "succeeded"
+            message = "✓ " + " · ".join(parts)
+        else:
+            status = "failed"
+            message = (
+                "✗ " + " · ".join(parts) +
+                ". If you denied earlier, grant manually in System Settings → "
+                "Privacy & Security → Screen Recording."
+            )
+        return PluginSettingsActionResult(
+            status=status,
+            message=message,
+            data={
+                "permissions": {
+                    "screen_recording": screen,
+                    "accessibility": accessibility,
+                }
+            },
+        )
 
 
 __all__ = ["ScreenshotTimelinePlugin", "DEFAULT_SETTINGS"]

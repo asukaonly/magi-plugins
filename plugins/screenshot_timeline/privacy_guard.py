@@ -33,8 +33,10 @@ class PrivacyGuard:
     def is_app_blocked(self, app_bundle: str) -> bool:
         if not app_bundle:
             return False
-        patterns = list(DEFAULT_APP_BLOCKLIST) + list(self.extra_app_blocklist)
-        return any(fnmatch.fnmatchcase(app_bundle, p) for p in patterns)
+        # The blocklist is owned entirely by settings — defaults flow in via
+        # ``extra_app_blocklist`` (seeded from ``DEFAULT_APP_BLOCKLIST`` in
+        # ``plugin.py``) so the UI shows users what is actually blocked.
+        return any(fnmatch.fnmatchcase(app_bundle, p) for p in self.extra_app_blocklist)
 
     def is_window_incognito(self, *, app_bundle: str, window_title: str) -> bool:
         # Only consider for browser apps to reduce false positives
