@@ -25,6 +25,7 @@ try:
     from .ids import new_capture_id
     from .privacy_guard import PrivacyGuard
     from .retention import purge_orphan_originals
+    from .screen_lock import is_screen_locked
     from .trigger_orchestrator import (
         IntervalTimer,
         TriggerOrchestrator,
@@ -57,6 +58,8 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     PrivacyGuard = _pg.PrivacyGuard
     _ret = _load_sibling("retention")
     purge_orphan_originals = _ret.purge_orphan_originals
+    _sl = _load_sibling("screen_lock")
+    is_screen_locked = _sl.is_screen_locked
     _to = _load_sibling("trigger_orchestrator")
     IntervalTimer = _to.IntervalTimer
     TriggerOrchestrator = _to.TriggerOrchestrator
@@ -347,7 +350,7 @@ class ScreenshotSensor(SensorBase):
         skip_reason = self._guard.should_skip_capture(
             app_bundle=str(win.get("app_bundle_id") or ""),
             window_title=str(win.get("window_title") or ""),
-            screen_locked=False,
+            screen_locked=is_screen_locked(),
             now=time.time(),
         )
         if skip_reason is not None:
