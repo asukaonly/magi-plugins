@@ -133,16 +133,36 @@ class ScreenshotSensor(SensorBase):
         )
         self._pending_closed: list[dict[str, Any]] = []
 
-        # Wired up in start(), torn down in stop()
+        # Wired up by start() (lazy, triggered on first collect_items()),
+        # torn down by stop() if it's ever invoked.
         self._orchestrator: TriggerOrchestrator | None = None
         self._active_timer: IntervalTimer | None = None
         self._full_screen_timer: IntervalTimer | None = None
         self._workspace_handle: object | None = None
         self._retention_task: asyncio.Task | None = None
+        self._started: bool = False
+        self._start_lock: asyncio.Lock = asyncio.Lock()
 
     # ------- Lifecycle -------
 
     async def start(self) -> None:
+        """Idempotent lazy init.
+
+        SensorBase has no host-driven start/stop hook (the host only calls
+        collect_items periodically). So we self-bootstrap on the first
+        collect_items() call, and this method is a no-op on subsequent
+        invocations. Also safe to call from tests directly.
+        """
+        # Fast path without lock to avoid contention.
+        if self._started:
+            return
+        async with self._start_lock:
+            if self._started:
+                return
+            await self._do_start()
+            self._started = True
+
+    async def _do_start(self) -> None:
         logger.warning(
             "sensor.start.begin helper_argv=%s capture_scope=%s active_interval_s=%s full_screen_interval_min=%s",
             self.helper_argv, self.capture_scope, self.active_window_interval_sec,
@@ -280,7 +300,22 @@ class ScreenshotSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
-        """Harvest naturally-closed bursts; do NOT force-close the open one."""
+        """Harvest naturally-closed bursts; do NOT force-close the open one.
+
+        Also handles lazy start: SensorBase has no host-driven start hook,
+        so the very first call to collect_items() is what actually kicks
+        off the helper subprocess + timer loops + window-switch observer.
+        """
+        logger.warning(
+            "sensor.collect_items.called started=%s pending=%d",
+            self._started, len(self._pending_closed),
+        )
+        if not self._started:
+            try:
+                await self.start()
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("sensor.lazy_start_failed err=%r", exc)
+                return SensorSyncResult(items=[])
         items = list(self._pending_closed)
         self._pending_closed.clear()
         return SensorSyncResult(items=items)
