@@ -64,6 +64,11 @@ def main() -> None:
                 },
                 "ocr": {"text": "hello world", "confidence_avg": 0.9, "block_count": 2},
                 "files_written": {"original_bytes": 1234, "thumbnail_bytes": 567},
+                # Vary phash by request id so consecutive captures aren't
+                # mistakenly dropped by the sensor's hamming-distance dedup.
+                # The real Swift helper computes this from the image; the
+                # mock just needs a stable, distinct value per call.
+                "phash": f"{(abs(hash(rid)) ^ 0xA5A5A5A5A5A5A5A5) & ((1 << 64) - 1):016x}",
             })
             continue
         if op == "crash":

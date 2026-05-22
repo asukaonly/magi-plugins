@@ -51,6 +51,13 @@ func handle(_ req: HelperRequest) async {
             let ocrCfg = req.ocr ?? OcrConfig(languages: ["en-US"], level: "accurate")
             let ocrResult = try runOcr(on: image, languages: ocrCfg.languages, level: ocrCfg.level)
 
+            // Compute the perceptual hash from the full-resolution image
+            // (not the thumbnail) — the thumbnail's anti-alias can shift
+            // adjacent-pixel comparisons enough to add noise. dHash is
+            // already a 9×8 downsample internally so the input size is
+            // only as expensive as one extra downscale.
+            let phash = computeDHash(of: image)
+
             let dims = [image.width, image.height]
             let now = Date().timeIntervalSince1970
             writeResponse(.success(
@@ -59,7 +66,8 @@ func handle(_ req: HelperRequest) async {
                 dimensions: dims,
                 activeWindow: win,
                 ocr: ocrResult,
-                filesWritten: FilesWritten(originalBytes: origBytes, thumbnailBytes: thumbBytes)
+                filesWritten: FilesWritten(originalBytes: origBytes, thumbnailBytes: thumbBytes),
+                phash: phash
             ))
         } catch CaptureError.permissionDenied {
             writeResponse(.error(id: req.id, code: "PERMISSION_DENIED",

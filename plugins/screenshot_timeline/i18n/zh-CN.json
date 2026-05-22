@@ -104,7 +104,8 @@
       "screenshot_timeline": "屏幕快照时间线"
     },
     "action": {
-      "screen_session": "屏幕会话"
+      "screen_session": "屏幕会话",
+      "screen_capture": "屏幕截图"
     },
     "object": {
       "app": {

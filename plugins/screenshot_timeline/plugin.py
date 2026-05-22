@@ -283,8 +283,11 @@ class ScreenshotTimelinePlugin(Plugin):
 
         sensor = ScreenshotSensor(
             helper_argv=helper_argv,
-            gap_minutes=int(settings.get("gap_minutes", DEFAULT_SETTINGS["gap_minutes"])),
-            max_minutes=int(settings.get("max_minutes", DEFAULT_SETTINGS["max_minutes"])),
+            # gap_minutes/max_minutes were burst-aggregator knobs; the
+            # sensor now emits one L1 event per capture so they're no
+            # longer wired in. We keep the field defs in DEFAULT_SETTINGS
+            # so any existing user YAML doesn't fail validation, but they
+            # currently have no effect.
             retention_days=int(settings.get("original_retention_days", DEFAULT_SETTINGS["original_retention_days"])),
             capture_scope=str(settings.get("capture_scope", DEFAULT_SETTINGS["capture_scope"])),
             ocr_languages=_tuple(settings.get("ocr_languages"), DEFAULT_SETTINGS["ocr_languages"]),

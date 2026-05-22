@@ -1,4 +1,22 @@
-"""Screenshot timeline sensor — orchestrates triggers, helper, privacy, bursts, L1 emission."""
+"""Screenshot timeline sensor — orchestrates triggers, helper, privacy, perceptual-hash dedup, and per-capture L1 emission.
+
+Storage model: **one screenshot = one L1 event**.
+
+Rationale: an earlier version of this sensor aggregated consecutive
+same-window captures into "bursts" and emitted one L1 row per burst.
+That made each row carry 5–8 KB of OCR text union, which the host
+embedder split into 12–20 chunks per row. In multi-source retrieval
+(e.g. side-by-side with chrome_history's short rows) a single burst
+dominated top-K via sheer chunk count, drowning out other sources.
+
+Now we emit per-capture rows (≈1–2 KB OCR each, 1–2 chunks). Burst is
+still a useful UI concept (group consecutive same-window captures on a
+timeline) but it lives in the UI/projection layer, not in storage.
+
+To stop bombing L1 with near-identical frames (cursor blink, idle
+window) we use the Swift helper's dHash output and drop captures whose
+hash is within hamming distance 5 of the previous same-window capture.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -20,7 +38,7 @@ from magi_plugin_sdk.sensors import (
 
 # Intra-plugin imports — fallback for test loader (spec_from_file_location)
 try:
-    from .burst_aggregator import BurstAggregator, ClosedBurst
+    from .phash_utils import hamming_distance
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
     from .permissions import request_screen_recording, screen_recording_status
@@ -45,9 +63,8 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
         spec.loader.exec_module(mod)
         return mod
 
-    _ba = _load_sibling("burst_aggregator")
-    BurstAggregator = _ba.BurstAggregator
-    ClosedBurst = _ba.ClosedBurst
+    _ph = _load_sibling("phash_utils")
+    hamming_distance = _ph.hamming_distance
     _hc = _load_sibling("helper_client")
     HelperClient = _hc.HelperClient
     HelperCrashedError = _hc.HelperCrashedError
@@ -70,7 +87,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScreenshotSensor(SensorBase):
-    """Pull-sync sensor that produces burst-aggregated screenshot events."""
+    """Pull-sync sensor that emits one L1 event per screenshot capture."""
 
     sensor_id: str = "timeline.screenshot"
     display_name: str = "Screenshot Timeline"
@@ -86,8 +103,6 @@ class ScreenshotSensor(SensorBase):
         *,
         helper_argv: list[str] | None = None,
         resources_root: Path | None = None,
-        gap_minutes: int = 5,
-        max_minutes: int = 30,
         retention_days: int = 30,
         capture_scope: str = "hybrid",
         ocr_languages: tuple[str, ...] = ("en-US", "zh-Hans"),
@@ -99,6 +114,7 @@ class ScreenshotSensor(SensorBase):
         jpeg_quality_thumbnail: int = 70,
         active_window_interval_sec: float = 10.0,
         full_screen_interval_min: float = 5.0,
+        phash_dedup_threshold: int = 5,
     ) -> None:
         super().__init__()
         self.helper_argv = list(helper_argv or [])
@@ -107,8 +123,6 @@ class ScreenshotSensor(SensorBase):
             if resources_root is not None
             else Path.home() / ".magi" / "data" / "resources" / "screenshots"
         )
-        self.gap_minutes = gap_minutes
-        self.max_minutes = max_minutes
         self.retention_days = retention_days
         self.capture_scope = capture_scope
         self.ocr_languages = tuple(ocr_languages)
@@ -118,20 +132,24 @@ class ScreenshotSensor(SensorBase):
         self.jpeg_quality_thumbnail = jpeg_quality_thumbnail
         self.active_window_interval_sec = float(active_window_interval_sec)
         self.full_screen_interval_min = float(full_screen_interval_min)
+        # Hamming distance threshold below which a new capture is treated
+        # as a redundant near-duplicate of the previous one for the same
+        # window. ~5 out of 64 bits ≈ cursor / minor anti-alias differences.
+        self.phash_dedup_threshold = int(phash_dedup_threshold)
 
         self._helper: HelperClient | None = (
             HelperClient(binary_argv=self.helper_argv) if self.helper_argv else None
-        )
-        self._aggregator = BurstAggregator(
-            gap_minutes=gap_minutes,
-            max_minutes=max_minutes,
-            retention_days=retention_days,
         )
         self._guard = PrivacyGuard(
             extra_app_blocklist=tuple(extra_app_blocklist),
             window_title_blocklist=tuple(window_title_blocklist),
         )
-        self._pending_closed: list[dict[str, Any]] = []
+        # Per-window last phash (hex) — keyed by (app_bundle, window_title).
+        # Used to suppress near-duplicate frames. Bounded by app/window
+        # cardinality, which is small in practice.
+        self._last_phash_by_window: dict[tuple[str, str], str] = {}
+        # Per-capture L1 items ready for the next collect_items() pull.
+        self._pending_items: list[dict[str, Any]] = []
 
         # Wired up by start() (lazy, triggered on first collect_items()),
         # torn down by stop() if it's ever invoked.
@@ -277,8 +295,9 @@ class ScreenshotSensor(SensorBase):
             self._workspace_handle = None
         self._orchestrator = None
 
-        # Drain any open burst before tearing down the helper subprocess
-        await self.flush_pending_bursts()
+        # Drain pending L1 items before tearing down the helper subprocess
+        # so that anything in flight from a recent tick won't be lost.
+        await self.drain_pending_items()
         if self._helper is not None:
             await self._helper.shutdown()
 
@@ -300,15 +319,18 @@ class ScreenshotSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
-        """Harvest naturally-closed bursts; do NOT force-close the open one.
+        """Hand off all captures queued since the last poll.
 
         Also handles lazy start: SensorBase has no host-driven start hook,
         so the very first call to collect_items() is what actually kicks
         off the helper subprocess + timer loops + window-switch observer.
+
+        Each item corresponds to exactly one screenshot — see the module
+        docstring for why we no longer aggregate bursts at storage time.
         """
         logger.debug(
             "sensor.collect_items.called started=%s pending=%d",
-            self._started, len(self._pending_closed),
+            self._started, len(self._pending_items),
         )
         if not self._started:
             try:
@@ -316,15 +338,23 @@ class ScreenshotSensor(SensorBase):
             except Exception as exc:  # noqa: BLE001
                 logger.exception("sensor.lazy_start_failed err=%r", exc)
                 return SensorSyncResult(items=[])
-        items = list(self._pending_closed)
-        self._pending_closed.clear()
+        items = list(self._pending_items)
+        self._pending_items.clear()
         return SensorSyncResult(items=items)
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
+        """Render one captured screenshot into a SensorOutput.
+
+        ``item`` is the per-image payload assembled in ``trigger_once()``.
+        The capture's id is its L1 source_item_id, so each capture becomes
+        exactly one host-side L1 row.
+        """
         app_bundle = str(item.get("app_bundle") or "")
         app_name = str(item.get("app_name") or app_bundle)
         window_title = str(item.get("window_title") or "")
         display_id = str(item.get("display_id") or "primary")
+        trigger = str(item.get("trigger") or "")
+        scope = str(item.get("scope") or "")
 
         activity = self._build_activity(
             source=self._build_activity_facet(
@@ -333,9 +363,9 @@ class ScreenshotSensor(SensorBase):
                 fallback="Screenshot Timeline",
             ),
             action=self._build_activity_facet(
-                code="screen_session",
-                i18n_key="activity.action.screen_session",
-                fallback="Screen Session",
+                code="screen_capture",
+                i18n_key="activity.action.screen_capture",
+                fallback="Screen Capture",
             ),
             object=self._build_activity_facet(
                 code=app_bundle or "unknown",
@@ -348,27 +378,17 @@ class ScreenshotSensor(SensorBase):
                 "window_title": window_title,
                 "url": str(item.get("url") or ""),
                 "display_id": display_id,
-                # Pass these as ints — the SDK widened qualifiers to accept
-                # JSON-native primitives. Round-tripping through JSON keeps
-                # them as numbers in the L1 metadata column, which makes
-                # downstream aggregation (e.g. sum of capture_count over a
-                # day) trivial without coercion.
-                "capture_count": int(item.get("capture_count") or 0),
-                "duration_seconds": int(item.get("duration_seconds") or 0),
+                "trigger": trigger,
+                "scope": scope,
             },
         )
 
         title = (
             f"{app_name}: {window_title}".strip(": ").strip() if window_title else app_name
         )
-        narration = self._build_narration(
-            title=title or None,
-            body=str(item.get("ocr_text_union") or ""),
-        )
-
-        content_blocks = [
-            ContentBlock(kind="text", value=str(item.get("ocr_text_union") or "")),
-        ]
+        ocr_text = str(item.get("ocr_text") or "")
+        narration = self._build_narration(title=title or None, body=ocr_text)
+        content_blocks = [ContentBlock(kind="text", value=ocr_text)]
 
         tags: list[str] = []
         if app_bundle:
@@ -377,22 +397,27 @@ class ScreenshotSensor(SensorBase):
 
         provenance = {
             "sensor_id": self.sensor_id,
-            "trigger_breakdown": dict(item.get("trigger_breakdown") or {}),
+            "capture_id": str(item.get("capture_id") or ""),
+            "trigger": trigger,
+            "scope": scope,
             "ocr_confidence_avg": float(item.get("ocr_confidence_avg") or 0.0),
-            "representative_capture_id": str(item.get("representative_capture_id") or ""),
-            "captures": list(item.get("captures") or []),
+            "phash": str(item.get("phash") or ""),
+            "original_path": str(item.get("original_path") or ""),
+            "thumbnail_path": str(item.get("thumbnail_path") or ""),
+            "original_expires_at": item.get("original_expires_at"),
+            "dimensions": list(item.get("dimensions") or [0, 0]),
         }
 
         return self._build_output(
             source_item_id=str(item["source_item_id"]),
             activity=activity,
             narration=narration,
-            occurred_at=float(item.get("start_unix") or 0.0),
+            occurred_at=float(item.get("captured_at") or 0.0),
             content_blocks=content_blocks,
             tags=tags,
             provenance=provenance,
             domain_payload={
-                "importance_score": _importance_for_burst_dict(item),
+                "importance_score": _importance_for_capture(item),
             },
         )
 
@@ -500,24 +525,57 @@ class ScreenshotSensor(SensorBase):
             resp.get("files_written"),
         )
 
-        # 5. Build per-capture payload + feed aggregator
-        payload = {
+        # 5. Perceptual-hash dedup against the previous capture of the same window.
+        #    The helper has already written the jpgs to disk; if we decide
+        #    to drop this capture we also delete those files so nothing
+        #    leaks into retention's pool.
+        app_bundle = str(win.get("app_bundle_id") or "")
+        window_title = str(win.get("window_title") or "")
+        window_key = (app_bundle, window_title)
+        phash = str(resp.get("phash") or "")
+        if phash and window_key in self._last_phash_by_window:
+            dist = hamming_distance(self._last_phash_by_window[window_key], phash)
+            if dist <= self.phash_dedup_threshold:
+                logger.info(
+                    "trigger.skipped reason=phash_dup trigger=%s app=%s window=%r dist=%d",
+                    trigger, app_bundle, window_title, dist,
+                )
+                # Best-effort cleanup of the freshly-written jpgs.
+                for p in (original_path, thumbnail_path):
+                    try:
+                        Path(p).unlink(missing_ok=True)
+                    except OSError:
+                        pass
+                # Still record the phash so a steady-state near-identical
+                # stream remains suppressed (don't overwrite with the
+                # baseline — the new frame is similar enough to be a no-op).
+                return
+        if phash:
+            self._last_phash_by_window[window_key] = phash
+
+        # 6. Build per-capture L1 item and queue it for the next pull.
+        captured_at = float(resp.get("captured_at") or now)
+        item: dict[str, Any] = {
             "capture_id": rid,
-            "captured_at": float(resp.get("captured_at") or now),
-            "app_bundle": win.get("app_bundle_id") or "",
-            "window_title": win.get("window_title") or "",
+            "source_item_id": rid,
+            "idempotency_key": rid,
+            "captured_at": captured_at,
+            "app_bundle": app_bundle,
+            "app_name": str(win.get("app_name") or _app_name_from_bundle(app_bundle)),
+            "window_title": window_title,
             "url": win.get("url"),
+            "display_id": str(win.get("display_id") or "primary"),
             "ocr_text": (resp.get("ocr") or {}).get("text") or "",
+            "ocr_confidence_avg": float((resp.get("ocr") or {}).get("confidence_avg") or 0.0),
             "trigger": trigger,
             "scope": _scope_for_trigger(self.capture_scope, trigger),
             "original_path": original_path,
             "thumbnail_path": thumbnail_path,
-            "dimensions": tuple(resp.get("dimensions") or (0, 0)),
-            "ocr_confidence_avg": float((resp.get("ocr") or {}).get("confidence_avg") or 0.0),
+            "original_expires_at": captured_at + self.retention_days * 86400.0,
+            "dimensions": list(resp.get("dimensions") or [0, 0]),
+            "phash": phash,
         }
-        closed = self._aggregator.ingest(payload)
-        for burst in closed:
-            self._pending_closed.append(_closed_burst_to_dict(burst))
+        self._pending_items.append(item)
 
     async def _probe_screen_lock(self) -> bool:
         """Probe whether the macOS screen is locked, via the long-running helper.
@@ -540,12 +598,15 @@ class ScreenshotSensor(SensorBase):
             return False
         return bool(resp.get("screen_locked", False))
 
-    async def flush_pending_bursts(self) -> list[dict[str, Any]]:
-        """Force-close any open burst and return all pending burst dicts."""
-        for burst in self._aggregator.flush_all(now=time.time()):
-            self._pending_closed.append(_closed_burst_to_dict(burst))
-        out = list(self._pending_closed)
-        self._pending_closed.clear()
+    async def drain_pending_items(self) -> list[dict[str, Any]]:
+        """Return + clear all queued per-capture items.
+
+        Used at shutdown to make sure no in-flight item is lost, and in
+        tests to assert on what was captured without going through the
+        host pull-sync path.
+        """
+        out = list(self._pending_items)
+        self._pending_items.clear()
         return out
 
     async def _retention_loop(self) -> None:
@@ -571,38 +632,6 @@ class ScreenshotSensor(SensorBase):
             return
 
 
-def _closed_burst_to_dict(burst: "ClosedBurst") -> dict[str, Any]:
-    return {
-        "source_item_id": burst.source_item_id,
-        "app_bundle": burst.app_bundle,
-        "app_name": burst.app_name,
-        "window_title": burst.window_title,
-        "url": burst.url,
-        "start_unix": burst.start_unix,
-        "end_unix": burst.end_unix,
-        "duration_seconds": burst.duration_seconds,
-        "capture_count": burst.capture_count,
-        "captures": [
-            {
-                "capture_id": c.capture_id,
-                "captured_at": c.captured_at,
-                "trigger": c.trigger,
-                "scope": c.scope,
-                "thumbnail_path": c.thumbnail_path,
-                "original_path": c.original_path,
-                "original_expires_at": c.original_expires_at,
-                "dimensions": list(c.dimensions),
-            }
-            for c in burst.captures
-        ],
-        "ocr_text_union": burst.ocr_text_union,
-        "trigger_breakdown": burst.trigger_breakdown,
-        "representative_capture_id": burst.representative_capture_id,
-        "ocr_confidence_avg": burst.ocr_confidence_avg,
-        "display_id": burst.display_id,
-    }
-
-
 def _scope_for_trigger(default_scope: str, trigger: str) -> str:
     # The dedicated full-screen timer emits "full_screen_timer" → always full_screen.
     if trigger == "full_screen_timer":
@@ -613,13 +642,30 @@ def _scope_for_trigger(default_scope: str, trigger: str) -> str:
     return default_scope
 
 
-def _importance_for_burst_dict(item: dict[str, Any]) -> float:
-    breakdown = item.get("trigger_breakdown") or {}
-    if breakdown.get("manual", 0) > 0:
+def _importance_for_capture(item: dict[str, Any]) -> float:
+    """Per-capture importance — single-trigger version of the prior
+    burst-weighted formula. Captures driven by an explicit user
+    intention (manual, window switch) outrank passive timer ticks."""
+    trigger = str(item.get("trigger") or "")
+    if trigger == "manual":
         return 0.8
-    if breakdown.get("window_switch", 0) > 0:
+    if trigger == "window_switch":
         return 0.5
     return 0.3
+
+
+def _app_name_from_bundle(bundle: str) -> str:
+    """Derive a display name from an app bundle id when we don't have one.
+
+    The helper already returns ``app_name`` separately so this is mostly
+    a safety net (probe returned a bundle but no localized name). Pure
+    fallback heuristic — strip the reverse-DNS prefix and titlecase the
+    last component (``com.apple.Safari`` → ``Safari``).
+    """
+    if not bundle:
+        return ""
+    last = bundle.rsplit(".", 1)[-1]
+    return last or bundle
 
 
 __all__ = ["ScreenshotSensor"]

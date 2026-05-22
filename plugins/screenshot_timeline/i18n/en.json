@@ -104,7 +104,8 @@
       "screenshot_timeline": "Screenshot Timeline"
     },
     "action": {
-      "screen_session": "Screen Session"
+      "screen_session": "Screen Session",
+      "screen_capture": "Screen Capture"
     },
     "object": {
       "app": {

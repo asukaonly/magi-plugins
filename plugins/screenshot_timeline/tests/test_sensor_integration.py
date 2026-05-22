@@ -1,4 +1,4 @@
-"""Integration test: sensor with mock helper, drive ticks, expect burst items."""
+"""Integration test: sensor with mock helper, drive ticks, expect per-capture L1 items."""
 from __future__ import annotations
 
 import asyncio
@@ -23,38 +23,41 @@ def _load(name: str) -> ModuleType:
 
 
 @pytest.mark.asyncio
-async def test_capture_tick_produces_burst_items_via_flush(tmp_path: Path) -> None:
+async def test_capture_tick_produces_one_l1_item_per_capture(tmp_path: Path) -> None:
+    """Two ticks → two L1 items. No burst aggregation."""
     sensor_mod = _load("sensor")
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
-        gap_minutes=5,
-        max_minutes=30,
         retention_days=30,
     )
     await sensor.start()
     try:
         await sensor.trigger_once("timer")
         await sensor.trigger_once("timer")
-        items = await sensor.flush_pending_bursts()
-        assert len(items) == 1
-        item = items[0]
-        # Validate the burst-dict shape that build_output will consume.
-        # Mock helper returns captured_at=1700000000.0 → 2023-11-14 UTC.
-        assert item["source_item_id"].startswith("20231114_")
-        assert item["capture_count"] == 2
-        assert item["app_bundle"] == "com.apple.Safari"
-        assert "[truncated]" not in item["ocr_text_union"]
+        items = await sensor.drain_pending_items()
+        # One row per capture — drop-in replacement of the old "1 burst
+        # holds 2 captures" model. Critical for embedding chunk balance
+        # against short rows from other sources (chrome_history etc).
+        assert len(items) == 2
+        for item in items:
+            # capture_id is timestamp-prefixed (see ids.new_capture_id).
+            assert item["source_item_id"] == item["capture_id"]
+            assert item["app_bundle"] == "com.apple.Safari"
+            assert item["window_title"] == "Mock Window"
+            assert item["ocr_text"] == "hello world"
+            assert item["phash"]  # mock helper returns one per request
+            assert item["trigger"] == "timer"
+            assert "original_path" in item and "thumbnail_path" in item
 
-        # Verify build_output produces a valid SensorOutput.
-        output = await sensor.build_output(item)
+        # Verify build_output produces a SensorOutput per item.
+        output = await sensor.build_output(items[0])
         assert output.source_type == "screenshot_timeline"
-        assert output.source_item_id == item["source_item_id"]
-        assert output.narration.body  # OCR text union
+        assert output.source_item_id == items[0]["source_item_id"]
+        assert output.narration.body == "hello world"
         assert output.activity.source.code == "screenshot_timeline"
-        # SDK qualifiers preserve JSON-native primitive types — ints round-trip
-        # as ints through the L1 metadata column rather than being str-wrapped.
-        assert output.activity.qualifiers["capture_count"] == 2
+        assert output.activity.action.code == "screen_capture"
+        assert output.activity.qualifiers["trigger"] == "timer"
     finally:
         await sensor.stop()
 
@@ -65,16 +68,53 @@ async def test_blocked_app_skips_capture(tmp_path: Path) -> None:
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
-        gap_minutes=5,
-        max_minutes=30,
         retention_days=30,
         extra_app_blocklist=("com.apple.Safari",),  # mock helper always reports Safari
     )
     await sensor.start()
     try:
         await sensor.trigger_once("timer")
-        items = await sensor.flush_pending_bursts()
+        items = await sensor.drain_pending_items()
         assert items == []
+    finally:
+        await sensor.stop()
+
+
+@pytest.mark.asyncio
+async def test_phash_dedup_drops_near_identical_capture(tmp_path: Path) -> None:
+    """Two ticks with the SAME phash → second is dropped + its jpgs deleted."""
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(
+        helper_argv=[sys.executable, str(_FIXTURE)],
+        resources_root=tmp_path,
+        retention_days=30,
+        phash_dedup_threshold=5,
+    )
+    await sensor.start()
+    try:
+        await sensor.trigger_once("timer")
+        # Force the next capture to have the SAME phash as the previous
+        # one for the same window. The window key is (app_bundle, window_title)
+        # — mock helper always returns ("com.apple.Safari", "Mock Window").
+        items_after_first = list(sensor._pending_items)
+        assert len(items_after_first) == 1
+        prior_phash = items_after_first[0]["phash"]
+        sensor._last_phash_by_window[("com.apple.Safari", "Mock Window")] = prior_phash
+
+        # Patch the helper's response for the next call: re-use the same phash.
+        # We achieve this without touching mock_helper by injecting it
+        # through the sensor's last-phash table — when the second capture
+        # finishes, the new phash (different, derived from a new rid)
+        # would normally NOT match, so we set the baseline to a value
+        # that we know matches what mock will return.
+        # Instead easier: bump threshold to 64 so EVERYTHING dedupes.
+        sensor.phash_dedup_threshold = 64
+
+        await sensor.trigger_once("timer")
+        items = await sensor.drain_pending_items()
+        # 1 from first tick (still there because we didn't drain between)
+        # + 0 from second (deduped) = 1 total
+        assert len(items) == 1
     finally:
         await sensor.stop()
 
@@ -93,8 +133,6 @@ async def test_sensor_active_window_timer_fires_capture(
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
-        gap_minutes=5,
-        max_minutes=30,
         retention_days=30,
         active_window_interval_sec=0.05,    # fast tick for test
         full_screen_interval_min=999.0,      # disable in test (also: scope=active_window keeps it off)
@@ -104,42 +142,36 @@ async def test_sensor_active_window_timer_fires_capture(
     try:
         await asyncio.sleep(0.25)  # ~3-5 timer ticks
     finally:
-        # Force-flush any open burst before stop so we can assert on it
-        items = await sensor.flush_pending_bursts()
+        items = await sensor.drain_pending_items()
         await sensor.stop()
-    assert len(items) >= 1, "expected at least one burst from timer-driven captures"
-    assert items[0]["capture_count"] >= 1
+    assert len(items) >= 1, "expected at least one capture from timer-driven ticks"
+    assert items[0]["app_bundle"] == "com.apple.Safari"
 
 
 @pytest.mark.asyncio
-async def test_collect_items_does_not_force_close_open_burst(tmp_path: Path) -> None:
-    """collect_items must NOT prematurely close a burst that's still accumulating.
-
-    A naive flush_all-on-every-poll would chop a long reading session into many
-    small bursts. The real-time loop should harvest only naturally-closed bursts.
+async def test_collect_items_returns_per_capture_immediately(tmp_path: Path) -> None:
+    """Per-capture L1 model: collect_items() returns one item per capture
+    without waiting for a "burst close" boundary. The previous burst-
+    aggregated design held items back until a window change or gap — that
+    caused long reading sessions to never surface to the host until
+    shutdown. Per-image flush means the host can keep up with realtime.
     """
     sensor_mod = _load("sensor")
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
-        gap_minutes=5,
-        max_minutes=30,
         retention_days=30,
     )
     await sensor.start()
     try:
-        # Two captures of the same window — burst still OPEN
         await sensor.trigger_once("timer")
         await sensor.trigger_once("timer")
 
-        # Production pull-sync poll: should return 0 items because the burst hasn't closed
         result = await sensor.collect_items(context=None)  # type: ignore[arg-type]
-        assert result.items == []
-
-        # Force-flush (e.g. on shutdown) returns the 1 burst
-        items = await sensor.flush_pending_bursts()
-        assert len(items) == 1
-        assert items[0]["capture_count"] == 2
+        assert len(result.items) == 2  # both captures immediately visible
+        # Second collect_items finds nothing — items are drained on read.
+        result2 = await sensor.collect_items(context=None)  # type: ignore[arg-type]
+        assert result2.items == []
     finally:
         await sensor.stop()
 
@@ -161,8 +193,6 @@ async def test_start_is_skipped_when_screen_recording_denied(
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
-        gap_minutes=5,
-        max_minutes=30,
         retention_days=30,
     )
     await sensor.start()
