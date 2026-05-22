@@ -434,8 +434,21 @@ class ScreenshotSensor(SensorBase):
         # like "cap_01KS614703Y9D2H3482FW77TC4_thumb.jpg" that have no
         # semantic value. Real topic extraction belongs at the host level
         # downstream of the OCR text, not here.
-        if item.get("url"):
-            entities.append({"type": "uri", "name": str(item["url"])})
+        url_value = str(item.get("url") or "").strip()
+        if url_value:
+            # Two entities per URL — keeps KG joinable across plugins:
+            #   web_page: the exact URL, useful for "I saw this specific page"
+            #   site:    just the host, matches chrome-history's canonical
+            #            `site:<domain>` node id so visits in one plugin
+            #            line up with on-screen visits in this one.
+            entities.append(
+                {"type": "web_page", "name": url_value, "canonical_id": url_value}
+            )
+            domain = _domain_from_url(url_value)
+            if domain:
+                entities.append(
+                    {"type": "site", "name": domain, "canonical_id": f"site:{domain}"}
+                )
         return SensorOutputMetadata(entities=entities)
 
     # ------- Live capture path -------
@@ -652,6 +665,27 @@ def _importance_for_capture(item: dict[str, Any]) -> float:
     if trigger == "window_switch":
         return 0.5
     return 0.3
+
+
+def _domain_from_url(url: str) -> str:
+    """Return the bare host of an HTTP(S) URL, lowercased, with leading
+    ``www.`` stripped. Returns empty string on anything that doesn't
+    parse — we never want to invent a domain.
+
+    Matches chrome-history's normalize_domain() in spirit so the L2
+    ``site:<domain>`` node id is the same across the two plugins.
+    """
+    try:
+        from urllib.parse import urlsplit
+        parts = urlsplit(url.strip())
+    except Exception:  # noqa: BLE001
+        return ""
+    if parts.scheme not in ("http", "https"):
+        return ""
+    host = (parts.hostname or "").strip().lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host
 
 
 def _app_name_from_bundle(bundle: str) -> str:
