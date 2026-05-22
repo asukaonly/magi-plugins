@@ -25,7 +25,7 @@
       },
       "ocr_level": {
         "label": "OCR 识别级别",
-        "description": "accurate 较慢但更准；fast 反之。"
+        "description": "Apple Vision 的文字识别精度档位。「精确」用神经网络模型，能处理小字号、中英混排、复杂版式，但单张截图 OCR 耗时 0.5–2 秒；「快速」用传统算法，速度快 5–10 倍，但小字、中文、复杂界面容易识别出乱码。截屏场景大多是 IDE、浏览器、聊天软件的界面文字，建议保持「精确」。"
       },
       "original_retention_days": {
         "label": "原图保留天数",

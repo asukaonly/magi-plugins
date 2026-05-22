@@ -25,7 +25,7 @@
       },
       "ocr_level": {
         "label": "OCR recognition level",
-        "description": "Accurate is slower but better quality; fast is the opposite."
+        "description": "Apple Vision text-recognition precision tier. \"Accurate\" uses a neural network — handles small fonts, mixed-language text, and dense UI well, but takes ~0.5–2 s per screenshot. \"Fast\" uses traditional character recognition — 5–10× faster but small fonts, CJK characters, and busy UI degrade quickly. Most screen content is IDE / browser / chat-app chrome, so keep \"Accurate\" unless CPU usage is an issue."
       },
       "original_retention_days": {
         "label": "Original retention (days)",

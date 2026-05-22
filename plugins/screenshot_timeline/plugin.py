@@ -146,7 +146,14 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.ocr_level",
             type="select",
             label="OCR recognition level",
-            description="Accurate is slower but better quality; fast is the opposite.",
+            description=(
+                "Apple Vision text-recognition precision tier. \"Accurate\" uses "
+                "a neural network — handles small fonts, mixed-language text, "
+                "and dense UI; ~0.5–2s per screenshot. \"Fast\" uses traditional "
+                "character recognition — 5-10× faster but small fonts, CJK "
+                "characters, and busy UI degrade quickly. Keep \"Accurate\" "
+                "unless CPU is an issue."
+            ),
             default="accurate",
             options=[
                 ExtensionFieldOption(label="Accurate", value="accurate"),
