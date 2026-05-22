@@ -454,10 +454,19 @@ class ScreenshotSensor(SensorBase):
             return
 
         # 3. Compose file paths
+        #
+        # Layout: split originals and thumbnails into sibling subtrees with
+        # the same filename in each. This lets retention sweep originals
+        # without ever touching thumbnails, and lets downstream readers
+        # (chat / memory / timeline UI) store just the capture_id and
+        # resolve to either side by prepending the right prefix.
+        #
+        #   <resources_root>/originals/<YYYY/MM/DD>/<capture_id>.jpg
+        #   <resources_root>/thumbnails/<YYYY/MM/DD>/<capture_id>.jpg
         now = time.time()
-        date_dir = self.resources_root / time.strftime("%Y/%m/%d", time.localtime(now))
-        original_path = str(date_dir / f"{rid}_orig.jpg")
-        thumbnail_path = str(date_dir / f"{rid}_thumb.jpg")
+        date_subpath = time.strftime("%Y/%m/%d", time.localtime(now))
+        original_path = str(self.resources_root / "originals" / date_subpath / f"{rid}.jpg")
+        thumbnail_path = str(self.resources_root / "thumbnails" / date_subpath / f"{rid}.jpg")
         logger.debug("trigger.capture_request rid=%s path=%s", rid, original_path)
 
         # 4. Capture + OCR via helper

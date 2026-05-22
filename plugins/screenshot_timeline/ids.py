@@ -1,18 +1,21 @@
-"""ULID-based identity helpers for screenshot timeline events."""
+"""Identity helpers for screenshot timeline events.
+
+`new_capture_id()` returns human-readable timestamp-prefixed ids like
+`20260522T134523_456789_K3FW`. These have the same lexicographic-equals-
+chronological ordering as a ULID but tell the user when a screenshot was
+taken at a glance — useful in Finder, in logs, and when debugging
+retention.
+
+The id is also the on-disk filename stem: `<capture_id>.jpg` in both
+`originals/` and `thumbnails/`. Callers should NOT append `_orig` /
+`_thumb` suffixes anymore.
+"""
 from __future__ import annotations
 
-import os
 import secrets
 import time
 
 _CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-
-
-def _ulid(now: float | None = None) -> str:
-    ts_ms = int((now if now is not None else time.time()) * 1000)
-    time_part = _encode(ts_ms, 10)
-    rand_part = "".join(_CROCKFORD[b % 32] for b in secrets.token_bytes(16))[:16]
-    return time_part + rand_part
 
 
 def _encode(value: int, length: int) -> str:
@@ -24,8 +27,25 @@ def _encode(value: int, length: int) -> str:
 
 
 def new_capture_id(now: float | None = None) -> str:
-    """Generate a stable ULID-style capture id with a `cap_` prefix."""
-    return "cap_" + _ulid(now=now)
+    """Generate a timestamp-prefixed capture id.
+
+    Format: ``YYYYMMDDTHHMMSS_<microseconds>_<4char-random>``
+
+    The first three components fully order ids chronologically when
+    compared lexicographically (each component is fixed-width zero-
+    padded). The 4-character random tail catches the rare case of two
+    capture triggers firing within the same microsecond (e.g. the
+    NSWorkspace observer and the interval timer racing on an app
+    switch).
+    """
+    when = now if now is not None else time.time()
+    seconds = int(when)
+    micros = int((when - seconds) * 1_000_000)
+    micros = max(0, min(999_999, micros))
+    local = time.localtime(seconds)
+    prefix = time.strftime("%Y%m%dT%H%M%S", local)
+    tail = "".join(_CROCKFORD[b % 32] for b in secrets.token_bytes(4))[:4]
+    return f"{prefix}_{micros:06d}_{tail}"
 
 
 def burst_source_item_id(

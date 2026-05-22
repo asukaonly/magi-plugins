@@ -18,19 +18,30 @@ def _load_module() -> ModuleType:
     return mod
 
 
-def test_new_capture_id_starts_with_prefix() -> None:
+def test_new_capture_id_format_is_iso_prefixed() -> None:
+    """Capture id must start with a YYYYMMDDTHHMMSS timestamp + microseconds
+    + 4-char random tail. Total length is fixed at 26 chars (same as a
+    ULID, but human-readable)."""
     ids = _load_module()
     value = ids.new_capture_id()
-    assert value.startswith("cap_")
-    assert len(value) == 4 + 26  # "cap_" + 26 ULID chars
+    # YYYYMMDDTHHMMSS = 15 chars; _ = 1; microseconds = 6; _ = 1; tail = 4.
+    assert len(value) == 15 + 1 + 6 + 1 + 4 == 27
+    # ISO-ish date-time prefix: year digits then 'T' separator
+    assert value[8] == "T"
+    assert value[15] == "_"
+    assert value[22] == "_"
+    # Microseconds block is six digits
+    assert value[16:22].isdigit()
 
 
 def test_new_capture_id_monotonic() -> None:
+    """Lexicographic order must equal chronological order so that
+    ``ls -1`` / glob results are inherently time-sorted (same property as
+    the previous ULID layout)."""
     ids = _load_module()
     a = ids.new_capture_id(now=1_700_000_000.0)
-    time.sleep(0.001)  # ensure later ms
     b = ids.new_capture_id(now=1_700_000_001.0)
-    assert b > a  # ULID time-prefix is lexicographically sortable
+    assert b > a
 
 
 def test_burst_source_item_id_format() -> None:
