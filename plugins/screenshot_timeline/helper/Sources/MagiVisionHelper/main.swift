@@ -58,6 +58,12 @@ func handle(_ req: HelperRequest) async {
             // only as expensive as one extra downscale.
             let phash = computeDHash(of: image)
 
+            // System idle time piggybacks on the capture response — no
+            // separate IPC round-trip needed by the Python sensor. Uses
+            // CGEventSource which requires no permissions and is cheap
+            // (one syscall). Drives session-boundary detection.
+            let idleSeconds = systemIdleSeconds()
+
             let dims = [image.width, image.height]
             let now = Date().timeIntervalSince1970
             writeResponse(.success(
@@ -67,7 +73,8 @@ func handle(_ req: HelperRequest) async {
                 activeWindow: win,
                 ocr: ocrResult,
                 filesWritten: FilesWritten(originalBytes: origBytes, thumbnailBytes: thumbBytes),
-                phash: phash
+                phash: phash,
+                idleSeconds: idleSeconds
             ))
         } catch CaptureError.permissionDenied {
             writeResponse(.error(id: req.id, code: "PERMISSION_DENIED",

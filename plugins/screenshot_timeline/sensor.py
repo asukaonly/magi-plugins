@@ -39,6 +39,11 @@ from magi_plugin_sdk.sensors import (
 # Intra-plugin imports — fallback for test loader (spec_from_file_location)
 try:
     from .phash_utils import hamming_distance
+    from .session_tracker import (
+        DEFAULT_IDLE_THRESHOLD_SECONDS,
+        SessionStore,
+        SessionTracker,
+    )
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
     from .permissions import request_screen_recording, screen_recording_status
@@ -65,6 +70,10 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
 
     _ph = _load_sibling("phash_utils")
     hamming_distance = _ph.hamming_distance
+    _st = _load_sibling("session_tracker")
+    DEFAULT_IDLE_THRESHOLD_SECONDS = _st.DEFAULT_IDLE_THRESHOLD_SECONDS
+    SessionStore = _st.SessionStore
+    SessionTracker = _st.SessionTracker
     _hc = _load_sibling("helper_client")
     HelperClient = _hc.HelperClient
     HelperCrashedError = _hc.HelperCrashedError
@@ -115,6 +124,8 @@ class ScreenshotSensor(SensorBase):
         active_window_interval_sec: float = 10.0,
         full_screen_interval_min: float = 5.0,
         phash_dedup_threshold: int = 5,
+        session_idle_threshold_seconds: float | None = None,
+        session_db_path: Path | None = None,
     ) -> None:
         super().__init__()
         self.helper_argv = list(helper_argv or [])
@@ -150,6 +161,23 @@ class ScreenshotSensor(SensorBase):
         self._last_phash_by_window: dict[tuple[str, str], str] = {}
         # Per-capture L1 items ready for the next collect_items() pull.
         self._pending_items: list[dict[str, Any]] = []
+
+        # Plugin-private session tracker. Stays in a SQLite db under
+        # ~/.magi/data/plugins/screenshot_timeline/ — NOT in host memory.
+        # We open it lazily in start() so tests can override the path
+        # via __init__ before any disk I/O happens.
+        self._session_db_path = (
+            Path(session_db_path)
+            if session_db_path is not None
+            else Path.home() / ".magi" / "data" / "plugins" / "screenshot_timeline" / "sessions.db"
+        )
+        self.session_idle_threshold_seconds = (
+            float(session_idle_threshold_seconds)
+            if session_idle_threshold_seconds is not None
+            else DEFAULT_IDLE_THRESHOLD_SECONDS
+        )
+        self._session_store: SessionStore | None = None
+        self._session_tracker: SessionTracker | None = None
 
         # Wired up by start() (lazy, triggered on first collect_items()),
         # torn down by stop() if it's ever invoked.
@@ -216,6 +244,18 @@ class ScreenshotSensor(SensorBase):
         if self._helper is not None:
             await self._helper.start()
             logger.info("sensor.start.helper_spawned argv=%s", self.helper_argv)
+
+        # Plugin-private session db / tracker. Recovery of any stale
+        # 'open' session row happens inside SessionTracker.__init__.
+        self._session_store = SessionStore(self._session_db_path)
+        self._session_tracker = SessionTracker(
+            store=self._session_store,
+            idle_threshold_seconds=self.session_idle_threshold_seconds,
+        )
+        logger.info(
+            "sensor.start.session_tracker_ready db=%s idle_threshold_s=%.0f",
+            self._session_db_path, self.session_idle_threshold_seconds,
+        )
 
         loop = asyncio.get_running_loop()
         self._orchestrator = TriggerOrchestrator(
@@ -300,6 +340,16 @@ class ScreenshotSensor(SensorBase):
         await self.drain_pending_items()
         if self._helper is not None:
             await self._helper.shutdown()
+        # Close any open session record cleanly + release the db handle.
+        if self._session_tracker is not None:
+            try:
+                self._session_tracker.shutdown()
+            except Exception:  # noqa: BLE001
+                logger.exception("session.shutdown_failed")
+            self._session_tracker = None
+        if self._session_store is not None:
+            self._session_store.close()
+            self._session_store = None
 
     # ------- SensorBase overrides -------
 
@@ -406,6 +456,11 @@ class ScreenshotSensor(SensorBase):
             "thumbnail_path": str(item.get("thumbnail_path") or ""),
             "original_expires_at": item.get("original_expires_at"),
             "dimensions": list(item.get("dimensions") or [0, 0]),
+            # Plugin-private session id this capture belongs to. The
+            # session row itself lives in the plugin's sessions.db; we
+            # write only the id here so a later host-side query can
+            # group L1 events by session if needed.
+            "session_id": str(item.get("session_id") or ""),
         }
 
         return self._build_output(
@@ -566,8 +621,31 @@ class ScreenshotSensor(SensorBase):
         if phash:
             self._last_phash_by_window[window_key] = phash
 
-        # 6. Build per-capture L1 item and queue it for the next pull.
+        # 6. Update the session tracker. May close the previous session
+        # (returned as `closed`) and/or open a new one. We tag the item
+        # below with whichever session id is current after observe.
         captured_at = float(resp.get("captured_at") or now)
+        idle_seconds_raw = resp.get("idle_seconds")
+        idle_seconds = (
+            float(idle_seconds_raw) if isinstance(idle_seconds_raw, (int, float)) else None
+        )
+        session_id: str | None = None
+        if self._session_tracker is not None:
+            try:
+                _closed, current = self._session_tracker.observe_capture(
+                    capture_id=rid,
+                    captured_at=captured_at,
+                    app_bundle=app_bundle,
+                    idle_seconds=idle_seconds,
+                    screen_locked=screen_locked,
+                )
+                session_id = current.session_id
+            except Exception:  # noqa: BLE001
+                # Session tracking is enrichment; if the db is corrupt or
+                # the disk is full, capture should still flow into L1.
+                logger.exception("session.observe_failed")
+
+        # 7. Build per-capture L1 item and queue it for the next pull.
         item: dict[str, Any] = {
             "capture_id": rid,
             "source_item_id": rid,
@@ -587,6 +665,8 @@ class ScreenshotSensor(SensorBase):
             "original_expires_at": captured_at + self.retention_days * 86400.0,
             "dimensions": list(resp.get("dimensions") or [0, 0]),
             "phash": phash,
+            "idle_seconds": idle_seconds,
+            "session_id": session_id,
         }
         self._pending_items.append(item)
 

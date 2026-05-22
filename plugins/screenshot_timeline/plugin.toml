@@ -2,7 +2,7 @@
 id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
-version = "0.2.1"
+version = "0.3.0"
 description = "Captures your screen, runs local OCR, and feeds magi memory."
 description_i18n = { "zh-CN" = "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。" }
 author = "Magi Team"

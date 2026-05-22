@@ -88,6 +88,11 @@ public struct HelperResponse: Codable {
     // hamming distance between two phashes is a strong signal for "same
     // window content, minor pixel difference" (e.g. cursor blink, tiny scroll).
     public let phash: String?
+    // System-wide seconds since the last input event of any kind
+    // (keyboard, mouse, scroll). Used by the Python sensor's session
+    // tracker to decide whether the user has been idle long enough to
+    // close the current activity session. Zero macOS permissions required.
+    public let idleSeconds: Double?
     public let error: ErrorPayload?
     public let permissionStatus: String?
     public let screenLocked: Bool?
@@ -100,6 +105,7 @@ public struct HelperResponse: Codable {
         case ocr
         case filesWritten = "files_written"
         case phash
+        case idleSeconds = "idle_seconds"
         case error
         case permissionStatus = "permission_status"
         case screenLocked = "screen_locked"
@@ -112,12 +118,13 @@ public struct HelperResponse: Codable {
         activeWindow: ActiveWindowInfo? = nil,
         ocr: OcrResult? = nil,
         filesWritten: FilesWritten? = nil,
-        phash: String? = nil
+        phash: String? = nil,
+        idleSeconds: Double? = nil
     ) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: capturedAt, dimensions: dimensions,
             activeWindow: activeWindow, ocr: ocr, filesWritten: filesWritten,
-            phash: phash, error: nil,
+            phash: phash, idleSeconds: idleSeconds, error: nil,
             permissionStatus: nil, screenLocked: nil
         )
     }
@@ -125,7 +132,7 @@ public struct HelperResponse: Codable {
     public static func error(id: String, code: String, message: String) -> HelperResponse {
         HelperResponse(
             id: id, ok: false, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil,
+            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil,
             error: ErrorPayload(code: code, message: message),
             permissionStatus: nil, screenLocked: nil
         )
@@ -134,7 +141,7 @@ public struct HelperResponse: Codable {
     public static func permission(id: String, status: String) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, error: nil,
+            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
             permissionStatus: status, screenLocked: nil
         )
     }
@@ -142,7 +149,7 @@ public struct HelperResponse: Codable {
     public static func screenLock(id: String, locked: Bool) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, error: nil,
+            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
             permissionStatus: nil, screenLocked: locked
         )
     }

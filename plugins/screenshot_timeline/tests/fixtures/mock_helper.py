@@ -69,6 +69,11 @@ def main() -> None:
                 # The real Swift helper computes this from the image; the
                 # mock just needs a stable, distinct value per call.
                 "phash": f"{(abs(hash(rid)) ^ 0xA5A5A5A5A5A5A5A5) & ((1 << 64) - 1):016x}",
+                # Tests can override by passing "idle_seconds" through
+                # the request payload; default to 0 (= user just acted)
+                # so session boundaries don't accidentally fire in
+                # tests that don't care about them.
+                "idle_seconds": float(req.get("idle_seconds", 0.0)),
             })
             continue
         if op == "crash":
