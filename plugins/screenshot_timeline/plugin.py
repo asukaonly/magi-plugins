@@ -249,6 +249,14 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 class ScreenshotTimelinePlugin(Plugin):
     """Captures screen content with local OCR and feeds magi L1."""
 
+    def __init__(self) -> None:
+        super().__init__()
+        # Track sensors we created so `shutdown()` can stop them. The host
+        # calls `get_sensors()` once on load and the same instances are
+        # retained in the SensorRegistry until unload — caching here lets
+        # us tear them down on reload without poking the registry.
+        self._owned_sensors: list[ScreenshotSensor] = []
+
     def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
         settings: dict[str, Any] = {}
         sensors_settings = self.settings.get("sensors", {})
@@ -282,6 +290,7 @@ class ScreenshotTimelinePlugin(Plugin):
             active_window_interval_sec=float(settings.get("active_window_interval_sec", DEFAULT_SETTINGS["active_window_interval_sec"])),
             full_screen_interval_min=float(settings.get("full_screen_interval_min", DEFAULT_SETTINGS["full_screen_interval_min"])),
         )
+        self._owned_sensors.append(sensor)
 
         return [
             (
@@ -404,6 +413,29 @@ class ScreenshotTimelinePlugin(Plugin):
                 }
             },
         )
+
+    async def shutdown(self) -> None:
+        """Stop the screenshot sensor and its helper subprocess on unload.
+
+        The host calls this on reload (settings change, disable, upgrade).
+        Without it, every reload leaks the previous sensor: its timer
+        keeps ticking, its NSWorkspace observer keeps listening, and its
+        helper subprocess keeps consuming memory + battery. The visible
+        symptom is "I set the interval to 120s and now captures fire
+        every 3s" — actually multiple sensor instances stacking up.
+        """
+        # Snapshot + clear up front so a re-entrant call is a no-op.
+        owned = list(self._owned_sensors)
+        self._owned_sensors.clear()
+        for sensor in owned:
+            try:
+                await sensor.stop()
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception(
+                    "plugin.sensor_stop_failed sensor=%r",
+                    getattr(sensor, "source_type", sensor),
+                )
 
 
 __all__ = ["ScreenshotTimelinePlugin", "DEFAULT_SETTINGS"]

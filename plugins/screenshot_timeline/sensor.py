@@ -348,8 +348,13 @@ class ScreenshotSensor(SensorBase):
                 "window_title": window_title,
                 "url": str(item.get("url") or ""),
                 "display_id": display_id,
-                "capture_count": str(item.get("capture_count") or 0),
-                "duration_seconds": str(int(item.get("duration_seconds") or 0)),
+                # Pass these as ints — the SDK widened qualifiers to accept
+                # JSON-native primitives. Round-tripping through JSON keeps
+                # them as numbers in the L1 metadata column, which makes
+                # downstream aggregation (e.g. sum of capture_count over a
+                # day) trivial without coercion.
+                "capture_count": int(item.get("capture_count") or 0),
+                "duration_seconds": int(item.get("duration_seconds") or 0),
             },
         )
 
@@ -395,11 +400,15 @@ class ScreenshotSensor(SensorBase):
         entities: list[dict[str, Any]] = []
         app_bundle = str(item.get("app_bundle") or "")
         app_name = str(item.get("app_name") or app_bundle)
-        window_title = str(item.get("window_title") or "")
         if app_bundle:
             entities.append({"type": "software", "name": app_name, "canonical_id": app_bundle})
-        if window_title:
-            entities.append({"type": "topic", "name": window_title})
+        # Intentionally do NOT emit window_title as a topic entity. On most
+        # apps the window title is chrome (file path tabs in editors, mail
+        # subject lines, browser tab titles after the page name) — not a
+        # canonical topic. Forwarding it to the KG floods it with strings
+        # like "cap_01KS614703Y9D2H3482FW77TC4_thumb.jpg" that have no
+        # semantic value. Real topic extraction belongs at the host level
+        # downstream of the OCR text, not here.
         if item.get("url"):
             entities.append({"type": "uri", "name": str(item["url"])})
         return SensorOutputMetadata(entities=entities)

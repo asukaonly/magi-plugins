@@ -52,8 +52,9 @@ async def test_capture_tick_produces_burst_items_via_flush(tmp_path: Path) -> No
         assert output.source_item_id == item["source_item_id"]
         assert output.narration.body  # OCR text union
         assert output.activity.source.code == "screenshot_timeline"
-        # qualifiers are stringified by SensorBase._build_activity
-        assert output.activity.qualifiers["capture_count"] == "2"
+        # SDK qualifiers preserve JSON-native primitive types — ints round-trip
+        # as ints through the L1 metadata column rather than being str-wrapped.
+        assert output.activity.qualifiers["capture_count"] == 2
     finally:
         await sensor.stop()
 
