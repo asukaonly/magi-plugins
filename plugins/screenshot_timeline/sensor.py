@@ -163,7 +163,7 @@ class ScreenshotSensor(SensorBase):
             self._started = True
 
     async def _do_start(self) -> None:
-        logger.warning(
+        logger.info(
             "sensor.start.begin helper_argv=%s capture_scope=%s active_interval_s=%s full_screen_interval_min=%s",
             self.helper_argv, self.capture_scope, self.active_window_interval_sec,
             self.full_screen_interval_min,
@@ -186,7 +186,7 @@ class ScreenshotSensor(SensorBase):
         except Exception:  # noqa: BLE001
             logger.warning("sensor.permission_probe_failed", exc_info=True)
             status = "unknown"
-        logger.warning("sensor.start.permission_status=%s", status)
+        logger.info("sensor.start.permission_status=%s", status)
         if status == "denied":
             logger.warning(
                 "sensor.permission_blocked status=%s — skipping helper start. "
@@ -197,7 +197,7 @@ class ScreenshotSensor(SensorBase):
 
         if self._helper is not None:
             await self._helper.start()
-            logger.warning("sensor.start.helper_spawned argv=%s", self.helper_argv)
+            logger.info("sensor.start.helper_spawned argv=%s", self.helper_argv)
 
         loop = asyncio.get_running_loop()
         self._orchestrator = TriggerOrchestrator(
@@ -238,7 +238,7 @@ class ScreenshotSensor(SensorBase):
                 pass
 
         self._workspace_handle = install_nsworkspace_observer(_on_window_switch)
-        logger.warning(
+        logger.info(
             "sensor.start.timers_installed active=%ss full_screen_timer=%s observer=%s",
             self.active_window_interval_sec,
             self._full_screen_timer is not None,
@@ -246,7 +246,7 @@ class ScreenshotSensor(SensorBase):
         )
 
         self._retention_task = asyncio.create_task(self._retention_loop())
-        logger.warning("sensor.start.complete — capture loop now live")
+        logger.info("sensor.start.complete — capture loop now live")
 
     async def stop(self) -> None:
         # Cancel retention sweep first so it cannot race with helper shutdown.
@@ -306,7 +306,7 @@ class ScreenshotSensor(SensorBase):
         so the very first call to collect_items() is what actually kicks
         off the helper subprocess + timer loops + window-switch observer.
         """
-        logger.warning(
+        logger.debug(
             "sensor.collect_items.called started=%s pending=%d",
             self._started, len(self._pending_closed),
         )
@@ -408,7 +408,7 @@ class ScreenshotSensor(SensorBase):
 
     async def trigger_once(self, trigger: str) -> None:
         """Run a single capture cycle. Called by the trigger orchestrator."""
-        logger.warning("trigger.fire trigger=%s", trigger)
+        logger.debug("trigger.fire trigger=%s", trigger)
         if self._helper is None:
             logger.warning("trigger.no_helper — sensor wasn't fully started; skipping")
             return
@@ -424,7 +424,7 @@ class ScreenshotSensor(SensorBase):
             logger.warning("trigger.probe_not_ok trigger=%s resp=%s", trigger, probe)
             return
         win = probe.get("active_window") or {}
-        logger.warning(
+        logger.debug(
             "trigger.probed trigger=%s app=%s window=%r",
             trigger, win.get("app_bundle_id"), win.get("window_title"),
         )
@@ -438,7 +438,7 @@ class ScreenshotSensor(SensorBase):
             now=time.time(),
         )
         if skip_reason is not None:
-            logger.warning(
+            logger.info(
                 "trigger.skipped reason=%s trigger=%s app=%s locked=%s",
                 skip_reason, trigger, win.get("app_bundle_id"), screen_locked,
             )
@@ -449,7 +449,7 @@ class ScreenshotSensor(SensorBase):
         date_dir = self.resources_root / time.strftime("%Y/%m/%d", time.localtime(now))
         original_path = str(date_dir / f"{rid}_orig.jpg")
         thumbnail_path = str(date_dir / f"{rid}_thumb.jpg")
-        logger.warning("trigger.capture_request rid=%s path=%s", rid, original_path)
+        logger.debug("trigger.capture_request rid=%s path=%s", rid, original_path)
 
         # 4. Capture + OCR via helper
         try:
@@ -475,7 +475,7 @@ class ScreenshotSensor(SensorBase):
             logger.warning("trigger.helper_error %s", resp.get("error"))
             return
 
-        logger.warning(
+        logger.debug(
             "trigger.captured rid=%s dims=%s ocr_chars=%d files=%s",
             rid, resp.get("dimensions"),
             len((resp.get("ocr") or {}).get("text") or ""),
