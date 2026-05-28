@@ -17,6 +17,10 @@ from magi_plugin_sdk import (
 from magi_plugin_sdk.sensors import SensorSpec
 
 from .privacy_guard import DEFAULT_APP_BLOCKLIST
+from .screenshot_tools import (
+    build_recall_asset_refs as _build_recall_asset_refs,
+    build_screenshot_timeline_tool_classes,
+)
 from .sensor import ScreenshotSensor
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -338,6 +342,47 @@ class ScreenshotTimelinePlugin(Plugin):
                 ),
             )
         ]
+
+    def get_tools(self) -> list[type[Any]]:
+        """Expose the capture-ref resolver tool to the chat LLM.
+
+        Required because memory_query returns screenshot events with
+        ``asset_ref_id = capture_id`` and tags them as needing
+        ``screenshot_timeline_resolve_capture_refs`` to be resolved.
+        Without this tool registered the LLM would mis-route those
+        refs to photo_library's resolver (which doesn't know our IDs).
+        """
+        resources_root = (
+            Path.home() / ".magi" / "data" / "resources" / "screenshots"
+        )
+        return build_screenshot_timeline_tool_classes(resources_root=resources_root)
+
+    def build_recall_artifacts(
+        self,
+        *,
+        events: list[dict[str, Any]],
+        query: str,
+        query_mode: str | None,
+    ) -> dict[str, Any] | None:
+        """Project screenshot_timeline events into LLM-facing asset_refs.
+
+        The host calls this on every memory_query so each plugin can
+        translate its own L1 rows into a consistent ``asset_refs``
+        envelope. We attach ``resolver_tool=screenshot_timeline_resolve_capture_refs``
+        so the chat LLM picks the right resolver for our captures.
+
+        See screenshot_tools.build_recall_asset_refs for the per-event
+        projection logic.
+        """
+        _ = query, query_mode
+        if not events:
+            return None
+        asset_refs: list[dict[str, Any]] = []
+        for event in events:
+            asset_refs.extend(_build_recall_asset_refs(event))
+        if not asset_refs:
+            return None
+        return {"asset_refs": asset_refs}
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [

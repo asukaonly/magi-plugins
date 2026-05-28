@@ -2,14 +2,14 @@
 id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
-version = "0.3.1"
+version = "0.4.0"
 description = "Captures your screen, runs local OCR, and feeds magi memory."
 description_i18n = { "zh-CN" = "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ScreenshotTimelinePlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["sensor", "tool"]
 platforms = ["macos"]
 min_sdk_version = "0.1.0"
 dependencies = [
