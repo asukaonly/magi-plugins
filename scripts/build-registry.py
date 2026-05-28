@@ -40,7 +40,17 @@ def build_entry(plugin_dir: Path) -> dict | None:
         entry["description_i18n"] = meta["description_i18n"]
     entry["author"] = meta.get("author", "")
     entry["official"] = meta.get("official", False)
+    # kind: "plugin" (default) or "library". Libraries are hidden from
+    # market listings and only installed as dep closure of a plugin.
+    kind = meta.get("kind", "plugin")
+    if kind != "plugin":
+        entry["kind"] = kind
     entry["contribution_types"] = meta.get("contribution_types", [])
+    # depends_on: list of plugin_ids this plugin imports from (typically
+    # library packages). The host resolves the closure on install.
+    depends_on = meta.get("depends_on", [])
+    if depends_on:
+        entry["depends_on"] = depends_on
     entry["platforms"] = meta.get("platforms", [])
     return entry
 

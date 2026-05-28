@@ -3,6 +3,27 @@
   "repo_url": "https://github.com/asukaonly/magi-plugins.git",
   "plugins": [
     {
+      "plugin_id": "browser_history_core",
+      "name": "Browser History Core",
+      "name_i18n": {
+        "zh-CN": "浏览器历史核心库"
+      },
+      "version": "0.1.0",
+      "path": "plugins/browser_history_core",
+      "description": "Shared ingestion primitives consumed by Chrome/Firefox/Edge history plugins. Installed automatically as a dependency; not user-toggleable.",
+      "description_i18n": {
+        "zh-CN": "Chrome/Firefox/Edge 历史插件共用的解析逻辑。作为依赖自动安装，无需手动启用。"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "kind": "library",
+      "contribution_types": [],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
+    },
+    {
       "plugin_id": "calendar",
       "name": "Calendar",
       "name_i18n": {
@@ -16,8 +37,12 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos"
+      ]
     },
     {
       "plugin_id": "chrome-history",
@@ -33,8 +58,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos", "windows"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "edge-history",
@@ -50,8 +80,15 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["windows"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "depends_on": [
+        "browser_history_core"
+      ],
+      "platforms": [
+        "windows"
+      ]
     },
     {
       "plugin_id": "firefox-history",
@@ -67,8 +104,16 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["windows", "macos"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "depends_on": [
+        "browser_history_core"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
     },
     {
       "plugin_id": "git-activity",
@@ -84,8 +129,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos", "windows"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "netease-music",
@@ -101,8 +151,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos", "windows"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "photo-library",
@@ -118,8 +173,14 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor", "tool"],
-      "platforms": ["macos", "windows"]
+      "contribution_types": [
+        "sensor",
+        "tool"
+      ],
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "screen-time",
@@ -135,8 +196,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos", "windows"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos",
+        "windows"
+      ]
     },
     {
       "plugin_id": "screenshot_timeline",
@@ -144,7 +210,7 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "version": "0.1.2",
+      "version": "0.3.0",
       "path": "plugins/screenshot_timeline",
       "description": "Captures your screen, runs local OCR, and feeds magi memory.",
       "description_i18n": {
@@ -152,8 +218,12 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos"
+      ]
     },
     {
       "plugin_id": "steam-play-history",
@@ -169,8 +239,14 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["windows", "macos", "linux"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ]
     },
     {
       "plugin_id": "system-media",
@@ -186,8 +262,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["windows", "macos"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
     },
     {
       "plugin_id": "telegram",
@@ -203,8 +284,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["channel"],
-      "platforms": ["windows", "macos"]
+      "contribution_types": [
+        "channel"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
     },
     {
       "plugin_id": "terminal-history",
@@ -220,8 +306,12 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
-      "platforms": ["macos"]
+      "contribution_types": [
+        "sensor"
+      ],
+      "platforms": [
+        "macos"
+      ]
     },
     {
       "plugin_id": "weixin",
@@ -237,8 +327,13 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["channel"],
-      "platforms": ["windows", "macos"]
+      "contribution_types": [
+        "channel"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ]
     }
   ]
 }

@@ -10,4 +10,5 @@ entry_module = "plugin"
 entry_class = "FirefoxHistoryPlugin"
 official = true
 contribution_types = ["sensor"]
+depends_on = ["browser_history_core"]
 platforms = ["windows", "macos"]

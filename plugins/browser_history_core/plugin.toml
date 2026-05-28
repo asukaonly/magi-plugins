@@ -1,0 +1,12 @@
+[plugin]
+id = "browser_history_core"
+name = "Browser History Core"
+name_i18n = { "zh-CN" = "浏览器历史核心库" }
+version = "0.1.0"
+description = "Shared ingestion primitives consumed by Chrome/Firefox/Edge history plugins. Installed automatically as a dependency; not user-toggleable."
+description_i18n = { "zh-CN" = "Chrome/Firefox/Edge 历史插件共用的解析逻辑。作为依赖自动安装，无需手动启用。" }
+author = "Magi Team"
+official = true
+kind = "library"
+contribution_types = []
+platforms = ["windows", "macos"]
