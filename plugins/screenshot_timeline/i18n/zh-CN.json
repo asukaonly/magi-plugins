@@ -21,7 +21,7 @@
       },
       "ocr_languages": {
         "label": "OCR 语言",
-        "description": "Apple Vision 识别语言代码（BCP-47），例如 en-US, zh-Hans, ja。"
+        "description": "Apple Vision 识别语言代码（BCP-47），例如 zh-Hans, en-US, ja。顺序敏感：第一个语言是主字符集假设，如果屏幕主要是中文（含代码/URL），保持 zh-Hans 在第一位；纯英文用户可把 en-US 放在前面。"
       },
       "ocr_level": {
         "label": "OCR 识别级别",

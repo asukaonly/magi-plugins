@@ -24,7 +24,14 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "capture_scope": "hybrid",
     "active_window_interval_sec": 10,
     "full_screen_interval_min": 5,
-    "ocr_languages": ["en-US", "zh-Hans"],
+    # Order matters. VNRecognizeTextRequest.recognitionLanguages treats the
+    # first entry as the PRIMARY character-set hypothesis — when set to
+    # "en-US" first, Chinese glyphs get mapped onto Latin alphabet best-
+    # matches and come out as gibberish like "ŁŘä*# #šùÑ£Ж?È=£". Putting
+    # zh-Hans first uses Chinese as primary, English in code/URLs/brand
+    # names still falls back cleanly. For an all-English UI the cost is
+    # negligible (Latin tokens never look like CJK glyphs to the model).
+    "ocr_languages": ["zh-Hans", "en-US"],
     "ocr_level": "accurate",
     "original_retention_days": 30,
     "keyboard_triggers_enabled": False,
@@ -136,8 +143,13 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.ocr_languages",
             type="tags",
             label="OCR languages",
-            description="Apple Vision recognition language codes (BCP-47), e.g. en-US, zh-Hans, ja.",
-            default=["en-US", "zh-Hans"],
+            description=(
+                "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. "
+                "Order matters: the first language is the primary character-set hypothesis. "
+                "If your screen content is mostly Chinese with code/URLs mixed in, keep "
+                "zh-Hans first; English-only users can put en-US first."
+            ),
+            default=["zh-Hans", "en-US"],
             section="ocr",
             surface="timeline",
             order=50,

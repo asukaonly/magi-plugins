@@ -21,7 +21,7 @@
       },
       "ocr_languages": {
         "label": "OCR languages",
-        "description": "Apple Vision recognition language codes (BCP-47), e.g. en-US, zh-Hans, ja."
+        "description": "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. Order matters: the first language is the primary character-set hypothesis. If your screen is mostly Chinese with code/URLs mixed in, keep zh-Hans first; English-only users can put en-US first."
       },
       "ocr_level": {
         "label": "OCR recognition level",
