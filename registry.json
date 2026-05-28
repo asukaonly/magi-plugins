@@ -210,7 +210,7 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "version": "0.3.0",
+      "version": "0.4.0",
       "path": "plugins/screenshot_timeline",
       "description": "Captures your screen, runs local OCR, and feeds magi memory.",
       "description_i18n": {
@@ -219,7 +219,8 @@
       "author": "Magi Team",
       "official": true,
       "contribution_types": [
-        "sensor"
+        "sensor",
+        "tool"
       ],
       "platforms": [
         "macos"
