@@ -42,7 +42,50 @@
       ],
       "platforms": [
         "macos"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "calendar",
+        "platform_support": [
+          "darwin"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "日程",
+              "日历",
+              "会议",
+              "安排",
+              "约见",
+              "提醒",
+              "什么时候"
+            ],
+            "en": [
+              "calendar",
+              "schedule",
+              "meeting",
+              "appointment",
+              "reminder",
+              "agenda"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你的日程，回答'我今天有什么会'这类问题",
+          "en": "Lets magi see what's on your calendar"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Calendars"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "chrome-history",
@@ -64,7 +107,53 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "browser_history",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "浏览",
+              "上网",
+              "看过",
+              "网页",
+              "网站",
+              "搜过",
+              "查过"
+            ],
+            "en": [
+              "browsing",
+              "browser",
+              "website",
+              "online",
+              "bookmark",
+              "browsed",
+              "history"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能读取你的 Chrome 历史，帮你回想最近看过什么",
+          "en": "Lets magi see what you've been reading in Chrome"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Application Support/Google/Chrome/Default/History",
+              "win32": "%LOCALAPPDATA%/Google/Chrome/User Data/Default/History"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "edge-history",
@@ -88,7 +177,49 @@
       ],
       "platforms": [
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "browser_history",
+        "platform_support": [
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "浏览",
+              "上网",
+              "看过",
+              "网页",
+              "网站",
+              "搜过"
+            ],
+            "en": [
+              "browsing",
+              "browser",
+              "website",
+              "online",
+              "bookmark",
+              "browsed"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能读取你的 Edge 浏览历史",
+          "en": "Lets magi see your Edge browsing history"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "win32": "%LOCALAPPDATA%/Microsoft/Edge/User Data/Default/History"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "firefox-history",
@@ -113,7 +244,50 @@
       "platforms": [
         "windows",
         "macos"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "browser_history",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "浏览",
+              "上网",
+              "看过",
+              "网页",
+              "网站",
+              "搜过"
+            ],
+            "en": [
+              "browsing",
+              "browser",
+              "website",
+              "online",
+              "bookmark"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能读取你的 Firefox 浏览历史",
+          "en": "Lets magi see your Firefox browsing history"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Application Support/Firefox/Profiles",
+              "win32": "%APPDATA%/Mozilla/Firefox/Profiles"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "git-activity",
@@ -135,7 +309,56 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "code_activity",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "代码",
+              "提交",
+              "commit",
+              "改了什么",
+              "项目",
+              "仓库",
+              "repo",
+              "git",
+              "写了什么"
+            ],
+            "en": [
+              "code",
+              "commit",
+              "changed",
+              "repo",
+              "repository",
+              "project",
+              "git",
+              "pull request"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你的代码改动和项目进度",
+          "en": "Lets magi see what you've been building"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "executable_in_path",
+            "names": [
+              "git",
+              "git.exe"
+            ]
+          }
+        ]
+      }
     },
     {
       "plugin_id": "netease-music",
@@ -180,7 +403,53 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "photos",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 20,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "照片",
+              "图片",
+              "拍",
+              "相册",
+              "拍过",
+              "那张",
+              "影像",
+              "图像"
+            ],
+            "en": [
+              "photo",
+              "picture",
+              "image",
+              "photos",
+              "snapshot",
+              "album"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你的照片和最近的瞬间",
+          "en": "Lets magi see your photos and recent moments"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Pictures",
+              "win32": "%USERPROFILE%/Pictures"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "screen-time",
