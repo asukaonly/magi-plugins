@@ -13,6 +13,7 @@ from magi_plugin_sdk.channels import (
     ChannelTarget,
     OutboundContent,
 )
+from magi_plugin_sdk.delivery import DeliveryChunk, DeliveryContent, DeliveryReceipt
 
 from .formatter import telegram_format
 
@@ -50,6 +51,10 @@ class TelegramChannel(Channel):
         self._application: Any = None
         self._bot_username: str = ""
         self._bot_id: int = 0
+        # Phase G+1: per-(channel_type, chat_id) streaming buffer. Chunks
+        # accumulate here until ``is_final=True`` triggers a single
+        # ``deliver()`` call.
+        self._chunk_buffers: dict[tuple[str, str], list[str]] = {}
 
     def bind_session_mapper(self, session_mapper: ChannelSessionMapperProtocol) -> None:
         self._session_mapper = session_mapper
@@ -150,9 +155,32 @@ class TelegramChannel(Channel):
                 )
 
     # === Phase G capability flags ===
-    supports_streaming = False
+    supports_streaming = True
     supports_revision = True
     supports_attachments = True
+
+    async def deliver_chunk(
+        self,
+        target: ChannelTarget,
+        chunk: "DeliveryChunk",
+    ) -> None:
+        """Buffer incoming chunks per (channel_type, chat_id) and send one
+        assembled message via ``deliver()`` on the boundary chunk.
+
+        Telegram has no streaming-message primitive; the cleanest semantics
+        is to deliver the assembled text once. Empty assembled text is
+        silently skipped — Telegram rejects empty messages.
+        """
+        key = (target.channel_type, target.external_chat_id)
+        if chunk.text:
+            self._chunk_buffers.setdefault(key, []).append(chunk.text)
+        if not chunk.is_final:
+            return
+        parts = self._chunk_buffers.pop(key, [])
+        if not parts:
+            return
+        assembled = "".join(parts)
+        await self.deliver(target, DeliveryContent(text=assembled))
 
     async def deliver(self, target: ChannelTarget, content: "DeliveryContent") -> "DeliveryReceipt":
         """Phase G delivery returning a DeliveryReceipt with the native
