@@ -149,6 +149,114 @@ class TelegramChannel(Channel):
                     chat_id=target.external_chat_id,
                 )
 
+    # === Phase G capability flags ===
+    supports_streaming = False
+    supports_revision = True
+    supports_attachments = True
+
+    async def deliver(self, target: ChannelTarget, content: Any) -> Any:
+        """Phase G delivery returning a DeliveryReceipt with the native
+        Telegram message_id so the host can later edit / delete the message."""
+        from magi_plugin_sdk.delivery import DeliveryReceipt
+        import time
+
+        text = telegram_format(content.text, max_length=self._config.max_message_length)
+        if not text.strip():
+            text = content.text[: self._config.max_message_length]
+
+        chat_id = int(target.external_chat_id)
+        kwargs: dict[str, Any] = {"chat_id": chat_id, "text": text}
+
+        message = None
+        try:
+            message = await self._application.bot.send_message(
+                parse_mode="MarkdownV2", **kwargs
+            )
+        except Exception:
+            logger.debug("MarkdownV2 deliver failed, retrying as plain text")
+            kwargs["text"] = content.text[: self._config.max_message_length]
+            try:
+                message = await self._application.bot.send_message(**kwargs)
+            except Exception:
+                logger.exception(
+                    "Failed to deliver message to Telegram",
+                    chat_id=target.external_chat_id,
+                )
+
+        return DeliveryReceipt(
+            channel_id=f"telegram:{chat_id}",
+            external_message_id=str(message.message_id) if message is not None else None,
+            delivered_at_ms=int(time.time() * 1000),
+        )
+
+    async def revise(self, receipt: Any, new_content: Any) -> Any:
+        """Edit a previously-delivered Telegram message."""
+        from magi_plugin_sdk.delivery import DeliveryReceipt
+        import time
+
+        chat_id = self._chat_id_from_receipt(receipt)
+        text = telegram_format(new_content.text, max_length=self._config.max_message_length)
+        if not text.strip():
+            text = new_content.text[: self._config.max_message_length]
+
+        try:
+            await self._application.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=int(receipt.external_message_id),
+                text=text,
+                parse_mode="MarkdownV2",
+            )
+        except Exception:
+            logger.debug("MarkdownV2 revise failed, retrying as plain text")
+            try:
+                await self._application.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=int(receipt.external_message_id),
+                    text=new_content.text[: self._config.max_message_length],
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to revise Telegram message",
+                    chat_id=chat_id,
+                    message_id=receipt.external_message_id,
+                )
+
+        return DeliveryReceipt(
+            channel_id=receipt.channel_id,
+            external_message_id=receipt.external_message_id,
+            delivered_at_ms=int(time.time() * 1000),
+        )
+
+    async def retract(self, receipt: Any) -> None:
+        """Delete a previously-delivered Telegram message."""
+        chat_id = self._chat_id_from_receipt(receipt)
+        try:
+            await self._application.bot.delete_message(
+                chat_id=chat_id,
+                message_id=int(receipt.external_message_id),
+            )
+        except Exception:
+            logger.exception(
+                "Failed to retract Telegram message",
+                chat_id=chat_id,
+                message_id=receipt.external_message_id,
+            )
+
+    def _chat_id_from_receipt(self, receipt: Any) -> int:
+        """Extract telegram chat_id from a DeliveryReceipt.
+
+        Expects ``channel_id`` in the form ``'telegram:<chat_id>'``
+        as produced by ``deliver``.
+        """
+        cid = receipt.channel_id
+        prefix = "telegram:"
+        if cid.startswith(prefix):
+            return int(cid[len(prefix):])
+        raise ValueError(
+            f"Cannot extract chat_id from channel_id={cid!r}; "
+            f"expected 'telegram:<chat_id>' format"
+        )
+
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
         if self._application is None:
             return
