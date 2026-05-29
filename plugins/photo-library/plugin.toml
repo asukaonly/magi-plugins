@@ -22,3 +22,28 @@ source_paths = []
 exclude_patterns = []
 analysis_features = ["exif"]
 edge_whitelist = ["CAPTURED", "RELATED_TO", "INTERACTED_WITH", "CREATED"]
+
+[plugin.suggestion_descriptor]
+category = "photos"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 20
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["照片", "图片", "拍", "相册", "拍过", "那张", "影像", "图像"]
+en = ["photo", "picture", "image", "photos", "snapshot", "album"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你的照片和最近的瞬间"
+en = "Lets magi see your photos and recent moments"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Pictures"
+win32 = "%USERPROFILE%/Pictures"

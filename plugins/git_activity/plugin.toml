@@ -21,3 +21,25 @@ initial_sync_lookback_days = 30
 sensitive_mode = "redact"
 sensitive_keywords = []
 default_retention_mode = "analyze_only"
+
+[plugin.suggestion_descriptor]
+category = "code_activity"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["代码", "提交", "commit", "改了什么", "项目", "仓库", "repo", "git", "写了什么"]
+en = ["code", "commit", "changed", "repo", "repository", "project", "git", "pull request"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你的代码改动和项目进度"
+en = "Lets magi see what you've been building"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "executable_in_path"
+names = ["git", "git.exe"]

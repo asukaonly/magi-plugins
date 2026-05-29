@@ -12,3 +12,28 @@ official = true
 contribution_types = ["sensor"]
 depends_on = ["browser_history_core"]
 platforms = ["windows", "macos"]
+
+[plugin.suggestion_descriptor]
+category = "browser_history"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["浏览", "上网", "看过", "网页", "网站", "搜过"]
+en = ["browsing", "browser", "website", "online", "bookmark"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能读取你的 Firefox 浏览历史"
+en = "Lets magi see your Firefox browsing history"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Library/Application Support/Firefox/Profiles"
+win32 = "%APPDATA%/Mozilla/Firefox/Profiles"

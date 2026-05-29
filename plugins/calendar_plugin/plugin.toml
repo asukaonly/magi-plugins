@@ -23,3 +23,27 @@ sync_interval_minutes = 30
 lookback_days = 30
 recurring_expansion_days = 30
 default_retention_mode = "full"
+
+[plugin.suggestion_descriptor]
+category = "calendar"
+platform_support = ["darwin"]
+setup_time_estimate_seconds = 10
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["日程", "日历", "会议", "安排", "约见", "提醒", "什么时候"]
+en = ["calendar", "schedule", "meeting", "appointment", "reminder", "agenda"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你的日程，回答'我今天有什么会'这类问题"
+en = "Lets magi see what's on your calendar"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Library/Calendars"

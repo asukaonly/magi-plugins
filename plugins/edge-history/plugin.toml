@@ -12,3 +12,27 @@ official = true
 contribution_types = ["sensor"]
 depends_on = ["browser_history_core"]
 platforms = ["windows"]
+
+[plugin.suggestion_descriptor]
+category = "browser_history"
+platform_support = ["win32"]
+setup_time_estimate_seconds = 10
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["浏览", "上网", "看过", "网页", "网站", "搜过"]
+en = ["browsing", "browser", "website", "online", "bookmark", "browsed"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能读取你的 Edge 浏览历史"
+en = "Lets magi see your Edge browsing history"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+win32 = "%LOCALAPPDATA%/Microsoft/Edge/User Data/Default/History"
