@@ -154,10 +154,10 @@ class TelegramChannel(Channel):
     supports_revision = True
     supports_attachments = True
 
-    async def deliver(self, target: ChannelTarget, content: Any) -> Any:
+    async def deliver(self, target: ChannelTarget, content: "DeliveryContent") -> "DeliveryReceipt":
         """Phase G delivery returning a DeliveryReceipt with the native
         Telegram message_id so the host can later edit / delete the message."""
-        from magi_plugin_sdk.delivery import DeliveryReceipt
+        from magi_plugin_sdk.delivery import DeliveryContent, DeliveryReceipt  # noqa: F401
         import time
 
         text = telegram_format(content.text, max_length=self._config.max_message_length)
@@ -183,26 +183,40 @@ class TelegramChannel(Channel):
                     chat_id=target.external_chat_id,
                 )
 
+        # external_message_id is stored as "<chat_id>:<message_id>" so that
+        # retract/revise can recover the chat_id without relying on channel_id.
+        # channel_id is set to self.channel_type ("telegram") so ChannelRegistry
+        # lookups (which index by channel_type) succeed.
+        ext_msg_id = f"{chat_id}:{message.message_id}" if message is not None else None
         return DeliveryReceipt(
-            channel_id=f"telegram:{chat_id}",
-            external_message_id=str(message.message_id) if message is not None else None,
+            channel_id=self.channel_type,
+            external_message_id=ext_msg_id,
             delivered_at_ms=int(time.time() * 1000),
         )
 
-    async def revise(self, receipt: Any, new_content: Any) -> Any:
+    async def revise(self, receipt: "DeliveryReceipt", new_content: "DeliveryContent") -> "DeliveryReceipt":
         """Edit a previously-delivered Telegram message."""
-        from magi_plugin_sdk.delivery import DeliveryReceipt
+        from magi_plugin_sdk.delivery import DeliveryContent, DeliveryReceipt  # noqa: F401
         import time
+
+        if receipt.external_message_id is None:
+            # Nothing was delivered (e.g. send failed), nothing to revise.
+            return DeliveryReceipt(
+                channel_id=receipt.channel_id,
+                external_message_id=None,
+                delivered_at_ms=int(time.time() * 1000),
+            )
 
         chat_id = self._chat_id_from_receipt(receipt)
         text = telegram_format(new_content.text, max_length=self._config.max_message_length)
         if not text.strip():
             text = new_content.text[: self._config.max_message_length]
 
+        message_id = self._message_id_from_receipt(receipt)
         try:
             await self._application.bot.edit_message_text(
                 chat_id=chat_id,
-                message_id=int(receipt.external_message_id),
+                message_id=message_id,
                 text=text,
                 parse_mode="MarkdownV2",
             )
@@ -211,7 +225,7 @@ class TelegramChannel(Channel):
             try:
                 await self._application.bot.edit_message_text(
                     chat_id=chat_id,
-                    message_id=int(receipt.external_message_id),
+                    message_id=message_id,
                     text=new_content.text[: self._config.max_message_length],
                 )
             except Exception:
@@ -227,13 +241,20 @@ class TelegramChannel(Channel):
             delivered_at_ms=int(time.time() * 1000),
         )
 
-    async def retract(self, receipt: Any) -> None:
+    async def retract(self, receipt: "DeliveryReceipt") -> None:
         """Delete a previously-delivered Telegram message."""
+        from magi_plugin_sdk.delivery import DeliveryReceipt  # noqa: F401
+
+        if receipt.external_message_id is None:
+            # Nothing was delivered (e.g. send failed), nothing to delete.
+            return
+
         chat_id = self._chat_id_from_receipt(receipt)
+        message_id = self._message_id_from_receipt(receipt)
         try:
             await self._application.bot.delete_message(
                 chat_id=chat_id,
-                message_id=int(receipt.external_message_id),
+                message_id=message_id,
             )
         except Exception:
             logger.exception(
@@ -245,16 +266,29 @@ class TelegramChannel(Channel):
     def _chat_id_from_receipt(self, receipt: Any) -> int:
         """Extract telegram chat_id from a DeliveryReceipt.
 
-        Expects ``channel_id`` in the form ``'telegram:<chat_id>'``
+        Expects ``external_message_id`` in the form ``'<chat_id>:<message_id>'``
         as produced by ``deliver``.
         """
-        cid = receipt.channel_id
-        prefix = "telegram:"
-        if cid.startswith(prefix):
-            return int(cid[len(prefix):])
+        ext = receipt.external_message_id
+        if ext and ":" in ext:
+            return int(ext.split(":", 1)[0])
         raise ValueError(
-            f"Cannot extract chat_id from channel_id={cid!r}; "
-            f"expected 'telegram:<chat_id>' format"
+            f"Cannot extract chat_id from external_message_id={ext!r}; "
+            f"expected '<chat_id>:<message_id>' format"
+        )
+
+    def _message_id_from_receipt(self, receipt: Any) -> int:
+        """Extract telegram message_id from a DeliveryReceipt.
+
+        Expects ``external_message_id`` in the form ``'<chat_id>:<message_id>'``
+        as produced by ``deliver``.
+        """
+        ext = receipt.external_message_id
+        if ext and ":" in ext:
+            return int(ext.split(":", 1)[1])
+        raise ValueError(
+            f"Cannot extract message_id from external_message_id={ext!r}; "
+            f"expected '<chat_id>:<message_id>' format"
         )
 
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
