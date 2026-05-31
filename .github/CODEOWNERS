@@ -1,0 +1,4 @@
+# The official-plugins allowlist is the authority for the `official` trust
+# badge. Changes require maintainer review (enable "Require review from
+# Code Owners" in branch protection for this to be enforced).
+/official-plugins.json   @asukaonly

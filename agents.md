@@ -18,6 +18,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
   - Lockfiles target the bundled **Python 3.13 runtime**, not your host Python — the locks are identical regardless of the contributor's local interpreter.
   - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `python scripts/lock-deps.py`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
 - Commit the updated `registry.json` together with plugin changes.
+- To mark a plugin official, add its `plugin_id` to `official-plugins.json` (maintainer-gated via CODEOWNERS), then regenerate the registry.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
 - Test plugin functionality against the Magi backend before pushing.
@@ -30,6 +31,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Don't put non-plugin code in this repo.
 - Don't manually edit `registry.json` — always regenerate it via the script.
 - Don't hand-edit `requirements.lock` files — always regenerate via `scripts/lock-deps.py`.
+- Don't set `official = true` in a plugin's `plugin.toml` expecting a badge — the `official` flag is derived solely from `official-plugins.json` (maintainer-controlled). Self-declared values are ignored.
 
 ---
 
