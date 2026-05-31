@@ -18,17 +18,33 @@ except ModuleNotFoundError:
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGINS_DIR = REPO_ROOT / "plugins"
 REGISTRY_PATH = REPO_ROOT / "registry.json"
+OFFICIAL_ALLOWLIST_PATH = REPO_ROOT / "official-plugins.json"
 
 
-def build_entry(plugin_dir: Path) -> dict | None:
+def load_official_ids() -> set[str]:
+    """Maintainer-controlled set of plugin_ids allowed to be `official`.
+
+    Authority for the `official` flag lives here, NOT in each plugin's
+    plugin.toml — a third-party PR touching only plugins/<their-plugin>/
+    cannot grant itself official status.
+    """
+    if not OFFICIAL_ALLOWLIST_PATH.exists():
+        return set()
+    with open(OFFICIAL_ALLOWLIST_PATH, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    return set(data.get("official_plugin_ids", []))
+
+
+def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     toml_path = plugin_dir / "plugin.toml"
     if not toml_path.exists():
         return None
     with open(toml_path, "rb") as f:
         data = tomllib.load(f)
     meta = data.get("plugin", {})
+    plugin_id = meta.get("id", plugin_dir.name)
     entry: dict = {
-        "plugin_id": meta.get("id", plugin_dir.name),
+        "plugin_id": plugin_id,
         "name": meta.get("name", plugin_dir.name),
     }
     if "name_i18n" in meta:
@@ -39,7 +55,13 @@ def build_entry(plugin_dir: Path) -> dict | None:
     if "description_i18n" in meta:
         entry["description_i18n"] = meta["description_i18n"]
     entry["author"] = meta.get("author", "")
-    entry["official"] = meta.get("official", False)
+    self_declared = bool(meta.get("official", False))
+    entry["official"] = plugin_id in official_ids
+    if self_declared and not entry["official"]:
+        print(
+            f"  ! {plugin_id}: plugin.toml self-declares official=true but is "
+            f"not in official-plugins.json — ignored (allowlist is authoritative)"
+        )
     # kind: "plugin" (default) or "library". Libraries are hidden from
     # market listings and only installed as dep closure of a plugin.
     kind = meta.get("kind", "plugin")
@@ -56,11 +78,12 @@ def build_entry(plugin_dir: Path) -> dict | None:
 
 
 def main() -> None:
+    official_ids = load_official_ids()
     entries = []
     for child in sorted(PLUGINS_DIR.iterdir()):
         if not child.is_dir():
             continue
-        entry = build_entry(child)
+        entry = build_entry(child, official_ids)
         if entry:
             entries.append(entry)
             print(f"  + {entry['plugin_id']} v{entry['version']}")

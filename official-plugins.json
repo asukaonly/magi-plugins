@@ -1,0 +1,19 @@
+{
+  "official_plugin_ids": [
+    "browser_history_core",
+    "calendar",
+    "chrome-history",
+    "edge-history",
+    "firefox-history",
+    "git-activity",
+    "netease-music",
+    "photo-library",
+    "screen-time",
+    "screenshot_timeline",
+    "steam-play-history",
+    "system-media",
+    "telegram",
+    "terminal-history",
+    "weixin"
+  ]
+}
