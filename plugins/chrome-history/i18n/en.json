@@ -3,6 +3,10 @@
     "name": "Chrome History",
     "description": "Local Google Chrome browsing history ingestion for the timeline",
     "fields": {
+      "enabled": {
+        "label": "Enabled",
+        "description": "Whether Chrome history sync is active."
+      },
       "profile": {
         "label": "Profile",
         "description": "Chrome profile directory to read, such as Default or Profile 1."
@@ -34,6 +38,14 @@
       "filter_keywords": {
         "label": "Filter Keywords",
         "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+      },
+      "initial_sync_policy": {
+        "label": "First Sync Scope",
+        "description": "Decide how much history should be imported when this source is enabled for the first time."
+      },
+      "initial_sync_lookback_days": {
+        "label": "Recent Days",
+        "description": "Used when the first-sync scope is set to recent days."
       }
     },
     "options": {

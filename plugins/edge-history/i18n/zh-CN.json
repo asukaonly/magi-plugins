@@ -2,6 +2,65 @@
   "edge_history": {
     "name": "Edge 浏览历史",
     "description": "本地 Microsoft Edge 浏览历史接入时间线",
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "是否启用 Edge 浏览历史同步。"
+      },
+      "profile": {
+        "label": "配置档案",
+        "description": "要读取的 Edge 配置目录，例如 Default 或 Profile 1。"
+      },
+      "sync_mode": {
+        "label": "同步方式",
+        "description": "控制 Edge 历史的同步策略。"
+      },
+      "sync_interval_minutes": {
+        "label": "定时间隔（分钟）",
+        "description": "基于定时同步所用的轮询间隔。"
+      },
+      "merge_window_minutes": {
+        "label": "合并窗口（分钟）",
+        "description": "同一页面在该时间窗口内的多次访问会合并成一条时间线事件，即使中间出现了其他页面。"
+      },
+      "max_items_per_sync": {
+        "label": "单次最大条数",
+        "description": "每次同步最多写入多少条浏览记录。"
+      },
+      "filter_domains": {
+        "label": "过滤域名（正则）",
+        "description": "标准化后的域名只要被任一正则部分匹配到，就不会被 AI 分析；如需精确匹配，请使用 ^...$。"
+      },
+      "filter_keywords": {
+        "label": "过滤关键词",
+        "description": "URL 或标题中只要包含任一关键词，记录就不会被 AI 分析；这是不区分大小写的子串匹配，不是正则。"
+      },
+      "initial_sync_policy": {
+        "label": "首次同步范围",
+        "description": "决定首次启用此来源时要导入多少历史记录。"
+      },
+      "initial_sync_lookback_days": {
+        "label": "最近天数",
+        "description": "当首次同步范围设为“同步最近几天”时使用。"
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "手动",
+        "interval": "定时"
+      },
+      "initial_sync_policy": {
+        "full": "同步全部历史",
+        "lookback_days": "同步最近几天",
+        "from_now": "仅同步新记录"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "sync": "同步",
+      "filters": "过滤",
+      "activation": "激活"
+    },
     "activation": {
       "title": "启用 Edge 浏览历史",
       "description": "Edge 浏览历史属于敏感的本地数据。请选择首次同步如何初始化时间线，再启用该来源。",
@@ -23,16 +82,5 @@
   "summary": {
     "single_visit": "{title}",
     "multiple_visits": "{title}（访问 {count} 次）"
-  },
-  "initial_sync_policy": {
-    "full": "同步全部历史",
-    "lookback_days": "同步最近几天",
-    "from_now": "仅同步新记录"
-  },
-  "filters": {
-    "domains_label": "过滤域名（正则）",
-    "domains_description": "标准化后的域名只要被任一正则部分匹配到，就不会被 AI 分析；如需精确匹配，请使用 ^...$。",
-    "keywords_label": "过滤关键词",
-    "keywords_description": "URL 或标题中只要包含任一关键词，记录就不会被 AI 分析；这是不区分大小写的子串匹配，不是正则。"
   }
 }
