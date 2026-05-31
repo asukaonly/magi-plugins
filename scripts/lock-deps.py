@@ -59,9 +59,14 @@ def compile_lock(dependencies: list[str]) -> str:
         "--no-header",
         "-",  # read requirements from stdin
     ]
-    result = subprocess.run(
-        cmd, input=reqs_text, capture_output=True, text=True, check=True
-    )
+    try:
+        result = subprocess.run(
+            cmd, input=reqs_text, capture_output=True, text=True, check=True
+        )
+    except subprocess.CalledProcessError as exc:
+        raise SystemExit(
+            f"uv pip compile failed (exit {exc.returncode}):\n{exc.stderr}"
+        ) from exc
     return LOCK_HEADER + result.stdout
 
 

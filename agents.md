@@ -15,6 +15,8 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Keep each plugin self-contained in its own directory under `plugins/`.
 - Run `python scripts/build-registry.py` after adding or modifying a plugin.
 - After changing a plugin's `dependencies`, run `python scripts/lock-deps.py <plugin_dir>` (needs `uv`: `pip install uv`) and commit the updated `requirements.lock`.
+  - Lockfiles target the bundled **Python 3.13 runtime**, not your host Python — the locks are identical regardless of the contributor's local interpreter.
+  - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `python scripts/lock-deps.py`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
 - Commit the updated `registry.json` together with plugin changes.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
