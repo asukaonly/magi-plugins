@@ -29,9 +29,17 @@ def load_official_ids() -> set[str]:
     cannot grant itself official status.
     """
     if not OFFICIAL_ALLOWLIST_PATH.exists():
+        print(
+            f"note: {OFFICIAL_ALLOWLIST_PATH.name} not found; all plugins "
+            f"marked non-official",
+            file=sys.stderr,
+        )
         return set()
-    with open(OFFICIAL_ALLOWLIST_PATH, "r", encoding="utf-8") as fh:
-        data = json.load(fh)
+    try:
+        with open(OFFICIAL_ALLOWLIST_PATH, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except json.JSONDecodeError as exc:
+        sys.exit(f"error: {OFFICIAL_ALLOWLIST_PATH.name} is not valid JSON: {exc}")
     return set(data.get("official_plugin_ids", []))
 
 
@@ -60,7 +68,8 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     if self_declared and not entry["official"]:
         print(
             f"  ! {plugin_id}: plugin.toml self-declares official=true but is "
-            f"not in official-plugins.json — ignored (allowlist is authoritative)"
+            f"not in official-plugins.json — ignored (allowlist is authoritative)",
+            file=sys.stderr,
         )
     # kind: "plugin" (default) or "library". Libraries are hidden from
     # market listings and only installed as dep closure of a plugin.
