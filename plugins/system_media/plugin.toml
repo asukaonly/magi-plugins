@@ -21,3 +21,20 @@ enabled = false
 sync_interval_minutes = 1
 min_session_seconds = 30
 pause_timeout_seconds = 300
+[plugin.suggestion_descriptor]
+category = "media"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 5
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["在播放", "正在听", "正在看", "播放了什么", "媒体"]
+en = ["playing", "now playing", "media", "watching"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你正在播放的媒体"
+en = "Lets magi see what media you're playing"

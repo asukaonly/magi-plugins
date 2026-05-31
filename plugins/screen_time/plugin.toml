@@ -18,3 +18,20 @@ dependencies = [
 [plugin.default_settings.sensors.screen_time]
 enabled = false
 sync_interval_minutes = 5
+[plugin.suggestion_descriptor]
+category = "screen_context"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 10
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["屏幕时间", "用了多久", "用了哪些 app", "使用时长", "玩手机"]
+en = ["screen time", "app usage", "how long", "usage"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你的屏幕使用情况"
+en = "Lets magi see your screen-time usage"

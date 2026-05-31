@@ -380,7 +380,50 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "music",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "音乐",
+              "听歌",
+              "歌单",
+              "最近听了什么",
+              "单曲循环",
+              "网易云"
+            ],
+            "en": [
+              "music",
+              "listening",
+              "songs",
+              "playlist",
+              "netease"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你最近在听什么音乐",
+          "en": "Lets magi see what you've been listening to"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3",
+              "win32": "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "photo-library",
@@ -471,7 +514,39 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "screen_context",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "屏幕时间",
+              "用了多久",
+              "用了哪些 app",
+              "使用时长",
+              "玩手机"
+            ],
+            "en": [
+              "screen time",
+              "app usage",
+              "how long",
+              "usage"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你的屏幕使用情况",
+          "en": "Lets magi see your screen-time usage"
+        }
+      }
     },
     {
       "plugin_id": "screenshot_timeline",
@@ -493,7 +568,38 @@
       ],
       "platforms": [
         "macos"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "screen_context",
+        "platform_support": [
+          "darwin"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "截图",
+              "屏幕",
+              "屏幕上",
+              "刚才在看",
+              "看到了什么"
+            ],
+            "en": [
+              "screenshot",
+              "screen",
+              "on screen",
+              "what was on my screen"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你屏幕上发生了什么",
+          "en": "Lets magi see what's on your screen"
+        }
+      }
     },
     {
       "plugin_id": "steam-play-history",
@@ -516,7 +622,51 @@
         "windows",
         "macos",
         "linux"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "gaming",
+        "platform_support": [
+          "win32",
+          "darwin",
+          "linux"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "玩了什么游戏",
+              "游戏",
+              "Steam",
+              "游戏时长",
+              "最近在玩"
+            ],
+            "en": [
+              "played",
+              "game",
+              "steam",
+              "playtime",
+              "gaming"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你最近玩了什么游戏",
+          "en": "Lets magi see what games you've been playing"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Application Support/Steam",
+              "win32": "%ProgramFiles(x86)%/Steam",
+              "linux": "~/.steam/steam"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "system-media",
@@ -538,7 +688,39 @@
       "platforms": [
         "windows",
         "macos"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "media",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 5,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "在播放",
+              "正在听",
+              "正在看",
+              "播放了什么",
+              "媒体"
+            ],
+            "en": [
+              "playing",
+              "now playing",
+              "media",
+              "watching"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你正在播放的媒体",
+          "en": "Lets magi see what media you're playing"
+        }
+      }
     },
     {
       "plugin_id": "telegram",
@@ -581,7 +763,47 @@
       ],
       "platforms": [
         "macos"
-      ]
+      ],
+      "suggestion_descriptor": {
+        "category": "terminal",
+        "platform_support": [
+          "darwin"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "命令",
+              "终端",
+              "敲了什么",
+              "跑过什么命令",
+              "shell"
+            ],
+            "en": [
+              "terminal",
+              "command",
+              "shell",
+              "ran",
+              "cli"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能看到你最近敲过哪些命令",
+          "en": "Lets magi see your recent terminal commands"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/.zsh_history"
+            }
+          }
+        ]
+      }
     },
     {
       "plugin_id": "weixin",

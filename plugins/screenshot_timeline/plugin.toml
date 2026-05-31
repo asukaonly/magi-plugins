@@ -52,3 +52,20 @@ jpeg_quality_original = 80
 jpeg_quality_thumbnail = 70
 initial_sync_configured = false
 sync_mode = "interval"
+[plugin.suggestion_descriptor]
+category = "screen_context"
+platform_support = ["darwin"]
+setup_time_estimate_seconds = 10
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["截图", "屏幕", "屏幕上", "刚才在看", "看到了什么"]
+en = ["screenshot", "screen", "on screen", "what was on my screen"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你屏幕上发生了什么"
+en = "Lets magi see what's on your screen"

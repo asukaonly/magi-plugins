@@ -11,3 +11,28 @@ entry_class = "SteamPlayHistoryPlugin"
 official = true
 contribution_types = ["sensor"]
 platforms = ["windows", "macos", "linux"]
+[plugin.suggestion_descriptor]
+category = "gaming"
+platform_support = ["win32", "darwin", "linux"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["玩了什么游戏", "游戏", "Steam", "游戏时长", "最近在玩"]
+en = ["played", "game", "steam", "playtime", "gaming"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你最近玩了什么游戏"
+en = "Lets magi see what games you've been playing"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Library/Application Support/Steam"
+win32 = "%ProgramFiles(x86)%/Steam"
+linux = "~/.steam/steam"

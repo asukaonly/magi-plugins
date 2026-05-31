@@ -11,3 +11,27 @@ entry_class = "NeteaseMusicPlugin"
 official = true
 platforms = ["macos", "windows"]
 contribution_types = ["sensor"]
+[plugin.suggestion_descriptor]
+category = "music"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["音乐", "听歌", "歌单", "最近听了什么", "单曲循环", "网易云"]
+en = ["music", "listening", "songs", "playlist", "netease"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你最近在听什么音乐"
+en = "Lets magi see what you've been listening to"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+win32 = "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"

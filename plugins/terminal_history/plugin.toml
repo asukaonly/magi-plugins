@@ -22,3 +22,26 @@ sensitive_mode = "redact"
 sensitive_keywords = []
 dedup_window_seconds = 60
 default_retention_mode = "analyze_only"
+[plugin.suggestion_descriptor]
+category = "terminal"
+platform_support = ["darwin"]
+setup_time_estimate_seconds = 10
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["命令", "终端", "敲了什么", "跑过什么命令", "shell"]
+en = ["terminal", "command", "shell", "ran", "cli"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你最近敲过哪些命令"
+en = "Lets magi see your recent terminal commands"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/.zsh_history"
