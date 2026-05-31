@@ -14,6 +14,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Follow the plugin contracts and base classes defined in the main Magi repo.
 - Keep each plugin self-contained in its own directory under `plugins/`.
 - Run `python scripts/build-registry.py` after adding or modifying a plugin.
+- After changing a plugin's `dependencies`, run `python scripts/lock-deps.py <plugin_dir>` (needs `uv`: `pip install uv`) and commit the updated `requirements.lock`.
 - Commit the updated `registry.json` together with plugin changes.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
@@ -26,6 +27,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Don't add AI identity signatures (e.g. `Co-authored-by: AI Agent`).
 - Don't put non-plugin code in this repo.
 - Don't manually edit `registry.json` — always regenerate it via the script.
+- Don't hand-edit `requirements.lock` files — always regenerate via `scripts/lock-deps.py`.
 
 ---
 
