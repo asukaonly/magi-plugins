@@ -20,6 +20,16 @@ PLUGINS_DIR = REPO_ROOT / "plugins"
 REGISTRY_PATH = REPO_ROOT / "registry.json"
 OFFICIAL_ALLOWLIST_PATH = REPO_ROOT / "official-plugins.json"
 
+# Authoritative known-capability enum. The wire model (magi SDK) is permissive
+# (str) for forward-compat; THIS is the gate that keeps typos / unknown
+# capabilities out of registry.json. Adding a capability is a deliberate act:
+# update this set AND the magi SDK + frontend category map together.
+KNOWN_CAPABILITIES = {
+    "screen_recording", "accessibility", "calendar", "photos",
+    "contacts", "system_media",
+    "filesystem_read", "filesystem_write", "network", "subprocess",
+}
+
 
 def load_official_ids() -> set[str]:
     """Maintainer-controlled set of plugin_ids allowed to be `official`.
@@ -77,6 +87,10 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     if kind != "plugin":
         entry["kind"] = kind
     entry["contribution_types"] = meta.get("contribution_types", [])
+    permissions = meta.get("permissions", {}) or {}
+    capabilities = permissions.get("capabilities", [])
+    if capabilities:
+        entry["capabilities"] = capabilities  # verbatim; validated in main()
     # depends_on: list of plugin_ids this plugin imports from (typically
     # library packages). The host resolves the closure on install.
     depends_on = meta.get("depends_on", [])
@@ -96,6 +110,22 @@ def main() -> None:
         if entry:
             entries.append(entry)
             print(f"  + {entry['plugin_id']} v{entry['version']}")
+
+    unknown: list[str] = []
+    for entry in entries:
+        for cap in entry.get("capabilities", []):
+            name = cap.get("capability") if isinstance(cap, dict) else None
+            if name not in KNOWN_CAPABILITIES:
+                unknown.append(f"{entry['plugin_id']}: {name!r}")
+    if unknown:
+        print("\nERROR: unknown capability(ies) declared:", file=sys.stderr)
+        for u in unknown:
+            print(f"  ! {u}", file=sys.stderr)
+        print(
+            "Allowed: " + ", ".join(sorted(KNOWN_CAPABILITIES)),
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     registry = {
         "registry_version": "2",
