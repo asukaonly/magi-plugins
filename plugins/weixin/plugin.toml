@@ -12,3 +12,7 @@ official = true
 contribution_types = ["channel"]
 platforms = ["windows", "macos"]
 dependencies = ["segno>=1.6.1", "cryptography>=42.0.0"]
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+reason_i18n = { en = "Connect to the iLink bot gateway", "zh-CN" = "连接 iLink 机器人网关" }

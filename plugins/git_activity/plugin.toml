@@ -43,3 +43,12 @@ en = "Lets magi see what you've been building"
 [[plugin.suggestion_descriptor.local_requirements]]
 check_kind = "executable_in_path"
 names = ["git", "git.exe"]
+
+[[plugin.permissions.capabilities]]
+capability = "subprocess"
+scope = ["git"]
+reason_i18n = { en = "Run git to read commit and checkout history", "zh-CN" = "调用 git 读取提交与检出历史" }
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+reason_i18n = { en = "Discover and read local git repositories", "zh-CN" = "发现并读取本地 git 仓库" }

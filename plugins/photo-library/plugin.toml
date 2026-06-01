@@ -47,3 +47,12 @@ check_kind = "file_exists"
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 darwin = "~/Pictures"
 win32 = "%USERPROFILE%/Pictures"
+
+[[plugin.permissions.capabilities]]
+capability = "photos"
+reason_i18n = { en = "Access your photo library and its metadata", "zh-CN" = "访问你的照片库及其元数据" }
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Pictures"]
+reason_i18n = { en = "Scan local photo files for metadata", "zh-CN" = "扫描本地照片文件的元数据" }

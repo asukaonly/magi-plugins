@@ -47,3 +47,12 @@ check_kind = "file_exists"
 
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 darwin = "~/Library/Calendars"
+
+[[plugin.permissions.capabilities]]
+capability = "calendar"
+reason_i18n = { en = "Read your calendar events and reminders", "zh-CN" = "读取你的日历事件与提醒事项" }
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Library/Calendars"]
+reason_i18n = { en = "Parse the local calendar store", "zh-CN" = "解析本地日历数据" }

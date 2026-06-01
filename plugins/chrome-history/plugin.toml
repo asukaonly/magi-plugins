@@ -47,3 +47,8 @@ check_kind = "file_exists"
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 darwin = "~/Library/Application Support/Google/Chrome/Default/History"
 win32 = "%LOCALAPPDATA%/Google/Chrome/User Data/Default/History"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Library/Application Support/Google/Chrome", "%LOCALAPPDATA%\\Google\\Chrome"]
+reason_i18n = { en = "Read the local Chrome history database", "zh-CN" = "读取本地 Chrome 历史数据库" }

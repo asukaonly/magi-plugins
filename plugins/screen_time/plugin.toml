@@ -35,3 +35,8 @@ en = ["screen time", "app usage", "how long", "usage"]
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能看到你的屏幕使用情况"
 en = "Lets magi see your screen-time usage"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Library/Application Support/Knowledge"]
+reason_i18n = { en = "Read the local app-usage data source", "zh-CN" = "读取本地应用用量数据源" }

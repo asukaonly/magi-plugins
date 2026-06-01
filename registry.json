@@ -40,6 +40,25 @@
       "contribution_types": [
         "sensor"
       ],
+      "capabilities": [
+        {
+          "capability": "calendar",
+          "reason_i18n": {
+            "en": "Read your calendar events and reminders",
+            "zh-CN": "读取你的日历事件与提醒事项"
+          }
+        },
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Calendars"
+          ],
+          "reason_i18n": {
+            "en": "Parse the local calendar store",
+            "zh-CN": "解析本地日历数据"
+          }
+        }
+      ],
       "platforms": [
         "macos"
       ],
@@ -103,6 +122,19 @@
       "official": true,
       "contribution_types": [
         "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Application Support/Google/Chrome",
+            "%LOCALAPPDATA%\\Google\\Chrome"
+          ],
+          "reason_i18n": {
+            "en": "Read the local Chrome history database",
+            "zh-CN": "读取本地 Chrome 历史数据库"
+          }
+        }
       ],
       "platforms": [
         "macos",
@@ -172,6 +204,18 @@
       "contribution_types": [
         "sensor"
       ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "%LOCALAPPDATA%\\Microsoft\\Edge"
+          ],
+          "reason_i18n": {
+            "en": "Read the local Edge history database",
+            "zh-CN": "读取本地 Edge 历史数据库"
+          }
+        }
+      ],
       "depends_on": [
         "browser_history_core"
       ],
@@ -237,6 +281,19 @@
       "official": true,
       "contribution_types": [
         "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Application Support/Firefox",
+            "%APPDATA%\\Mozilla\\Firefox"
+          ],
+          "reason_i18n": {
+            "en": "Read the local Firefox history database",
+            "zh-CN": "读取本地 Firefox 历史数据库"
+          }
+        }
       ],
       "depends_on": [
         "browser_history_core"
@@ -305,6 +362,25 @@
       "official": true,
       "contribution_types": [
         "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "subprocess",
+          "scope": [
+            "git"
+          ],
+          "reason_i18n": {
+            "en": "Run git to read commit and checkout history",
+            "zh-CN": "调用 git 读取提交与检出历史"
+          }
+        },
+        {
+          "capability": "filesystem_read",
+          "reason_i18n": {
+            "en": "Discover and read local git repositories",
+            "zh-CN": "发现并读取本地 git 仓库"
+          }
+        }
       ],
       "platforms": [
         "macos",
@@ -377,6 +453,18 @@
       "contribution_types": [
         "sensor"
       ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Containers/com.netease.163music"
+          ],
+          "reason_i18n": {
+            "en": "Read the NetEase Music local play history",
+            "zh-CN": "读取网易云音乐本地播放历史"
+          }
+        }
+      ],
       "platforms": [
         "macos",
         "windows"
@@ -442,6 +530,25 @@
       "contribution_types": [
         "sensor",
         "tool"
+      ],
+      "capabilities": [
+        {
+          "capability": "photos",
+          "reason_i18n": {
+            "en": "Access your photo library and its metadata",
+            "zh-CN": "访问你的照片库及其元数据"
+          }
+        },
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Pictures"
+          ],
+          "reason_i18n": {
+            "en": "Scan local photo files for metadata",
+            "zh-CN": "扫描本地照片文件的元数据"
+          }
+        }
       ],
       "platforms": [
         "macos",
@@ -511,6 +618,18 @@
       "contribution_types": [
         "sensor"
       ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Application Support/Knowledge"
+          ],
+          "reason_i18n": {
+            "en": "Read the local app-usage data source",
+            "zh-CN": "读取本地应用用量数据源"
+          }
+        }
+      ],
       "platforms": [
         "macos",
         "windows"
@@ -566,6 +685,43 @@
         "sensor",
         "tool"
       ],
+      "capabilities": [
+        {
+          "capability": "screen_recording",
+          "reason_i18n": {
+            "en": "Capture screenshots of your screen",
+            "zh-CN": "截取你的屏幕画面"
+          }
+        },
+        {
+          "capability": "accessibility",
+          "optional": true,
+          "reason_i18n": {
+            "en": "Read the active window for context (optional)",
+            "zh-CN": "读取活动窗口作为上下文（可选）"
+          }
+        },
+        {
+          "capability": "filesystem_write",
+          "scope": [
+            "~/.magi"
+          ],
+          "reason_i18n": {
+            "en": "Save screenshots and thumbnails",
+            "zh-CN": "保存截图与缩略图"
+          }
+        },
+        {
+          "capability": "subprocess",
+          "scope": [
+            "magi-vision-helper"
+          ],
+          "reason_i18n": {
+            "en": "Run the bundled OCR/vision helper",
+            "zh-CN": "运行随附的 OCR/视觉助手"
+          }
+        }
+      ],
       "platforms": [
         "macos"
       ],
@@ -617,6 +773,19 @@
       "official": true,
       "contribution_types": [
         "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Application Support/Steam",
+            "C:\\Program Files (x86)\\Steam"
+          ],
+          "reason_i18n": {
+            "en": "Read local Steam files to infer play sessions",
+            "zh-CN": "读取本地 Steam 文件以推断游戏时段"
+          }
+        }
       ],
       "platforms": [
         "windows",
@@ -685,6 +854,15 @@
       "contribution_types": [
         "sensor"
       ],
+      "capabilities": [
+        {
+          "capability": "system_media",
+          "reason_i18n": {
+            "en": "Read system media playback (now-playing) info",
+            "zh-CN": "读取系统媒体播放（正在播放）信息"
+          }
+        }
+      ],
       "platforms": [
         "windows",
         "macos"
@@ -739,6 +917,18 @@
       "contribution_types": [
         "channel"
       ],
+      "capabilities": [
+        {
+          "capability": "network",
+          "scope": [
+            "api.telegram.org"
+          ],
+          "reason_i18n": {
+            "en": "Connect to the Telegram Bot API",
+            "zh-CN": "连接 Telegram Bot API"
+          }
+        }
+      ],
       "platforms": [
         "windows",
         "macos"
@@ -760,6 +950,20 @@
       "official": true,
       "contribution_types": [
         "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/.zsh_history",
+            "~/.bash_history",
+            "~/.local/share/fish"
+          ],
+          "reason_i18n": {
+            "en": "Read your shell command history files",
+            "zh-CN": "读取你的 shell 命令历史文件"
+          }
+        }
       ],
       "platforms": [
         "macos"
@@ -821,6 +1025,15 @@
       "official": true,
       "contribution_types": [
         "channel"
+      ],
+      "capabilities": [
+        {
+          "capability": "network",
+          "reason_i18n": {
+            "en": "Connect to the iLink bot gateway",
+            "zh-CN": "连接 iLink 机器人网关"
+          }
+        }
       ],
       "platforms": [
         "windows",

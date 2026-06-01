@@ -36,3 +36,8 @@ check_kind = "file_exists"
 darwin = "~/Library/Application Support/Steam"
 win32 = "%ProgramFiles(x86)%/Steam"
 linux = "~/.steam/steam"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Library/Application Support/Steam", "C:\\Program Files (x86)\\Steam"]
+reason_i18n = { en = "Read local Steam files to infer play sessions", "zh-CN" = "读取本地 Steam 文件以推断游戏时段" }

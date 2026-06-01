@@ -35,3 +35,8 @@ check_kind = "file_exists"
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 darwin = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
 win32 = "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Library/Containers/com.netease.163music"]
+reason_i18n = { en = "Read the NetEase Music local play history", "zh-CN" = "读取网易云音乐本地播放历史" }

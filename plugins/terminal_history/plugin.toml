@@ -45,3 +45,8 @@ check_kind = "file_exists"
 
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 darwin = "~/.zsh_history"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/.zsh_history", "~/.bash_history", "~/.local/share/fish"]
+reason_i18n = { en = "Read your shell command history files", "zh-CN" = "读取你的 shell 命令历史文件" }

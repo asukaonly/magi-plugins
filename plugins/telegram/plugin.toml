@@ -12,3 +12,8 @@ official = true
 contribution_types = ["channel"]
 dependencies = ["python-telegram-bot>=22.0"]
 platforms = ["windows", "macos"]
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["api.telegram.org"]
+reason_i18n = { en = "Connect to the Telegram Bot API", "zh-CN" = "连接 Telegram Bot API" }

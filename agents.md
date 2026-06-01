@@ -19,6 +19,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
   - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `python scripts/lock-deps.py`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
 - Commit the updated `registry.json` together with plugin changes.
 - To mark a plugin official, add its `plugin_id` to `official-plugins.json` (maintainer-gated via CODEOWNERS), then regenerate the registry.
+- Declare what a plugin accesses with `[[plugin.permissions.capabilities]]` (capability from the known set: screen_recording, accessibility, calendar, photos, contacts, system_media, filesystem_read, filesystem_write, network, subprocess; optional `scope`, `optional`, `reason_i18n`). Users see these at install for consent; reviewers use them as a checklist.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
 - Test plugin functionality against the Magi backend before pushing.
@@ -32,6 +33,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Don't manually edit `registry.json` — always regenerate it via the script.
 - Don't hand-edit `requirements.lock` files — always regenerate via `scripts/lock-deps.py`.
 - Don't set `official = true` in a plugin's `plugin.toml` expecting a badge — the `official` flag is derived solely from `official-plugins.json` (maintainer-controlled). Self-declared values are ignored.
+- Don't declare a capability outside the known set — `build-registry.py` will fail the build. Adding a new capability requires updating the SDK + frontend too.
 
 ---
 

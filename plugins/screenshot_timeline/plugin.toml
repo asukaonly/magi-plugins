@@ -20,7 +20,6 @@ dependencies = [
 binary_relative_path = "bin/magi-vision-helper"
 
 [plugin.permissions]
-declares = ["screen_recording", "accessibility_optional", "fs_write_resources"]
 memory_access = ["write_l1"]
 
 [plugin.default_settings.sensors.screenshot_timeline]
@@ -69,3 +68,22 @@ en = ["screenshot", "screen", "on screen", "what was on my screen"]
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能看到你屏幕上发生了什么"
 en = "Lets magi see what's on your screen"
+
+[[plugin.permissions.capabilities]]
+capability = "screen_recording"
+reason_i18n = { en = "Capture screenshots of your screen", "zh-CN" = "截取你的屏幕画面" }
+
+[[plugin.permissions.capabilities]]
+capability = "accessibility"
+optional = true
+reason_i18n = { en = "Read the active window for context (optional)", "zh-CN" = "读取活动窗口作为上下文（可选）" }
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_write"
+scope = ["~/.magi"]
+reason_i18n = { en = "Save screenshots and thumbnails", "zh-CN" = "保存截图与缩略图" }
+
+[[plugin.permissions.capabilities]]
+capability = "subprocess"
+scope = ["magi-vision-helper"]
+reason_i18n = { en = "Run the bundled OCR/vision helper", "zh-CN" = "运行随附的 OCR/视觉助手" }

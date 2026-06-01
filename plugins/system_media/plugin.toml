@@ -38,3 +38,7 @@ en = ["playing", "now playing", "media", "watching"]
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能看到你正在播放的媒体"
 en = "Lets magi see what media you're playing"
+
+[[plugin.permissions.capabilities]]
+capability = "system_media"
+reason_i18n = { en = "Read system media playback (now-playing) info", "zh-CN" = "读取系统媒体播放（正在播放）信息" }

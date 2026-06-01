@@ -36,3 +36,8 @@ check_kind = "file_exists"
 
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
 win32 = "%LOCALAPPDATA%/Microsoft/Edge/User Data/Default/History"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["%LOCALAPPDATA%\\Microsoft\\Edge"]
+reason_i18n = { en = "Read the local Edge history database", "zh-CN" = "读取本地 Edge 历史数据库" }
