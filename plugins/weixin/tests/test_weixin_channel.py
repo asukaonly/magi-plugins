@@ -250,6 +250,113 @@ async def test_deliver_returns_receipt_with_weixin_client_id(tmp_path: Path) -> 
 
 
 @pytest.mark.asyncio
+async def test_deliver_resolves_external_chat_id_via_session_mapper_when_target_blank(
+    tmp_path: Path,
+) -> None:
+    """Phase H+2 fix: when ``ChannelTarget.external_chat_id`` is blank
+    (the host-side ``resolve_delivery_targets`` leaves it empty for
+    non-chat_sse channels, expecting the channel to look it up), the
+    Weixin channel MUST reverse-resolve via the bound session_mapper
+    using ``target.magi_session_id``. The inbound flow already recorded
+    a ``magi_session_id ↔ external_chat_id`` mapping when the user
+    first wrote to us, so the lookup hits.
+
+    Without this resolution, ``to_user_id=""`` would reach iLink's
+    ``sendmessage`` endpoint and the API would return ``ret: -2``
+    (param error), so the reply silently fails — which is what the
+    original WeChat-outbound bug looked like in production logs.
+    """
+    from magi_plugin_sdk.delivery import DeliveryContent
+
+    class _LookupMapper:
+        """Honors ``lookup_by_session`` for the host's blank-target case."""
+        def __init__(self, *, magi_session_id: str, external_chat_id: str) -> None:
+            self._magi_session_id = magi_session_id
+            self._external_chat_id = external_chat_id
+
+        async def lookup_by_session(self, magi_session_id: str):
+            if magi_session_id != self._magi_session_id:
+                return None
+            return ChannelSessionMapping(
+                channel_type="weixin",
+                external_chat_id=self._external_chat_id,
+                magi_session_id=self._magi_session_id,
+                magi_user_id="channel_weixin_o9cq_etc",
+            )
+
+        async def resolve_or_create(self, **kwargs):
+            raise AssertionError("deliver() must not create mappings; "
+                                 "they are recorded on the inbound path only")
+
+    channel = WeixinChannel(config=WeixinChannelConfig(
+        state_dir=str(tmp_path), account_id="bot@im.bot",
+    ))
+    api = FakeSendApi()
+    channel._api = api  # type: ignore[assignment]
+    channel._credentials = WeixinCredentials(account_id="bot@im.bot", token="token")
+    channel.bind_session_mapper(_LookupMapper(  # type: ignore[arg-type]
+        magi_session_id="chsess_for_wx",
+        external_chat_id="o9cq805VkoHSU8CcaDYe0iaJa-DM@im.wechat",
+    ))
+
+    # Crucially: external_chat_id is BLANK on the target.
+    target = ChannelTarget(
+        channel_type="weixin",
+        external_chat_id="",
+        magi_session_id="chsess_for_wx",
+        magi_user_id="channel_weixin_o9cq_etc",
+    )
+    receipt = await channel.deliver(target, DeliveryContent(text="hi from agent"))
+
+    # The send happened and used the mapper-resolved id.
+    assert api.sent == ["hi from agent"]
+    assert receipt.external_message_id == "client-1"
+    assert receipt.channel_id == "weixin"
+    assert receipt.magi_session_id == "chsess_for_wx"
+
+
+@pytest.mark.asyncio
+async def test_deliver_raises_when_blank_target_and_no_session_mapping(
+    tmp_path: Path,
+) -> None:
+    """If ``external_chat_id`` is blank AND the session_mapper has no
+    matching weixin mapping, we MUST raise rather than silently send to
+    an empty ``to_user_id`` (which would yield iLink ``ret: -2`` and a
+    confusing log). The DeliveryRouter catches the exception and logs a
+    clear ``channel.deliver failed`` warning — much better diagnostics
+    than the upstream ``ret: -2`` mystery.
+    """
+    from magi_plugin_sdk.delivery import DeliveryContent
+
+    class _EmptyMapper:
+        async def lookup_by_session(self, magi_session_id: str):
+            return None
+        async def resolve_or_create(self, **kwargs):
+            raise AssertionError("not used")
+
+    channel = WeixinChannel(config=WeixinChannelConfig(
+        state_dir=str(tmp_path), account_id="bot@im.bot",
+    ))
+    api = FakeSendApi()
+    channel._api = api  # type: ignore[assignment]
+    channel._credentials = WeixinCredentials(account_id="bot@im.bot", token="token")
+    channel.bind_session_mapper(_EmptyMapper())  # type: ignore[arg-type]
+
+    target = ChannelTarget(
+        channel_type="weixin",
+        external_chat_id="",
+        magi_session_id="s-orphan",
+        magi_user_id="u-orphan",
+    )
+
+    with pytest.raises(RuntimeError, match="no external_chat_id resolvable"):
+        await channel.deliver(target, DeliveryContent(text="hi"))
+
+    # Nothing was sent — we refused to call iLink with a blank to_user_id.
+    assert api.sent == []
+
+
+@pytest.mark.asyncio
 async def test_deliver_empty_text_returns_receipt_with_no_external_id(tmp_path: Path) -> None:
     """Empty text → no chunks sent → receipt has external_message_id=None.
 

@@ -177,6 +177,33 @@ class WeixinChannel(Channel):
             magi_session_id=target.magi_session_id,
         )
 
+    async def _resolve_external_chat_id(self, target: ChannelTarget) -> str:
+        """Return the WeChat-side ``to_user_id`` for this target.
+
+        Phase G design: ``resolve_delivery_targets`` leaves
+        ``target.external_chat_id`` blank for non-chat_sse channels and
+        expects the channel to look it up itself via the session_mapper
+        (the inbound flow already recorded a ``magi_session_id ↔
+        external_chat_id`` mapping when the user first wrote to us on
+        WeChat). Without this lookup, ``to_user_id=""`` reaches iLink's
+        ``sendmessage`` endpoint and gets back ``ret: -2`` (param error).
+
+        Callers may still pre-fill ``target.external_chat_id`` — we
+        prefer it when present so the legacy ``send_message`` path
+        (which does fill it) keeps working unchanged.
+        """
+        external = (target.external_chat_id or "").strip()
+        if external:
+            return external
+        if self._session_mapper is None:
+            return ""
+        mapping = await self._session_mapper.lookup_by_session(
+            target.magi_session_id
+        )
+        if mapping is None or mapping.channel_type != "weixin":
+            return ""
+        return str(mapping.external_chat_id or "").strip()
+
     async def _send_text(
         self, *, text: str, target: ChannelTarget,
     ) -> list[str]:
@@ -190,13 +217,20 @@ class WeixinChannel(Channel):
         text = (text or "").strip()
         if not text:
             return []
-        context_token = self._context_tokens.get(target.external_chat_id)
+        to_user_id = await self._resolve_external_chat_id(target)
+        if not to_user_id:
+            raise RuntimeError(
+                f"Weixin deliver: no external_chat_id resolvable for "
+                f"magi_session_id={target.magi_session_id!r} "
+                f"(session_mapper has no weixin mapping for this session)"
+            )
+        context_token = self._context_tokens.get(to_user_id)
         client_ids: list[str] = []
         try:
             for chunk in self._split_text(text):
                 client_ids.append(
                     await self._api.send_text_message(
-                        to_user_id=target.external_chat_id,
+                        to_user_id=to_user_id,
                         text=chunk,
                         context_token=context_token,
                         timeout_ms=self._config.request_timeout_ms,
@@ -214,14 +248,14 @@ class WeixinChannel(Channel):
             state="running",
             running=True,
             last_outbound_at_ms=_now_ms(),
-            last_outbound_chat_id=target.external_chat_id,
+            last_outbound_chat_id=to_user_id,
             last_outbound_client_id=client_ids[-1] if client_ids else "",
             last_outbound_part_count=len(client_ids),
             last_error="",
         )
         logger.info(
             "Weixin outbound sent to_user_id=%s client_id=%s chars=%s",
-            target.external_chat_id,
+            to_user_id,
             client_ids[-1] if client_ids else "",
             len(text),
         )
@@ -231,11 +265,14 @@ class WeixinChannel(Channel):
         if not self._config.enable_typing_indicator or self._api is None:
             return
         try:
-            context_token = self._context_tokens.get(target.external_chat_id)
-            ticket = await self._get_typing_ticket(target.external_chat_id, context_token)
+            to_user_id = await self._resolve_external_chat_id(target)
+            if not to_user_id:
+                return
+            context_token = self._context_tokens.get(to_user_id)
+            ticket = await self._get_typing_ticket(to_user_id, context_token)
             if ticket:
                 await self._api.send_typing(
-                    ilink_user_id=target.external_chat_id,
+                    ilink_user_id=to_user_id,
                     typing_ticket=ticket,
                 )
         except Exception:
