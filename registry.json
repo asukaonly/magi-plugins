@@ -673,11 +673,11 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "version": "0.4.0",
+      "version": "0.5.0",
       "path": "plugins/screenshot_timeline",
-      "description": "Captures your screen, runs local OCR, and feeds magi memory.",
+      "description": "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory.",
       "description_i18n": {
-        "zh-CN": "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。"
+        "zh-CN": "持续截屏并提取屏幕文本（辅助功能优先、OCR 兜底），把你的屏幕活动接入 magi 记忆。"
       },
       "author": "Magi Team",
       "official": true,
@@ -697,8 +697,8 @@
           "capability": "accessibility",
           "optional": true,
           "reason_i18n": {
-            "en": "Read the active window for context (optional)",
-            "zh-CN": "读取活动窗口作为上下文（可选）"
+            "en": "Read window content via the accessibility tree (cleaner than OCR) + active-window context (optional)",
+            "zh-CN": "通过辅助功能树读取窗口内容（比 OCR 更干净）及活动窗口上下文（可选）"
           }
         },
         {

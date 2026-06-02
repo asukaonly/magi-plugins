@@ -1,11 +1,14 @@
 # Screenshot Timeline
 
-A macOS plugin that continuously captures your screen, runs local OCR via Apple Vision Framework, and feeds the resulting text into magi's L1 memory.
+A macOS plugin that continuously captures your screen, extracts on-screen text, and feeds it into magi's L1 memory.
+
+Text extraction is **accessibility-first**: the helper reads the focused window's macOS accessibility (AX) tree — exact, structured text (roles + bbox), ~0 CPU — and only falls back to local Apple Vision OCR when that tree is hollow (custom-rendered apps like WeChat/QQ, games, or apps with no a11y support). See `AXTree.swift`.
 
 ## What it does
 
 - Smart-triggered screenshots (active-window timer + window-switch + optional keyboard triggers)
-- Local OCR via `VNRecognizeTextRequest` — no network, no LLM calls
+- AX-first content: exact text + semantic roles from the accessibility tree; auto-wakes Chromium/Electron apps (`AXManualAccessibility`) so VS Code / Chrome / Slack-style apps expose their content
+- Local OCR via `VNRecognizeTextRequest` as the fallback path — no network, no LLM calls
 - Burst aggregation: consecutive captures of the same window cluster into one L1 event
 - Privacy guards: ships with a default blocklist for password managers and incognito windows; user-extendable
 - Storage: full-resolution originals retained for 30 days (configurable), thumbnails permanent
@@ -15,9 +18,9 @@ A macOS plugin that continuously captures your screen, runs local OCR via Apple 
 | Permission | Required for | Prompted when |
 |---|---|---|
 | Screen Recording | All capture | First capture attempt |
-| Accessibility | Active-window title; keyboard triggers; panic hotkey | First probe / when user enables keyboard triggers |
+| Accessibility | Active-window title; **AX-tree content extraction**; keyboard triggers; panic hotkey | First probe / when user enables keyboard triggers |
 
-If you only grant Screen Recording, capture works but window titles fall back to empty strings and keyboard triggers are unavailable.
+If you only grant Screen Recording, capture works but window titles fall back to empty strings, AX-tree content extraction is unavailable (every frame uses OCR), and keyboard triggers are unavailable.
 
 ## Architecture (overview)
 
@@ -77,7 +80,8 @@ Use after a fresh install to verify end-to-end behavior:
 
 - macOS only (Windows version is a separate plugin, not in this release)
 - Browser URL extraction is intentionally conservative — only window titles
-- Pass-2 vision-LLM enrichment is reserved in the metadata schema but not exposed
+- AX coverage varies by app: native + Chromium/Electron (once woken) are rich; custom-rendered apps (WeChat, QQ, many games) expose no content tree and always use OCR. The first frame after focusing a freshly-woken Electron app may still be hollow (tree building) and use OCR; the next frame gets AX. Each L1 row's `provenance.content_source` (`ax`/`ocr`) records which path produced it.
+- AX entity extraction (people/links from the structured `ax_blocks`) and Pass-2 vision-LLM enrichment are reserved but not yet exposed
 - Helper binary is committed unsigned in the dev tree; release builds will use a signed/notarized binary distributed via `magi-plugins` GitHub Releases (separate workflow)
 - Keyboard triggers UI is declared but the `CGEventTap` listener isn't wired yet — toggle is harmless but has no effect (follow-up work)
 - Retention deletes expired originals via filesystem-walk; L1 metadata still references the (now-missing) `original_path` and readers must handle gracefully. Proper L1 metadata patching needs an SDK hook that doesn't exist yet

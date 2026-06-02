@@ -48,8 +48,27 @@ func handle(_ req: HelperRequest) async {
             let thumb = resizedJpeg(image: image, maxWidth: req.thumbnailMaxWidth ?? 1024)
             let thumbBytes = try writeJpeg(image: thumb, to: paths.thumbnail, quality: qualities.thumbnail)
 
-            let ocrCfg = req.ocr ?? OcrConfig(languages: ["en-US"], level: "accurate")
-            let ocrResult = try runOcr(on: image, languages: ocrCfg.languages, level: ocrCfg.level)
+            // AX-first content path. Walk the frontmost focused window's
+            // accessibility tree; if it carries enough in-content text, use it
+            // and skip OCR entirely (the battery win on AX-rich apps). When the
+            // tree is hollow (WeChat/QQ/games) — or AX is disabled — fall back
+            // to OCR, which is the original behavior.
+            let axCfg = req.ax ?? AXConfig(enabled: true, wake: true, minContentChars: 80, minContentNodes: 5)
+            var axResult: AXResult? = nil
+            var axRich = false
+            if axCfg.enabled {
+                let r = extractActiveWindowAX(wake: axCfg.wake)
+                axResult = r
+                axRich = r.windowFound
+                    && r.contentChars >= axCfg.minContentChars
+                    && r.contentNodes >= axCfg.minContentNodes
+            }
+
+            var ocrResult: OcrResult? = nil
+            if !axRich {
+                let ocrCfg = req.ocr ?? OcrConfig(languages: ["en-US"], level: "accurate")
+                ocrResult = try runOcr(on: image, languages: ocrCfg.languages, level: ocrCfg.level)
+            }
 
             // Compute the perceptual hash from the full-resolution image
             // (not the thumbnail) — the thumbnail's anti-alias can shift
@@ -72,6 +91,12 @@ func handle(_ req: HelperRequest) async {
                 dimensions: dims,
                 activeWindow: win,
                 ocr: ocrResult,
+                axText: axResult?.text,
+                axBlocks: axResult?.blocks,
+                axContentChars: axResult?.contentChars,
+                axContentNodes: axResult?.contentNodes,
+                axNodeCount: axResult?.nodeCount,
+                usedOcrFallback: !axRich,
                 filesWritten: FilesWritten(originalBytes: origBytes, thumbnailBytes: thumbBytes),
                 phash: phash,
                 idleSeconds: idleSeconds

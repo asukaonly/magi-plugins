@@ -5,6 +5,25 @@ public struct OcrConfig: Codable {
     public let level: String  // "fast" or "accurate"
 }
 
+/// Tuning for the AX-first content path. When `enabled`, the helper walks the
+/// frontmost focused window's accessibility tree and skips OCR when that tree
+/// carries enough in-content text (>= both thresholds). Defaults are biased
+/// toward running OCR: the hollow-vs-rich gap is ~100x, so anything between
+/// ~20 and ~1000 separates cleanly, and a low bar means borderline windows
+/// still get OCR rather than silently losing content.
+public struct AXConfig: Codable {
+    public let enabled: Bool
+    public let wake: Bool             // send AXManualAccessibility to wake Chromium/Electron
+    public let minContentChars: Int   // score gate: chars of non-control text
+    public let minContentNodes: Int   // score gate: count of non-control text nodes
+
+    enum CodingKeys: String, CodingKey {
+        case enabled, wake
+        case minContentChars = "min_content_chars"
+        case minContentNodes = "min_content_nodes"
+    }
+}
+
 public struct SavePaths: Codable {
     public let original: String
     public let thumbnail: String
@@ -20,12 +39,13 @@ public struct HelperRequest: Codable {
     public let op: String  // "capture_and_ocr", "probe_active_window", "shutdown"
     public let scope: String?  // "active_window", "full_screen", "display:N"
     public let ocr: OcrConfig?
+    public let ax: AXConfig?
     public let savePaths: SavePaths?
     public let jpegQuality: JpegQuality?
     public let thumbnailMaxWidth: Int?
 
     enum CodingKeys: String, CodingKey {
-        case id, op, scope, ocr
+        case id, op, scope, ocr, ax
         case savePaths = "save_paths"
         case jpegQuality = "jpeg_quality"
         case thumbnailMaxWidth = "thumbnail_max_width"
@@ -83,6 +103,18 @@ public struct HelperResponse: Codable {
     public let dimensions: [Int]?
     public let activeWindow: ActiveWindowInfo?
     public let ocr: OcrResult?
+    // AX-first content path. `axText` is exact, reading-order text from the
+    // focused window's accessibility tree; `axBlocks` is the capped structured
+    // view (role/text/bbox). `axContentChars`/`axContentNodes` are the score
+    // the Python side (and the helper's own OCR gate) read to decide whether
+    // AX was rich enough. `usedOcrFallback` is true when the score was below
+    // threshold (or AX disabled/empty) and OCR was run instead.
+    public let axText: String?
+    public let axBlocks: [AXBlock]?
+    public let axContentChars: Int?
+    public let axContentNodes: Int?
+    public let axNodeCount: Int?
+    public let usedOcrFallback: Bool?
     public let filesWritten: FilesWritten?
     // 64-bit dHash as 16-char lowercase hex. Cheap perceptual fingerprint;
     // hamming distance between two phashes is a strong signal for "same
@@ -103,6 +135,12 @@ public struct HelperResponse: Codable {
         case dimensions
         case activeWindow = "active_window"
         case ocr
+        case axText = "ax_text"
+        case axBlocks = "ax_blocks"
+        case axContentChars = "ax_content_chars"
+        case axContentNodes = "ax_content_nodes"
+        case axNodeCount = "ax_node_count"
+        case usedOcrFallback = "used_ocr_fallback"
         case filesWritten = "files_written"
         case phash
         case idleSeconds = "idle_seconds"
@@ -117,22 +155,34 @@ public struct HelperResponse: Codable {
         dimensions: [Int]? = nil,
         activeWindow: ActiveWindowInfo? = nil,
         ocr: OcrResult? = nil,
+        axText: String? = nil,
+        axBlocks: [AXBlock]? = nil,
+        axContentChars: Int? = nil,
+        axContentNodes: Int? = nil,
+        axNodeCount: Int? = nil,
+        usedOcrFallback: Bool? = nil,
         filesWritten: FilesWritten? = nil,
         phash: String? = nil,
         idleSeconds: Double? = nil
     ) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: capturedAt, dimensions: dimensions,
-            activeWindow: activeWindow, ocr: ocr, filesWritten: filesWritten,
-            phash: phash, idleSeconds: idleSeconds, error: nil,
-            permissionStatus: nil, screenLocked: nil
+            activeWindow: activeWindow, ocr: ocr,
+            axText: axText, axBlocks: axBlocks, axContentChars: axContentChars,
+            axContentNodes: axContentNodes, axNodeCount: axNodeCount,
+            usedOcrFallback: usedOcrFallback,
+            filesWritten: filesWritten, phash: phash, idleSeconds: idleSeconds,
+            error: nil, permissionStatus: nil, screenLocked: nil
         )
     }
 
     public static func error(id: String, code: String, message: String) -> HelperResponse {
         HelperResponse(
             id: id, ok: false, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil,
+            activeWindow: nil, ocr: nil,
+            axText: nil, axBlocks: nil, axContentChars: nil, axContentNodes: nil,
+            axNodeCount: nil, usedOcrFallback: nil,
+            filesWritten: nil, phash: nil, idleSeconds: nil,
             error: ErrorPayload(code: code, message: message),
             permissionStatus: nil, screenLocked: nil
         )
@@ -141,7 +191,10 @@ public struct HelperResponse: Codable {
     public static func permission(id: String, status: String) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
+            activeWindow: nil, ocr: nil,
+            axText: nil, axBlocks: nil, axContentChars: nil, axContentNodes: nil,
+            axNodeCount: nil, usedOcrFallback: nil,
+            filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
             permissionStatus: status, screenLocked: nil
         )
     }
@@ -149,7 +202,10 @@ public struct HelperResponse: Codable {
     public static func screenLock(id: String, locked: Bool) -> HelperResponse {
         HelperResponse(
             id: id, ok: true, capturedAt: nil, dimensions: nil,
-            activeWindow: nil, ocr: nil, filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
+            activeWindow: nil, ocr: nil,
+            axText: nil, axBlocks: nil, axContentChars: nil, axContentNodes: nil,
+            axNodeCount: nil, usedOcrFallback: nil,
+            filesWritten: nil, phash: nil, idleSeconds: nil, error: nil,
             permissionStatus: nil, screenLocked: locked
         )
     }

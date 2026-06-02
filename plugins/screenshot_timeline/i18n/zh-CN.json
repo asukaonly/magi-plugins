@@ -1,7 +1,7 @@
 {
   "screenshot_timeline": {
     "name": "屏幕快照时间线",
-    "description": "持续截屏并本地 OCR，把你的屏幕活动接入 magi 记忆。",
+    "description": "持续截屏并提取屏幕文本（辅助功能优先、OCR 兜底），把你的屏幕活动接入 magi 记忆。",
     "fields": {
       "enabled": {
         "label": "启用",
@@ -18,6 +18,22 @@
       "full_screen_interval_min": {
         "label": "全屏捕获间隔（分钟）",
         "description": "周期性全屏捕获的间隔（仅在 hybrid 或 full_screen 模式下生效）。"
+      },
+      "ax_enabled": {
+        "label": "辅助功能优先取文本",
+        "description": "优先从焦点窗口的 macOS 辅助功能树读取屏幕文本——精确、带结构、几乎不耗 CPU——仅当该树为空（自绘应用、游戏等）时才回落到 OCR。需要辅助功能权限。关闭则始终用 OCR。"
+      },
+      "ax_wake": {
+        "label": "唤醒 Chromium/Electron 应用",
+        "description": "发送 AXManualAccessibility 信号，让 Chromium/Electron 应用（VS Code、Chrome、Slack 等）向辅助功能树暴露内容。关闭则只有原生可访问的应用能取到 AX 文本。会给被捕获的应用带来少量辅助功能开销。"
+      },
+      "ax_min_content_chars": {
+        "label": "AX 最小内容字符数",
+        "description": "仅当窗口辅助功能树中的非控件文本达到这么多字符时才用 AX（跳过 OCR）。越低越倾向于用 AX。有内容的窗口通常上千字符，空的不到 10。"
+      },
+      "ax_min_content_nodes": {
+        "label": "AX 最小内容节点数",
+        "description": "与字符阈值搭配：还需达到这么多个非控件文本节点，才会跳过 OCR。"
       },
       "ocr_languages": {
         "label": "OCR 语言",
@@ -79,7 +95,7 @@
     "ui_blocks": {
       "macos_permissions": {
         "title": "macOS 权限",
-        "description": "屏幕录制为必需权限。辅助功能为可选权限，仅在使用键盘触发和紧急快捷键时需要。"
+        "description": "屏幕录制为必需权限。辅助功能为可选但推荐——它驱动「辅助功能优先取文本」（比 OCR 更干净），没有它则每帧都用 OCR；键盘触发和紧急快捷键也需要它。"
       }
     },
     "permissions": {
@@ -89,7 +105,7 @@
       },
       "accessibility": {
         "label": "辅助功能",
-        "description": "用于键盘触发和紧急快捷键（可选）。"
+        "description": "驱动「辅助功能优先取文本」（比 OCR 更干净）、键盘触发和紧急快捷键。可选——没有它则每帧回落到 OCR。"
       }
     },
     "activation": {

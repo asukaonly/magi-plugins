@@ -206,3 +206,43 @@ async def test_start_is_skipped_when_screen_recording_denied(
         assert sensor._helper is not None and sensor._helper._proc is None
     finally:
         await sensor.stop()
+
+
+def _ax_item(**overrides: object) -> dict:
+    item = {
+        "capture_id": "cap_ax", "source_item_id": "cap_ax", "idempotency_key": "cap_ax",
+        "captured_at": 1000.0, "app_bundle": "com.microsoft.VSCode", "app_name": "Code",
+        "window_title": "plugin.toml — magi-plugins", "url": None, "display_id": "primary",
+        "ocr_text": "OCR FALLBACK TEXT", "ocr_confidence_avg": 0.5,
+        "ax_text": "[file] plugin.toml\n[diff] adapter.py (d500c61)",
+        "ax_content_chars": 10300, "ax_node_count": 4103, "ax_blocks": [],
+        "used_ocr_fallback": False, "trigger": "timer", "scope": "active_window",
+        "original_path": "/x/o.jpg", "thumbnail_path": "/x/t.jpg",
+        "original_expires_at": 87400.0, "dimensions": [1920, 1080],
+        "phash": "abcabcabcabcabca", "idle_seconds": 0.0, "session_id": "",
+    }
+    item.update(overrides)
+    return item
+
+
+@pytest.mark.asyncio
+async def test_build_output_prefers_ax_text_when_rich(tmp_path: Path) -> None:
+    """AX-rich capture (used_ocr_fallback=False) → content block is the exact AX text."""
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    output = await sensor.build_output(_ax_item())
+    assert output.content_blocks[0].value == "[file] plugin.toml\n[diff] adapter.py (d500c61)"
+    assert output.narration.body == output.content_blocks[0].value
+    assert output.provenance["content_source"] == "ax"
+    assert output.provenance["ax_content_chars"] == 10300
+
+
+@pytest.mark.asyncio
+async def test_build_output_falls_back_to_ocr_when_ax_hollow(tmp_path: Path) -> None:
+    """Hollow AX tree (WeChat/QQ-like, used_ocr_fallback=True) → OCR text wins."""
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    item = _ax_item(used_ocr_fallback=True, ax_text="alert\nAllow", ax_content_chars=6, ax_node_count=6)
+    output = await sensor.build_output(item)
+    assert output.content_blocks[0].value == "OCR FALLBACK TEXT"
+    assert output.provenance["content_source"] == "ocr"

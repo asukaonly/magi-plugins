@@ -52,4 +52,45 @@ final class ProtocolTests: XCTestCase {
         XCTAssertTrue(s.contains("\"ok\":false"))
         XCTAssertTrue(s.contains("\"code\":\"PERMISSION_DENIED\""))
     }
+
+    func testDecodeCaptureRequestWithAXConfig() throws {
+        let json = """
+        {
+          "id": "req_2",
+          "op": "capture_and_ocr",
+          "ax": {"enabled": true, "wake": true, "min_content_chars": 80, "min_content_nodes": 5}
+        }
+        """.data(using: .utf8)!
+        let req = try JSONDecoder().decode(HelperRequest.self, from: json)
+        XCTAssertEqual(req.ax?.enabled, true)
+        XCTAssertEqual(req.ax?.wake, true)
+        XCTAssertEqual(req.ax?.minContentChars, 80)
+        XCTAssertEqual(req.ax?.minContentNodes, 5)
+    }
+
+    func testCaptureRequestWithoutAXDecodesToNil() throws {
+        // Back-compat: a request that predates the AX path must still decode.
+        let json = """
+        {"id": "req_3", "op": "capture_and_ocr"}
+        """.data(using: .utf8)!
+        let req = try JSONDecoder().decode(HelperRequest.self, from: json)
+        XCTAssertNil(req.ax)
+    }
+
+    func testEncodeSuccessResponseWithAX() throws {
+        let resp = HelperResponse.success(
+            id: "req_2",
+            axText: "hello\nworld",
+            axBlocks: [AXBlock(role: "AXStaticText", text: "hello", bbox: [1, 2, 3, 4])],
+            axContentChars: 11,
+            axContentNodes: 2,
+            axNodeCount: 5,
+            usedOcrFallback: false
+        )
+        let data = try JSONEncoder().encode(resp)
+        let s = String(data: data, encoding: .utf8)!
+        XCTAssertTrue(s.contains("\"ax_content_chars\":11"))
+        XCTAssertTrue(s.contains("\"used_ocr_fallback\":false"))
+        XCTAssertTrue(s.contains("\"ax_blocks\""))
+    }
 }

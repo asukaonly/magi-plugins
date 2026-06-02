@@ -37,6 +37,16 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     # negligible (Latin tokens never look like CJK glyphs to the model).
     "ocr_languages": ["zh-Hans", "en-US"],
     "ocr_level": "accurate",
+    # AX-first content extraction. When on, the helper reads the focused
+    # window's accessibility tree and skips OCR when it's text-rich; hollow
+    # trees (WeChat/QQ/games) fall back to OCR. `ax_wake` sends the private
+    # AXManualAccessibility signal that makes Chromium/Electron apps expose
+    # their content (off = native apps only). Thresholds gate the AX-vs-OCR
+    # decision; the hollow-vs-rich gap is ~100x so they're forgiving.
+    "ax_enabled": True,
+    "ax_wake": True,
+    "ax_min_content_chars": 80,
+    "ax_min_content_nodes": 5,
     "original_retention_days": 30,
     "keyboard_triggers_enabled": False,
     "keyboard_trigger_types": ["scroll", "arrow", "space", "delete"],
@@ -142,6 +152,69 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             section="capture",
             surface="timeline",
             order=40,
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.ax_enabled",
+            type="switch",
+            label="Accessibility-first text",
+            description=(
+                "Read on-screen text from the focused window's macOS accessibility "
+                "tree first — exact, structured, ~0 CPU — falling back to OCR only "
+                "when that tree is hollow (custom-rendered apps, games). Requires "
+                "Accessibility permission. Turn off to always use OCR."
+            ),
+            default=True,
+            section="ocr",
+            surface="timeline",
+            order=46,
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.ax_wake",
+            type="switch",
+            label="Wake Chromium/Electron apps",
+            description=(
+                "Send the AXManualAccessibility signal so Chromium/Electron apps "
+                "(VS Code, Chrome, Slack…) expose their content to the accessibility "
+                "tree. Off = only natively-accessible apps yield AX text. Imposes a "
+                "small accessibility cost on the app being captured."
+            ),
+            default=True,
+            section="ocr",
+            surface="timeline",
+            order=47,
+            depends_on_key=f"{prefix}.ax_enabled",
+            depends_on_values=["true"],
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.ax_min_content_chars",
+            type="number",
+            label="AX min content chars",
+            description=(
+                "Use AX text (skip OCR) only when the window's accessibility tree "
+                "carries at least this many characters of non-control text. Lower = "
+                "trust AX more often. Rich windows score 1000s, hollow ones <10."
+            ),
+            default=80,
+            section="ocr",
+            surface="timeline",
+            order=48,
+            depends_on_key=f"{prefix}.ax_enabled",
+            depends_on_values=["true"],
+        ),
+        ExtensionFieldSpec(
+            key=f"{prefix}.ax_min_content_nodes",
+            type="number",
+            label="AX min content nodes",
+            description=(
+                "Companion to the char threshold: also require at least this many "
+                "non-control text nodes before skipping OCR."
+            ),
+            default=5,
+            section="ocr",
+            surface="timeline",
+            order=49,
+            depends_on_key=f"{prefix}.ax_enabled",
+            depends_on_values=["true"],
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.ocr_languages",
@@ -308,6 +381,10 @@ class ScreenshotTimelinePlugin(Plugin):
             capture_scope=str(settings.get("capture_scope", DEFAULT_SETTINGS["capture_scope"])),
             ocr_languages=_tuple(settings.get("ocr_languages"), DEFAULT_SETTINGS["ocr_languages"]),
             ocr_level=str(settings.get("ocr_level", DEFAULT_SETTINGS["ocr_level"])),
+            ax_enabled=bool(settings.get("ax_enabled", DEFAULT_SETTINGS["ax_enabled"])),
+            ax_wake=bool(settings.get("ax_wake", DEFAULT_SETTINGS["ax_wake"])),
+            ax_min_content_chars=int(settings.get("ax_min_content_chars", DEFAULT_SETTINGS["ax_min_content_chars"])),
+            ax_min_content_nodes=int(settings.get("ax_min_content_nodes", DEFAULT_SETTINGS["ax_min_content_nodes"])),
             extra_app_blocklist=_tuple(settings.get("app_blocklist"), DEFAULT_SETTINGS["app_blocklist"]),
             window_title_blocklist=_tuple(settings.get("window_title_blocklist"), DEFAULT_SETTINGS["window_title_blocklist"]),
             thumbnail_max_width=int(settings.get("thumbnail_max_width", DEFAULT_SETTINGS["thumbnail_max_width"])),

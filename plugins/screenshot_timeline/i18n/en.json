@@ -1,7 +1,7 @@
 {
   "screenshot_timeline": {
     "name": "Screenshot Timeline",
-    "description": "Captures your screen, runs local OCR, and feeds magi memory.",
+    "description": "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory.",
     "fields": {
       "enabled": {
         "label": "Enabled",
@@ -18,6 +18,22 @@
       "full_screen_interval_min": {
         "label": "Full-screen interval (min)",
         "description": "Periodic full-screen capture interval (used in hybrid or full_screen modes)."
+      },
+      "ax_enabled": {
+        "label": "Accessibility-first text",
+        "description": "Read on-screen text from the focused window's macOS accessibility tree first — exact, structured, ~0 CPU — falling back to OCR only when that tree is hollow (custom-rendered apps, games). Requires Accessibility permission. Turn off to always use OCR."
+      },
+      "ax_wake": {
+        "label": "Wake Chromium/Electron apps",
+        "description": "Send the AXManualAccessibility signal so Chromium/Electron apps (VS Code, Chrome, Slack…) expose their content to the accessibility tree. Off = only natively-accessible apps yield AX text. Imposes a small accessibility cost on the app being captured."
+      },
+      "ax_min_content_chars": {
+        "label": "AX min content chars",
+        "description": "Use AX text (skip OCR) only when the window's accessibility tree carries at least this many characters of non-control text. Lower = trust AX more often. Rich windows score 1000s, hollow ones <10."
+      },
+      "ax_min_content_nodes": {
+        "label": "AX min content nodes",
+        "description": "Companion to the char threshold: also require at least this many non-control text nodes before skipping OCR."
       },
       "ocr_languages": {
         "label": "OCR languages",
@@ -79,7 +95,7 @@
     "ui_blocks": {
       "macos_permissions": {
         "title": "macOS Permissions",
-        "description": "Screen Recording is required for capture. Accessibility is optional, needed only for keyboard triggers and the panic hotkey."
+        "description": "Screen Recording is required for capture. Accessibility is optional but recommended — it powers accessibility-first text extraction (cleaner than OCR); without it every frame uses OCR. Also needed for keyboard triggers and the panic hotkey."
       }
     },
     "permissions": {
@@ -89,7 +105,7 @@
       },
       "accessibility": {
         "label": "Accessibility",
-        "description": "Required for keyboard triggers and the panic hotkey (optional)."
+        "description": "Powers accessibility-first text extraction (cleaner than OCR), keyboard triggers, and the panic hotkey. Optional — without it, every frame falls back to OCR."
       }
     },
     "activation": {

@@ -116,6 +116,10 @@ class ScreenshotSensor(SensorBase):
         capture_scope: str = "hybrid",
         ocr_languages: tuple[str, ...] = ("en-US", "zh-Hans"),
         ocr_level: str = "accurate",
+        ax_enabled: bool = True,
+        ax_wake: bool = True,
+        ax_min_content_chars: int = 80,
+        ax_min_content_nodes: int = 5,
         extra_app_blocklist: tuple[str, ...] = (),
         window_title_blocklist: tuple[str, ...] = (),
         thumbnail_max_width: int = 1024,
@@ -138,6 +142,14 @@ class ScreenshotSensor(SensorBase):
         self.capture_scope = capture_scope
         self.ocr_languages = tuple(ocr_languages)
         self.ocr_level = ocr_level
+        # AX-first content extraction. When the focused window's accessibility
+        # tree carries enough in-content text (>= both thresholds), the helper
+        # uses it and skips OCR; hollow trees (WeChat/QQ/games) fall back to
+        # OCR. Thresholds are deliberately low — the hollow-vs-rich gap is ~100x.
+        self.ax_enabled = bool(ax_enabled)
+        self.ax_wake = bool(ax_wake)
+        self.ax_min_content_chars = int(ax_min_content_chars)
+        self.ax_min_content_nodes = int(ax_min_content_nodes)
         self.thumbnail_max_width = thumbnail_max_width
         self.jpeg_quality_original = jpeg_quality_original
         self.jpeg_quality_thumbnail = jpeg_quality_thumbnail
@@ -437,8 +449,14 @@ class ScreenshotSensor(SensorBase):
             f"{app_name}: {window_title}".strip(": ").strip() if window_title else app_name
         )
         ocr_text = str(item.get("ocr_text") or "")
-        narration = self._build_narration(title=title or None, body=ocr_text)
-        content_blocks = [ContentBlock(kind="text", value=ocr_text)]
+        ax_text = str(item.get("ax_text") or "")
+        used_ocr = bool(item.get("used_ocr_fallback", True))
+        # AX-first: when the helper found a rich accessibility tree, surface its
+        # exact text; otherwise (hollow tree / OCR fallback) surface OCR. Guard
+        # both directions so an empty primary still yields the other.
+        body = (ocr_text if used_ocr else ax_text) or ax_text or ocr_text
+        narration = self._build_narration(title=title or None, body=body)
+        content_blocks = [ContentBlock(kind="text", value=body)]
 
         tags: list[str] = []
         if app_bundle:
@@ -451,6 +469,13 @@ class ScreenshotSensor(SensorBase):
             "trigger": trigger,
             "scope": scope,
             "ocr_confidence_avg": float(item.get("ocr_confidence_avg") or 0.0),
+            # Which extractor produced the content block, plus the AX score that
+            # drove the decision. The full ax_blocks aren't persisted here (a
+            # rich window is 100s of nodes — too heavy per row); they stay on
+            # the in-flight item for any future entity-extraction pass.
+            "content_source": "ocr" if used_ocr else "ax",
+            "ax_content_chars": int(item.get("ax_content_chars") or 0),
+            "ax_node_count": int(item.get("ax_node_count") or 0),
             "phash": str(item.get("phash") or ""),
             "original_path": str(item.get("original_path") or ""),
             "thumbnail_path": str(item.get("thumbnail_path") or ""),
@@ -570,6 +595,12 @@ class ScreenshotSensor(SensorBase):
                     "op": "capture_and_ocr",
                     "scope": _scope_for_trigger(self.capture_scope, trigger),
                     "ocr": {"languages": list(self.ocr_languages), "level": self.ocr_level},
+                    "ax": {
+                        "enabled": self.ax_enabled,
+                        "wake": self.ax_wake,
+                        "min_content_chars": self.ax_min_content_chars,
+                        "min_content_nodes": self.ax_min_content_nodes,
+                    },
                     "save_paths": {"original": original_path, "thumbnail": thumbnail_path},
                     "jpeg_quality": {
                         "original": self.jpeg_quality_original,
@@ -658,6 +689,14 @@ class ScreenshotSensor(SensorBase):
             "display_id": str(win.get("display_id") or "primary"),
             "ocr_text": (resp.get("ocr") or {}).get("text") or "",
             "ocr_confidence_avg": float((resp.get("ocr") or {}).get("confidence_avg") or 0.0),
+            # AX-first content path. `used_ocr_fallback` tells build_output which
+            # text to surface; defaults True so a helper that didn't send AX
+            # fields degrades to the original OCR behavior.
+            "ax_text": str(resp.get("ax_text") or ""),
+            "ax_content_chars": int(resp.get("ax_content_chars") or 0),
+            "ax_node_count": int(resp.get("ax_node_count") or 0),
+            "ax_blocks": resp.get("ax_blocks") or [],
+            "used_ocr_fallback": bool(resp.get("used_ocr_fallback", True)),
             "trigger": trigger,
             "scope": _scope_for_trigger(self.capture_scope, trigger),
             "original_path": original_path,
