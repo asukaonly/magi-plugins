@@ -18,6 +18,7 @@ from magi_plugin_sdk.channels import (
     ChannelTarget,
     OutboundContent,
 )
+from magi_plugin_sdk.delivery import DeliveryContent, DeliveryReceipt
 
 from .api import (
     DEFAULT_API_TIMEOUT_MS,
@@ -151,11 +152,44 @@ class WeixinChannel(Channel):
         logger.info("Weixin channel stopped")
 
     async def send_message(self, target: ChannelTarget, content: OutboundContent) -> None:
+        """Legacy SDK path — fires and forgets. Phase G's ``deliver()`` is
+        the modern caller and returns a receipt for retract/revise lookups."""
+        await self._send_text(text=content.text or "", target=target)
+
+    async def deliver(
+        self, target: ChannelTarget, content: DeliveryContent,
+    ) -> DeliveryReceipt:
+        """Phase G typed delivery — returns a receipt carrying the
+        Weixin-side ``client_id`` of the last sent chunk so the host's
+        DeliveryReceiptsStore can correlate later operations.
+
+        ``client_id`` is what Weixin uses as its per-message identity.
+        For multi-chunk sends, we return the LAST chunk's id (consistent
+        with how telegram and chat_sse handle their receipts).
+        """
+        client_ids = await self._send_text(
+            text=content.text or "", target=target,
+        )
+        return DeliveryReceipt(
+            channel_id="weixin",
+            external_message_id=client_ids[-1] if client_ids else None,
+            delivered_at_ms=_now_ms(),
+            magi_session_id=target.magi_session_id,
+        )
+
+    async def _send_text(
+        self, *, text: str, target: ChannelTarget,
+    ) -> list[str]:
+        """Core text-send used by both legacy send_message and Phase G deliver.
+
+        Returns the list of Weixin client_ids assigned to each chunk
+        (empty list when the input text is empty after stripping).
+        """
         if self._api is None or self._credentials is None:
             raise RuntimeError("Weixin channel is not started")
-        text = (content.text or "").strip()
+        text = (text or "").strip()
         if not text:
-            return
+            return []
         context_token = self._context_tokens.get(target.external_chat_id)
         client_ids: list[str] = []
         try:
@@ -191,6 +225,7 @@ class WeixinChannel(Channel):
             client_ids[-1] if client_ids else "",
             len(text),
         )
+        return client_ids
 
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
         if not self._config.enable_typing_indicator or self._api is None:

@@ -213,6 +213,70 @@ async def test_send_message_splits_long_text(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_deliver_returns_receipt_with_weixin_client_id(tmp_path: Path) -> None:
+    """Phase G+1: deliver() returns a DeliveryReceipt whose
+    external_message_id is the Weixin-side client_id of the last chunk.
+
+    Test data: 'hello world' splits into ['hello', 'world'] at length 5,
+    so client_ids will be ['client-1', 'client-2'] and the receipt
+    carries 'client-2' (the LAST one — same convention as Telegram).
+    """
+    from magi_plugin_sdk.delivery import DeliveryContent
+
+    channel = WeixinChannel(
+        config=WeixinChannelConfig(
+            state_dir=str(tmp_path),
+            account_id="bot@im.bot",
+            max_message_length=5,
+        )
+    )
+    api = FakeSendApi()
+    channel._api = api  # type: ignore[assignment]
+    channel._credentials = WeixinCredentials(account_id="bot@im.bot", token="token")
+
+    target = ChannelTarget(
+        channel_type="weixin",
+        external_chat_id="user-1",
+        magi_session_id="s-7",
+        magi_user_id="u-1",
+    )
+    receipt = await channel.deliver(target, DeliveryContent(text="hello world"))
+
+    assert api.sent == ["hello", "world"]
+    assert receipt.channel_id == "weixin"
+    assert receipt.external_message_id == "client-2"
+    assert receipt.magi_session_id == "s-7"
+    assert receipt.delivered_at_ms > 0
+
+
+@pytest.mark.asyncio
+async def test_deliver_empty_text_returns_receipt_with_no_external_id(tmp_path: Path) -> None:
+    """Empty text → no chunks sent → receipt has external_message_id=None.
+
+    This matches ChatSseChannel's convention for "nothing actually went
+    out" and lets the DeliveryReceiptsStore record the attempt without
+    a phantom client_id."""
+    from magi_plugin_sdk.delivery import DeliveryContent
+
+    channel = WeixinChannel(
+        config=WeixinChannelConfig(state_dir=str(tmp_path), account_id="bot@im.bot"),
+    )
+    api = FakeSendApi()
+    channel._api = api  # type: ignore[assignment]
+    channel._credentials = WeixinCredentials(account_id="bot@im.bot", token="token")
+
+    target = ChannelTarget(
+        channel_type="weixin", external_chat_id="user-1",
+        magi_session_id="s-1", magi_user_id="u-1",
+    )
+    receipt = await channel.deliver(target, DeliveryContent(text="   "))
+
+    assert api.sent == []
+    assert receipt.external_message_id is None
+    assert receipt.channel_id == "weixin"
+
+
+@pytest.mark.asyncio
 async def test_inbound_image_is_stored_as_attachment(tmp_path: Path, monkeypatch) -> None:
     png = b"\x89PNG\r\n\x1a\n" + b"image"
 
