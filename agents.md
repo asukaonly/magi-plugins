@@ -13,11 +13,12 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 **Do**
 - Follow the plugin contracts and base classes defined in the main Magi repo.
 - Keep each plugin self-contained in its own directory under `plugins/`.
-- Run `python scripts/build-registry.py` after adding or modifying a plugin.
-- After changing a plugin's `dependencies`, run `python scripts/lock-deps.py <plugin_dir>` (needs `uv`: `pip install uv`) and commit the updated `requirements.lock`.
-  - Lockfiles target the bundled **Python 3.13 runtime**, not your host Python — the locks are identical regardless of the contributor's local interpreter.
-  - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `python scripts/lock-deps.py`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
-- Commit the updated `registry.json` together with plugin changes.
+- **After editing any `plugins/<name>/plugin.toml`** (version bump, dep change, capability rename, description edit, anything): run `bash scripts/refresh.sh <name>` and commit the regenerated `requirements.lock` + `registry.json` together with the manifest change. This single command runs `lock-deps.py` → `build-registry.py` → `gen_registry.py` in the right order; CI enforces all three stay in lockstep (the `lockfiles-in-sync` + `registry-in-sync` checks fail otherwise).
+  - **Strongly recommended:** wire up the in-repo pre-commit hook once per clone so the artifacts re-generate automatically when you stage a `plugin.toml`:
+    `git config core.hooksPath scripts/hooks`
+    The hook is idempotent — a no-op when no `plugin.toml` is staged. Bypass for emergencies with `git commit --no-verify` (CI will still catch drift).
+  - `lock-deps.py` needs `uv` (`pip install uv`). Lockfiles target the bundled **Python 3.13 runtime**, not your host Python — the locks are identical regardless of the contributor's local interpreter.
+  - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `bash scripts/refresh.sh`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
 - To mark a plugin official, add its `plugin_id` to `official-plugins.json` (maintainer-gated via CODEOWNERS), then regenerate the registry.
 - Declare what a plugin accesses with `[[plugin.permissions.capabilities]]` (capability from the known set: screen_recording, accessibility, calendar, photos, contacts, system_media, filesystem_read, filesystem_write, network, subprocess; optional `scope`, `optional`, `reason_i18n`). Users see these at install for consent; reviewers use them as a checklist.
 - Use Conventional Commits with clear English subjects.

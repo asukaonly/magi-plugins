@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# In-repo git pre-commit hook for magi-plugins.
+#
+# When a commit stages any ``plugins/*/plugin.toml``, this hook auto-runs
+# ``scripts/lock-deps.py <plugin>`` for each changed plugin and then
+# rebuilds + post-processes registry.json. Any drift gets staged into the
+# in-progress commit so the registry-in-sync + lockfiles-in-sync CI
+# checks pass on the first try.
+#
+# To enable for this clone:
+#   git config core.hooksPath scripts/hooks
+#
+# To bypass once (e.g. emergency commit, will fail CI):
+#   git commit --no-verify
+#
+# To disable:
+#   git config --unset core.hooksPath
+#
+# This hook is intentionally idempotent: when nothing changed it's a no-op.
+# It does NOT run ``ruff`` / tests — those live in CI and are too slow for
+# every commit. Its only job is to keep the manifest-derived artifacts
+# (registry.json + requirements.lock) in lockstep with the manifests.
+
+set -euo pipefail
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+# Collect plugin.toml files in the staged change set. ``mapfile`` is bash 4+
+# only; macOS still ships bash 3.2 by default and git invokes hooks with the
+# system shell, so we use a portable newline-joined string and split on it.
+changed_manifests=$(
+  git diff --cached --name-only --diff-filter=ACMR \
+    | grep -E '^plugins/[^/]+/plugin\.toml$' || true
+)
+
+if [ -z "$changed_manifests" ]; then
+  exit 0
+fi
+
+echo "[pre-commit] plugin manifest changes detected:"
+echo "$changed_manifests" | sed 's/^/  /'
+
+regen_needed=0
+
+while IFS= read -r manifest; do
+  [ -z "$manifest" ] && continue
+  plugin_dir=$(basename "$(dirname "$manifest")")
+  echo "[pre-commit] re-locking $plugin_dir..."
+  python scripts/lock-deps.py "$plugin_dir"
+  lockfile="plugins/$plugin_dir/requirements.lock"
+  if ! git diff --quiet -- "$lockfile" 2>/dev/null \
+      || [ -n "$(git status --porcelain -- "$lockfile")" ]; then
+    git add "$lockfile"
+    regen_needed=1
+  fi
+done <<< "$changed_manifests"
+
+echo "[pre-commit] rebuilding registry.json..."
+python scripts/build-registry.py
+python scripts/gen_registry.py
+
+if ! git diff --quiet -- registry.json 2>/dev/null \
+    || [ -n "$(git status --porcelain -- registry.json)" ]; then
+  git add registry.json
+  regen_needed=1
+fi
+
+if [ "$regen_needed" -eq 1 ]; then
+  echo "[pre-commit] auto-staged regenerated artifacts (registry.json / requirements.lock)."
+fi
