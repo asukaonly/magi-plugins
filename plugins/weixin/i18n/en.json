@@ -1,16 +1,8 @@
 {
   "weixin": {
     "name": "Weixin",
-    "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
-  },
-  "contributions": {
-    "weixin:channel": {
-      "display_name": "Weixin",
-      "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
-    }
-  },
-  "fields": {
-    "weixin:channel": {
+    "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
+    "fields": {
       "bot_token": {
         "label": "Manual Bot Token",
         "description": "Manual iLink bot token override. QR login stores the token in the credentials file instead, so this field normally stays empty."
@@ -55,33 +47,39 @@
         "label": "Poll Timeout",
         "description": "Long-poll timeout in milliseconds for getUpdates."
       }
+    },
+    "actions": {
+      "qr_login": {
+        "label": "Weixin QR Login",
+        "description": "Scan with Weixin to authorize this channel. The token is saved to a credentials file and is not pasted into the manual token field.",
+        "button_label": "Start QR Login"
+      },
+      "validate_credentials": {
+        "label": "Validate Credentials",
+        "description": "Check the saved Weixin credentials and gateway connection.",
+        "button_label": "Test Connection"
+      },
+      "reset_cursor": {
+        "label": "Reset Cursor",
+        "description": "Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
+        "button_label": "Reset Cursor"
+      },
+      "clear_processed_messages": {
+        "label": "Clear Message Dedupe",
+        "description": "Clear the local processed-message cache used for Weixin retry safety.",
+        "button_label": "Clear Dedupe"
+      },
+      "logout": {
+        "label": "Logout Weixin",
+        "description": "Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
+        "button_label": "Logout"
+      }
     }
   },
-  "actions": {
-    "qr_login": {
-      "label": "Weixin QR Login",
-      "description": "Scan with Weixin to authorize this channel. The token is saved to a credentials file and is not pasted into the manual token field.",
-      "button_label": "Start QR Login"
-    },
-    "validate_credentials": {
-      "label": "Validate Credentials",
-      "description": "Check the saved Weixin credentials and gateway connection.",
-      "button_label": "Test Connection"
-    },
-    "reset_cursor": {
-      "label": "Reset Cursor",
-      "description": "Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
-      "button_label": "Reset Cursor"
-    },
-    "clear_processed_messages": {
-      "label": "Clear Message Dedupe",
-      "description": "Clear the local processed-message cache used for Weixin retry safety.",
-      "button_label": "Clear Dedupe"
-    },
-    "logout": {
-      "label": "Logout Weixin",
-      "description": "Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
-      "button_label": "Logout"
+  "contributions": {
+    "weixin:channel": {
+      "display_name": "Weixin",
+      "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
     }
   },
   "action_messages": {

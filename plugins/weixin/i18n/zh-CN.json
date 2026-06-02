@@ -1,16 +1,8 @@
 {
   "weixin": {
     "name": "微信",
-    "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。"
-  },
-  "contributions": {
-    "weixin:channel": {
-      "display_name": "微信",
-      "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。"
-    }
-  },
-  "fields": {
-    "weixin:channel": {
+    "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。",
+    "fields": {
       "bot_token": {
         "label": "手动机器人 Token",
         "description": "手动填写的 iLink bot token 备用项。扫码登录会把 token 保存到凭据文件里，因此这里通常保持为空。"
@@ -55,33 +47,39 @@
         "label": "轮询超时",
         "description": "getUpdates 长轮询超时时间，单位毫秒。"
       }
+    },
+    "actions": {
+      "qr_login": {
+        "label": "微信扫码登录",
+        "description": "用微信扫描二维码完成授权。token 会保存到凭据文件，不会填入手动 Token 字段。",
+        "button_label": "开始扫码登录"
+      },
+      "validate_credentials": {
+        "label": "校验微信连接",
+        "description": "检查已保存的微信凭据和网关连接是否可用。",
+        "button_label": "测试连接"
+      },
+      "reset_cursor": {
+        "label": "重置游标",
+        "description": "清除已保存的微信 getUpdates 游标，并从网关的下一位置重新连接。",
+        "button_label": "重置游标"
+      },
+      "clear_processed_messages": {
+        "label": "清除消息去重",
+        "description": "清除用于微信重试安全的本地已处理消息缓存。",
+        "button_label": "清除去重"
+      },
+      "logout": {
+        "label": "退出微信登录",
+        "description": "移除该账号已保存的微信凭据，直到重新扫码登录前停止通道。",
+        "button_label": "退出登录"
+      }
     }
   },
-  "actions": {
-    "qr_login": {
-      "label": "微信扫码登录",
-      "description": "用微信扫描二维码完成授权。token 会保存到凭据文件，不会填入手动 Token 字段。",
-      "button_label": "开始扫码登录"
-    },
-    "validate_credentials": {
-      "label": "校验微信连接",
-      "description": "检查已保存的微信凭据和网关连接是否可用。",
-      "button_label": "测试连接"
-    },
-    "reset_cursor": {
-      "label": "重置游标",
-      "description": "清除已保存的微信 getUpdates 游标，并从网关的下一位置重新连接。",
-      "button_label": "重置游标"
-    },
-    "clear_processed_messages": {
-      "label": "清除消息去重",
-      "description": "清除用于微信重试安全的本地已处理消息缓存。",
-      "button_label": "清除去重"
-    },
-    "logout": {
-      "label": "退出微信登录",
-      "description": "移除该账号已保存的微信凭据，直到重新扫码登录前停止通道。",
-      "button_label": "退出登录"
+  "contributions": {
+    "weixin:channel": {
+      "display_name": "微信",
+      "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。"
     }
   },
   "action_messages": {
