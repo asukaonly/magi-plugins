@@ -673,7 +673,7 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "version": "0.5.0",
+      "version": "0.5.1",
       "path": "plugins/screenshot_timeline",
       "description": "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory.",
       "description_i18n": {

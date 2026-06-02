@@ -105,8 +105,23 @@ def _settings_ui_blocks(prefix: str) -> list[SettingsUIBlockSpec]:
     ]
 
 
+# Settings that are config-file overridable but intentionally NOT shown in the
+# settings UI. These are internal extraction/sync machinery a normal user can't
+# act on meaningfully ("AX min content nodes", "wake Chromium apps", "how the
+# host pulls bursts"). Their defaults live in DEFAULT_SETTINGS + plugin.toml, so
+# power users can still override them via the settings config file. To re-expose
+# one, just drop it from this set. Keyed by the field's short name (last segment).
+_HIDDEN_FROM_UI = {
+    "ax_enabled",
+    "ax_wake",
+    "ax_min_content_chars",
+    "ax_min_content_nodes",
+    "sync_mode",
+}
+
+
 def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    return [
+    specs = [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
             type="switch",
@@ -339,6 +354,10 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             surface="timeline",
             order=140,
         ),
+    ]
+    return [
+        spec for spec in specs
+        if spec.key.rsplit(".", 1)[-1] not in _HIDDEN_FROM_UI
     ]
 
 
