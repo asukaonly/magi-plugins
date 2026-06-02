@@ -163,6 +163,198 @@ class WeixinApiClient:
             timeout_ms=DEFAULT_CONFIG_TIMEOUT_MS,
         )
 
+    # === Media upload (Phase A media-outbound) =============================
+    #
+    # The iLink image-send protocol is a 3-step dance:
+    #
+    #     1. POST ilink/bot/getuploadurl with plaintext + ciphertext sizes,
+    #        plaintext MD5, and the (base64) AES-128 key. Server replies
+    #        with ``upload_param`` (an opaque CDN credentials string),
+    #        ``upload_full_url`` (the CDN PUT endpoint), and the same for
+    #        the thumbnail.
+    #     2. PUT the AES-128-ECB-encrypted bytes to ``upload_full_url``
+    #        (and the encrypted thumbnail to its own URL).
+    #     3. POST ilink/bot/sendmessage with an item_list entry of
+    #        ``type=2 (IMAGE)`` whose ``image_item.media`` carries the
+    #        ``encrypt_query_param`` (= upload_param from step 1) and
+    #        ``aes_key`` (= base64 of the AES key) so the recipient can
+    #        decrypt.
+    #
+    # See ``media_upload.py`` for the crypto/thumbnail helpers that feed
+    # this flow, and ``adapter.py::_send_image_attachment`` for the
+    # orchestrator that ties getuploadurl → CDN PUT → send_image_message
+    # together for a single attachment dict.
+
+    async def get_upload_url(
+        self,
+        *,
+        filekey: str,
+        media_type: int,
+        to_user_id: str,
+        raw_size: int,
+        raw_md5: str,
+        cipher_size: int,
+        thumb_raw_size: int,
+        thumb_raw_md5: str,
+        thumb_cipher_size: int,
+        aes_key_b64: str,
+        no_need_thumb: bool = False,
+        timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
+    ) -> dict[str, Any]:
+        """Step 1 of the image-send flow — get pre-signed CDN params.
+
+        ``raw_*`` describe the plaintext file; ``cipher_size`` is the
+        AES-PKCS7-padded ciphertext length the client will PUT to the
+        CDN. ``aes_key_b64`` lets the server record the key so the
+        recipient device can decrypt by reading it back off the
+        ``image_item.media.aes_key`` field on inbound.
+        """
+        body: dict[str, Any] = {
+            "filekey": filekey,
+            "media_type": media_type,
+            "to_user_id": to_user_id,
+            "rawsize": raw_size,
+            "rawfilemd5": raw_md5,
+            "filesize": cipher_size,
+            "aeskey": aes_key_b64,
+            "base_info": self._base_info(),
+        }
+        if no_need_thumb:
+            body["no_need_thumb"] = True
+        else:
+            body["thumb_rawsize"] = thumb_raw_size
+            body["thumb_rawfilemd5"] = thumb_raw_md5
+            body["thumb_filesize"] = thumb_cipher_size
+        response = await self._request_json(
+            "POST", "ilink/bot/getuploadurl", body=body, timeout_ms=timeout_ms,
+        )
+        ret = response.get("ret")
+        errcode = response.get("errcode")
+        if (ret is not None and ret != 0) or (errcode is not None and errcode != 0):
+            message = response.get("errmsg") or response.get("message") or response
+            raise WeixinApiError(f"Weixin getuploadurl returned an error: {message}")
+        return response
+
+    async def upload_to_cdn(
+        self,
+        *,
+        upload_full_url: str,
+        encrypted_bytes: bytes,
+        timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
+    ) -> None:
+        """Step 2 — PUT the AES-encrypted bytes to the CDN endpoint
+        returned by ``get_upload_url``. The CDN treats the body as
+        opaque ciphertext; no JSON, no headers beyond Content-Length.
+        Any non-2xx response is fatal — callers should NOT retry
+        without first re-calling ``get_upload_url`` because the
+        upload credentials are typically single-use."""
+        await asyncio.to_thread(
+            self._upload_to_cdn_sync,
+            upload_full_url, encrypted_bytes, timeout_ms,
+        )
+
+    def _upload_to_cdn_sync(
+        self, upload_full_url: str, encrypted_bytes: bytes, timeout_ms: int | None,
+    ) -> None:
+        headers = {
+            "Content-Type": "application/octet-stream",
+            "Content-Length": str(len(encrypted_bytes)),
+        }
+        request = urllib.request.Request(
+            upload_full_url, data=encrypted_bytes, headers=headers, method="PUT",
+        )
+        timeout_s = (timeout_ms / 1000) if timeout_ms and timeout_ms > 0 else None
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_s) as response:
+                _ = response.read()  # drain
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            raise WeixinApiError(
+                f"Weixin CDN upload PUT HTTP {exc.code}: {detail}"
+            ) from exc
+        except Exception as exc:
+            if _is_timeout_error(exc):
+                raise WeixinApiTimeout(str(exc)) from exc
+            raise
+
+    async def send_image_message(
+        self,
+        *,
+        to_user_id: str,
+        image_param: str,
+        image_aes_key_b64: str,
+        image_size: int,
+        thumb_param: str | None,
+        thumb_aes_key_b64: str | None,
+        thumb_width: int | None,
+        thumb_height: int | None,
+        thumb_size: int | None,
+        context_token: str | None,
+        timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
+    ) -> str:
+        """Step 3 — post the message itself with ``item_list[type=2]``.
+
+        The CDNMedia fields (``encrypt_query_param`` + ``aes_key``) wire
+        the recipient back to the ciphertext on the CDN. The thumb
+        is optional but Weixin clients render a much better preview
+        when it's present, so we provide it whenever possible.
+        Returns the client-generated ``client_id`` so callers can build
+        a DeliveryReceipt that retract/revise can correlate later.
+        """
+        client_id = f"magi-weixin-{secrets.token_hex(12)}"
+        image_item: dict[str, Any] = {
+            "media": {
+                "encrypt_query_param": image_param,
+                "aes_key": image_aes_key_b64,
+            },
+            "mid_size": image_size,
+            "hd_size": image_size,
+        }
+        if (
+            thumb_param is not None
+            and thumb_aes_key_b64 is not None
+            and thumb_width is not None
+            and thumb_height is not None
+            and thumb_size is not None
+        ):
+            image_item["thumb_media"] = {
+                "encrypt_query_param": thumb_param,
+                "aes_key": thumb_aes_key_b64,
+            }
+            image_item["thumb_width"] = thumb_width
+            image_item["thumb_height"] = thumb_height
+            image_item["thumb_size"] = thumb_size
+        response = await self._request_json(
+            "POST",
+            "ilink/bot/sendmessage",
+            body={
+                "msg": {
+                    "from_user_id": "",
+                    "to_user_id": to_user_id,
+                    "client_id": client_id,
+                    "message_type": MESSAGE_TYPE_BOT,
+                    "message_state": MESSAGE_STATE_FINISH,
+                    "item_list": [
+                        {
+                            "type": MESSAGE_ITEM_IMAGE,
+                            "image_item": image_item,
+                        }
+                    ],
+                    "context_token": context_token or None,
+                },
+                "base_info": self._base_info(),
+            },
+            timeout_ms=timeout_ms,
+        )
+        ret = response.get("ret")
+        errcode = response.get("errcode")
+        if (ret is not None and ret != 0) or (errcode is not None and errcode != 0):
+            message = response.get("errmsg") or response.get("message") or response
+            raise WeixinApiError(
+                f"Weixin sendmessage(image) returned an error: {message}"
+            )
+        return client_id
+
     async def send_typing(
         self,
         *,

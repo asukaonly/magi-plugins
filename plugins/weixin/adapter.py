@@ -166,16 +166,205 @@ class WeixinChannel(Channel):
         ``client_id`` is what Weixin uses as its per-message identity.
         For multi-chunk sends, we return the LAST chunk's id (consistent
         with how telegram and chat_sse handle their receipts).
+
+        Phase A media-outbound: when ``content.attachments`` is non-empty,
+        each image attachment is AES-128-ECB-encrypted client-side,
+        uploaded to the iLink CDN, and sent as a follow-up image message
+        AFTER the text body — same ordering as Telegram. Non-image
+        attachments are currently logged-and-skipped (iLink does support
+        voice/file/video item types via the same 3-step pipeline, but
+        each needs its own metadata which isn't wired yet). The receipt
+        tracks the LAST sent ``client_id`` so a subsequent retract
+        operates on the most recent message.
         """
         client_ids = await self._send_text(
             text=content.text or "", target=target,
         )
+        attachments = list(content.attachments or ())
+        if attachments:
+            attachment_ids = await self._send_attachments(
+                attachments=attachments, target=target,
+            )
+            client_ids.extend(attachment_ids)
         return DeliveryReceipt(
             channel_id="weixin",
             external_message_id=client_ids[-1] if client_ids else None,
             delivered_at_ms=_now_ms(),
             magi_session_id=target.magi_session_id,
         )
+
+    async def _send_attachments(
+        self,
+        *,
+        attachments: list[dict[str, Any]],
+        target: ChannelTarget,
+    ) -> list[str]:
+        """Send each attachment via the iLink media pipeline.
+
+        Currently handles ``kind="image"`` only — non-image kinds are
+        logged and skipped rather than dropped silently. Best-effort per
+        attachment: one failure doesn't abort siblings.
+        """
+        if self._api is None or self._credentials is None:
+            raise RuntimeError("Weixin channel is not started")
+        to_user_id = await self._resolve_external_chat_id(target)
+        if not to_user_id:
+            raise RuntimeError(
+                "Weixin deliver(attachments): no external_chat_id resolvable for "
+                f"magi_session_id={target.magi_session_id!r}"
+            )
+        context_token = self._context_tokens.get(to_user_id)
+        client_ids: list[str] = []
+        for attachment in attachments:
+            kind = str(attachment.get("kind") or "").strip().lower()
+            if kind != "image":
+                logger.warning(
+                    "Weixin attachment skipped (only image is wired today) "
+                    "kind=%s attachment_id=%s original_name=%s",
+                    kind, attachment.get("attachment_id"),
+                    attachment.get("original_name"),
+                )
+                continue
+            try:
+                client_id = await self._send_image_attachment(
+                    attachment=attachment,
+                    to_user_id=to_user_id,
+                    context_token=context_token,
+                )
+                client_ids.append(client_id)
+            except Exception:
+                logger.exception(
+                    "Weixin attachment send failed attachment_id=%s "
+                    "storage_path=%s",
+                    attachment.get("attachment_id"),
+                    attachment.get("storage_path"),
+                )
+                # Keep going — best-effort across siblings.
+        return client_ids
+
+    async def _send_image_attachment(
+        self,
+        *,
+        attachment: dict[str, Any],
+        to_user_id: str,
+        context_token: str | None,
+    ) -> str:
+        """Encrypt → upload → send for one image. Returns iLink client_id.
+
+        The 3-step iLink flow:
+          1. getuploadurl → CDN credentials + PUT URLs (main + thumb).
+          2. PUT AES-128-ECB-encrypted ciphertext to each URL.
+          3. sendmessage with item_list[type=2] referencing CDNMedia.
+        """
+        from . import media_upload as _mu
+        from .api import MESSAGE_ITEM_IMAGE, WeixinApiError
+
+        storage_path = str(attachment.get("storage_path") or "").strip()
+        if not storage_path:
+            raise ValueError(
+                "attachment is missing storage_path; "
+                "host-side attachment_ingestion should always set it"
+            )
+        with open(storage_path, "rb") as fh:
+            plaintext = fh.read()
+
+        # --- AES-128 key + main file encryption ---
+        key = _mu.generate_aes_key()
+        ciphertext = _mu.aes_128_ecb_encrypt(plaintext, key)
+        raw_md5 = _mu.md5_hex(plaintext)
+        aes_key_b64 = _mu.b64encode(key)
+
+        # --- thumbnail (same key reused — matches openclaw-weixin convention) ---
+        try:
+            thumb_bytes, thumb_w, thumb_h = _mu.make_thumbnail(plaintext)
+            thumb_cipher = _mu.aes_128_ecb_encrypt(thumb_bytes, key)
+            thumb_raw_md5 = _mu.md5_hex(thumb_bytes)
+            no_need_thumb = False
+        except Exception:
+            # Pillow choked on this file (corrupted? unsupported format?).
+            # We can still send the full image; the recipient will see
+            # a generic placeholder instead of a preview.
+            logger.warning(
+                "Weixin thumbnail generation failed; sending without preview "
+                "attachment_id=%s", attachment.get("attachment_id"),
+            )
+            thumb_bytes = b""
+            thumb_cipher = b""
+            thumb_raw_md5 = ""
+            thumb_w = thumb_h = 0
+            no_need_thumb = True
+
+        filekey = str(attachment.get("attachment_id") or "").strip() \
+            or _mu.md5_hex(plaintext)
+
+        upload_resp = await self._api.get_upload_url(
+            filekey=filekey,
+            media_type=MESSAGE_ITEM_IMAGE,
+            to_user_id=to_user_id,
+            raw_size=len(plaintext),
+            raw_md5=raw_md5,
+            cipher_size=len(ciphertext),
+            thumb_raw_size=len(thumb_bytes),
+            thumb_raw_md5=thumb_raw_md5,
+            thumb_cipher_size=len(thumb_cipher),
+            aes_key_b64=aes_key_b64,
+            no_need_thumb=no_need_thumb,
+            timeout_ms=self._config.request_timeout_ms,
+        )
+
+        image_param = str(upload_resp.get("upload_param") or "")
+        image_full_url = str(upload_resp.get("upload_full_url") or "")
+        thumb_param = upload_resp.get("thumb_upload_param")
+        # Some iLink deployments return a separate ``thumb_upload_full_url``;
+        # if absent we skip the thumb upload step but still send the full
+        # image (the recipient just sees no preview).
+        thumb_full_url = upload_resp.get("thumb_upload_full_url")
+
+        if not image_full_url:
+            raise WeixinApiError(
+                "Weixin getuploadurl response missing upload_full_url"
+            )
+        await self._api.upload_to_cdn(
+            upload_full_url=image_full_url,
+            encrypted_bytes=ciphertext,
+            timeout_ms=self._config.request_timeout_ms,
+        )
+        if not no_need_thumb and thumb_full_url:
+            await self._api.upload_to_cdn(
+                upload_full_url=str(thumb_full_url),
+                encrypted_bytes=thumb_cipher,
+                timeout_ms=self._config.request_timeout_ms,
+            )
+
+        client_id = await self._api.send_image_message(
+            to_user_id=to_user_id,
+            image_param=image_param,
+            image_aes_key_b64=aes_key_b64,
+            image_size=len(plaintext),
+            thumb_param=str(thumb_param) if (thumb_param and not no_need_thumb) else None,
+            thumb_aes_key_b64=aes_key_b64 if not no_need_thumb else None,
+            thumb_width=thumb_w if not no_need_thumb else None,
+            thumb_height=thumb_h if not no_need_thumb else None,
+            thumb_size=len(thumb_bytes) if not no_need_thumb else None,
+            context_token=context_token,
+            timeout_ms=self._config.request_timeout_ms,
+        )
+        self._state.update_channel_status(
+            state="running",
+            running=True,
+            last_outbound_at_ms=_now_ms(),
+            last_outbound_chat_id=to_user_id,
+            last_outbound_client_id=client_id,
+            last_error="",
+        )
+        logger.info(
+            "Weixin outbound image sent to_user_id=%s client_id=%s "
+            "attachment_id=%s raw_bytes=%s cipher_bytes=%s",
+            to_user_id, client_id,
+            attachment.get("attachment_id"),
+            len(plaintext), len(ciphertext),
+        )
+        return client_id
 
     async def _resolve_external_chat_id(self, target: ChannelTarget) -> str:
         """Return the WeChat-side ``to_user_id`` for this target.
