@@ -906,7 +906,7 @@
       "name_i18n": {
         "zh-CN": "Telegram"
       },
-      "version": "0.1.2",
+      "version": "0.2.0",
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -1015,7 +1015,7 @@
       "name_i18n": {
         "zh-CN": "微信"
       },
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "plugins/weixin",
       "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
       "description_i18n": {
