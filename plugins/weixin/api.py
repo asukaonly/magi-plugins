@@ -300,6 +300,18 @@ class WeixinApiClient:
             "Content-Type": "application/octet-stream",
             "Content-Length": str(len(encrypted_bytes)),
         }
+        # CDN diagnostic logging: dump the full URL (truncated) so
+        # we can verify the host + query params are right. Plugin
+        # uses the SDK-provided logger to integrate with backend
+        # logging config.
+        from magi_plugin_sdk import get_logger
+        _log = get_logger("magi_plugin_weixin.api")
+        url_for_log = url if len(url) <= 400 else url[:400] + "...(truncated)"
+        _log.info(
+            "Weixin CDN POST → %s ciphertext_bytes=%d",
+            url_for_log, len(encrypted_bytes),
+        )
+
         request = urllib.request.Request(
             url, data=encrypted_bytes, headers=headers, method="POST",
         )
@@ -312,18 +324,42 @@ class WeixinApiClient:
                 download_param = (
                     response.headers.get("x-encrypted-param") or ""
                 ).strip()
-                _ = response.read()  # drain body
+                resp_body_drained = response.read()
+                if not download_param:
+                    _log.warning(
+                        "Weixin CDN POST 2xx but no x-encrypted-param "
+                        "header. resp_headers=%s body_preview=%s",
+                        dict(response.headers),
+                        resp_body_drained[:200],
+                    )
         except urllib.error.HTTPError as exc:
-            err_msg = ""
+            err_header = ""
+            err_body = ""
             try:
                 if exc.headers is not None:
-                    err_msg = (exc.headers.get("x-error-message") or "").strip()
+                    err_header = (exc.headers.get("x-error-message") or "").strip()
             except Exception:
                 pass
-            if not err_msg:
-                err_msg = exc.read().decode("utf-8", errors="replace")[:300]
+            try:
+                err_body = exc.read().decode("utf-8", errors="replace")[:500]
+            except Exception:
+                pass
+            # Surface BOTH the header and body in the error AND in the
+            # log — the 500 we hit had both empty, so we need to see
+            # the response headers to understand what the CDN is
+            # rejecting (auth? URL shape? POST not supported?).
+            try:
+                exc_headers_dump = dict(exc.headers) if exc.headers else {}
+            except Exception:
+                exc_headers_dump = {}
+            _log.error(
+                "Weixin CDN POST HTTP %s url=%s err_header=%r err_body=%r "
+                "resp_headers=%s",
+                exc.code, url_for_log, err_header, err_body, exc_headers_dump,
+            )
+            detail = err_header or err_body or "(no error detail in response)"
             raise WeixinApiError(
-                f"Weixin CDN upload POST HTTP {exc.code}: {err_msg}"
+                f"Weixin CDN upload POST HTTP {exc.code}: {detail}"
             ) from exc
         except Exception as exc:
             if _is_timeout_error(exc):

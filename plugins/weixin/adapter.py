@@ -441,9 +441,17 @@ class WeixinChannel(Channel):
             no_need_thumb=no_need_thumb,
             timeout_ms=self._config.request_timeout_ms,
         )
+        # Verbose dump — first 300 chars of every field so we can
+        # see what iLink actually returned. Some deployments return
+        # extra fields (CDN host hints, expiry stamps, etc.) we may
+        # need to use.
+        _resp_preview = {
+            k: (str(v)[:300] if v is not None else None)
+            for k, v in (upload_resp or {}).items()
+        }
         logger.info(
-            "Weixin upload URL response attachment_id=%s keys=%s",
-            attachment_id, sorted((upload_resp or {}).keys()),
+            "Weixin upload URL response attachment_id=%s keys=%s preview=%s",
+            attachment_id, sorted((upload_resp or {}).keys()), _resp_preview,
         )
 
         upload_param_val = str(upload_resp.get("upload_param") or "")
