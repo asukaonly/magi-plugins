@@ -296,9 +296,26 @@ class WeixinApiClient:
     def _upload_to_cdn_sync(
         self, url: str, encrypted_bytes: bytes, timeout_ms: int | None,
     ) -> str:
+        # Header set chosen to look like a modern browser fetch:
+        # the CDN edge may be rejecting Python-urllib/3.x as a bot,
+        # and the previous bare {Content-Type, Content-Length}
+        # request returned HTTP 500 with x-error-code=-5102031 and
+        # empty body. Adding User-Agent / Accept / Accept-Encoding /
+        # Connection mirrors what Node's fetch() (used by openclaw)
+        # sends by default — same shape the CDN is known to accept.
+        # urllib auto-sets Content-Length from data=bytes, so we
+        # don't include it explicitly (some servers reject mismatched
+        # / duplicated Content-Length).
         headers = {
             "Content-Type": "application/octet-stream",
-            "Content-Length": str(len(encrypted_bytes)),
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
         }
         # CDN diagnostic logging: dump the full URL (truncated) so
         # we can verify the host + query params are right. Plugin
