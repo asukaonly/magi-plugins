@@ -186,15 +186,33 @@ class WeixinChannel(Channel):
         tracks the LAST sent ``client_id`` so a subsequent retract
         operates on the most recent message.
         """
+        # Phase H+2 diagnostics: log every deliver entry so we can
+        # tell whether attachments are reaching the channel at all
+        # vs being lost upstream (e.g. orchestrator dropping them
+        # before fanout). Logged at INFO so it shows in default
+        # backend logs.
+        attachments_in = list(content.attachments or ())
+        attachment_kinds = [str(a.get("kind") or "?") for a in attachments_in]
+        logger.info(
+            "Weixin.deliver entry session=%s text_len=%d attachments=%d kinds=%s",
+            target.magi_session_id,
+            len(content.text or ""),
+            len(attachments_in),
+            attachment_kinds,
+        )
         client_ids = await self._send_text(
             text=content.text or "", target=target,
         )
-        attachments = list(content.attachments or ())
-        if attachments:
+        if attachments_in:
             attachment_ids = await self._send_attachments(
-                attachments=attachments, target=target,
+                attachments=attachments_in, target=target,
             )
             client_ids.extend(attachment_ids)
+            logger.info(
+                "Weixin.deliver attachments sent session=%s sent=%d/%d",
+                target.magi_session_id,
+                len(attachment_ids), len(attachments_in),
+            )
         return DeliveryReceipt(
             channel_id="weixin",
             external_message_id=client_ids[-1] if client_ids else None,
@@ -223,15 +241,17 @@ class WeixinChannel(Channel):
         """
         preview = request.preview or "(no preview)"
         # Compact, scannable format. Users on phones won't read long
-        # blocks of text — keep the tool name and the two commands
-        # prominent.
+        # blocks of text. The slash-command parser also accepts plain
+        # 同意 / 拒绝 (and ok / yes / no) when there's only one
+        # pending request, so we surface the natural-language path as
+        # primary and the explicit ID path as fallback.
         text = (
             f"⚠️ Magi 想运行工具:{request.tool_name}\n"
             f"\n"
             f"{preview}\n"
             f"\n"
-            f"回复 /approve {request.short_id} 同意\n"
-            f"回复 /deny {request.short_id} 拒绝"
+            f"回复 同意 或 拒绝\n"
+            f"(同时有多个时请加 ID: 同意 {request.short_id})"
         )
         try:
             await self._send_text(text=text, target=target)
@@ -311,14 +331,60 @@ class WeixinChannel(Channel):
         from . import media_upload as _mu
         from .api import MESSAGE_ITEM_IMAGE, WeixinApiError
 
+        attachment_id = str(attachment.get("attachment_id") or "")
+        logger.info(
+            "Weixin _send_image_attachment START attachment_id=%s to_user_id=%s "
+            "attachment_keys=%s",
+            attachment_id, to_user_id, sorted(attachment.keys()),
+        )
+
         storage_path = str(attachment.get("storage_path") or "").strip()
         if not storage_path:
-            raise ValueError(
-                "attachment is missing storage_path; "
-                "host-side attachment_ingestion should always set it"
+            # Defensive fallback: derive absolute from storage_rel_path
+            # which the chat layer always sets. Some upstream paths
+            # only carry the relative form (chat_messages.payload_json
+            # is the canonical example), so use it when storage_path
+            # is missing. Both point to the same file.
+            rel_path = str(attachment.get("storage_rel_path") or "").strip()
+            if rel_path:
+                from pathlib import Path
+                from magi_plugin_sdk import PluginRuntimePaths  # noqa: F401  (typing only)
+                # Best-effort: assume the standard runtime layout
+                # (~/.magi/data/...). Real-world this lives in
+                # magi.utils.runtime.get_runtime_paths but plugins
+                # shouldn't pull host internals — fall back to
+                # XDG-style default.
+                import os
+                base = Path(os.environ.get("MAGI_DATA_DIR") or
+                            (Path.home() / ".magi"))
+                storage_path = str(base / rel_path)
+                logger.info(
+                    "Weixin storage_path derived from rel: %s",
+                    storage_path,
+                )
+            else:
+                logger.error(
+                    "Weixin attachment missing both storage_path and "
+                    "storage_rel_path attachment_id=%s keys=%s",
+                    attachment_id, sorted(attachment.keys()),
+                )
+                raise ValueError(
+                    "attachment is missing storage_path; "
+                    "host-side attachment_ingestion should always set it"
+                )
+        try:
+            with open(storage_path, "rb") as fh:
+                plaintext = fh.read()
+        except FileNotFoundError:
+            logger.error(
+                "Weixin file not found attachment_id=%s storage_path=%s",
+                attachment_id, storage_path,
             )
-        with open(storage_path, "rb") as fh:
-            plaintext = fh.read()
+            raise
+        logger.info(
+            "Weixin file read OK attachment_id=%s size=%d",
+            attachment_id, len(plaintext),
+        )
 
         # --- AES-128 key + main file encryption ---
         key = _mu.generate_aes_key()
@@ -349,6 +415,12 @@ class WeixinChannel(Channel):
         filekey = str(attachment.get("attachment_id") or "").strip() \
             or _mu.md5_hex(plaintext)
 
+        logger.info(
+            "Weixin requesting upload URL attachment_id=%s filekey=%s "
+            "raw_size=%d cipher_size=%d thumb_raw_size=%d no_need_thumb=%s",
+            attachment_id, filekey, len(plaintext), len(ciphertext),
+            len(thumb_bytes), no_need_thumb,
+        )
         upload_resp = await self._api.get_upload_url(
             filekey=filekey,
             media_type=MESSAGE_ITEM_IMAGE,
@@ -363,6 +435,10 @@ class WeixinChannel(Channel):
             no_need_thumb=no_need_thumb,
             timeout_ms=self._config.request_timeout_ms,
         )
+        logger.info(
+            "Weixin upload URL response attachment_id=%s keys=%s",
+            attachment_id, sorted((upload_resp or {}).keys()),
+        )
 
         image_param = str(upload_resp.get("upload_param") or "")
         image_full_url = str(upload_resp.get("upload_full_url") or "")
@@ -373,19 +449,39 @@ class WeixinChannel(Channel):
         thumb_full_url = upload_resp.get("thumb_upload_full_url")
 
         if not image_full_url:
+            logger.error(
+                "Weixin upload URL response missing upload_full_url "
+                "attachment_id=%s response_keys=%s",
+                attachment_id, sorted((upload_resp or {}).keys()),
+            )
             raise WeixinApiError(
                 "Weixin getuploadurl response missing upload_full_url"
             )
+        logger.info(
+            "Weixin uploading main CDN attachment_id=%s url_host=%s "
+            "cipher_size=%d",
+            attachment_id,
+            image_full_url.split("/")[2] if "://" in image_full_url else "?",
+            len(ciphertext),
+        )
         await self._api.upload_to_cdn(
             upload_full_url=image_full_url,
             encrypted_bytes=ciphertext,
             timeout_ms=self._config.request_timeout_ms,
+        )
+        logger.info(
+            "Weixin main CDN upload OK attachment_id=%s",
+            attachment_id,
         )
         if not no_need_thumb and thumb_full_url:
             await self._api.upload_to_cdn(
                 upload_full_url=str(thumb_full_url),
                 encrypted_bytes=thumb_cipher,
                 timeout_ms=self._config.request_timeout_ms,
+            )
+            logger.info(
+                "Weixin thumb CDN upload OK attachment_id=%s",
+                attachment_id,
             )
 
         client_id = await self._api.send_image_message(
