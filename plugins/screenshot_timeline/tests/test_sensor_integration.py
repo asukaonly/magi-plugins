@@ -246,3 +246,29 @@ async def test_build_output_falls_back_to_ocr_when_ax_hollow(tmp_path: Path) -> 
     output = await sensor.build_output(item)
     assert output.content_blocks[0].value == "OCR FALLBACK TEXT"
     assert output.provenance["content_source"] == "ocr"
+
+
+@pytest.mark.asyncio
+async def test_captures_are_l1_only_and_never_reach_l2(tmp_path: Path) -> None:
+    """Screen OCR/AX text has no speaker attribution, so captures must stay out
+    of L2 cognition. A chat window captured on screen would otherwise let the
+    L2 extractor attribute a third party's words to the user (e.g. another
+    person's "我520入职" becomes a user:self fact) and balloon the extraction
+    prompt with huge AX dumps. Both gates must hold:
+
+      1. memory_policy.cognition_eligible is False  → host L2 staging skips
+         the event (see magi staging: ``if not event.cognition_eligible``).
+      2. l2_batch_policy() returns None             → never staged at all.
+
+    Captures are still written to L1 (ingest_target stays ``l1_only``) so the
+    "what was on my screen" retrieval keeps working.
+    """
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+
+    assert sensor.memory_policy.cognition_eligible is False
+    assert sensor.memory_policy.to_dict()["cognition_eligible"] is False
+    assert sensor.memory_policy.ingest_target == "l1_only"  # still searchable at L1
+
+    output = await sensor.build_output(_ax_item())
+    assert sensor.l2_batch_policy(output) is None

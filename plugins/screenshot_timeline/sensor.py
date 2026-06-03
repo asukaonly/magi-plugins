@@ -105,7 +105,12 @@ class ScreenshotSensor(SensorBase):
     default_interval: int = 60
     supports_pull_sync: bool = True
     update_key_fields: tuple[str, ...] = ("source_item_id",)
-    memory_policy: SensorMemoryPolicy = SensorMemoryPolicy()
+    # L1-only: screen OCR / AX text has no reliable speaker attribution, so it
+    # must NOT drive L2 cognition (entity/assertion extraction). A chat window
+    # captured on screen would otherwise attribute another person's words to the
+    # user (e.g. "三千院: 我520入职" -> user:self). Captures stay searchable at
+    # L1; they never reach the L2 extraction LLM.
+    memory_policy: SensorMemoryPolicy = SensorMemoryPolicy(cognition_eligible=False)
 
     def __init__(
         self,
@@ -372,13 +377,10 @@ class ScreenshotSensor(SensorBase):
         return str(item.get("source_item_id") or "")
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
-        return L2BatchPolicy(
-            owner=f"{self.source_type}:default",
-            catch_up_owner=f"{self.source_type}:catchup",
-            max_events=20,
-            min_ready_events=4,
-            max_wait_seconds=180,
-        )
+        # None -> these captures are never staged for L2 cognition. See
+        # ``memory_policy`` above: screen text is L1-only (no speaker
+        # attribution, and large OCR/AX dumps would balloon L2 prompt cost).
+        return None
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         """Hand off all captures queued since the last poll.
