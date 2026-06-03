@@ -18,6 +18,7 @@ from magi_plugin_sdk.channels import (
     ChannelTarget,
     OutboundContent,
 )
+from magi_plugin_sdk import ControlRequest
 from magi_plugin_sdk.delivery import DeliveryContent, DeliveryReceipt
 
 from .api import (
@@ -71,6 +72,14 @@ class _CachedTypingTicket:
 
 class WeixinChannel(Channel):
     """Bidirectional text channel backed by the Weixin iLink bot gateway."""
+
+    # === Phase H+2: opt into control-plane fanout ===
+    # WeChat has no inline-button primitive, so deliver_control_request
+    # renders the prompt as a text message with explicit ``/approve
+    # <short_id>`` / ``/deny <short_id>`` instructions. The user's
+    # text reply flows through the normal inbound path; CF-6's
+    # slash-command parser resolves the broker.
+    supports_control_requests = True
 
     def __init__(
         self,
@@ -192,6 +201,49 @@ class WeixinChannel(Channel):
             delivered_at_ms=_now_ms(),
             magi_session_id=target.magi_session_id,
         )
+
+    async def deliver_control_request(
+        self,
+        target: ChannelTarget,
+        request: ControlRequest,
+    ) -> None:
+        """Phase H+2 — render a permission prompt as a text message
+        with explicit slash-command instructions.
+
+        Unlike Telegram (inline buttons), WeChat has no out-of-band
+        UX for "tap to act" — the only reliable response primitive
+        is the user typing a reply. So we send a clear text block
+        telling the user exactly what to type. The host's CF-6
+        slash-command parser resolves the broker when the reply
+        arrives via _on_inbound_message.
+
+        Truncates preview defensively to keep the message under the
+        iLink text-length cap (the host already truncated to 200
+        chars; we leave room for the wrapping text).
+        """
+        preview = request.preview or "(no preview)"
+        # Compact, scannable format. Users on phones won't read long
+        # blocks of text — keep the tool name and the two commands
+        # prominent.
+        text = (
+            f"⚠️ Magi 想运行工具:{request.tool_name}\n"
+            f"\n"
+            f"{preview}\n"
+            f"\n"
+            f"回复 /approve {request.short_id} 同意\n"
+            f"回复 /deny {request.short_id} 拒绝"
+        )
+        try:
+            await self._send_text(text=text, target=target)
+        except Exception:
+            # _send_text already logs; swallow so the fanout in the
+            # host (DeliveryRouter.fanout_control_request) doesn't see
+            # an exception that aborts other channels.
+            logger.exception(
+                "Weixin deliver_control_request failed "
+                "session=%s short_id=%s",
+                target.magi_session_id, request.short_id,
+            )
 
     async def _send_attachments(
         self,
