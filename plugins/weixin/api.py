@@ -426,13 +426,23 @@ class WeixinApiClient:
         a DeliveryReceipt that retract/revise can correlate later.
         """
         client_id = f"magi-weixin-{secrets.token_hex(12)}"
+        # image_item shape matches openclaw send.ts:165-175 exactly:
+        # * ``media.encrypt_type: 1`` — required for the recipient
+        #   device to invoke the AES-128-ECB decrypt pipeline.
+        #   Previously omitted, so the recipient saw an image
+        #   message but couldn't render the bytes (server accepted
+        #   the upload, message arrived, but no preview).
+        # * ``mid_size`` only — NOT ``hd_size``. openclaw uses just
+        #   one size field; sending hd_size in addition may confuse
+        #   the client into hunting for an HD variant on the CDN
+        #   that doesn't exist.
         image_item: dict[str, Any] = {
             "media": {
                 "encrypt_query_param": image_param,
                 "aes_key": image_aes_key_b64,
+                "encrypt_type": 1,
             },
             "mid_size": image_size,
-            "hd_size": image_size,
         }
         if (
             thumb_param is not None
@@ -508,7 +518,16 @@ class WeixinApiClient:
         )
 
     def _base_info(self) -> dict[str, str]:
-        return {"channel_version": self.channel_version}
+        # Match openclaw's buildBaseInfo() (api.ts:202-207) — both
+        # ``channel_version`` and ``bot_agent`` are sent. The
+        # gateway uses ``bot_agent`` for bot identity tracking;
+        # omitting it may cause downstream rate-limit / quota
+        # policies to lump all our requests together with anything
+        # else that omits the field.
+        return {
+            "channel_version": self.channel_version,
+            "bot_agent": "openclaw",
+        }
 
     def _common_headers(self) -> dict[str, str]:
         headers = {
