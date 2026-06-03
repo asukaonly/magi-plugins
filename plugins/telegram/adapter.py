@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from magi_plugin_sdk import get_logger
+from magi_plugin_sdk import ControlRequest, get_logger
 from magi_plugin_sdk.channels import (
     Channel,
     ChannelMessageDispatcherProtocol,
@@ -66,6 +66,7 @@ class TelegramChannel(Channel):
         try:
             from telegram.ext import (
                 Application,
+                CallbackQueryHandler,
                 CommandHandler,
                 MessageHandler,
                 filters,
@@ -90,6 +91,14 @@ class TelegramChannel(Channel):
         self._application.add_handler(CommandHandler("ask", self._on_ask_command))
         self._application.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self._on_message)
+        )
+        # Phase H+2: button-tap callbacks from deliver_control_request
+        # are translated into synthesized /approve|/deny text messages
+        # routed through the normal inbound dispatch path so the host's
+        # CF-6 slash-command parser handles them with zero special
+        # cases on the host side.
+        self._application.add_handler(
+            CallbackQueryHandler(self._on_callback_query, pattern=r"^magi:(approve|deny):")
         )
 
         await self._application.initialize()
@@ -158,6 +167,19 @@ class TelegramChannel(Channel):
     # non-streaming channels; Telegram receives only the assembled deliver().
     supports_revision = True
     supports_attachments = True
+
+    # === Phase H+2: opt into control-plane fanout ===
+    # When the host fans out a permission prompt, we render it as a
+    # text message plus an inline keyboard with [✅ 同意][❌ 拒绝]
+    # buttons. The CallbackQueryHandler below translates a button
+    # press back into a synthesized ``/approve <short_id>`` /
+    # ``/deny <short_id>`` text message dispatched through the same
+    # inbound path, so the host's CF-6 slash-command parser handles
+    # the resolution exactly the same as if the user had typed the
+    # command. callback_data format: "magi:approve:<short_id>" —
+    # well under Telegram's 64-byte limit even for the longest
+    # short_id (6 chars from our derivation scheme).
+    supports_control_requests = True
 
     # === Attachment routing ===
     # Map ``DeliveryContent.attachments[i]["kind"]`` (from the host's
@@ -433,6 +455,172 @@ class TelegramChannel(Channel):
             f"Cannot extract message_id from external_message_id={ext!r}; "
             f"expected '<chat_id>:<message_id>' format"
         )
+
+    # === Phase H+2: control-plane fanout ====================================
+
+    async def deliver_control_request(
+        self,
+        target: ChannelTarget,
+        request: ControlRequest,
+    ) -> None:
+        """Render a permission prompt as a text message + inline
+        keyboard with [✅ 同意][❌ 拒绝] buttons.
+
+        Looks up the real Telegram chat_id from ``target.magi_session_id``
+        via the session_mapper — the host's fanout populates
+        magi_session_id but leaves external_chat_id empty so each
+        channel resolves its own native id.
+        """
+        if self._application is None:
+            return
+        if self._session_mapper is None:
+            logger.warning(
+                "Telegram deliver_control_request: session_mapper not "
+                "bound, cannot resolve chat_id"
+            )
+            return
+        # Look up the (channel_type, chat_id) row for this session.
+        mapping = await self._session_mapper.lookup_by_session(
+            target.magi_session_id
+        )
+        if mapping is None:
+            # No mapping = no chat_id known; nothing to render.
+            return
+        chat_id = int(mapping.external_chat_id)
+
+        try:
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        except ImportError:
+            return
+
+        # Truncate the preview defensively — host already truncated to
+        # 200 chars, but adding the surrounding text could spill over
+        # if a tool_name is very long.
+        preview = request.preview or "(no preview)"
+        text = (
+            f"⚠️ Magi 想运行 `{request.tool_name}`\n\n"
+            f"{preview}\n\n"
+            f"ID: `{request.short_id}`"
+        )
+        keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "✅ 同意",
+                        callback_data=f"magi:approve:{request.short_id}",
+                    ),
+                    InlineKeyboardButton(
+                        "❌ 拒绝",
+                        callback_data=f"magi:deny:{request.short_id}",
+                    ),
+                ]
+            ]
+        )
+        try:
+            await self._application.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                reply_markup=keyboard,
+                parse_mode="MarkdownV2",
+            )
+        except Exception:
+            # MarkdownV2 escape might fail for unusual preview text.
+            # Retry without parse_mode so the user still sees the
+            # prompt rather than the host hanging on broker.wait.
+            try:
+                await self._application.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    reply_markup=keyboard,
+                )
+            except Exception:
+                logger.exception(
+                    "Telegram deliver_control_request failed "
+                    "chat_id=%s short_id=%s",
+                    chat_id, request.short_id,
+                )
+
+    async def _on_callback_query(self, update: Any, context: Any) -> None:
+        """Handle button taps from deliver_control_request prompts.
+
+        Translates the callback_data ``magi:{verb}:{short_id}`` into
+        a synthesized ``/{verb} {short_id}`` text message dispatched
+        through the same path as a normal user message. The host's
+        CF-6 slash-command parser short-circuits it into
+        broker.resolve. Acknowledges the callback so Telegram clears
+        the "loading" spinner on the button immediately, with a brief
+        feedback string for confirmation.
+        """
+        query = update.callback_query
+        if query is None or query.data is None:
+            return
+        try:
+            # Acknowledge fast so the spinner clears even if dispatch
+            # is slow.
+            await query.answer()
+        except Exception:
+            pass
+
+        parts = query.data.split(":", 2)
+        if len(parts) != 3 or parts[0] != "magi":
+            return
+        _, verb, short_id = parts
+        if verb not in ("approve", "deny"):
+            return
+        if not short_id:
+            return
+
+        chat = update.effective_chat
+        user = update.effective_user
+        if chat is None or user is None:
+            return
+        if self._session_mapper is None or self._message_dispatcher is None:
+            return
+
+        external_user_id = str(user.id)
+        if not self._is_user_allowed(external_user_id):
+            return
+
+        # The button-tap path doesn't go through resolve_or_create —
+        # the session must already exist (otherwise there'd be no
+        # pending permission to approve). Look up.
+        mapping = await self._session_mapper.lookup(
+            "telegram", str(chat.id),
+        )
+        if mapping is None:
+            return
+
+        synth_text = f"/{verb} {short_id}"
+        outcome = await self._message_dispatcher.dispatch_user_message(
+            source="telegram",
+            user_id=mapping.magi_user_id,
+            session_id=mapping.magi_session_id,
+            message=synth_text,
+            metadata={
+                "channel_type": "telegram",
+                "external_chat_id": str(chat.id),
+                "external_user_id": external_user_id,
+                "via_callback_query": True,
+            },
+        )
+        # Brief inline acknowledgement so the user sees what happened
+        # without scrolling to find a separate confirmation message.
+        try:
+            verb_zh = "同意" if verb == "approve" else "拒绝"
+            ack_text = (
+                outcome.error_message
+                if outcome and outcome.error_message
+                else f"✓ 已{verb_zh}"
+            )
+            # Edit the original message to strip the buttons and show
+            # the result — prevents double-clicks and clutter.
+            await query.edit_message_reply_markup(reply_markup=None)
+            await context.bot.send_message(chat_id=chat.id, text=ack_text)
+        except Exception:
+            logger.debug(
+                "Telegram callback ack edit failed (non-fatal)",
+                exc_info=True,
+            )
 
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
         if self._application is None:
