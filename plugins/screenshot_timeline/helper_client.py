@@ -43,10 +43,15 @@ class HelperClient:
     request_timeout: float = 10.0
     restart_initial_delay: float = 1.0
     restart_max_delay: float = 60.0
+    # After this many consecutive request timeouts the helper is presumed
+    # wedged (not responding) and gets recycled (killed + respawned) instead
+    # of timing out forever against a hung process.
+    max_consecutive_timeouts: int = 3
     # Label used in the ManagedSubprocess PID registry. Set per-instance if
     # you spawn multiple helpers from the same plugin.
     managed_label: str = "screenshot_timeline.helper"
     _managed: Any | None = field(default=None, init=False)  # ManagedSubprocess
+    _consecutive_timeouts: int = field(default=0, init=False)
     _proc: asyncio.subprocess.Process | None = field(default=None, init=False)
     _read_task: asyncio.Task | None = field(default=None, init=False)
     _stderr_task: asyncio.Task | None = field(default=None, init=False)
@@ -151,30 +156,67 @@ class HelperClient:
             self._pending.pop(rid, None)
             raise HelperCrashedError("helper stdin closed") from exc
         try:
-            return await asyncio.wait_for(fut, timeout=self.request_timeout)
+            result = await asyncio.wait_for(fut, timeout=self.request_timeout)
         except asyncio.TimeoutError as exc:
             self._pending.pop(rid, None)
-            raise HelperTimeoutError(f"helper did not respond within {self.request_timeout}s for id={rid}") from exc
+            self._consecutive_timeouts += 1
+            if self._consecutive_timeouts >= self.max_consecutive_timeouts:
+                # Helper is wedged — kill it so the read loop EOFs and the
+                # supervisor respawns a fresh one. Reset so we don't recycle
+                # again until the replacement also wedges.
+                self._consecutive_timeouts = 0
+                logger.warning(
+                    "helper.unresponsive recycling after %d consecutive timeouts",
+                    self.max_consecutive_timeouts,
+                )
+                await self._recycle()
+            raise HelperTimeoutError(
+                f"helper did not respond within {self.request_timeout}s for id={rid}"
+            ) from exc
+        self._consecutive_timeouts = 0
+        return result
 
     async def _read_loop(self) -> None:
         assert self._proc is not None and self._proc.stdout is not None
-        proc = self._proc
+        stdout = self._proc.stdout
+        # Manual newline framing over read(): asyncio StreamReader.readline()
+        # raises LimitOverrunError once a line exceeds its 64KB limit, which
+        # used to crash this loop and kill the response channel (every probe
+        # then timed out at 10s). read() has no per-line limit, so large helper
+        # responses (big AX trees / OCR payloads) are read intact.
+        buf = bytearray()
         try:
             while True:
-                line = await proc.stdout.readline()
-                if not line:
-                    break
-                try:
-                    resp = json.loads(line.decode().strip())
-                except json.JSONDecodeError:
-                    logger.warning("helper.bad_json line=%r", line)
-                    continue
-                rid = str(resp.get("id") or "")
-                fut = self._pending.pop(rid, None)
-                if fut and not fut.done():
-                    fut.set_result(resp)
+                chunk = await stdout.read(65536)
+                if not chunk:
+                    break  # EOF — helper closed stdout / exited
+                buf.extend(chunk)
+                while True:
+                    nl = buf.find(b"\n")
+                    if nl < 0:
+                        break
+                    line = bytes(buf[:nl])
+                    del buf[: nl + 1]
+                    self._handle_line(line)
         finally:
             await self._on_helper_exit()
+
+    def _handle_line(self, line: bytes) -> None:
+        text = line.decode(errors="replace").strip()
+        if not text:
+            return
+        try:
+            resp = json.loads(text)
+        except json.JSONDecodeError:
+            logger.warning("helper.bad_json line=%r", line[:200])
+            return
+        rid = str(resp.get("id") or "")
+        fut = self._pending.pop(rid, None)
+        if fut and not fut.done():
+            # A real response proves the helper is alive — clear the wedged
+            # counter so one slow turn doesn't later trip the watchdog.
+            self._consecutive_timeouts = 0
+            fut.set_result(resp)
 
     async def _stderr_loop(self) -> None:
         assert self._proc is not None and self._proc.stderr is not None
@@ -188,10 +230,40 @@ class HelperClient:
         except asyncio.CancelledError:
             pass
 
+    async def _kill_proc(self, proc: Any, managed: Any) -> None:
+        """Force-terminate an abandoned helper process.
+
+        A read-loop exit can leave the OS process alive (a crashed reader, or a
+        helper that merely closed stdout). Without an explicit kill those linger
+        as spinning orphan processes that accumulate across respawns.
+        """
+        if managed is not None:
+            try:
+                await managed.shutdown(sigterm_grace_seconds=1.0, sigkill_grace_seconds=1.0)
+                return
+            except Exception:  # noqa: BLE001
+                logger.warning("helper.kill_managed_failed", exc_info=True)
+        if proc is not None and proc.returncode is None:
+            try:
+                proc.kill()
+                await asyncio.wait_for(proc.wait(), timeout=2.0)
+            except Exception:  # noqa: BLE001
+                logger.warning("helper.kill_failed", exc_info=True)
+
+    async def _recycle(self) -> None:
+        """Kill a wedged (non-responding) helper. Its stdout then EOFs, which
+        drives ``_read_loop`` -> ``_on_helper_exit`` -> respawn."""
+        await self._kill_proc(self._proc, self._managed)
+
     async def _on_helper_exit(self) -> None:
         proc = self._proc
+        managed = self._managed
         self._proc = None
+        self._managed = None
         self._alive_event.clear()
+        # Ensure the OS process is actually dead before respawning so a
+        # crashed/closed read loop can't leak a spinning orphan helper.
+        await self._kill_proc(proc, managed)
         # Fail any in-flight requests with crashed error
         for fut in list(self._pending.values()):
             if not fut.done():

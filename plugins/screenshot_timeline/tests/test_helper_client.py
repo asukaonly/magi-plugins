@@ -84,3 +84,50 @@ async def test_crash_triggers_respawn() -> None:
         assert resp["ok"] is True
     finally:
         await client.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_large_response_line_is_read() -> None:
+    """A helper response larger than asyncio's default 64KB readline limit must
+    be read intact, not crash the read loop. The crash previously killed the
+    response channel and made every subsequent probe time out."""
+    mod = _load()
+    client = _client(mod, request_timeout=2.0)
+    await client.start()
+    try:
+        resp = await client.request({"id": "big_1", "op": "big", "size": 200 * 1024})
+        assert resp["ok"] is True
+        assert len(resp["blob"]) == 200 * 1024
+        # The channel must still work afterwards (read loop didn't die).
+        resp2 = await client.request({"id": "after_big", "op": "probe_active_window"})
+        assert resp2["ok"] is True
+    finally:
+        await client.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_recycles_wedged_helper_after_consecutive_timeouts() -> None:
+    """A helper that stops responding must be recycled (killed + respawned)
+    after max_consecutive_timeouts, so a fresh helper serves later probes
+    instead of timing out forever against the wedged process."""
+    mod = _load()
+    client = _client(
+        mod,
+        request_timeout=0.3,
+        max_consecutive_timeouts=2,
+        restart_initial_delay=0.05,
+        restart_max_delay=0.1,
+    )
+    await client.start()
+    try:
+        first_pid = client._proc.pid
+        for i in range(2):
+            with pytest.raises(mod.HelperTimeoutError):
+                await client.request({"id": f"hang_{i}", "op": "hang"})
+        # Supervisor respawns a fresh helper after the watchdog recycles.
+        await asyncio.sleep(0.4)
+        resp = await client.request({"id": "after_hang", "op": "probe_active_window"})
+        assert resp["ok"] is True
+        assert client._proc is not None and client._proc.pid != first_pid
+    finally:
+        await client.shutdown()

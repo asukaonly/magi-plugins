@@ -81,6 +81,12 @@ def main() -> None:
         if op == "hang":
             time.sleep(30)
             continue
+        if op == "big":
+            # Emit a single NDJSON line far larger than asyncio StreamReader's
+            # default 64KB readline limit, to exercise large-response handling.
+            size = int(req.get("size", 200 * 1024))
+            emit({"id": rid, "ok": True, "blob": "x" * size})
+            continue
         emit({"id": rid, "ok": False,
               "error": {"code": "BAD_REQUEST", "message": f"unknown op {op}"}})
 
