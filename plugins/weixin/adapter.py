@@ -435,18 +435,47 @@ class WeixinChannel(Channel):
             no_need_thumb=no_need_thumb,
             timeout_ms=self._config.request_timeout_ms,
         )
+        # Dump first 500 chars of each value so we can see what
+        # iLink actually returned (the protocol comment claims
+        # upload_full_url is in here, but live iLink may return
+        # only upload_param — possibly with the URL embedded).
+        _resp_preview = {
+            k: (str(v)[:500] if v is not None else None)
+            for k, v in (upload_resp or {}).items()
+        }
         logger.info(
-            "Weixin upload URL response attachment_id=%s keys=%s",
+            "Weixin upload URL response attachment_id=%s keys=%s preview=%s",
             attachment_id, sorted((upload_resp or {}).keys()),
+            _resp_preview,
         )
 
         image_param = str(upload_resp.get("upload_param") or "")
         image_full_url = str(upload_resp.get("upload_full_url") or "")
+
+        # Phase H+2 protocol-drift defense: some iLink deployments
+        # return ONLY upload_param without a separate
+        # upload_full_url. In that case upload_param is often
+        # itself a fully-qualified PUT URL (or includes one as a
+        # prefix). Detect and use it directly.
+        if not image_full_url and image_param.startswith(("http://", "https://")):
+            image_full_url = image_param
+            logger.info(
+                "Weixin upload_full_url derived from upload_param "
+                "attachment_id=%s url_host=%s",
+                attachment_id,
+                image_full_url.split("/")[2] if "://" in image_full_url else "?",
+            )
         thumb_param = upload_resp.get("thumb_upload_param")
         # Some iLink deployments return a separate ``thumb_upload_full_url``;
         # if absent we skip the thumb upload step but still send the full
         # image (the recipient just sees no preview).
         thumb_full_url = upload_resp.get("thumb_upload_full_url")
+        # Same protocol-drift fallback as image_full_url: if the
+        # standalone URL field is absent but thumb_upload_param is
+        # itself a URL, use it directly.
+        if not thumb_full_url and isinstance(thumb_param, str) and \
+                thumb_param.startswith(("http://", "https://")):
+            thumb_full_url = thumb_param
 
         if not image_full_url:
             logger.error(
