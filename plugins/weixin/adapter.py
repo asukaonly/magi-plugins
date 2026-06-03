@@ -390,27 +390,33 @@ class WeixinChannel(Channel):
         key = _mu.generate_aes_key()
         ciphertext = _mu.aes_128_ecb_encrypt(plaintext, key)
         raw_md5 = _mu.md5_hex(plaintext)
-        aes_key_b64 = _mu.b64encode(key)
+        # iLink protocol uses TWO encodings of the same AES key:
+        #   - aes_key_hex (32 lowercase hex chars) → in getuploadurl
+        #     body's "aeskey" field. Verified against
+        #     openclaw-weixin src/cdn/upload.ts:81
+        #     ``aeskey: aeskey.toString("hex")``.
+        #   - aes_key_msg_b64 (base64 of the hex string's UTF-8
+        #     bytes) → in sendmessage's media.aes_key field.
+        #     Verified against openclaw src/messaging/send.ts:
+        #     ``aes_key: Buffer.from(uploaded.aeskey).toString("base64")``
+        #     where uploaded.aeskey is the hex string. Note this
+        #     is base64-of-hex-string, NOT base64-of-raw-key-bytes.
+        aes_key_hex = key.hex()
+        aes_key_msg_b64 = _mu.b64encode(aes_key_hex.encode("utf-8"))
 
-        # --- thumbnail (same key reused — matches openclaw-weixin convention) ---
-        try:
-            thumb_bytes, thumb_w, thumb_h = _mu.make_thumbnail(plaintext)
-            thumb_cipher = _mu.aes_128_ecb_encrypt(thumb_bytes, key)
-            thumb_raw_md5 = _mu.md5_hex(thumb_bytes)
-            no_need_thumb = False
-        except Exception:
-            # Pillow choked on this file (corrupted? unsupported format?).
-            # We can still send the full image; the recipient will see
-            # a generic placeholder instead of a preview.
-            logger.warning(
-                "Weixin thumbnail generation failed; sending without preview "
-                "attachment_id=%s", attachment.get("attachment_id"),
-            )
-            thumb_bytes = b""
-            thumb_cipher = b""
-            thumb_raw_md5 = ""
-            thumb_w = thumb_h = 0
-            no_need_thumb = True
+        # --- thumbnail: openclaw reference (src/cdn/upload.ts:80)
+        # unconditionally sends ``no_need_thumb: true`` — the server
+        # generates previews from the uploaded ciphertext. Our prior
+        # client-side thumbnail pipeline was a guess from outdated
+        # docs; dropping it removes a moving part that doesn't add
+        # value. The thumb-related fields below are still computed
+        # for compat with get_upload_url's signature but no actual
+        # thumb is uploaded. ---
+        no_need_thumb = True
+        thumb_bytes = b""
+        thumb_cipher = b""
+        thumb_raw_md5 = ""
+        thumb_w = thumb_h = 0
 
         filekey = str(attachment.get("attachment_id") or "").strip() \
             or _mu.md5_hex(plaintext)
@@ -431,98 +437,63 @@ class WeixinChannel(Channel):
             thumb_raw_size=len(thumb_bytes),
             thumb_raw_md5=thumb_raw_md5,
             thumb_cipher_size=len(thumb_cipher),
-            aes_key_b64=aes_key_b64,
+            aes_key_hex=aes_key_hex,
             no_need_thumb=no_need_thumb,
             timeout_ms=self._config.request_timeout_ms,
         )
-        # Dump first 500 chars of each value so we can see what
-        # iLink actually returned (the protocol comment claims
-        # upload_full_url is in here, but live iLink may return
-        # only upload_param — possibly with the URL embedded).
-        _resp_preview = {
-            k: (str(v)[:500] if v is not None else None)
-            for k, v in (upload_resp or {}).items()
-        }
         logger.info(
-            "Weixin upload URL response attachment_id=%s keys=%s preview=%s",
+            "Weixin upload URL response attachment_id=%s keys=%s",
             attachment_id, sorted((upload_resp or {}).keys()),
-            _resp_preview,
         )
 
-        image_param = str(upload_resp.get("upload_param") or "")
-        image_full_url = str(upload_resp.get("upload_full_url") or "")
+        upload_param_val = str(upload_resp.get("upload_param") or "")
+        upload_full_url_val = str(upload_resp.get("upload_full_url") or "")
 
-        # Phase H+2 protocol-drift defense: some iLink deployments
-        # return ONLY upload_param without a separate
-        # upload_full_url. In that case upload_param is often
-        # itself a fully-qualified PUT URL (or includes one as a
-        # prefix). Detect and use it directly.
-        if not image_full_url and image_param.startswith(("http://", "https://")):
-            image_full_url = image_param
-            logger.info(
-                "Weixin upload_full_url derived from upload_param "
-                "attachment_id=%s url_host=%s",
-                attachment_id,
-                image_full_url.split("/")[2] if "://" in image_full_url else "?",
-            )
-        thumb_param = upload_resp.get("thumb_upload_param")
-        # Some iLink deployments return a separate ``thumb_upload_full_url``;
-        # if absent we skip the thumb upload step but still send the full
-        # image (the recipient just sees no preview).
-        thumb_full_url = upload_resp.get("thumb_upload_full_url")
-        # Same protocol-drift fallback as image_full_url: if the
-        # standalone URL field is absent but thumb_upload_param is
-        # itself a URL, use it directly.
-        if not thumb_full_url and isinstance(thumb_param, str) and \
-                thumb_param.startswith(("http://", "https://")):
-            thumb_full_url = thumb_param
-
-        if not image_full_url:
-            logger.error(
-                "Weixin upload URL response missing upload_full_url "
-                "attachment_id=%s response_keys=%s",
-                attachment_id, sorted((upload_resp or {}).keys()),
-            )
-            raise WeixinApiError(
-                "Weixin getuploadurl response missing upload_full_url"
-            )
+        # CDN upload — new signature handles both response shapes:
+        #   - has upload_full_url → use it directly
+        #   - has only upload_param → build URL from cdn_base + param
+        # Returns the download_encrypted_query_param (x-encrypted-param
+        # response header) — that's the token to embed in sendmessage,
+        # NOT the upload_param we just used to upload.
         logger.info(
-            "Weixin uploading main CDN attachment_id=%s url_host=%s "
-            "cipher_size=%d",
+            "Weixin uploading main CDN attachment_id=%s "
+            "have_full_url=%s have_param=%s cipher_size=%d",
             attachment_id,
-            image_full_url.split("/")[2] if "://" in image_full_url else "?",
+            bool(upload_full_url_val), bool(upload_param_val),
             len(ciphertext),
         )
-        await self._api.upload_to_cdn(
-            upload_full_url=image_full_url,
+        image_download_param = await self._api.upload_to_cdn(
+            upload_full_url=upload_full_url_val or None,
+            upload_param=upload_param_val or None,
+            filekey=filekey,
+            cdn_base_url=self._config.cdn_base_url,
             encrypted_bytes=ciphertext,
             timeout_ms=self._config.request_timeout_ms,
         )
         logger.info(
-            "Weixin main CDN upload OK attachment_id=%s",
-            attachment_id,
+            "Weixin main CDN upload OK attachment_id=%s "
+            "download_param_len=%d",
+            attachment_id, len(image_download_param),
         )
-        if not no_need_thumb and thumb_full_url:
-            await self._api.upload_to_cdn(
-                upload_full_url=str(thumb_full_url),
-                encrypted_bytes=thumb_cipher,
-                timeout_ms=self._config.request_timeout_ms,
-            )
-            logger.info(
-                "Weixin thumb CDN upload OK attachment_id=%s",
-                attachment_id,
-            )
+        # Thumb upload removed — openclaw reference uses
+        # ``no_need_thumb: true`` unconditionally (server generates
+        # the preview). See above for the rationale.
 
+        # send_image_message's ``image_param`` is semantically
+        # the CDN DOWNLOAD token (image_download_param), NOT the
+        # upload_param. Previously misnamed/misrouted; verified
+        # against openclaw src/messaging/send.ts which uses
+        # ``uploaded.downloadEncryptedQueryParam``.
         client_id = await self._api.send_image_message(
             to_user_id=to_user_id,
-            image_param=image_param,
-            image_aes_key_b64=aes_key_b64,
-            image_size=len(plaintext),
-            thumb_param=str(thumb_param) if (thumb_param and not no_need_thumb) else None,
-            thumb_aes_key_b64=aes_key_b64 if not no_need_thumb else None,
-            thumb_width=thumb_w if not no_need_thumb else None,
-            thumb_height=thumb_h if not no_need_thumb else None,
-            thumb_size=len(thumb_bytes) if not no_need_thumb else None,
+            image_param=image_download_param,
+            image_aes_key_b64=aes_key_msg_b64,
+            image_size=len(ciphertext),
+            thumb_param=None,
+            thumb_aes_key_b64=None,
+            thumb_width=None,
+            thumb_height=None,
+            thumb_size=None,
             context_token=context_token,
             timeout_ms=self._config.request_timeout_ms,
         )

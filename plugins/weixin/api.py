@@ -197,17 +197,23 @@ class WeixinApiClient:
         thumb_raw_size: int,
         thumb_raw_md5: str,
         thumb_cipher_size: int,
-        aes_key_b64: str,
+        aes_key_hex: str,
         no_need_thumb: bool = False,
         timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
     ) -> dict[str, Any]:
         """Step 1 of the image-send flow — get pre-signed CDN params.
 
         ``raw_*`` describe the plaintext file; ``cipher_size`` is the
-        AES-PKCS7-padded ciphertext length the client will PUT to the
-        CDN. ``aes_key_b64`` lets the server record the key so the
-        recipient device can decrypt by reading it back off the
-        ``image_item.media.aes_key`` field on inbound.
+        AES-PKCS7-padded ciphertext length the client will POST to
+        the CDN.
+
+        ``aes_key_hex`` is the AES-128 key as a 32-char lowercase
+        hex string (NOT base64). Verified against openclaw-weixin
+        reference (src/cdn/upload.ts:81): ``aeskey:
+        aeskey.toString("hex")``. The previous ``aes_key_b64``
+        parameter name was misleading and caused the iLink server
+        to record an unusable key, so the message-side recipient
+        couldn't decrypt the image.
         """
         body: dict[str, Any] = {
             "filekey": filekey,
@@ -216,7 +222,7 @@ class WeixinApiClient:
             "rawsize": raw_size,
             "rawfilemd5": raw_md5,
             "filesize": cipher_size,
-            "aeskey": aes_key_b64,
+            "aeskey": aes_key_hex,
             "base_info": self._base_info(),
         }
         if no_need_thumb:
@@ -238,44 +244,98 @@ class WeixinApiClient:
     async def upload_to_cdn(
         self,
         *,
-        upload_full_url: str,
+        upload_full_url: str | None,
+        upload_param: str | None,
+        filekey: str,
+        cdn_base_url: str,
         encrypted_bytes: bytes,
         timeout_ms: int = DEFAULT_API_TIMEOUT_MS,
-    ) -> None:
-        """Step 2 — PUT the AES-encrypted bytes to the CDN endpoint
-        returned by ``get_upload_url``. The CDN treats the body as
-        opaque ciphertext; no JSON, no headers beyond Content-Length.
-        Any non-2xx response is fatal — callers should NOT retry
-        without first re-calling ``get_upload_url`` because the
-        upload credentials are typically single-use."""
-        await asyncio.to_thread(
-            self._upload_to_cdn_sync,
-            upload_full_url, encrypted_bytes, timeout_ms,
+    ) -> str:
+        """Step 2 — POST AES-encrypted bytes to the CDN, return the
+        download token (``x-encrypted-param`` response header).
+
+        Protocol verified against Tencent/openclaw-weixin reference
+        (src/cdn/cdn-upload.ts + src/cdn/cdn-url.ts):
+
+        * **Method is POST** (not PUT — earlier comment was wrong).
+        * **URL**: prefer server-returned ``upload_full_url``; when
+          absent (current iLink shape), build
+          ``{cdn_base}/upload?encrypted_query_param={upload_param}
+          &filekey={filekey}``.
+        * **Body**: opaque AES-128-ECB ciphertext.
+        * **Response**: ``x-encrypted-param`` header → the
+          ``encrypt_query_param`` value to embed in the subsequent
+          sendmessage. This is a DIFFERENT token from the
+          ``upload_param`` we just used to upload.
+        * **Error handling**: 4xx aborts immediately; 5xx may be
+          retried but credentials are single-use, so caller must
+          re-call ``get_upload_url`` first. We do not retry here.
+
+        Returns the download_encrypted_query_param (header value)
+        — caller passes this into ``send_image_message``'s
+        ``image_param`` / ``download_query_param``.
+        """
+        if upload_full_url and upload_full_url.strip():
+            url = upload_full_url.strip()
+        elif upload_param:
+            url = (
+                f"{cdn_base_url.rstrip('/')}/upload"
+                f"?encrypted_query_param="
+                f"{urllib.parse.quote(upload_param, safe='')}"
+                f"&filekey={urllib.parse.quote(filekey, safe='')}"
+            )
+        else:
+            raise WeixinApiError(
+                "Weixin CDN upload: neither upload_full_url nor "
+                "upload_param available in getuploadurl response"
+            )
+        return await asyncio.to_thread(
+            self._upload_to_cdn_sync, url, encrypted_bytes, timeout_ms,
         )
 
     def _upload_to_cdn_sync(
-        self, upload_full_url: str, encrypted_bytes: bytes, timeout_ms: int | None,
-    ) -> None:
+        self, url: str, encrypted_bytes: bytes, timeout_ms: int | None,
+    ) -> str:
         headers = {
             "Content-Type": "application/octet-stream",
             "Content-Length": str(len(encrypted_bytes)),
         }
         request = urllib.request.Request(
-            upload_full_url, data=encrypted_bytes, headers=headers, method="PUT",
+            url, data=encrypted_bytes, headers=headers, method="POST",
         )
         timeout_s = (timeout_ms / 1000) if timeout_ms and timeout_ms > 0 else None
         try:
             with urllib.request.urlopen(request, timeout=timeout_s) as response:
-                _ = response.read()  # drain
+                # Read the download token BEFORE draining body — urllib
+                # exposes headers via response.headers regardless of
+                # body read order, but be explicit.
+                download_param = (
+                    response.headers.get("x-encrypted-param") or ""
+                ).strip()
+                _ = response.read()  # drain body
         except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
+            err_msg = ""
+            try:
+                if exc.headers is not None:
+                    err_msg = (exc.headers.get("x-error-message") or "").strip()
+            except Exception:
+                pass
+            if not err_msg:
+                err_msg = exc.read().decode("utf-8", errors="replace")[:300]
             raise WeixinApiError(
-                f"Weixin CDN upload PUT HTTP {exc.code}: {detail}"
+                f"Weixin CDN upload POST HTTP {exc.code}: {err_msg}"
             ) from exc
         except Exception as exc:
             if _is_timeout_error(exc):
                 raise WeixinApiTimeout(str(exc)) from exc
             raise
+
+        if not download_param:
+            raise WeixinApiError(
+                "Weixin CDN upload response missing x-encrypted-param "
+                "header (the download token for sendmessage)"
+            )
+        return download_param
 
     async def send_image_message(
         self,
