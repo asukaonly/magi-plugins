@@ -30,6 +30,21 @@ MESSAGE_ITEM_IMAGE = 2
 MESSAGE_ITEM_VOICE = 3
 MESSAGE_ITEM_FILE = 4
 MESSAGE_ITEM_VIDEO = 5
+
+# === Upload media-type enum — DIFFERENT enum from MESSAGE_ITEM_* ===
+# These are for the ``media_type`` field in ``getuploadurl`` request
+# bodies. openclaw-weixin (``src/api/types.ts:25-30``) defines:
+#   UploadMediaType = { IMAGE: 1, VIDEO: 2, FILE: 3, VOICE: 4 }
+# Note IMAGE=1 here, NOT 2 — collision with MessageItemType.IMAGE=2
+# (which is for ``item_list[].type`` in sendmessage). Previously this
+# plugin reused MESSAGE_ITEM_IMAGE=2 for the upload media_type call,
+# which made iLink interpret image uploads as VIDEO uploads — the
+# server then 500'd with cryptic ``x-error-code: -5102031`` because
+# the cipher payload didn't match the VIDEO-pipeline validations.
+UPLOAD_MEDIA_TYPE_IMAGE = 1
+UPLOAD_MEDIA_TYPE_VIDEO = 2
+UPLOAD_MEDIA_TYPE_FILE = 3
+UPLOAD_MEDIA_TYPE_VOICE = 4
 TYPING_STATUS_TYPING = 1
 
 
@@ -303,19 +318,15 @@ class WeixinApiClient:
         # empty body. Adding User-Agent / Accept / Accept-Encoding /
         # Connection mirrors what Node's fetch() (used by openclaw)
         # sends by default — same shape the CDN is known to accept.
-        # urllib auto-sets Content-Length from data=bytes, so we
-        # don't include it explicitly (some servers reject mismatched
-        # / duplicated Content-Length).
+        # Match openclaw-weixin EXACTLY (src/cdn/cdn-upload.ts:42-46):
+        # only Content-Type, nothing else. The previous Chrome-style
+        # header set was a guess that didn't help; the actual cause
+        # of -5102031 was the wrong upload media_type sent in the
+        # PRIOR getuploadurl call (see UPLOAD_MEDIA_TYPE_IMAGE
+        # constant in this file). Keeping headers minimal matches
+        # the proven-working reference.
         headers = {
             "Content-Type": "application/octet-stream",
-            "User-Agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
         }
         # CDN diagnostic logging: dump the full URL (truncated) so
         # we can verify the host + query params are right. Plugin

@@ -329,7 +329,7 @@ class WeixinChannel(Channel):
           3. sendmessage with item_list[type=2] referencing CDNMedia.
         """
         from . import media_upload as _mu
-        from .api import MESSAGE_ITEM_IMAGE, WeixinApiError
+        from .api import UPLOAD_MEDIA_TYPE_IMAGE, WeixinApiError
 
         attachment_id = str(attachment.get("attachment_id") or "")
         logger.info(
@@ -418,8 +418,14 @@ class WeixinChannel(Channel):
         thumb_raw_md5 = ""
         thumb_w = thumb_h = 0
 
-        filekey = str(attachment.get("attachment_id") or "").strip() \
-            or _mu.md5_hex(plaintext)
+        # filekey: per-upload random hex (matches openclaw
+        # src/cdn/upload.ts:66 ``crypto.randomBytes(16).toString("hex")``).
+        # Previously this plugin reused ``attachment_id`` as the
+        # filekey, which made retries of the same attachment collide
+        # on the iLink server's internal dedup table. A fresh random
+        # filekey per upload eliminates that whole class of issue.
+        import secrets as _secrets
+        filekey = _secrets.token_hex(16)
 
         logger.info(
             "Weixin requesting upload URL attachment_id=%s filekey=%s "
@@ -429,7 +435,7 @@ class WeixinChannel(Channel):
         )
         upload_resp = await self._api.get_upload_url(
             filekey=filekey,
-            media_type=MESSAGE_ITEM_IMAGE,
+            media_type=UPLOAD_MEDIA_TYPE_IMAGE,
             to_user_id=to_user_id,
             raw_size=len(plaintext),
             raw_md5=raw_md5,
