@@ -55,7 +55,7 @@ def _fields() -> list[ExtensionFieldSpec]:
             key=f"{_PREFIX}.sync_interval_minutes", type="number",
             label="Sync Interval (minutes)",
             description="How often to rescan the vault for changes.",
-            default=10, section="general", surface="timeline", order=50,
+            default=10, min=1, max=1440, section="general", surface="timeline", order=50,
         ),
     ]
 
