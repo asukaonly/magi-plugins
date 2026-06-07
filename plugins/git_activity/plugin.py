@@ -126,6 +126,17 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
                 depends_on_key=f"{prefix}.initial_sync_policy",
                 depends_on_values=["lookback_days"],
             ),
+            ExtensionFieldSpec(
+                key=f"{prefix}.repos",
+                type="path",
+                label="Repository Folders",
+                description="Select one or more Git repository folders to monitor.",
+                default=[],
+                required=True,
+                section="activation",
+                surface="timeline",
+                order=30,
+            ),
         ],
     )
 
