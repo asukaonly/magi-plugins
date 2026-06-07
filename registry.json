@@ -521,7 +521,7 @@
       },
       "version": "0.1.0",
       "path": "plugins/obsidian-vault",
-      "description": "Optional. Reads on-screen-free, on-device markdown notes from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder.",
+      "description": "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder.",
       "description_i18n": {
         "zh-CN": "可选。在本地读取 Obsidian 笔记库的 markdown（含 wikilink、标签、frontmatter），让 Magi 把你写的内容和其他活动连起来。默认关闭；笔记不出本机，任意文件夹都可排除。"
       },
