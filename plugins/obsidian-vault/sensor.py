@@ -117,6 +117,70 @@ class ObsidianVaultSensor(SensorBase):
             relation_candidates=relation_candidates,
         )
 
+    def _resolve_settings(self, context: SensorSyncContext) -> dict[str, Any]:
+        """Merge constructor defaults with live plugin settings for this sensor."""
+        sensors = context.plugin_settings.get("sensors", {})
+        live = sensors.get("obsidian_vault", {}) if isinstance(sensors, dict) else {}
+        return {
+            "vault_path": live.get("vault_path", self._vault_path) or "",
+            "exclude_folders": live.get("exclude_folders", self._exclude_folders) or [],
+            "cognition_exclude_folders": live.get(
+                "cognition_exclude_folders", self._cognition_exclude_folders
+            ) or [],
+        }
+
+    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        settings = self._resolve_settings(context)
+        vault_path = str(settings["vault_path"]).strip()
+        if not vault_path:
+            return SensorSyncResult(items=[], next_cursor=context.last_cursor,
+                                    watermark_ts=time.time(),
+                                    stats={"count": 0, "error": "no vault_path"})
+
+        vault_root = Path(vault_path).expanduser()
+        if not vault_root.is_dir():
+            return SensorSyncResult(items=[], next_cursor=context.last_cursor,
+                                    watermark_ts=time.time(),
+                                    stats={"count": 0, "error": "vault_path not a directory"})
+
+        try:
+            since = float(context.last_cursor) if context.last_cursor else 0.0
+        except (TypeError, ValueError):
+            since = 0.0
+
+        exclude = list(settings["exclude_folders"])
+        search_only = list(settings["cognition_exclude_folders"])
+
+        items: list[dict[str, Any]] = []
+        max_mtime = since
+        scanned = 0
+        for path in walk_markdown(vault_root):
+            rel = path.relative_to(vault_root).as_posix()
+            tier = classify_folder(rel, exclude, search_only)
+            if tier == "exclude":
+                continue
+            if tier != self._tier:
+                continue  # this instance only handles its own tier
+            mtime = path.stat().st_mtime
+            if mtime <= since:
+                continue
+            scanned += 1
+            note = parse_note(path, vault_root)
+            note["source_item_id"] = self.source_item_identity(note)
+            items.append(note)
+            if mtime > max_mtime:
+                max_mtime = mtime
+            if len(items) >= int(context.limit or 1000):
+                break
+
+        items.sort(key=lambda it: float(it.get("mtime") or 0.0), reverse=True)
+        return SensorSyncResult(
+            items=items,
+            next_cursor=str(max_mtime) if max_mtime > 0 else context.last_cursor,
+            watermark_ts=max_mtime or time.time(),
+            stats={"count": len(items), "tier": self._tier},
+        )
+
     async def build_output(self, item: dict) -> SensorOutput:
         body = str(item.get("body") or "")
         title = str(item.get("title") or "").strip() or None

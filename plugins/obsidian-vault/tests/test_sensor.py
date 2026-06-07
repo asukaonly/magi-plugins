@@ -89,3 +89,68 @@ def test_extract_metadata_emits_entities_and_relations() -> None:
     preds = {(rc["predicate"], rc["object_ref"]) for rc in meta.relation_candidates}
     assert ("REFERENCES", "Alex") in preds
     assert ("REFERENCES", "Project X") in preds
+
+
+def _ctx(mod, vault: Path, last_cursor=None, settings=None):
+    return mod_sync_context(mod, vault, last_cursor, settings)
+
+
+def mod_sync_context(mod, vault: Path, last_cursor, settings):
+    # Build a SensorSyncContext with the real SDK dataclass.
+    from magi_plugin_sdk.sensors import SensorSyncContext
+
+    class _Paths:
+        def plugin_cache_dir(self, plugin_id: str) -> Path:
+            return vault
+    return SensorSyncContext(
+        source_type="obsidian_vault",
+        manual=False,
+        last_cursor=last_cursor,
+        last_success_at=None,
+        limit=1000,
+        runtime_paths=_Paths(),
+        plugin_settings=settings or {},
+    )
+
+
+def test_collect_items_knowledge_tier_skips_search_and_excluded(tmp_path: Path) -> None:
+    mod = _load_sensor_module()
+    (tmp_path / "Projects").mkdir()
+    (tmp_path / "Clippings").mkdir()
+    (tmp_path / ".obsidian").mkdir()
+    (tmp_path / "Projects" / "A.md").write_text("# A\nbody [[X]]\n", encoding="utf-8")
+    (tmp_path / "Clippings" / "C.md").write_text("# C\nclip\n", encoding="utf-8")
+    (tmp_path / ".obsidian" / "W.md").write_text("# W\nconfig\n", encoding="utf-8")
+
+    sensor = mod.ObsidianVaultSensor(
+        cognition_eligible=True, sensor_suffix="knowledge",
+        vault_path=str(tmp_path),
+        exclude_folders=[".obsidian"], cognition_exclude_folders=["Clippings"],
+    )
+    result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, None, {})))
+    rels = {it["rel_path"] for it in result.items}
+    assert rels == {"Projects/A.md"}              # only knowledge-tier note
+    assert result.next_cursor is not None
+
+
+def test_collect_items_incremental_via_cursor(tmp_path: Path) -> None:
+    mod = _load_sensor_module()
+    (tmp_path / "Projects").mkdir()
+    old = tmp_path / "Projects" / "Old.md"
+    old.write_text("# Old\nold\n", encoding="utf-8")
+    import os
+    os.utime(old, (1000.0, 1000.0))  # mtime far in the past
+
+    sensor = mod.ObsidianVaultSensor(
+        cognition_eligible=True, sensor_suffix="knowledge",
+        vault_path=str(tmp_path), exclude_folders=[], cognition_exclude_folders=[],
+    )
+    # Cursor newer than the old file -> nothing ingested.
+    result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, "2000.0", {})))
+    assert result.items == []
+
+    # A fresh file (current mtime) is picked up.
+    new = tmp_path / "Projects" / "New.md"
+    new.write_text("# New\nnew\n", encoding="utf-8")
+    result2 = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, "2000.0", {})))
+    assert {it["rel_path"] for it in result2.items} == {"Projects/New.md"}
