@@ -1,0 +1,43 @@
+{
+  "obsidian-vault": {
+    "name": "Obsidian 笔记库",
+    "description": "将 Obsidian 库中的 markdown 笔记读入 Magi 的记忆。",
+    "fields": {
+      "vault_path": {
+        "label": "库目录",
+        "description": "你的 Obsidian 库路径。"
+      },
+      "exclude_folders": {
+        "label": "排除的文件夹",
+        "description": "完全不读取的文件夹。"
+      },
+      "cognition_exclude_folders": {
+        "label": "仅搜索文件夹",
+        "description": "可搜索但不进入知识图谱。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": "多久重新扫描一次库。"
+      }
+    },
+    "sections": {
+      "general": "通用",
+      "privacy": "隐私"
+    }
+  },
+  "activity": {
+    "source": {
+      "obsidian": "Obsidian"
+    },
+    "action": {
+      "edited": "编辑",
+      "created": "新建"
+    },
+    "object": {
+      "note": "笔记"
+    }
+  },
+  "content_blocks": {
+    "note": "笔记：{title}"
+  }
+}
