@@ -66,6 +66,57 @@ class ObsidianVaultSensor(SensorBase):
         uid = str(item.get("uid") or "").strip()
         return uid or str(item.get("rel_path") or "").strip()
 
+    async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
+        """Pre-extract high-confidence structured signals from the note.
+
+        wikilinks -> note entities + REFERENCES relation candidates;
+        tags      -> tag list + TAGGED_AS relation candidates.
+        These are unambiguous, so they are emitted even though free-prose extraction
+        only runs for the knowledge (cognition_eligible) instance.
+        """
+        title = str(item.get("title") or "").strip()
+        note_surface = title or str(item.get("rel_path") or "")
+        wikilinks = [str(w) for w in (item.get("wikilinks") or []) if str(w).strip()]
+        tags = [str(t) for t in (item.get("tags") or []) if str(t).strip()]
+
+        entities: list[dict[str, Any]] = [
+            {
+                "surface": note_surface,
+                "normalized_name": note_surface,
+                "entity_type": "note",
+                "alias_signals": list(item.get("aliases") or []),
+            }
+        ]
+        for link in wikilinks:
+            entities.append({"surface": link, "normalized_name": link, "entity_type": "note"})
+
+        relation_candidates: list[dict[str, Any]] = []
+        for link in wikilinks:
+            relation_candidates.append({
+                "subject_ref": note_surface,
+                "subject_type": "note",
+                "predicate": "REFERENCES",
+                "object_ref": link,
+                "object_type": "note",
+                "confidence": 0.95,
+            })
+        for tag in tags:
+            relation_candidates.append({
+                "subject_ref": note_surface,
+                "subject_type": "note",
+                "predicate": "TAGGED_AS",
+                "object_ref": tag,
+                "object_type": "topic",
+                "confidence": 0.95,
+            })
+
+        return SensorOutputMetadata(
+            entities=entities,
+            tags=tags,
+            fact_hints=[],
+            relation_candidates=relation_candidates,
+        )
+
     async def build_output(self, item: dict) -> SensorOutput:
         body = str(item.get("body") or "")
         title = str(item.get("title") or "").strip() or None

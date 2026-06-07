@@ -72,3 +72,20 @@ def test_memory_policy_differs_by_tier() -> None:
     # Both are authored + permanent.
     assert knowledge.memory_policy.memory_domain == "user_authored"
     assert knowledge.memory_policy.retention_class == "permanent"
+
+
+def test_extract_metadata_emits_entities_and_relations() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.ObsidianVaultSensor(cognition_eligible=True, sensor_suffix="knowledge")
+    meta = asyncio.run(sensor.extract_metadata(_sample_item()))
+
+    # The note itself + each wikilink target become entity hints.
+    surfaces = {e["surface"] for e in meta.entities}
+    assert "Magi Project" in surfaces      # the note
+    assert "Alex" in surfaces and "Project X" in surfaces
+    assert set(meta.tags) == {"project", "beta"}
+
+    # Each wikilink is a REFERENCES relation candidate from this note.
+    preds = {(rc["predicate"], rc["object_ref"]) for rc in meta.relation_candidates}
+    assert ("REFERENCES", "Alex") in preds
+    assert ("REFERENCES", "Project X") in preds
