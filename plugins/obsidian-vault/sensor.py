@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from typing import Any, Optional
 
 from magi_plugin_sdk.sensors import (
@@ -16,7 +17,6 @@ from magi_plugin_sdk.sensors import (
 )
 
 from .reader import classify_folder, parse_note, walk_markdown
-from pathlib import Path
 
 
 class ObsidianVaultSensor(SensorBase):
@@ -154,18 +154,25 @@ class ObsidianVaultSensor(SensorBase):
         items: list[dict[str, Any]] = []
         max_mtime = since
         scanned = 0
+        skipped_errors = 0
         for path in walk_markdown(vault_root):
+            scanned += 1
             rel = path.relative_to(vault_root).as_posix()
             tier = classify_folder(rel, exclude, search_only)
             if tier == "exclude":
                 continue
             if tier != self._tier:
                 continue  # this instance only handles its own tier
-            mtime = path.stat().st_mtime
-            if mtime <= since:
+            try:
+                mtime = path.stat().st_mtime
+                if mtime <= since:
+                    continue
+                note = parse_note(path, vault_root)
+            except Exception:
+                # A single unreadable / vanished / locked file must never abort
+                # the whole scan — skip it and keep ingesting the rest.
+                skipped_errors += 1
                 continue
-            scanned += 1
-            note = parse_note(path, vault_root)
             note["source_item_id"] = self.source_item_identity(note)
             items.append(note)
             if mtime > max_mtime:
@@ -178,7 +185,12 @@ class ObsidianVaultSensor(SensorBase):
             items=items,
             next_cursor=str(max_mtime) if max_mtime > 0 else context.last_cursor,
             watermark_ts=max_mtime or time.time(),
-            stats={"count": len(items), "tier": self._tier},
+            stats={
+                "count": len(items),
+                "scanned": scanned,
+                "skipped_errors": skipped_errors,
+                "tier": self._tier,
+            },
         )
 
     async def build_output(self, item: dict) -> SensorOutput:

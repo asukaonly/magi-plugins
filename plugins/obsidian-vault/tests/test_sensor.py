@@ -154,3 +154,27 @@ def test_collect_items_incremental_via_cursor(tmp_path: Path) -> None:
     new.write_text("# New\nnew\n", encoding="utf-8")
     result2 = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, "2000.0", {})))
     assert {it["rel_path"] for it in result2.items} == {"Projects/New.md"}
+
+
+def test_collect_items_skips_unreadable_note(tmp_path: Path, monkeypatch) -> None:
+    """A single failing parse_note must not abort the whole scan."""
+    mod = _load_sensor_module()
+    (tmp_path / "Projects").mkdir()
+    (tmp_path / "Projects" / "Good.md").write_text("# Good\nok\n", encoding="utf-8")
+    (tmp_path / "Projects" / "Bad.md").write_text("# Bad\nboom\n", encoding="utf-8")
+
+    real_parse = mod.parse_note
+
+    def flaky(path, root):
+        if path.name == "Bad.md":
+            raise OSError("locked")
+        return real_parse(path, root)
+
+    monkeypatch.setattr(mod, "parse_note", flaky)
+    sensor = mod.ObsidianVaultSensor(
+        cognition_eligible=True, sensor_suffix="knowledge",
+        vault_path=str(tmp_path), exclude_folders=[], cognition_exclude_folders=[],
+    )
+    result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, None, {})))
+    assert {it["rel_path"] for it in result.items} == {"Projects/Good.md"}
+    assert result.stats["skipped_errors"] == 1
