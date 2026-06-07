@@ -1,0 +1,43 @@
+[plugin]
+id = "obsidian-vault"
+name = "Obsidian Vault"
+name_i18n = { "zh-CN" = "Obsidian 笔记库" }
+version = "0.1.0"
+description = "Optional. Reads on-screen-free, on-device markdown notes from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder."
+description_i18n = { "zh-CN" = "可选。在本地读取 Obsidian 笔记库的 markdown（含 wikilink、标签、frontmatter），让 Magi 把你写的内容和其他活动连起来。默认关闭；笔记不出本机，任意文件夹都可排除。" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "ObsidianVaultPlugin"
+official = true
+contribution_types = ["sensor"]
+platforms = ["macos", "windows"]
+
+[plugin.default_settings.sensors.obsidian_vault]
+enabled = false
+vault_path = ""
+exclude_folders = [".obsidian", ".trash", "Templates"]
+cognition_exclude_folders = ["Clippings", "References"]
+sync_interval_minutes = 10
+initial_sync_configured = false
+
+[plugin.suggestion_descriptor]
+category = "notes"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 20
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["笔记", "obsidian", "vault", "记了什么", "写过", "知识库"]
+en = ["notes", "obsidian", "vault", "wrote", "knowledge base", "markdown"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能看到你在笔记里写了什么"
+en = "Lets magi see what you write in your notes"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+reason_i18n = { en = "Read markdown notes from your Obsidian vault", "zh-CN" = "读取你 Obsidian 库中的 markdown 笔记" }
