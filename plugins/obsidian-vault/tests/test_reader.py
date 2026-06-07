@@ -46,3 +46,18 @@ def test_parse_note_title_falls_back_to_h1_then_filename(tmp_path: Path) -> None
     note2 = tmp_path / "Bare.md"
     note2.write_text("just text, no heading\n", encoding="utf-8")
     assert reader.parse_note(note2, tmp_path)["title"] == "Bare"
+
+
+def test_classify_folder_tiers() -> None:
+    reader = _load_reader()
+    exclude = [".obsidian", "Templates"]
+    search_only = ["Clippings", "References"]
+    # exclude wins over everything
+    assert reader.classify_folder(".obsidian/workspace.md", exclude, search_only) == "exclude"
+    assert reader.classify_folder("Templates/Daily.md", exclude, search_only) == "exclude"
+    # search-only folders
+    assert reader.classify_folder("Clippings/some-article.md", exclude, search_only) == "search"
+    assert reader.classify_folder("References/paper.md", exclude, search_only) == "search"
+    # everything else is knowledge
+    assert reader.classify_folder("Projects/Magi.md", exclude, search_only) == "knowledge"
+    assert reader.classify_folder("Daily/2026-06-07.md", exclude, search_only) == "knowledge"
