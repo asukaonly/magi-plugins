@@ -35,7 +35,8 @@ class ChromeHistoryTimelineSensor(SensorBase):
     relation_edge_whitelist = ("VIEWED",)
     supports_pull_sync = True
 
-    memory_policy = SensorMemoryPolicy()  # defaults match design
+    # P2 frequency gate — see browser_history_core; interest needs repeat visits.
+    memory_policy = SensorMemoryPolicy(promotion_threshold=3)
 
     def __init__(
         self,
