@@ -15,7 +15,9 @@ contribution_types = ["sensor"]
 category = "music"
 platform_support = ["darwin", "win32"]
 setup_time_estimate_seconds = 15
-data_locality = "local_only"
+# Not local-only: when a Last.fm API key is configured the sensor sends the
+# played artist/track to ws.audioscrobbler.com to fetch genre tags.
+data_locality = "uploads"
 
 [plugin.suggestion_descriptor.triggers]
 intents = []

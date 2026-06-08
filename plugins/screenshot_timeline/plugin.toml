@@ -3,12 +3,13 @@ id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
 version = "0.5.2"
-description = "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory."
-description_i18n = { "zh-CN" = "持续截屏并提取屏幕文本（辅助功能优先、OCR 兜底），把你的屏幕活动接入 magi 记忆。" }
+description = "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days."
+description_i18n = { "zh-CN" = "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ScreenshotTimelinePlugin"
 official = true
+data_locality = "local_only"
 contribution_types = ["sensor", "tool"]
 platforms = ["macos"]
 min_sdk_version = "0.1.0"

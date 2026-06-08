@@ -62,6 +62,7 @@
       "platforms": [
         "macos"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "calendar",
         "platform_support": [
@@ -140,6 +141,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
         "platform_support": [
@@ -222,6 +224,7 @@
       "platforms": [
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
         "platform_support": [
@@ -302,6 +305,7 @@
         "windows",
         "macos"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
         "platform_support": [
@@ -386,6 +390,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "code_activity",
         "platform_support": [
@@ -469,6 +474,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "uploads",
       "suggestion_descriptor": {
         "category": "music",
         "platform_support": [
@@ -476,7 +482,7 @@
           "win32"
         ],
         "setup_time_estimate_seconds": 15,
-        "data_locality": "local_only",
+        "data_locality": "uploads",
         "triggers": {
           "intents": [],
           "entities": [],
@@ -543,6 +549,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "notes",
         "platform_support": [
@@ -620,6 +627,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "photos",
         "platform_support": [
@@ -700,6 +708,7 @@
         "macos",
         "windows"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "screen_context",
         "platform_support": [
@@ -741,9 +750,9 @@
       },
       "version": "0.5.2",
       "path": "plugins/screenshot_timeline",
-      "description": "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory.",
+      "description": "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days.",
       "description_i18n": {
-        "zh-CN": "持续截屏并提取屏幕文本（辅助功能优先、OCR 兜底），把你的屏幕活动接入 magi 记忆。"
+        "zh-CN": "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。"
       },
       "author": "Magi Team",
       "official": true,
@@ -791,6 +800,7 @@
       "platforms": [
         "macos"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "screen_context",
         "platform_support": [
@@ -858,6 +868,7 @@
         "macos",
         "linux"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "gaming",
         "platform_support": [
@@ -933,6 +944,7 @@
         "windows",
         "macos"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "media",
         "platform_support": [
@@ -1034,6 +1046,7 @@
       "platforms": [
         "macos"
       ],
+      "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "terminal",
         "platform_support": [
