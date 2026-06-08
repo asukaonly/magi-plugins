@@ -4,7 +4,13 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import (
+    ActivationFlowSpec,
+    ExtensionFieldOption,
+    ExtensionFieldSpec,
+    Plugin,
+    SensorSpec,
+)
 from .photo_tools import build_photo_library_tool_classes
 from .sensor import PhotoLibraryTimelineSensor
 
@@ -137,6 +143,34 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
     ]
 
 
+def _build_activation_flow(prefix: str) -> ActivationFlowSpec:
+    return ActivationFlowSpec(
+        title="Enable Photo Library",
+        description=(
+            "Photo library is sensitive local data. Pick the folder(s) to scan; "
+            "Magi reads photo metadata (time, place, camera) to build your timeline."
+        ),
+        confirm_label="Enable source",
+        cancel_label="Not now",
+        enabled_key=f"{prefix}.enabled",
+        configured_key=f"{prefix}.initial_sync_configured",
+        fields=[
+            ExtensionFieldSpec(
+                key=f"{prefix}.source_paths",
+                type="path",
+                label="Photo Directories",
+                description="Local folders containing photos to scan. Add one or more.",
+                default=[],
+                required=True,
+                section="activation",
+                surface="timeline",
+                order=10,
+                placeholder="/path/to/photos",
+            ),
+        ],
+    )
+
+
 class PhotoLibraryPlugin(Plugin):
     """Registers the photo library timeline source."""
 
@@ -194,6 +228,7 @@ class PhotoLibraryPlugin(Plugin):
                     metadata={
                         "source_type": "photo_library",
                         "default_settings": dict(DEFAULT_SETTINGS),
+                        "activation_flow": _build_activation_flow("sensors.photo_library").model_dump(),
                     },
                 ),
             )

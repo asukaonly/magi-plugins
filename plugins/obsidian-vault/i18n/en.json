@@ -1,0 +1,43 @@
+{
+  "obsidian-vault": {
+    "name": "Obsidian Vault",
+    "description": "Reads markdown notes from your Obsidian vault into Magi's memory.",
+    "fields": {
+      "vault_path": {
+        "label": "Vault Folder",
+        "description": "Path to your Obsidian vault."
+      },
+      "exclude_folders": {
+        "label": "Excluded Folders",
+        "description": "Folders never read at all."
+      },
+      "cognition_exclude_folders": {
+        "label": "Search-only Folders",
+        "description": "Read for search but kept out of the knowledge graph."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to rescan the vault."
+      }
+    },
+    "sections": {
+      "general": "General",
+      "privacy": "Privacy"
+    }
+  },
+  "activity": {
+    "source": {
+      "obsidian": "Obsidian"
+    },
+    "action": {
+      "edited": "edited",
+      "created": "created"
+    },
+    "object": {
+      "note": "note"
+    }
+  },
+  "content_blocks": {
+    "note": "Note: {title}"
+  }
+}
