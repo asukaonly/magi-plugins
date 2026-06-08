@@ -14,6 +14,7 @@ from magi_plugin_sdk.sensors import (
     SensorBase,
     SensorMemoryPolicy,
     SensorOutput,
+    SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
 )
@@ -39,9 +40,13 @@ class GitActivitySensor(SensorBase):
     relation_edge_whitelist = ("COMMITTED", "CHECKED_OUT", "MERGED", "REBASED")
     supports_pull_sync = True
 
+    # structured-only: git's L1 content is just an operation-count summary, so the LLM
+    # adds little. We emit a deterministic `user COMMITTED software:<repo>` edge via
+    # extract_metadata and skip phase1/2 (cost win, no loss of the repo signal).
     memory_policy = SensorMemoryPolicy(
         cognition_eligible=True,
         importance_bias=0.35,
+        allow_llm_extraction=False,
     )
 
     def __init__(
@@ -58,6 +63,42 @@ class GitActivitySensor(SensorBase):
         self.memory_policy = SensorMemoryPolicy(
             cognition_eligible=bool(l3_summary_enabled),
             importance_bias=0.35,
+            allow_llm_extraction=False,
+        )
+
+    async def extract_metadata(self, item: dict) -> SensorOutputMetadata:
+        """Deterministic structured signal so git can run structured-only.
+
+        The repo becomes a ``software`` entity and a ``user COMMITTED software:<repo>``
+        edge is written without the LLM. Emitted in the L2 host contract shape
+        (entities use ``mention_text``; the edge goes in ``fact_hints`` with
+        ``fact_kind``/``origin_mode``). git's L1 content is only an operation-count
+        summary, so this loses nothing the LLM was extracting while skipping its cost.
+        """
+        repo_path = str(item.get("repo_path") or "")
+        repo_name = Path(repo_path).name if repo_path else ""
+        if not repo_name:
+            return SensorOutputMetadata()
+        return SensorOutputMetadata(
+            entities=[
+                {
+                    "mention_text": repo_name,
+                    "entity_type": "software",
+                    "canonical_name_hint": repo_name,
+                }
+            ],
+            fact_hints=[
+                {
+                    "subject_ref": "user:self",
+                    "subject_type": "user",
+                    "predicate": "COMMITTED",
+                    "object_ref": f"software:{repo_name}",
+                    "object_type": "software",
+                    "fact_kind": "interaction_evidence",
+                    "origin_mode": "source_structured",
+                    "confidence": 1.0,
+                }
+            ],
         )
 
     def _get_reader(self, repo_path: str) -> Optional[GitReflogReader]:
