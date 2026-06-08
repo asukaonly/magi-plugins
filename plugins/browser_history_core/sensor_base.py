@@ -58,7 +58,10 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
     relation_edge_whitelist = ("VIEWED",)
     supports_pull_sync = True
 
-    memory_policy = SensorMemoryPolicy()  # defaults match design
+    # P2 frequency gate: only domains visited >= this many times drive LLM interest
+    # extraction; a casual one-off visit stays structured-only (no INTERESTED_IN from a
+    # single title). promotion_key=domain is emitted per event in build_output.
+    memory_policy = SensorMemoryPolicy(promotion_threshold=3)
 
     def __init__(
         self,
@@ -237,7 +240,7 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                 "transition": str(item.get("transition") or ""),
                 "canonical_url": url,
             },
-            domain_payload={"retention_mode": self.retention_mode},
+            domain_payload={"retention_mode": self.retention_mode, "promotion_key": domain},
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
