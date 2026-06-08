@@ -74,21 +74,35 @@ def test_memory_policy_differs_by_tier() -> None:
     assert knowledge.memory_policy.retention_class == "permanent"
 
 
-def test_extract_metadata_emits_entities_and_relations() -> None:
+def test_extract_metadata_emits_host_contract_hints() -> None:
     mod = _load_sensor_module()
     sensor = mod.ObsidianVaultSensor(cognition_eligible=True, sensor_suffix="knowledge")
     meta = asyncio.run(sensor.extract_metadata(_sample_item()))
 
-    # The note itself + each wikilink target become entity hints.
-    surfaces = {e["surface"] for e in meta.entities}
-    assert "Magi Project" in surfaces      # the note
-    assert "Alex" in surfaces and "Project X" in surfaces
+    # Entity hints use the keys the L2 entity-hint reader requires (it skips items
+    # without mention_text); no legacy surface/normalized_name keys.
+    by_mention = {e["mention_text"]: e for e in meta.entities}
+    assert by_mention["Magi Project"]["entity_type"] == "concept"          # the note
+    assert by_mention["Magi Project"]["canonical_name_hint"] == "Magi Project"
+    assert by_mention["Alex"]["entity_type"] == "concept"                  # wikilink target
+    assert by_mention["beta"]["entity_type"] == "topic"                    # tag
+    assert all("surface" not in e for e in meta.entities)
     assert set(meta.tags) == {"project", "beta"}
 
-    # Each wikilink is a REFERENCES relation candidate from this note.
-    preds = {(rc["predicate"], rc["object_ref"]) for rc in meta.relation_candidates}
-    assert ("REFERENCES", "Alex") in preds
-    assert ("REFERENCES", "Project X") in preds
+    # Relations go through fact_hints (NOT relation_candidates), in the exact host shape:
+    # type:name refs, REFERENCES predicate, explicit_fact + source_structured so the
+    # deterministic direct-write path admits them.
+    assert meta.relation_candidates == []
+    edges = {(f["predicate"], f["object_ref"]) for f in meta.fact_hints}
+    assert ("REFERENCES", "concept:Alex") in edges          # wikilink -> concept
+    assert ("REFERENCES", "concept:Project X") in edges
+    assert ("REFERENCES", "topic:project") in edges         # tag -> topic
+    assert ("REFERENCES", "topic:beta") in edges
+    for f in meta.fact_hints:
+        assert f["subject_ref"] == "concept:Magi Project"
+        assert f["subject_type"] == "concept"
+        assert f["fact_kind"] == "explicit_fact"
+        assert f["origin_mode"] == "source_structured"
 
 
 def _ctx(mod, vault: Path, last_cursor=None, settings=None):

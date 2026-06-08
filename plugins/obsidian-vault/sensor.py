@@ -32,7 +32,9 @@ class ObsidianVaultSensor(SensorBase):
     polling_mode = "interval"
     default_interval = 10  # minutes
     update_key_fields = ("source_item_id",)
-    relation_edge_whitelist = ("REFERENCES", "TAGGED_AS")
+    # Unused by the host (it reads L2 fact_hints, not the timeline relation_candidates
+    # whitelist) — kept empty to avoid implying a route we don't use.
+    relation_edge_whitelist = ()
     supports_pull_sync = True
 
     def __init__(
@@ -46,6 +48,13 @@ class ObsidianVaultSensor(SensorBase):
     ) -> None:
         super().__init__()
         self.sensor_id = f"timeline.obsidian_vault.{sensor_suffix}"
+        # Distinct source_type per tier. The host resolves/schedules/cursors sensors by
+        # (plugin_id, source_type) and resolve_source_sensor() is first-match-wins, so two
+        # sensors sharing a source_type collide (only the first ever runs). Distinct
+        # source_types give each tier its own schedule + cursor.
+        self.source_type = (
+            "obsidian_vault" if sensor_suffix == "knowledge" else f"obsidian_vault_{sensor_suffix}"
+        )
         self.display_name = "Obsidian Vault"
         self._tier = sensor_suffix
         self._vault_path = vault_path
@@ -67,54 +76,60 @@ class ObsidianVaultSensor(SensorBase):
         return uid or str(item.get("rel_path") or "").strip()
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
-        """Pre-extract high-confidence structured signals from the note.
+        """Pre-extract high-confidence, source-owned structured signals.
 
-        wikilinks -> note entities + REFERENCES relation candidates;
-        tags      -> tag list + TAGGED_AS relation candidates.
-        These are unambiguous, so they are emitted even though free-prose extraction
-        only runs for the knowledge (cognition_eligible) instance.
+        Emitted in the exact shape the L2 host consumes:
+          - entity hints (``entities``): ``mention_text`` / ``entity_type`` / ``canonical_name_hint``
+            (the L2 entity-hint reader skips items without ``mention_text``).
+          - graph hints (``fact_hints``): typed ``REFERENCES`` edges with
+            ``fact_kind="explicit_fact"`` + ``origin_mode="source_structured"`` so they are
+            written deterministically (no LLM). ``*_ref`` use ``type:name`` form so the host
+            auto-registers catalog entities. (Projection routes ``fact_hints`` ->
+            ``structured_graph_hints``; ``relation_candidates`` is a different, timeline-only path.)
+
+        Notes map to the ``concept`` entity type (the ontology has no ``note`` type);
+        wikilink targets are ``concept``; tags are ``topic``. Both wikilinks and tags become
+        ``REFERENCES`` edges from the note — a tag means the note *references* that topic,
+        which avoids over-claiming user interest.
         """
         title = str(item.get("title") or "").strip()
-        note_surface = title or str(item.get("rel_path") or "")
+        note_name = title or str(item.get("rel_path") or "")
         wikilinks = [str(w) for w in (item.get("wikilinks") or []) if str(w).strip()]
         tags = [str(t) for t in (item.get("tags") or []) if str(t).strip()]
+        note_ref = f"concept:{note_name}"
 
         entities: list[dict[str, Any]] = [
-            {
-                "surface": note_surface,
-                "normalized_name": note_surface,
-                "entity_type": "note",
-                "alias_signals": list(item.get("aliases") or []),
-            }
+            {"mention_text": note_name, "entity_type": "concept", "canonical_name_hint": note_name}
         ]
         for link in wikilinks:
-            entities.append({"surface": link, "normalized_name": link, "entity_type": "note"})
-
-        relation_candidates: list[dict[str, Any]] = []
-        for link in wikilinks:
-            relation_candidates.append({
-                "subject_ref": note_surface,
-                "subject_type": "note",
-                "predicate": "REFERENCES",
-                "object_ref": link,
-                "object_type": "note",
-                "confidence": 0.95,
-            })
+            entities.append(
+                {"mention_text": link, "entity_type": "concept", "canonical_name_hint": link}
+            )
         for tag in tags:
-            relation_candidates.append({
-                "subject_ref": note_surface,
-                "subject_type": "note",
-                "predicate": "TAGGED_AS",
-                "object_ref": tag,
-                "object_type": "topic",
+            entities.append(
+                {"mention_text": tag, "entity_type": "topic", "canonical_name_hint": tag}
+            )
+
+        def _edge(object_ref: str, object_type: str) -> dict[str, Any]:
+            return {
+                "subject_ref": note_ref,
+                "subject_type": "concept",
+                "predicate": "REFERENCES",
+                "object_ref": object_ref,
+                "object_type": object_type,
+                "fact_kind": "explicit_fact",
+                "origin_mode": "source_structured",
                 "confidence": 0.95,
-            })
+            }
+
+        fact_hints: list[dict[str, Any]] = [_edge(f"concept:{link}", "concept") for link in wikilinks]
+        fact_hints += [_edge(f"topic:{tag}", "topic") for tag in tags]
 
         return SensorOutputMetadata(
             entities=entities,
             tags=tags,
-            fact_hints=[],
-            relation_candidates=relation_candidates,
+            fact_hints=fact_hints,
+            relation_candidates=[],
         )
 
     def _resolve_settings(self, context: SensorSyncContext) -> dict[str, Any]:

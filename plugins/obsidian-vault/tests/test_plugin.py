@@ -39,6 +39,13 @@ def test_get_sensors_returns_two_tiers_when_enabled() -> None:
     cog = {sid: inst.memory_policy.cognition_eligible for sid, inst, _ in sensors}
     assert cog["timeline.obsidian_vault.knowledge"] is True
     assert cog["timeline.obsidian_vault.search"] is False
+    # Distinct source_type per tier so the host doesn't collide them: resolve/schedule/
+    # cursor are keyed by (plugin_id, source_type), first-match-wins.
+    src = {sid: inst.source_type for sid, inst, _ in sensors}
+    assert src["timeline.obsidian_vault.knowledge"] == "obsidian_vault"
+    assert src["timeline.obsidian_vault.search"] == "obsidian_vault_search"
+    spec_src = {sid: spec.metadata["source_type"] for sid, _inst, spec in sensors}
+    assert spec_src["timeline.obsidian_vault.search"] == "obsidian_vault_search"
 
 
 def test_get_sensors_empty_when_disabled() -> None:
@@ -46,11 +53,15 @@ def test_get_sensors_empty_when_disabled() -> None:
     assert plugin.get_sensors() == []
 
 
-def test_extraction_profile_allows_reference_predicates() -> None:
+def test_extraction_profile_uses_registry_predicates() -> None:
     plugin = _make_plugin(enabled=True)
     profiles = plugin.get_extraction_profiles()
     assert len(profiles) == 1
     prof = profiles[0]
     assert "obsidian_vault" in prof.source_types
     assert "REFERENCES" in prof.allowed_predicates
-    assert "TAGGED_AS" in prof.allowed_predicates
+    assert list(prof.structured_allowed_predicates) == ["REFERENCES"]
+    # Non-registry predicates/types would invalidate the WHOLE profile at host load.
+    assert "TAGGED_AS" not in prof.allowed_predicates
+    assert "MENTIONS" not in prof.allowed_predicates
+    assert "note" not in prof.allowed_entity_types

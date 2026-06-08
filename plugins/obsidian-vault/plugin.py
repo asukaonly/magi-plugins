@@ -68,19 +68,23 @@ class ObsidianVaultPlugin(Plugin):
             ExtractionProfileSpec(
                 profile_id="source.obsidian_vault",
                 source_types=["obsidian_vault"],
-                allowed_entity_types=["note", "person", "topic", "concept"],
-                allowed_predicates=["REFERENCES", "TAGGED_AS", "MENTIONS"],
-                structured_allowed_entity_types=["note", "topic"],
-                structured_allowed_predicates=["REFERENCES", "TAGGED_AS"],
+                # Every type/predicate MUST be in the host ENTITY_TYPE_REGISTRY /
+                # PREDICATE_REGISTRY or the whole profile is rejected at load. Notes and
+                # wikilink targets map to `concept`; tags to `topic`.
+                allowed_entity_types=["concept", "topic", "person", "project", "software", "organization"],
+                allowed_predicates=["REFERENCES", "INTERESTED_IN", "KNOWS", "USES", "WORKS_WITH", "MEMBER_OF"],
+                structured_allowed_entity_types=["concept", "topic"],
+                structured_allowed_predicates=["REFERENCES"],
                 allow_graph=True,
-                allow_assertion=True,
+                allow_assertion=False,
                 extraction_instructions=(
                     "These events are user-authored Obsidian notes.\n"
-                    "- Treat [[wikilinks]] as REFERENCES edges between notes/entities.\n"
-                    "- Treat #tags as TAGGED_AS topics.\n"
-                    "- Extract entities the user clearly writes about (people, projects,\n"
-                    "  concepts). Do NOT assert quoted or third-party claims as the user's\n"
-                    "  own beliefs."
+                    "- [[wikilinks]] and #tags are already emitted as deterministic REFERENCES\n"
+                    "  edges (structured hints); do not re-derive them.\n"
+                    "- From the note body, extract entities the user clearly writes about\n"
+                    "  (people, projects, concepts) and relations among them.\n"
+                    "- Do NOT assert quoted, clipped, or third-party claims as the user's own\n"
+                    "  beliefs."
                 ),
             )
         ]
@@ -96,9 +100,9 @@ class ObsidianVaultPlugin(Plugin):
         search_only = cfg.get("cognition_exclude_folders", DEFAULT_SETTINGS["cognition_exclude_folders"])
         interval = cfg.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"])
 
-        def _spec(sensor_id: str) -> SensorSpec:
+        def _spec(sensor: ObsidianVaultSensor) -> SensorSpec:
             return SensorSpec(
-                sensor_id=sensor_id,
+                sensor_id=sensor.sensor_id,
                 display_name="Obsidian Vault",
                 description="Obsidian vault note ingestion for the timeline.",
                 domain="timeline",
@@ -107,7 +111,9 @@ class ObsidianVaultPlugin(Plugin):
                 polling_mode="interval",
                 fields=_fields(),
                 metadata={
-                    "source_type": "obsidian_vault",
+                    # Per-tier source_type so the two sensors get independent
+                    # registry/schedule/cursor entries (no first-match-wins collision).
+                    "source_type": sensor.source_type,
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
                 },
@@ -122,5 +128,5 @@ class ObsidianVaultPlugin(Plugin):
                 exclude_folders=list(exclude),
                 cognition_exclude_folders=list(search_only),
             )
-            result.append((sensor.sensor_id, sensor, _spec(sensor.sensor_id)))
+            result.append((sensor.sensor_id, sensor, _spec(sensor)))
         return result
