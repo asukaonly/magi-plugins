@@ -97,6 +97,15 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     if depends_on:
         entry["depends_on"] = depends_on
     entry["platforms"] = meta.get("platforms", [])
+    # Privacy-transparency signal -> "Local only" marketplace badge. Prefer the
+    # top-level declaration, falling back to the suggestion_descriptor's
+    # data_locality (where most plugins already declare it). Only emitted when
+    # declared, so undeclared plugins are never falsely badged as local.
+    data_locality = meta.get("data_locality", "") or (
+        meta.get("suggestion_descriptor") or {}
+    ).get("data_locality", "")
+    if data_locality:
+        entry["data_locality"] = data_locality
     return entry
 
 
