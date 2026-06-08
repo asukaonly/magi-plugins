@@ -42,3 +42,8 @@ win32 = "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"
 capability = "filesystem_read"
 scope = ["~/Library/Containers/com.netease.163music"]
 reason_i18n = { en = "Read the NetEase Music local play history", "zh-CN" = "读取网易云音乐本地播放历史" }
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["ws.audioscrobbler.com"]
+reason_i18n = { en = "Fetch genre tags for played tracks from the Last.fm API (only when a Last.fm API key is configured).", "zh-CN" = "从 Last.fm API 获取所播曲目的风格标签(仅在配置了 Last.fm API key 时)。" }
