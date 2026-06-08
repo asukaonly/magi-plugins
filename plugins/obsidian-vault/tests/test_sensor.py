@@ -47,11 +47,33 @@ def test_build_output_maps_note_to_l1_fields() -> None:
     assert out.source_item_id == "Projects/Magi.md"
     assert out.occurred_at == 1781000000.0
     assert out.narration.title == "Magi Project"
-    assert "Working with" in out.narration.body  # full text, not a summary
+    # narration.body is the lean summary (RFC #56 P3); for a one-line note it
+    # equals the line. The full note body is pinned for L2 separately.
+    assert "Working with" in out.narration.body
+    assert out.pinned_payload == _sample_item()["body"]
     assert out.activity.source.code == "obsidian"
     assert out.activity.object is not None and out.activity.object.code == "note"
     assert set(out.tags) == {"project", "beta"}
     assert out.activity.qualifiers["wikilink_count"] == 2
+
+
+def test_build_output_pins_full_body_and_leans_the_narration() -> None:
+    # RFC #56 P3: L1 stays lean (narration = first-line summary, no full body in
+    # content blocks); the complete frozen note goes to pinned_payload for L2.
+    mod = _load_sensor_module()
+    sensor = mod.ObsidianVaultSensor(cognition_eligible=True, sensor_suffix="knowledge")
+    long_body = "First line is the summary.\n\n" + ("more detail about the project. " * 80)
+    item = {**_sample_item(), "body": long_body}
+    out = asyncio.run(sensor.build_output(item))
+
+    # full frozen body reaches L2 via the pinned payload...
+    assert out.pinned_payload == long_body
+    # ...while L1's narration is just the lean first line
+    assert out.narration.body == "First line is the summary."
+    assert len(out.narration.body) < len(long_body)
+    # and the full body is not duplicated into content blocks (which land in L1 metadata)
+    text_blocks = [b.value for b in out.content_blocks if b.kind == "text"]
+    assert all("more detail" not in v for v in text_blocks)
 
 
 def test_build_output_prefers_frontmatter_uid_for_supersession() -> None:
