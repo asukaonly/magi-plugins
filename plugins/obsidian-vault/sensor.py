@@ -18,6 +18,21 @@ from magi_plugin_sdk.sensors import (
 
 from .reader import classify_folder, parse_note, walk_markdown
 
+_SUMMARY_MAX_CHARS = 280
+
+
+def _lean_summary(body: str, *, max_chars: int = _SUMMARY_MAX_CHARS) -> str:
+    """First non-empty line of the note, capped — a lean L1 preview (RFC #56 P3).
+
+    The full note body is pinned separately for L2; L1 only needs a short,
+    timeline-friendly summary, not the whole document.
+    """
+    for line in str(body or "").splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped if len(stripped) <= max_chars else stripped[:max_chars].rstrip() + "…"
+    return ""
+
 
 class ObsidianVaultSensor(SensorBase):
     """Pull-sync sensor that ingests Obsidian markdown notes.
@@ -210,16 +225,20 @@ class ObsidianVaultSensor(SensorBase):
 
     async def build_output(self, item: dict) -> SensorOutput:
         body = str(item.get("body") or "")
+        # P3: L1 keeps a lean summary; the full frozen note body goes to L2 via
+        # pinned_payload. Putting only the summary in narration/content blocks
+        # keeps the L1 row + metadata small (the body is no longer duplicated there).
+        summary = _lean_summary(body)
         title = str(item.get("title") or "").strip() or None
         tags = [str(t) for t in (item.get("tags") or []) if str(t).strip()]
         wikilinks = [str(w) for w in (item.get("wikilinks") or []) if str(w).strip()]
         mtime = float(item.get("mtime") or time.time())
 
-        content_blocks: list[ContentBlock] = [ContentBlock(kind="text", value=body)]
+        content_blocks: list[ContentBlock] = [ContentBlock(kind="text", value=summary)]
         content_blocks += [ContentBlock(kind="wikilink", value=w) for w in wikilinks]
         content_blocks += [ContentBlock(kind="tag", value=t) for t in tags]
 
-        return self._build_output(
+        output = self._build_output(
             source_item_id=self.source_item_identity(item),
             activity=self._build_activity(
                 source=self._build_activity_facet(
@@ -244,7 +263,7 @@ class ObsidianVaultSensor(SensorBase):
                     "tag_count": len(tags),
                 },
             ),
-            narration=self._build_narration(title=title, body=body),
+            narration=self._build_narration(title=title, body=summary),
             occurred_at=mtime,
             content_blocks=content_blocks,
             tags=tags,
@@ -255,3 +274,7 @@ class ObsidianVaultSensor(SensorBase):
             },
             domain_payload={"wikilinks": wikilinks, "tier": self._tier},
         )
+        # Pin the full frozen note body for L2 extraction (read at extraction time,
+        # never re-fetched from the vault). Sparse: None when the note is empty.
+        output.pinned_payload = body or None
+        return output
