@@ -10,7 +10,7 @@ entry_module = "plugin"
 entry_class = "CodingAgentHistoryPlugin"
 official = false
 contribution_types = ["sensor"]
-platforms = ["macos", "windows"]
+platforms = ["macos", "windows", "linux"]
 
 [plugin.default_settings.sensors.coding_agent_history]
 enabled = false
@@ -21,7 +21,7 @@ initial_sync_configured = false
 
 [plugin.suggestion_descriptor]
 category = "code_activity"
-platform_support = ["darwin", "win32"]
+platform_support = ["darwin", "win32", "linux"]
 setup_time_estimate_seconds = 20
 data_locality = "local_only"
 
@@ -36,6 +36,17 @@ en = ["claude code", "codex", "coding agent", "ai coding", "building", "working 
 [plugin.suggestion_descriptor.rationale]
 zh = "让 magi 了解你在用编程助手搭什么"
 en = "Lets magi learn what you're building with your coding assistant"
+
+# Only recommend when the user actually has coding-agent transcripts.
+# local_requirements are AND-combined, so gate on Claude Code's dir (the common
+# case); Codex-only users can still install from settings/marketplace.
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/.claude/projects"
+win32 = "%USERPROFILE%/.claude/projects"
+linux = "~/.claude/projects"
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
