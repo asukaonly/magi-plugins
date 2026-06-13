@@ -828,6 +828,22 @@ class WeixinChannel(Channel):
             last_inbound_chat_id=from_user_id,
             last_error="",
         )
+        # A host-handled command (e.g. /新会话, /approve) short-circuits with no
+        # LLM turn (turn_id is None) and returns its ack in error_message. Send it
+        # straight to from_user_id — NOT via _send_text's session-mapping
+        # resolution, which a /新会话 reset has just deleted. Normal turns
+        # (turn_id set) reply via deliver(), so only surface the command ack here.
+        ack = str(getattr(outcome, "error_message", "") or "").strip()
+        if getattr(outcome, "turn_id", None) is None and ack and self._api is not None:
+            try:
+                await self._api.send_text_message(
+                    to_user_id=from_user_id,
+                    text=ack,
+                    context_token=context_token or None,
+                    timeout_ms=self._config.request_timeout_ms,
+                )
+            except Exception:
+                logger.warning("Weixin command-ack send failed", exc_info=True)
         return True
 
     async def _get_typing_ticket(self, user_id: str, context_token: str | None) -> str:

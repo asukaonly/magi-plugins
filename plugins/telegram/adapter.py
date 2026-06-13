@@ -87,7 +87,11 @@ class TelegramChannel(Channel):
         self._application = builder.build()
 
         self._application.add_handler(CommandHandler("start", self._on_start_command))
-        self._application.add_handler(CommandHandler("reset", self._on_reset_command))
+        # Common session commands (/new, /reset) are owned by the host's unified
+        # channel-command layer (one reset/mapping chain across all channels) —
+        # forward the raw command to dispatch rather than resetting here.
+        self._application.add_handler(CommandHandler("reset", self._on_session_command))
+        self._application.add_handler(CommandHandler("new", self._on_session_command))
         self._application.add_handler(CommandHandler("ask", self._on_ask_command))
         self._application.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self._on_message)
@@ -643,19 +647,16 @@ class TelegramChannel(Channel):
             text="Hello! I'm your Magi assistant. Send me a message to get started.",
         )
 
-    async def _on_reset_command(self, update: Any, context: Any) -> None:
-        chat = update.effective_chat
-        user = update.effective_user
-        if chat is None or user is None:
+    async def _on_session_command(self, update: Any, context: Any) -> None:
+        """Forward a common session command (/new, /reset) to the host's unified
+        channel-command layer, which owns the session-mapping reset chain. We
+        dispatch the raw command text (e.g. ``/reset``); the host parser resets
+        the mapping and returns the ack, surfaced in ``_process_inbound``. Keeps
+        ONE reset path shared across channels — no plugin-side duplicate."""
+        message = update.effective_message
+        if message is None or not message.text:
             return
-        if self._session_mapper is None:
-            raise RuntimeError("Telegram channel session mapper is not bound")
-        external_chat_id = str(chat.id)
-        await self._session_mapper.delete_mapping("telegram", external_chat_id)
-        await context.bot.send_message(
-            chat_id=chat.id,
-            text="Session reset. Your next message will start a new conversation.",
-        )
+        await self._process_inbound(update, message.text)
 
     async def _on_ask_command(self, update: Any, context: Any) -> None:
         """Handle /ask <message> in group or DM."""
@@ -743,6 +744,16 @@ class TelegramChannel(Channel):
                 error_code=outcome.error_code,
                 error_message=outcome.error_message,
             )
+            return
+        # A host-handled command (/new, /reset, /approve) short-circuits with no
+        # LLM turn (turn_id is None) and returns its ack in error_message. Normal
+        # turns (turn_id set) reply via deliver(); only surface the command ack here.
+        ack = str(getattr(outcome, "error_message", "") or "").strip()
+        if getattr(outcome, "turn_id", None) is None and ack:
+            try:
+                await self._application.bot.send_message(chat_id=chat.id, text=ack)
+            except Exception:
+                logger.warning("Telegram command-ack send failed", exc_info=True)
 
     # -- Helpers --------------------------------------------------------------
 
