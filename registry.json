@@ -217,14 +217,16 @@
       ],
       "platforms": [
         "macos",
-        "windows"
+        "windows",
+        "linux"
       ],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "code_activity",
         "platform_support": [
           "darwin",
-          "win32"
+          "win32",
+          "linux"
         ],
         "setup_time_estimate_seconds": 20,
         "data_locality": "local_only",
@@ -256,7 +258,17 @@
         "rationale": {
           "zh": "让 magi 了解你在用编程助手搭什么",
           "en": "Lets magi learn what you're building with your coding assistant"
-        }
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/.claude/projects",
+              "win32": "%USERPROFILE%/.claude/projects",
+              "linux": "~/.claude/projects"
+            }
+          }
+        ]
       }
     },
     {
