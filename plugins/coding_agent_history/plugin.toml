@@ -1,0 +1,42 @@
+[plugin]
+id = "coding_agent_history"
+name = "Coding Agent History"
+name_i18n = { "zh-CN" = "编程助手历史" }
+version = "0.1.0"
+description = "Optional. Reads ONLY your own messages from local AI coding-assistant transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device."
+description_i18n = { "zh-CN" = "可选。仅读取本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "CodingAgentHistoryPlugin"
+official = false
+contribution_types = ["sensor"]
+platforms = ["macos", "windows"]
+
+[plugin.default_settings.sensors.coding_agent_history]
+enabled = false
+source_paths = ["~/.claude/projects", "~/.codex"]
+initial_sync_lookback_days = 30
+sync_interval_minutes = 30
+initial_sync_configured = false
+
+[plugin.suggestion_descriptor]
+category = "code_activity"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 20
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["claude code", "codex", "编程助手", "ai 编程", "写代码", "做了什么", "在搞什么", "项目"]
+en = ["claude code", "codex", "coding agent", "ai coding", "building", "working on", "side project"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "让 magi 了解你在用编程助手搭什么"
+en = "Lets magi learn what you're building with your coding assistant"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+reason_i18n = { en = "Read your own turns from local coding-assistant transcripts", "zh-CN" = "读取本地编程助手 transcript 中你自己发送的消息" }

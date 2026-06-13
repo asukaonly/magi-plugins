@@ -1,0 +1,36 @@
+{
+  "coding_agent_history": {
+    "name": "Coding Agent History",
+    "description": "Reads your own turns from local AI coding-assistant transcripts (Claude Code, Codex) into Magi's memory.",
+    "fields": {
+      "source_paths": {
+        "label": "Transcript Folders",
+        "description": "Folders to scan (e.g. ~/.claude/projects, ~/.codex)."
+      },
+      "initial_sync_lookback_days": {
+        "label": "First-sync window (days)",
+        "description": "First sync ingests sessions from the last N days (raise to import more)."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to rescan for new sessions."
+      }
+    },
+    "sections": {
+      "activation": "Activation",
+      "general": "General"
+    }
+  },
+  "activity": {
+    "source": {
+      "claude_code": "Claude Code",
+      "codex": "Codex"
+    },
+    "action": {
+      "conversed": "chatted"
+    },
+    "object": {
+      "coding_session": "coding session"
+    }
+  }
+}
