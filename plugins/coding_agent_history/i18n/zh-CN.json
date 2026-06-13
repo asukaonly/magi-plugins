@@ -1,0 +1,36 @@
+{
+  "coding_agent_history": {
+    "name": "编程助手历史",
+    "description": "把本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息读入 Magi 的记忆。",
+    "fields": {
+      "source_paths": {
+        "label": "Transcript 文件夹",
+        "description": "要扫描的文件夹（如 ~/.claude/projects、~/.codex）。"
+      },
+      "initial_sync_lookback_days": {
+        "label": "首次同步窗口（天）",
+        "description": "首次同步只纳入最近 N 天的会话（调大可导入更多历史）。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": "多久重新扫描一次新会话。"
+      }
+    },
+    "sections": {
+      "activation": "启用",
+      "general": "通用"
+    }
+  },
+  "activity": {
+    "source": {
+      "claude_code": "Claude Code",
+      "codex": "Codex"
+    },
+    "action": {
+      "conversed": "对话"
+    },
+    "object": {
+      "coding_session": "编程会话"
+    }
+  }
+}
