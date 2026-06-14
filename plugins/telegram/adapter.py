@@ -51,12 +51,16 @@ class TelegramChannel(Channel):
         self._application: Any = None
         self._bot_username: str = ""
         self._bot_id: int = 0
+        self._control_port: Any = None
 
     def bind_session_mapper(self, session_mapper: ChannelSessionMapperProtocol) -> None:
         self._session_mapper = session_mapper
 
     def bind_message_dispatcher(self, dispatcher: ChannelMessageDispatcherProtocol) -> None:
         self._message_dispatcher = dispatcher
+
+    def bind_control_port(self, control_port: Any) -> None:
+        self._control_port = control_port
 
     @property
     def channel_type(self) -> str:
@@ -595,25 +599,22 @@ class TelegramChannel(Channel):
             return
 
         synth_text = f"/{verb} {short_id}"
-        outcome = await self._message_dispatcher.dispatch_user_message(
-            source="telegram",
-            user_id=mapping.magi_user_id,
-            session_id=mapping.magi_session_id,
-            message=synth_text,
-            metadata={
-                "channel_type": "telegram",
-                "external_chat_id": str(chat.id),
-                "external_user_id": external_user_id,
-                "via_callback_query": True,
-            },
-        )
+        result = None
+        if self._control_port is not None:
+            result = await self._control_port.handle_command(
+                message=synth_text,
+                session_id=mapping.magi_session_id,
+                channel_type="telegram",
+                external_chat_id=str(chat.id),
+                external_user_id=external_user_id,
+            )
         # Brief inline acknowledgement so the user sees what happened
         # without scrolling to find a separate confirmation message.
         try:
             verb_zh = "同意" if verb == "approve" else "拒绝"
             ack_text = (
-                outcome.error_message
-                if outcome and outcome.error_message
+                result.ack
+                if result is not None and result.ack
                 else f"✓ 已{verb_zh}"
             )
             # Edit the original message to strip the buttons and show
@@ -713,6 +714,24 @@ class TelegramChannel(Channel):
             display_name=display_name,
         )
 
+        # Control commands (/new, /reset, /approve, /help) — handled by the host's
+        # unified control port and surfaced here; no LLM turn.
+        if self._control_port is not None:
+            result = await self._control_port.handle_command(
+                message=text,
+                session_id=mapping.magi_session_id,
+                channel_type="telegram",
+                external_chat_id=str(chat.id),
+                external_user_id=external_user_id,
+            )
+            if result is not None:
+                if result.ack:
+                    try:
+                        await self._application.bot.send_message(chat_id=chat.id, text=result.ack)
+                    except Exception:
+                        logger.warning("Telegram control-command ack send failed", exc_info=True)
+                return
+
         # Show typing indicator
         try:
             await self._application.bot.send_chat_action(
@@ -744,16 +763,6 @@ class TelegramChannel(Channel):
                 error_code=outcome.error_code,
                 error_message=outcome.error_message,
             )
-            return
-        # A host-handled command (/new, /reset, /approve) short-circuits with no
-        # LLM turn (turn_id is None) and returns its ack in error_message. Normal
-        # turns (turn_id set) reply via deliver(); only surface the command ack here.
-        ack = str(getattr(outcome, "error_message", "") or "").strip()
-        if getattr(outcome, "turn_id", None) is None and ack:
-            try:
-                await self._application.bot.send_message(chat_id=chat.id, text=ack)
-            except Exception:
-                logger.warning("Telegram command-ack send failed", exc_info=True)
 
     # -- Helpers --------------------------------------------------------------
 
