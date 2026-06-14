@@ -92,6 +92,7 @@ class WeixinChannel(Channel):
         self._session_mapper = session_mapper
         self._message_dispatcher = message_dispatcher
         self._attachment_store: ChannelAttachmentStoreProtocol | None = None
+        self._control_port: Any = None
         self._state = WeixinStateStore(config.state_dir)
         self._credentials: WeixinCredentials | None = None
         self._api: WeixinApiClient | None = None
@@ -112,6 +113,9 @@ class WeixinChannel(Channel):
 
     def bind_attachment_store(self, attachment_store: ChannelAttachmentStoreProtocol) -> None:
         self._attachment_store = attachment_store
+
+    def bind_control_port(self, control_port: Any) -> None:
+        self._control_port = control_port
 
     async def start(self) -> None:
         self._state.update_channel_status(state="starting", running=False, configured=False, last_error="")
@@ -753,6 +757,31 @@ class WeixinChannel(Channel):
             display_name=f"Weixin: {from_user_id}",
         )
 
+        # Control commands (/new, /reset, /approve, /help) — handled by the host's
+        # unified control port and surfaced to the sender; no LLM turn. Sent
+        # straight to from_user_id (a /新会话 reset has just deleted the mapping,
+        # so _send_text's session-mapping resolution would otherwise fail).
+        if self._control_port is not None and text and text.strip():
+            result = await self._control_port.handle_command(
+                message=text,
+                session_id=mapping.magi_session_id,
+                channel_type=self.channel_type,
+                external_chat_id=from_user_id,
+                external_user_id=from_user_id,
+            )
+            if result is not None:
+                if result.ack and self._api is not None:
+                    try:
+                        await self._api.send_text_message(
+                            to_user_id=from_user_id,
+                            text=result.ack,
+                            context_token=context_token or None,
+                            timeout_ms=self._config.request_timeout_ms,
+                        )
+                    except Exception:
+                        logger.warning("Weixin control-command ack send failed", exc_info=True)
+                return True
+
         await self.send_typing_indicator(
             ChannelTarget(channel_type=self.channel_type, external_chat_id=from_user_id)
         )
@@ -828,22 +857,6 @@ class WeixinChannel(Channel):
             last_inbound_chat_id=from_user_id,
             last_error="",
         )
-        # A host-handled command (e.g. /新会话, /approve) short-circuits with no
-        # LLM turn (turn_id is None) and returns its ack in error_message. Send it
-        # straight to from_user_id — NOT via _send_text's session-mapping
-        # resolution, which a /新会话 reset has just deleted. Normal turns
-        # (turn_id set) reply via deliver(), so only surface the command ack here.
-        ack = str(getattr(outcome, "error_message", "") or "").strip()
-        if getattr(outcome, "turn_id", None) is None and ack and self._api is not None:
-            try:
-                await self._api.send_text_message(
-                    to_user_id=from_user_id,
-                    text=ack,
-                    context_token=context_token or None,
-                    timeout_ms=self._config.request_timeout_ms,
-                )
-            except Exception:
-                logger.warning("Weixin command-ack send failed", exc_info=True)
         return True
 
     async def _get_typing_ticket(self, user_id: str, context_token: str | None) -> str:
