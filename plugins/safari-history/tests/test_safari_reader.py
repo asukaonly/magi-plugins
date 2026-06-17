@@ -4,6 +4,8 @@ import importlib.util
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 
 SAFARI_UNIX_OFFSET = 978_307_200
 
@@ -104,3 +106,35 @@ def test_safari_reader_cursor_returns_only_new_visits(tmp_path: Path) -> None:
     )
 
     assert items == []
+
+
+def test_safari_reader_permission_error_explains_full_disk_access(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reader_module = _load_safari_reader()
+    reader = reader_module.SafariHistoryReader()
+    root = tmp_path / "Safari"
+    root.mkdir()
+    history_db = root / "History.db"
+    history_db.write_bytes(b"sqlite")
+
+    def blocked_copy(src: Path, dst: Path) -> None:
+        raise PermissionError(1, "Operation not permitted", str(src))
+
+    monkeypatch.setattr(reader_module.shutil, "copy2", blocked_copy)
+
+    with pytest.raises(reader_module.SafariHistoryPermissionError) as exc:
+        reader.read_visits(
+            source_path=str(root),
+            profile="",
+            limit=20,
+            initial_lookback_hours=None,
+            merge_window_seconds=60.0,
+        )
+
+    message = str(exc.value)
+    assert "Full Disk Access" in message
+    assert "System Settings" in message
+    assert "Magi" in message
+    assert str(history_db) in message

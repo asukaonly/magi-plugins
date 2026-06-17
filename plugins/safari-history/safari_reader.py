@@ -5,6 +5,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+from errno import EACCES, EPERM
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,10 @@ from browser_history_core.visit_merger import aggregate_visits
 
 SAFARI_UNIX_OFFSET_SECONDS = 978_307_200
 DEFAULT_MACOS_SAFARI_ROOT = "~/Library/Safari"
+
+
+class SafariHistoryPermissionError(PermissionError):
+    """Raised when macOS privacy controls block Safari history access."""
 
 
 def _default_safari_root() -> str:
@@ -44,12 +49,27 @@ class SafariHistoryReader:
 
     def _copy_history_database(self, root: Path) -> Path:
         history_file = root / "History.db"
-        if not history_file.exists():
+        try:
+            history_file.stat()
+        except FileNotFoundError:
             raise FileNotFoundError(f"Safari history database not found: {history_file}")
+        except PermissionError as exc:
+            raise _permission_error(history_file, exc) from exc
+        except OSError as exc:
+            if exc.errno in {EACCES, EPERM}:
+                raise _permission_error(history_file, exc) from exc
+            raise
         temp_dir = Path(tempfile.mkdtemp(prefix="magi-safari-history-"))
         copy_path = temp_dir / "History.db"
-        shutil.copy2(history_file, copy_path)
-        return copy_path
+        try:
+            shutil.copy2(history_file, copy_path)
+            return copy_path
+        except PermissionError as exc:
+            raise _permission_error(history_file, exc) from exc
+        except OSError as exc:
+            if exc.errno in {EACCES, EPERM}:
+                raise _permission_error(history_file, exc) from exc
+            raise
 
     def read_visits(
         self,
@@ -241,3 +261,11 @@ def _visit_filter_sql(visit_columns: set[str]) -> str:
         return ""
     return "AND " + " AND ".join(clauses)
 
+
+def _permission_error(history_file: Path, exc: BaseException) -> SafariHistoryPermissionError:
+    return SafariHistoryPermissionError(
+        "Safari History.db is protected by macOS Full Disk Access. "
+        "Grant Full Disk Access to Magi (and its sidecar/helper if macOS lists it) in "
+        "System Settings > Privacy & Security > Full Disk Access, then fully restart Magi. "
+        f"Path: {history_file}"
+    )
