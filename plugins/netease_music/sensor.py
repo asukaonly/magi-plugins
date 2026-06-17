@@ -254,7 +254,7 @@ class NeteaseMusicTimelineSensor(SensorBase):
         )
 
     async def extract_metadata(self, item: dict) -> SensorOutputMetadata:
-        """Extract entity hints, relation candidates, and genre tags."""
+        """Extract entity hints, graph fact hints, and genre tags."""
         track_name = str(item.get("track_name", ""))
         artist_name = str(item.get("artist_name", ""))
         album_name = str(item.get("album_name", ""))
@@ -280,16 +280,26 @@ class NeteaseMusicTimelineSensor(SensorBase):
                 "canonical_name_hint": album_name,
             })
 
-        # Direct-write LISTENED edge (rule-based, no LLM needed)
-        relation_candidates: list[dict[str, Any]] = []
+        # Source-owned LISTENED evidence (rule-based, no LLM needed).
+        fact_hints: list[dict[str, Any]] = []
         if track_name:
-            relation_candidates.append({
+            fact_hint = {
+                "subject_ref": "user:self",
+                "subject_type": "user",
                 "predicate": "LISTENED",
-                "object_id": f"media:{track_name}",
+                "object_ref": f"media:{track_name}",
                 "object_type": "media",
-                "confidence": 1.0,
                 "fact_kind": "interaction_evidence",
-            })
+                "origin_mode": "source_structured",
+                "confidence": 1.0,
+            }
+            observed_at = item.get("update_time")
+            if observed_at:
+                observed_ts = float(observed_at)
+                fact_hint["observed_at"] = (
+                    observed_ts / 1000 if observed_ts > 1e12 else observed_ts
+                )
+            fact_hints.append(fact_hint)
 
         # Genre/style tags from configured strategy
         genre_tags = await self._extract_genre_tags(item)
@@ -297,7 +307,8 @@ class NeteaseMusicTimelineSensor(SensorBase):
         return SensorOutputMetadata(
             entities=entities,
             tags=genre_tags,
-            relation_candidates=relation_candidates,
+            fact_hints=fact_hints,
+            relation_candidates=[],
         )
 
     # ------------------------------------------------------------------

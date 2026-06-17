@@ -142,21 +142,52 @@ def should_mark_viewed(item: dict[str, Any]) -> bool:
     return visit_count >= 3 and bool(title)
 
 
-def build_relation_candidates(item: dict[str, Any]) -> list[dict[str, Any]]:
-    """Generate conservative relation candidates for a history item."""
-
+def _viewed_site_payload(item: dict[str, Any]) -> tuple[str, float, dict[str, Any]] | None:
     domain = str(item.get("domain") or normalize_domain(str(item.get("url") or ""))).strip().lower()
     if not domain:
-        return []
+        return None
+    if not should_mark_viewed(item):
+        return None
     observed_at = float(item.get("visit_time") or 0.0)
-    object_id = site_node_id(domain)
-    object_attributes = {
+    attributes = {
         "domain": domain,
         "label": domain,
         "source_kind": "site",
     }
-    if not should_mark_viewed(item):
+    return domain, observed_at, attributes
+
+
+def build_fact_hints(item: dict[str, Any]) -> list[dict[str, Any]]:
+    """Generate source-owned L2 graph hints for a history item."""
+
+    payload = _viewed_site_payload(item)
+    if payload is None:
         return []
+    domain, observed_at, attributes = payload
+    return [
+        {
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "VIEWED",
+            "object_ref": site_node_id(domain),
+            "object_type": "software",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.78,
+            "observed_at": observed_at,
+            "attributes": attributes,
+        }
+    ]
+
+
+def build_relation_candidates(item: dict[str, Any]) -> list[dict[str, Any]]:
+    """Generate legacy relation candidates for a history item."""
+
+    payload = _viewed_site_payload(item)
+    if payload is None:
+        return []
+    domain, observed_at, object_attributes = payload
+    object_id = site_node_id(domain)
     return [
         {
             "subject_id": "user:self",

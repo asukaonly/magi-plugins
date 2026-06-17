@@ -131,3 +131,59 @@ def build_session_relation_candidates(session: dict[str, Any]) -> list[dict[str,
         })
 
     return candidates
+
+
+def build_session_fact_hints(session: dict[str, Any]) -> list[dict[str, Any]]:
+    """Generate source-owned L2 graph hints from a settled photo session."""
+
+    hints: list[dict[str, Any]] = []
+    observed_at = float(
+        session.get("first_capture_ts")
+        or session.get("last_capture_ts")
+        or 0.0
+    )
+
+    device_slug = str(session.get("device_slug") or "").strip()
+    device_name = str(session.get("device_name") or "").strip()
+    if device_slug and device_name:
+        hints.append({
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "OWNS",
+            "object_ref": f"hardware:{device_slug}",
+            "object_type": "hardware",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.9,
+            "observed_at": observed_at,
+            "attributes": {
+                "device_name": device_name,
+                "source_kind": "exif",
+            },
+        })
+
+    lat = session.get("latitude")
+    lon = session.get("longitude")
+    location_name = str(session.get("location_name") or "")
+    if lat is not None and lon is not None:
+        loc_id = location_name or f"{lat:.4f},{lon:.4f}"
+        hints.append({
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "VISITED",
+            "object_ref": f"place:{loc_id}",
+            "object_type": "place",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.85,
+            "observed_at": observed_at,
+            "attributes": {
+                "latitude": lat,
+                "longitude": lon,
+                "location_name": location_name,
+                "photo_count": int(session.get("photo_count") or 0),
+                "source_kind": "gps",
+            },
+        })
+
+    return hints

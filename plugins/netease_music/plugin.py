@@ -203,9 +203,24 @@ class NeteaseMusicPlugin(Plugin):
                 allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
                 structured_allowed_entity_types=["media", "person", "group"],
                 structured_allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
-                allowed_assertion_families=["taste_profile", "preference_profile"],
+                allowed_assertion_families=["preference_profile"],
                 allow_graph=True,
                 allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["music.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "netease_music.listened_interest",
+                        "source_predicates": ["LISTENED"],
+                        "source_types": ["netease_music"],
+                        "trait_family": "preference_profile",
+                        "trait_name_template": "music.{object_slug}",
+                        "min_observations": 3,
+                        "min_distinct_days": 1,
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are music play records from NetEase Cloud Music. Each event\n"
                     "represents one track playback with track name, artist, and album info.\n\n"
@@ -219,11 +234,9 @@ class NeteaseMusicPlugin(Plugin):
                     "- Keep entity names concise: use the canonical artist name, not\n"
                     "  'artist_name - track_name'.\n\n"
                     "Assertion rules:\n"
-                    "- taste_profile assertions capture music taste dimensions, e.g.,\n"
-                    "  trait_name: 'music.genre', trait_value: 'indie_rock'.\n"
-                    "- preference_profile assertions capture specific artist/genre preferences.\n"
-                    "- Only assert preferences when there is genuine frequency signal\n"
-                    "  (multiple plays), not from a single listen."
+                    "- Do not emit Phase 2 assertion candidates for play records. Repeated\n"
+                    "  LISTENED graph evidence may be aggregated later by the host-owned\n"
+                    "  derived music preference rule declared in this profile."
                 ),
             )
         ]

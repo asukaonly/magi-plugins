@@ -30,7 +30,7 @@ from .file_index import FileIndexCache
 from .locale_data import get_locale_map
 from .normalizers import (
     build_session_entity_hints,
-    build_session_relation_candidates,
+    build_session_fact_hints,
 )
 from .reader import PhotoLibraryReader
 from .sessions import aggregate_sessions
@@ -51,7 +51,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
     polling_mode = "interval"
     default_interval = 60
     update_key_fields = ("session_key",)
-    relation_edge_whitelist = ("OWNED_DEVICE", "VISITED")
+    relation_edge_whitelist = ("OWNS", "VISITED")
     supports_pull_sync = True
 
     memory_policy = SensorMemoryPolicy(
@@ -398,5 +398,6 @@ class PhotoLibraryTimelineSensor(SensorBase):
         return SensorOutputMetadata(
             entities=build_session_entity_hints(item),
             tags=tags,
-            relation_candidates=build_session_relation_candidates(item),
+            fact_hints=build_session_fact_hints(item),
+            relation_candidates=[],
         )

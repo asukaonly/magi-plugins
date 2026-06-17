@@ -17,7 +17,7 @@ from magi_plugin_sdk.sensors import (
     SensorSyncResult,
 )
 
-from .normalizers import build_relation_candidates, normalize_domain, parse_title_entities
+from .normalizers import build_fact_hints, normalize_domain, parse_title_entities
 
 logger = logging.getLogger(__name__)
 
@@ -250,7 +250,8 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
         return SensorOutputMetadata(
             entities=entity_hints,
             tags=[tag for tag in (self.source_type, domain) if tag],
-            relation_candidates=build_relation_candidates(item),
+            fact_hints=build_fact_hints(item),
+            relation_candidates=[],
         )
 
 

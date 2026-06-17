@@ -236,8 +236,24 @@ class ChromeHistoryPlugin(Plugin):
                     "PRESENCE_OF",
                     "LOCATED_IN",
                 ],
+                allowed_assertion_families=["preference_profile"],
                 allow_graph=True,
-                allow_assertion=False,
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["interest.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "chrome_history.viewed_interest",
+                        "source_predicates": ["VIEWED"],
+                        "source_types": ["chrome_history"],
+                        "trait_family": "preference_profile",
+                        "trait_name_template": "interest.{object_slug}",
+                        "min_observations": 3,
+                        "min_distinct_days": 1,
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are browser history page titles, NOT user-authored messages.\n"
                     "Page titles often follow patterns like '{content} - {platform}' or\n"
@@ -251,6 +267,10 @@ class ChromeHistoryPlugin(Plugin):
                     "- VIEWED: for individual content consumption (a specific video, article)\n"
                     "- FOLLOWS: when visiting a specific creator or person's page\n"
                     "- WORKS_WITH: for professional tools/technologies seen in work context\n\n"
+                    "Assertion guidance:\n"
+                    "- Do not emit Phase 2 assertion candidates for browsing events. Repeated\n"
+                    "  VIEWED graph evidence may be aggregated later by the host-owned derived\n"
+                    "  interest rule declared in this profile.\n\n"
                     "Entity extraction rules (IMPORTANT):\n"
                     "- Preserve the source title language/script for content entities. Do NOT\n"
                     "  translate Chinese, Japanese, Korean, or other non-Latin names into\n"

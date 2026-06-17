@@ -58,6 +58,23 @@ def test_plugin_declares_safari_extraction_and_summary_profiles() -> None:
     profile = plugin.get_extraction_profiles()[0]
     assert profile.profile_id == "source.safari_history"
     assert list(profile.source_types) == ["safari_history"]
+    assert profile.assertion_mode == "derived"
+    assert profile.allowed_assertion_families == ["preference_profile"]
+    assert profile.allowed_assertion_traits == ["interest.*"]
+    assert profile.allow_assertion is True
+    assert profile.derived_assertion_specs == [
+        {
+            "rule_id": "safari_history.viewed_interest",
+            "source_predicates": ["VIEWED"],
+            "source_types": ["safari_history"],
+            "trait_family": "preference_profile",
+            "trait_name_template": "interest.{object_slug}",
+            "min_observations": 3,
+            "min_distinct_days": 1,
+            "source_domains": ["external_activity"],
+            "value_strategy": "canonical_name",
+        }
+    ]
 
     summary = plugin.get_summary_profiles()[0]
     assert summary.profile_id == "safari-history:browser_activity"

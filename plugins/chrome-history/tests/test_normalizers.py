@@ -40,3 +40,36 @@ def test_parse_domain_known_wiki_title_without_platform_suffix() -> None:
 
     names = [hint["mention_text"] for hint in hints]
     assert names == ["Fandom", "蠕动的饥饿", "诡秘之主"]
+
+
+def test_build_fact_hints_uses_l2_graph_hint_contract() -> None:
+    normalizers = _load_normalizers()
+
+    hints = normalizers.build_fact_hints(
+        {
+            "url": "https://github.com/asukaonly/magi",
+            "domain": "github.com",
+            "title": "asukaonly/magi",
+            "visit_time": 1710000000.0,
+            "visit_count": 1,
+        }
+    )
+
+    assert hints == [
+        {
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "VIEWED",
+            "object_ref": "site:github.com",
+            "object_type": "software",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.78,
+            "observed_at": 1710000000.0,
+            "attributes": {
+                "domain": "github.com",
+                "label": "github.com",
+                "source_kind": "site",
+            },
+        }
+    ]
