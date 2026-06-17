@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import sys
+from errno import EACCES, EPERM
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk import Plugin, SensorSpec
+from magi_plugin_sdk import Plugin, PluginSettingsResourceSpec, SensorSpec, SettingsUIBlockSpec
 
 _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
@@ -22,6 +23,38 @@ from browser_history_core.plugin_support import (
 
 from .safari_reader import _default_safari_root
 from .sensor import SafariHistoryTimelineSensor
+
+
+def _settings_ui_blocks() -> list[SettingsUIBlockSpec]:
+    """Host-rendered custom blocks for Safari's macOS permission status."""
+    return [
+        SettingsUIBlockSpec(
+            block_id="macos_permissions",
+            type="resource_picker",
+            title="macOS Permissions",
+            description="Full Disk Access is required to read Safari History.db.",
+            resource_name="permissions",
+            value_key="_readonly",
+            presentation="permission_status",
+        ),
+    ]
+
+
+def _full_disk_access_status() -> str:
+    """Check whether this process can read Safari's protected History.db."""
+    history_db = Path(_default_safari_root()).expanduser() / "History.db"
+    try:
+        with history_db.open("rb") as handle:
+            handle.read(1)
+    except FileNotFoundError:
+        return "unknown"
+    except PermissionError:
+        return "denied"
+    except OSError as exc:
+        if exc.errno in {EACCES, EPERM}:
+            return "denied"
+        return "unknown"
+    return "granted"
 
 
 class SafariHistoryPlugin(Plugin):
@@ -69,10 +102,40 @@ class SafariHistoryPlugin(Plugin):
                             "source_path": _default_safari_root(),
                         },
                         "activation_flow": build_activation_flow("sensors.safari_history", "Safari").model_dump(),
+                        "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks()],
                     },
                 ),
             )
         ]
+
+    def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
+        return [
+            PluginSettingsResourceSpec(
+                resource_name="permissions",
+                resource_type="channel_status",
+                description="Live macOS permission grant required by the Safari history plugin.",
+            ),
+        ]
+
+    def read_settings_resource(self, resource_name: str) -> Any:
+        if resource_name != "permissions":
+            raise KeyError(resource_name)
+        return {
+            "items": [
+                {
+                    "id": "full_disk_access",
+                    "label": "Full Disk Access",
+                    "label_i18n_key": "safari_history.permissions.full_disk_access.label",
+                    "description": "Required to read the local Safari history database.",
+                    "description_i18n_key": "safari_history.permissions.full_disk_access.description",
+                    "status": _full_disk_access_status(),
+                    "required": True,
+                    "settings_url": (
+                        "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+                    ),
+                },
+            ],
+        }
 
     def get_summary_profiles(self) -> list[Any]:
         return [build_summary_profile(source_type="safari_history", plugin_id="safari-history")]
@@ -139,4 +202,3 @@ class SafariHistoryPlugin(Plugin):
             events=events,
             budget=budget,
         )
-

@@ -66,6 +66,18 @@
       "description": "Safari history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
       "confirm_label": "Enable source",
       "cancel_label": "Not now"
+    },
+    "ui_blocks": {
+      "macos_permissions": {
+        "title": "macOS Permissions",
+        "description": "Full Disk Access is required to read Safari History.db."
+      }
+    },
+    "permissions": {
+      "full_disk_access": {
+        "label": "Full Disk Access",
+        "description": "Required to read the local Safari history database. Grant it to Magi, then fully restart the app."
+      }
     }
   },
   "activity": {
@@ -84,4 +96,3 @@
     "multiple_visits": "{title} ({count} visits)"
   }
 }
-
