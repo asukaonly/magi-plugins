@@ -2,6 +2,7 @@
 id = "steam-play-history"
 name = "Steam Play History"
 name_i18n = { "zh-CN" = "Steam 游玩历史" }
+icon = "brand:steam"
 version = "0.1.0"
 description = "Infers Steam gameplay sessions from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏会话" }

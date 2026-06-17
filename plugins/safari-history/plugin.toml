@@ -2,6 +2,7 @@
 id = "safari-history"
 name = "Safari History"
 name_i18n = { "zh-CN" = "Safari 浏览历史" }
+icon = "brand:safari"
 version = "0.1.0"
 description = "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Safari 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
@@ -57,4 +58,3 @@ darwin = "~/Library/Safari/History.db"
 capability = "filesystem_read"
 scope = ["~/Library/Safari"]
 reason_i18n = { en = "Read the local Safari history database", "zh-CN" = "读取本地 Safari 历史数据库" }
-

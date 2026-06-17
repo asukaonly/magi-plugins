@@ -2,6 +2,7 @@
 id = "coding_agent_history"
 name = "Coding Agent History"
 name_i18n = { "zh-CN" = "编程助手历史" }
+icon = "lucide:bot"
 version = "0.1.0"
 description = "Optional. Reads ONLY your own messages from local AI coding-assistant transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device."
 description_i18n = { "zh-CN" = "可选。仅读取本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。" }

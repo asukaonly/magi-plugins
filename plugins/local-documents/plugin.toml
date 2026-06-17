@@ -2,6 +2,7 @@
 id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
+icon = "lucide:file-text"
 version = "0.1.0"
 description = "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory."
 description_i18n = { "zh-CN" = "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。" }
@@ -46,4 +47,3 @@ en = "Lets magi read local notes and documents from folders you choose"
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 reason_i18n = { en = "Read local document folders selected by the user", "zh-CN" = "读取用户选择的本地文档文件夹" }
-

@@ -67,6 +67,9 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     }
     if "name_i18n" in meta:
         entry["name_i18n"] = meta["name_i18n"]
+    icon = str(meta.get("icon", "") or "").strip()
+    if icon:
+        entry["icon"] = icon
     entry["version"] = meta.get("version", "0.0.0")
     entry["path"] = f"plugins/{plugin_dir.name}"
     entry["description"] = meta.get("description", "")
