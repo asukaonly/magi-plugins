@@ -778,6 +778,89 @@
       }
     },
     {
+      "plugin_id": "safari-history",
+      "name": "Safari History",
+      "name_i18n": {
+        "zh-CN": "Safari 浏览历史"
+      },
+      "version": "0.1.0",
+      "path": "plugins/safari-history",
+      "description": "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description_i18n": {
+        "zh-CN": "读取本地 Safari 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Library/Safari"
+          ],
+          "reason_i18n": {
+            "en": "Read the local Safari history database",
+            "zh-CN": "读取本地 Safari 历史数据库"
+          }
+        }
+      ],
+      "depends_on": [
+        "browser_history_core"
+      ],
+      "platforms": [
+        "macos"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "browser_history",
+        "platform_support": [
+          "darwin"
+        ],
+        "setup_time_estimate_seconds": 10,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "浏览",
+              "上网",
+              "看过",
+              "网页",
+              "网站",
+              "搜过",
+              "查过",
+              "Safari"
+            ],
+            "en": [
+              "browsing",
+              "browser",
+              "website",
+              "online",
+              "bookmark",
+              "browsed",
+              "history",
+              "safari"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能读取你的 Safari 历史，帮你回想最近看过什么",
+          "en": "Lets magi see what you've been reading in Safari"
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Library/Safari/History.db"
+            }
+          }
+        ]
+      }
+    },
+    {
       "plugin_id": "screen-time",
       "name": "App Usage",
       "name_i18n": {

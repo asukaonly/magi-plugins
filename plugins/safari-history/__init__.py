@@ -1,0 +1,2 @@
+"""Safari history plugin package."""
+

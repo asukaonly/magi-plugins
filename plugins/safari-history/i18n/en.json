@@ -1,0 +1,87 @@
+{
+  "safari_history": {
+    "name": "Safari History",
+    "description": "Local Safari browsing history ingestion for the timeline",
+    "fields": {
+      "enabled": {
+        "label": "Enabled",
+        "description": "Whether Safari history sync is active."
+      },
+      "profile": {
+        "label": "Profile",
+        "description": "Safari stores history in one History.db file; leave this empty."
+      },
+      "sync_mode": {
+        "label": "Sync Mode",
+        "description": "How Safari history should be synchronized."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "Polling interval used for interval-based sync."
+      },
+      "merge_window_minutes": {
+        "label": "Merge Window (minutes)",
+        "description": "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them."
+      },
+      "max_items_per_sync": {
+        "label": "Max Items Per Sync",
+        "description": "Maximum number of history records to ingest per run."
+      },
+      "filter_domains": {
+        "label": "Filter Domains (Regex)",
+        "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
+      },
+      "filter_keywords": {
+        "label": "Filter Keywords",
+        "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+      },
+      "initial_sync_policy": {
+        "label": "First Sync Scope",
+        "description": "Decide how much history should be imported when this source is enabled for the first time."
+      },
+      "initial_sync_lookback_days": {
+        "label": "Recent Days",
+        "description": "Used when the first-sync scope is set to recent days."
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "Manual",
+        "interval": "Interval"
+      },
+      "initial_sync_policy": {
+        "full": "Sync full history",
+        "lookback_days": "Sync recent days",
+        "from_now": "Only new records from now on"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "sync": "Sync",
+      "filters": "Filters",
+      "activation": "Activation"
+    },
+    "activation": {
+      "title": "Enable Safari History",
+      "description": "Safari history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
+    }
+  },
+  "activity": {
+    "source": {
+      "safari": "Safari"
+    },
+    "action": {
+      "browse": "Browsing"
+    },
+    "object": {
+      "page": "Page"
+    }
+  },
+  "summary": {
+    "single_visit": "{title}",
+    "multiple_visits": "{title} ({count} visits)"
+  }
+}
+
