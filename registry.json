@@ -524,6 +524,77 @@
       }
     },
     {
+      "plugin_id": "local-documents",
+      "name": "Local Documents",
+      "name_i18n": {
+        "zh-CN": "本地文档"
+      },
+      "version": "0.1.0",
+      "path": "plugins/local-documents",
+      "description": "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory.",
+      "description_i18n": {
+        "zh-CN": "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "reason_i18n": {
+            "en": "Read local document folders selected by the user",
+            "zh-CN": "读取用户选择的本地文档文件夹"
+          }
+        }
+      ],
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "notes",
+        "platform_support": [
+          "darwin",
+          "win32",
+          "linux"
+        ],
+        "setup_time_estimate_seconds": 20,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "笔记",
+              "文档",
+              "本地文件",
+              "markdown",
+              "txt",
+              "写过",
+              "记录"
+            ],
+            "en": [
+              "notes",
+              "documents",
+              "local files",
+              "markdown",
+              "txt",
+              "wrote",
+              "recorded"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能读取你指定文件夹里的本地笔记和文档",
+          "en": "Lets magi read local notes and documents from folders you choose"
+        }
+      }
+    },
+    {
       "plugin_id": "netease-music",
       "name": "NetEase Cloud Music",
       "name_i18n": {

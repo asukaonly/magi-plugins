@@ -1,0 +1,74 @@
+{
+  "local_documents": {
+    "name": "本地文档",
+    "description": "本地笔记和文本类文档接入时间线",
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "是否启用本地文档同步。"
+      },
+      "root_paths": {
+        "label": "文档文件夹",
+        "description": "要扫描笔记和文本类文档的本地文件夹。"
+      },
+      "sync_mode": {
+        "label": "同步方式",
+        "description": "控制本地文档的同步策略。"
+      },
+      "sync_interval_minutes": {
+        "label": "定时间隔（分钟）",
+        "description": "重新扫描文件夹中变更文档的频率。"
+      },
+      "include_extensions": {
+        "label": "包含扩展名",
+        "description": "要接入的文本文件扩展名。"
+      },
+      "exclude_folders": {
+        "label": "排除文件夹",
+        "description": "完全不会读取的文件夹。"
+      },
+      "cognition_exclude_folders": {
+        "label": "仅搜索文件夹",
+        "description": "读取后可用于搜索和时间线，但不进入知识抽取的文件夹。"
+      },
+      "max_file_bytes": {
+        "label": "最大文件大小（字节）",
+        "description": "大于此大小的文件会被跳过。"
+      },
+      "max_body_chars": {
+        "label": "最大文本字符数",
+        "description": "每个文档正文最多存储的字符数。"
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "手动",
+        "interval": "定时"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "filters": "过滤",
+      "privacy": "隐私",
+      "activation": "激活"
+    },
+    "activation": {
+      "title": "启用本地文档",
+      "description": "本地文档可能包含私人笔记。请先选择 Magi 可以读取的文件夹，再启用该来源。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
+    }
+  },
+  "activity": {
+    "source": {
+      "local_documents": "本地文档"
+    },
+    "action": {
+      "edited": "编辑"
+    },
+    "object": {
+      "document": "文档"
+    }
+  }
+}
+

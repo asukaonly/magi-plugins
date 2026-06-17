@@ -1,0 +1,74 @@
+{
+  "local_documents": {
+    "name": "Local Documents",
+    "description": "Local notes and text documents ingested into the timeline",
+    "fields": {
+      "enabled": {
+        "label": "Enabled",
+        "description": "Whether local document sync is active."
+      },
+      "root_paths": {
+        "label": "Document Folders",
+        "description": "Local folders to scan for notes and text documents."
+      },
+      "sync_mode": {
+        "label": "Sync Mode",
+        "description": "How local documents should be synchronized."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to rescan the folders for changed documents."
+      },
+      "include_extensions": {
+        "label": "Included Extensions",
+        "description": "Text file extensions to ingest."
+      },
+      "exclude_folders": {
+        "label": "Excluded Folders",
+        "description": "Folders never read at all."
+      },
+      "cognition_exclude_folders": {
+        "label": "Search-only Folders",
+        "description": "Folders read for search and timeline but kept out of knowledge extraction."
+      },
+      "max_file_bytes": {
+        "label": "Max File Size (bytes)",
+        "description": "Files larger than this are skipped."
+      },
+      "max_body_chars": {
+        "label": "Max Text Characters",
+        "description": "Maximum characters stored from each document body."
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "Manual",
+        "interval": "Interval"
+      }
+    },
+    "sections": {
+      "general": "General",
+      "filters": "Filters",
+      "privacy": "Privacy",
+      "activation": "Activation"
+    },
+    "activation": {
+      "title": "Enable Local Documents",
+      "description": "Local documents can contain private notes. Choose the folders Magi may read before enabling this source.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
+    }
+  },
+  "activity": {
+    "source": {
+      "local_documents": "Local Documents"
+    },
+    "action": {
+      "edited": "Edited"
+    },
+    "object": {
+      "document": "Document"
+    }
+  }
+}
+
