@@ -38,6 +38,7 @@ from .normalizers import (
     build_session_entity_hints,
     build_session_fact_hints,
     build_session_relation_candidates,
+    build_session_retrieval_terms,
 )
 from .reader import PhotoLibraryReader
 from .sessions import aggregate_sessions
@@ -553,9 +554,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
             "last_capture_ts": last_ts,
         }
 
-        tags = ["photo_library", "session"]
-        if location or item.get("latitude") is not None:
-            tags.append("geo")
+        tags = build_session_retrieval_terms(item)
 
         domain_payload = {"representative_photos": reps}
 
@@ -592,9 +591,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
-        tags = ["photo_library", "session"]
-        if item.get("latitude") is not None or item.get("location_name"):
-            tags.append("geo")
+        tags = build_session_retrieval_terms(item)
         return SensorOutputMetadata(
             entities=build_session_entity_hints(item),
             tags=tags,

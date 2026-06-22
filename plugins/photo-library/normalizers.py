@@ -4,6 +4,12 @@ from __future__ import annotations
 from typing import Any
 
 
+_LOCATION_QUERY_ALIASES = {
+    "tokyo": "东京",
+    "japan": "日本",
+}
+
+
 def camera_display_name(make: str, model: str) -> str:
     """Build a human-readable camera name, deduplicating make from model."""
     make = make.strip()
@@ -32,6 +38,37 @@ def shooting_params_summary(item: dict[str, Any]) -> str:
     if item.get("iso"):
         parts.append(f"ISO{item['iso']}")
     return " ".join(parts)
+
+
+def build_session_retrieval_terms(session: dict[str, Any]) -> list[str]:
+    """Build compact search terms for photo-session retrieval and embeddings."""
+    terms = ["photo_library", "session"]
+    if session.get("latitude") is not None or session.get("location_name"):
+        terms.append("geo")
+
+    place_name = str(
+        session.get("apple_photos_place_name") or session.get("location_name") or ""
+    ).strip()
+    place_address = str(session.get("apple_photos_place_address") or "").strip()
+    _append_unique(terms, place_name)
+    _append_unique(terms, place_address)
+
+    location_text = " ".join(value for value in (place_name, place_address) if value)
+    location_text_lower = location_text.lower()
+    for token, alias in _LOCATION_QUERY_ALIASES.items():
+        if token in location_text_lower:
+            _append_unique(terms, alias)
+
+    return terms
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return
+    seen = {item.lower() for item in values}
+    if normalized.lower() not in seen:
+        values.append(normalized)
 
 
 def build_session_entity_hints(session: dict[str, Any]) -> list[dict[str, Any]]:

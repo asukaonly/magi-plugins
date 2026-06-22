@@ -56,3 +56,38 @@ def test_extract_metadata_emits_session_facts_as_fact_hints() -> None:
         assert fact["subject_ref"] == "user:self"
         assert fact["subject_type"] == "user"
         assert fact["origin_mode"] == "source_structured"
+
+
+def test_extract_metadata_adds_apple_place_details_to_retrieval_terms() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.PhotoLibraryTimelineSensor()
+
+    meta = asyncio.run(
+        sensor.extract_metadata(
+            {
+                "device_slug": "iphone16",
+                "device_name": "Apple iPhone 16 Pro Max",
+                "latitude": 35.661545,
+                "longitude": 139.74629166666668,
+                "location_name": "Honshu, Minato, Tokyo, Japan",
+                "location_source": "apple_photos",
+                "apple_photos_place_name": "Honshu, Minato, Tokyo, Japan",
+                "apple_photos_place_address": (
+                    "大手第二ビル, 23-15, Toranomon 3-Chōme, "
+                    "Minato, Tokyo, Japan 105-0001"
+                ),
+                "photo_count": 1,
+                "first_capture_ts": 1_735_372_123.182,
+            }
+        )
+    )
+
+    assert meta.tags == [
+        "photo_library",
+        "session",
+        "geo",
+        "Honshu, Minato, Tokyo, Japan",
+        "大手第二ビル, 23-15, Toranomon 3-Chōme, Minato, Tokyo, Japan 105-0001",
+        "东京",
+        "日本",
+    ]
