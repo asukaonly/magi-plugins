@@ -25,6 +25,16 @@ DEFAULT_SETTINGS = {
     "default_retention_mode": "analyze_only",
 }
 
+GAME_RECORDS_CAPABILITY_METADATA = {
+    "capability_id": "game_records",
+    "capability_display_name": "Game Records",
+    "capability_description": "Manage game activity sources that feed the timeline.",
+    "entry_id": "steam",
+    "entry_display_name": "Steam",
+    "entry_description": "Local Steam game activity and play sessions.",
+    "entry_order": 10,
+}
+
 
 def _detect_steam_root_compat(steam_path: str) -> str:
     """Resolve the default Steam path without breaking updates from older plugin versions."""
@@ -377,10 +387,10 @@ class SteamPlayHistoryPlugin(Plugin):
                 sensor,
                 SensorSpec(
                     sensor_id="timeline.steam_play_history",
-                    display_name=self.t("steam_play_history.name", fallback="Steam Play History"),
+                    display_name=self.t("steam_play_history.name", fallback="Steam"),
                     description=self.t(
                         "steam_play_history.description",
-                        fallback="Steam gameplay sessions inferred from local Steam playtime changes.",
+                        fallback="Steam game records inferred from local Steam playtime changes.",
                     ),
                     domain="timeline",
                     surface="timeline",
@@ -396,6 +406,7 @@ class SteamPlayHistoryPlugin(Plugin):
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "sync_interval_minutes": sync_interval,
                         "activation_flow": _activation_flow("sensors.steam_play_history", self.t).model_dump(),
+                        **GAME_RECORDS_CAPABILITY_METADATA,
                     },
                 ),
             )

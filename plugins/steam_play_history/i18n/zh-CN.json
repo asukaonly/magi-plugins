@@ -1,7 +1,19 @@
 {
   "steam_play_history": {
-    "name": "Steam 游玩历史",
-    "description": "根据本地 Steam 文件推断游戏会话"
+    "name": "Steam",
+    "description": "根据本地 Steam 文件推断游戏记录",
+    "capabilities": {
+      "game_records": {
+        "display_name": "游戏记录",
+        "description": "统一管理游戏记录入口。"
+      }
+    },
+    "entries": {
+      "steam": {
+        "display_name": "Steam",
+        "description": "本地 Steam 游戏活动和游玩会话。"
+      }
+    }
   },
   "activity": {
     "source": {
@@ -21,15 +33,15 @@
     "recent_summary": "Steam 显示最近玩过 {game_name}，累计游玩时长为 {total_playtime}。"
   },
   "activation": {
-    "title": "启用 Steam 游玩历史",
-    "description": "Steam 游玩历史会体现你的游戏习惯。请选择首次同步如何初始化时间线数据。精确游玩会话只会在启用后根据本地时长变化推断。",
+    "title": "启用 Steam",
+    "description": "Steam 游戏记录会体现你的游戏习惯。请选择首次同步如何初始化时间线数据。精确游玩会话只会在启用后根据本地时长变化推断。",
     "confirm_label": "启用来源",
     "cancel_label": "暂不启用"
   },
   "settings": {
     "enabled": {
       "label": "启用",
-      "description": "是否启用 Steam 游玩历史同步。"
+      "description": "是否启用 Steam 游戏记录同步。"
     },
     "steam_path": {
       "label": "Steam 路径",
@@ -41,7 +53,7 @@
     },
     "sync_mode": {
       "label": "同步模式",
-      "description": "Steam 游玩历史的同步方式。",
+      "description": "Steam 游戏记录的同步方式。",
       "options": {
         "manual": "手动",
         "interval": "定时"

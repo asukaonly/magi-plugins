@@ -21,6 +21,16 @@ DEFAULT_SETTINGS = {
     "initial_sync_configured": False,
 }
 
+LISTENING_HISTORY_CAPABILITY_METADATA = {
+    "capability_id": "listening_history",
+    "capability_display_name": "Listening History",
+    "capability_description": "Manage music listening history sources that feed the timeline.",
+    "entry_id": "netease_music",
+    "entry_display_name": "NetEase Cloud Music",
+    "entry_description": "Local NetEase Cloud Music listening history.",
+    "entry_order": 10,
+}
+
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
     if budget is None:
@@ -397,6 +407,7 @@ class NeteaseMusicPlugin(Plugin):
                         "source_type": "netease_music",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "activation_flow": _activation_flow("sensors.netease_music").model_dump(),
+                        **LISTENING_HISTORY_CAPABILITY_METADATA,
                     },
                 ),
             )

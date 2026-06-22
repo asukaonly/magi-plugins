@@ -37,3 +37,37 @@ def test_browser_history_plugins_declare_marketplace_display_group() -> None:
         assert group["icon"] == "lucide:globe"
         assert group["member_label"] == member_label
         assert group["member_order"] == member_order
+
+
+def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
+    build_registry = _load_build_registry_module()
+
+    expected = {
+        "netease_music": {
+            "id": "listening_history",
+            "name": "Listening History",
+            "name_zh": "听歌历史",
+            "icon": "lucide:music",
+            "member_label": "NetEase Cloud Music",
+            "member_order": 10,
+        },
+        "steam_play_history": {
+            "id": "game_records",
+            "name": "Game Records",
+            "name_zh": "游戏记录",
+            "icon": "lucide:gamepad-2",
+            "member_label": "Steam",
+            "member_order": 10,
+        },
+    }
+
+    for plugin_dir, spec in expected.items():
+        entry = build_registry.build_entry(ROOT / "plugins" / plugin_dir, official_ids=set())
+        assert entry is not None
+        group = entry["display_group"]
+        assert group["id"] == spec["id"]
+        assert group["name"] == spec["name"]
+        assert group["name_i18n"]["zh-CN"] == spec["name_zh"]
+        assert group["icon"] == spec["icon"]
+        assert group["member_label"] == spec["member_label"]
+        assert group["member_order"] == spec["member_order"]

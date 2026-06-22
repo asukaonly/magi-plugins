@@ -12,6 +12,19 @@ entry_class = "NeteaseMusicPlugin"
 official = true
 platforms = ["macos", "windows"]
 contribution_types = ["sensor"]
+
+[plugin.display_group]
+id = "listening_history"
+name = "Listening History"
+name_i18n = { "zh-CN" = "听歌历史" }
+description = "Manage music listening history sources from installed music plugins."
+description_i18n = { "zh-CN" = "统一管理听歌历史入口。" }
+icon = "lucide:music"
+order = 30
+member_label = "NetEase Cloud Music"
+member_label_i18n = { "zh-CN" = "网易云音乐" }
+member_order = 10
+
 [plugin.suggestion_descriptor]
 category = "music"
 platform_support = ["darwin", "win32"]

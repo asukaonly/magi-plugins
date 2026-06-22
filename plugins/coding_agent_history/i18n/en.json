@@ -1,17 +1,27 @@
 {
   "coding_agent_history": {
-    "name": "Coding Agent History",
-    "description": "Reads your own turns from local AI coding-assistant transcripts (Claude Code, Codex) into Magi's memory.",
+    "name": "Agent History",
+    "description": "Reads your own turns from local agent transcripts (Claude Code, Codex) into Magi's memory.",
+    "capabilities": {
+      "agent_history": {
+        "display_name": "Agent History",
+        "description": "Manage local agent transcript sources."
+      }
+    },
     "entries": {
-      "coding_agent_history": {
-        "display_name": "Coding Agent History",
-        "description": "Your own turns from AI coding-assistant transcripts (Claude Code, Codex)."
+      "claude_code": {
+        "display_name": "Claude Code",
+        "description": "Your own turns from local Claude Code transcripts."
+      },
+      "codex": {
+        "display_name": "Codex",
+        "description": "Your own turns from local Codex prompts."
       }
     },
     "fields": {
       "source_paths": {
         "label": "Transcript Folders",
-        "description": "Folders to scan (e.g. ~/.claude/projects, ~/.codex)."
+        "description": "Folders to scan for this agent's local transcripts."
       },
       "initial_sync_lookback_days": {
         "label": "First-sync window (days)",
@@ -25,6 +35,12 @@
     "sections": {
       "activation": "Activation",
       "general": "General"
+    },
+    "activation": {
+      "title": "Connect agent history",
+      "description": "Magi reads only your own messages from local agent transcripts. Obvious secrets are scrubbed before anything leaves your device.",
+      "confirm_label": "Connect",
+      "cancel_label": "Not now"
     }
   },
   "activity": {

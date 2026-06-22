@@ -2,10 +2,16 @@
   "netease_music": {
     "name": "NetEase Cloud Music",
     "description": "Play history from NetEase Cloud Music app",
+    "capabilities": {
+      "listening_history": {
+        "display_name": "Listening History",
+        "description": "Manage music listening history sources."
+      }
+    },
     "entries": {
       "netease_music": {
         "display_name": "NetEase Cloud Music",
-        "description": "Local NetEase Cloud Music play history ingestion for the timeline."
+        "description": "Local NetEase Cloud Music listening history."
       }
     },
     "fields": {

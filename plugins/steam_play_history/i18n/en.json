@@ -1,7 +1,19 @@
 {
   "steam_play_history": {
-    "name": "Steam Play History",
-    "description": "Steam gameplay sessions inferred from local Steam files"
+    "name": "Steam",
+    "description": "Steam game records inferred from local Steam files",
+    "capabilities": {
+      "game_records": {
+        "display_name": "Game Records",
+        "description": "Manage game activity sources."
+      }
+    },
+    "entries": {
+      "steam": {
+        "display_name": "Steam",
+        "description": "Local Steam game activity and play sessions."
+      }
+    }
   },
   "activity": {
     "source": {
@@ -21,15 +33,15 @@
     "recent_summary": "Steam reports {game_name} was played recently, with {total_playtime} total playtime."
   },
   "activation": {
-    "title": "Enable Steam Play History",
-    "description": "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before this source starts running. Exact sessions are inferred only after the source is enabled.",
+    "title": "Enable Steam",
+    "description": "Steam game records reveal gaming habits. Choose how the first sync should seed the timeline before this source starts running. Exact sessions are inferred only after the source is enabled.",
     "confirm_label": "Enable source",
     "cancel_label": "Not now"
   },
   "settings": {
     "enabled": {
       "label": "Enabled",
-      "description": "Whether Steam play history sync is active."
+      "description": "Whether Steam game record sync is active."
     },
     "steam_path": {
       "label": "Steam Path",
@@ -41,7 +53,7 @@
     },
     "sync_mode": {
       "label": "Sync Mode",
-      "description": "How Steam play history should be synchronized.",
+      "description": "How Steam game records should be synchronized.",
       "options": {
         "manual": "Manual",
         "interval": "Interval"

@@ -2,10 +2,16 @@
   "netease_music": {
     "name": "网易云音乐",
     "description": "网易云音乐播放记录接入时间线",
+    "capabilities": {
+      "listening_history": {
+        "display_name": "听歌历史",
+        "description": "统一管理听歌历史入口。"
+      }
+    },
     "entries": {
       "netease_music": {
         "display_name": "网易云音乐",
-        "description": "本地网易云音乐播放历史接入时间线。"
+        "description": "本地网易云音乐听歌历史接入时间线。"
       }
     },
     "fields": {

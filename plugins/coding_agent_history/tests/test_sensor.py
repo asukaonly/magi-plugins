@@ -44,7 +44,7 @@ def _load_sensor_module() -> ModuleType:
     return module
 
 
-def _ctx(tmp_path: Path, paths, *, lookback=30, last_cursor=None):
+def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=30, last_cursor=None):
     """Build a real SensorSyncContext; runtime_paths is the SDK's path facade."""
     from magi_plugin_sdk.sensors import SensorSyncContext
 
@@ -53,7 +53,7 @@ def _ctx(tmp_path: Path, paths, *, lookback=30, last_cursor=None):
             return tmp_path / "cache"
 
     return SensorSyncContext(
-        source_type="coding_agent_history",
+        source_type=source_type,
         manual=True,
         last_cursor=last_cursor,
         last_success_at=None,
@@ -61,7 +61,7 @@ def _ctx(tmp_path: Path, paths, *, lookback=30, last_cursor=None):
         runtime_paths=_Paths(),
         plugin_settings={
             "sensors": {
-                "coding_agent_history": {
+                source_type: {
                     "source_paths": list(paths),
                     "initial_sync_lookback_days": lookback,
                 }
@@ -72,12 +72,16 @@ def _ctx(tmp_path: Path, paths, *, lookback=30, last_cursor=None):
 
 def test_policy_marks_user_authored() -> None:
     mod = _load_sensor_module()
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     # THE CRUX: author_type="user" => L2 renders [USER] and extracts these as the
     # user's own facts (mirrors obsidian-vault). memory_domain confirms the route.
     assert sensor.memory_policy.author_type == "user"
     assert sensor.memory_policy.memory_domain == "user_authored"
-    assert sensor.source_type == "coding_agent_history"
+    assert sensor.source_type == "codex_agent_history"
     assert sensor.supports_pull_sync is True
 
 
@@ -100,7 +104,11 @@ def test_collect_and_build_output_scrubs_and_uses_user_turns(tmp_path: Path) -> 
         ),
         encoding="utf-8",
     )
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [str(root)])))
     assert len(res.items) == 1
     item = res.items[0]
@@ -114,8 +122,56 @@ def test_collect_and_build_output_scrubs_and_uses_user_turns(tmp_path: Path) -> 
     assert "[REDACTED" in pinned
     assert "refactor the parser" in pinned  # ordinary prose preserved
     assert out.source_item_id == "codex:c1"
-    assert out.source_type == "coding_agent_history"
+    assert out.source_type == "codex_agent_history"
     assert res.next_cursor is not None
+
+
+def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:
+    mod = _load_sensor_module()
+    now = time.time()
+
+    codex_root = tmp_path / ".codex"
+    codex_root.mkdir()
+    (codex_root / "history.jsonl").write_text(
+        json.dumps({"session_id": "codex-1", "text": "work on codex adapter", "ts": now}),
+        encoding="utf-8",
+    )
+
+    claude_root = tmp_path / ".claude" / "projects" / "-Users-me-proj"
+    claude_root.mkdir(parents=True)
+    (claude_root / "claude-1.jsonl").write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "message": {"content": "work on claude adapter"},
+                "sessionId": "claude-1",
+                "timestamp": "2026-06-22T12:00:00Z",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    codex_sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
+    claude_sensor = mod.CodingAgentHistorySensor(
+        agent="claude_code",
+        source_type="claude_code_agent_history",
+        display_name="Claude Code",
+    )
+
+    paths = [str(codex_root), str(claude_root.parent)]
+    codex_res = asyncio.run(codex_sensor.collect_items(_ctx(tmp_path, paths)))
+    claude_res = asyncio.run(
+        claude_sensor.collect_items(
+            _ctx(tmp_path, paths, source_type="claude_code_agent_history")
+        )
+    )
+
+    assert [item["source_item_id"] for item in codex_res.items] == ["codex:codex-1"]
+    assert [item["source_item_id"] for item in claude_res.items] == ["claude_code:claude-1"]
 
 
 def test_first_sync_windowed_excludes_old(tmp_path: Path) -> None:
@@ -128,7 +184,11 @@ def test_first_sync_windowed_excludes_old(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     res = asyncio.run(
         sensor.collect_items(_ctx(tmp_path, [str(root)], lookback=30, last_cursor=None))
     )
@@ -149,7 +209,11 @@ def test_incremental_sync_ignores_lookback_window(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     # last_cursor set (=> not first sync) and older than the file's mtime.
     res = asyncio.run(
         sensor.collect_items(_ctx(tmp_path, [str(root)], lookback=30, last_cursor="1.0"))
@@ -159,7 +223,11 @@ def test_incremental_sync_ignores_lookback_window(tmp_path: Path) -> None:
 
 def test_dedup_identity_and_fingerprint() -> None:
     mod = _load_sensor_module()
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     a = {"source_item_id": "codex:c1", "user_turns": ["one"], "occurred_at": 1.0}
     b = {"source_item_id": "codex:c1", "user_turns": ["one", "two"], "occurred_at": 2.0}
     # Same conversation => same identity (supersession key)...
@@ -170,7 +238,11 @@ def test_dedup_identity_and_fingerprint() -> None:
 
 def test_no_source_paths_returns_empty(tmp_path: Path) -> None:
     mod = _load_sensor_module()
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [])))
     assert res.items == []
 
@@ -179,7 +251,11 @@ def test_build_output_activity_and_narration_shape(tmp_path: Path) -> None:
     """build_output dispatches the SDK activity/narration helpers with the real
     (i18n_key-bearing) facet signature and pins the full scrubbed text."""
     mod = _load_sensor_module()
-    sensor = mod.CodingAgentHistorySensor()
+    sensor = mod.CodingAgentHistorySensor(
+        agent="claude_code",
+        source_type="claude_code_agent_history",
+        display_name="Claude Code",
+    )
     item = {
         "source_item_id": "claude_code:s1",
         "agent": "claude_code",

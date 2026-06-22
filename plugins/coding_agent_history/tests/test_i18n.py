@@ -24,6 +24,10 @@ def test_locale_files_valid_with_plugin_block():
         assert "coding_agent_history" in data, locale
         block = data["coding_agent_history"]
         assert block.get("name") and block.get("description"), locale
+        assert block["name"] in {"Agent History", "Agent 历史"}, locale
+        assert block["capabilities"]["agent_history"]["display_name"], locale
+        assert block["entries"]["claude_code"]["display_name"], locale
+        assert block["entries"]["codex"]["display_name"], locale
         assert "source_paths" in block.get("fields", {}), locale
 
 

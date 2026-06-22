@@ -212,16 +212,16 @@
     },
     {
       "plugin_id": "coding_agent_history",
-      "name": "Coding Agent History",
+      "name": "Agent History",
       "name_i18n": {
-        "zh-CN": "编程助手历史"
+        "zh-CN": "Agent 历史"
       },
       "icon": "lucide:bot",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/coding_agent_history",
-      "description": "Optional. Reads ONLY your own messages from local AI coding-assistant transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
+      "description": "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
       "description_i18n": {
-        "zh-CN": "可选。仅读取本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。"
+        "zh-CN": "可选。仅读取本地 Agent（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。"
       },
       "author": "Magi Team",
       "official": false,
@@ -232,8 +232,8 @@
         {
           "capability": "filesystem_read",
           "reason_i18n": {
-            "en": "Read your own turns from local coding-assistant transcripts",
-            "zh-CN": "读取本地编程助手 transcript 中你自己发送的消息"
+            "en": "Read your own turns from local agent transcripts",
+            "zh-CN": "读取本地 Agent transcript 中你自己发送的消息"
           }
         }
       ],
@@ -259,7 +259,7 @@
             "zh": [
               "claude code",
               "codex",
-              "编程助手",
+              "agent",
               "ai 编程",
               "写代码",
               "做了什么",
@@ -269,6 +269,7 @@
             "en": [
               "claude code",
               "codex",
+              "agent",
               "coding agent",
               "ai coding",
               "building",
@@ -278,8 +279,8 @@
           }
         },
         "rationale": {
-          "zh": "让 magi 了解你在用编程助手搭什么",
-          "en": "Lets magi learn what you're building with your coding assistant"
+          "zh": "让 magi 了解你在 Agent 会话里做了什么",
+          "en": "Lets magi learn what you're building with your agents"
         },
         "local_requirements": [
           {
@@ -776,6 +777,24 @@
           }
         }
       ],
+      "display_group": {
+        "id": "listening_history",
+        "name": "Listening History",
+        "name_i18n": {
+          "zh-CN": "听歌历史"
+        },
+        "description": "Manage music listening history sources from installed music plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理听歌历史入口。"
+        },
+        "icon": "lucide:music",
+        "order": 30,
+        "member_label": "NetEase Cloud Music",
+        "member_label_i18n": {
+          "zh-CN": "网易云音乐"
+        },
+        "member_order": 10
+      },
       "platforms": [
         "macos",
         "windows"
@@ -1257,16 +1276,16 @@
     },
     {
       "plugin_id": "steam-play-history",
-      "name": "Steam Play History",
+      "name": "Steam",
       "name_i18n": {
-        "zh-CN": "Steam 游玩历史"
+        "zh-CN": "Steam"
       },
       "icon": "brand:steam",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/steam_play_history",
-      "description": "Infers Steam gameplay sessions from local Steam files and playtime changes.",
+      "description": "Infers Steam game records from local Steam files and playtime changes.",
       "description_i18n": {
-        "zh-CN": "根据本地 Steam 文件和游玩时长变化推断游戏会话"
+        "zh-CN": "根据本地 Steam 文件和游玩时长变化推断游戏记录"
       },
       "author": "Magi Team",
       "official": true,
@@ -1286,6 +1305,24 @@
           }
         }
       ],
+      "display_group": {
+        "id": "game_records",
+        "name": "Game Records",
+        "name_i18n": {
+          "zh-CN": "游戏记录"
+        },
+        "description": "Manage game activity sources from installed game plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理游戏记录入口。"
+        },
+        "icon": "lucide:gamepad-2",
+        "order": 40,
+        "member_label": "Steam",
+        "member_label_i18n": {
+          "zh-CN": "Steam"
+        },
+        "member_order": 10
+      },
       "platforms": [
         "windows",
         "macos",

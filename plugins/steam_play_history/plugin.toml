@@ -1,17 +1,30 @@
 [plugin]
 id = "steam-play-history"
-name = "Steam Play History"
-name_i18n = { "zh-CN" = "Steam 游玩历史" }
+name = "Steam"
+name_i18n = { "zh-CN" = "Steam" }
 icon = "brand:steam"
-version = "0.1.0"
-description = "Infers Steam gameplay sessions from local Steam files and playtime changes."
-description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏会话" }
+version = "0.1.1"
+description = "Infers Steam game records from local Steam files and playtime changes."
+description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏记录" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SteamPlayHistoryPlugin"
 official = true
 contribution_types = ["sensor"]
 platforms = ["windows", "macos", "linux"]
+
+[plugin.display_group]
+id = "game_records"
+name = "Game Records"
+name_i18n = { "zh-CN" = "游戏记录" }
+description = "Manage game activity sources from installed game plugins."
+description_i18n = { "zh-CN" = "统一管理游戏记录入口。" }
+icon = "lucide:gamepad-2"
+order = 40
+member_label = "Steam"
+member_label_i18n = { "zh-CN" = "Steam" }
+member_order = 10
+
 [plugin.suggestion_descriptor]
 category = "gaming"
 platform_support = ["win32", "darwin", "linux"]

@@ -7,13 +7,14 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parent
 
 SENSOR_ENTRY_PLUGINS = {
-    "screen_time": "screen_time",
-    "coding_agent_history": "coding_agent_history",
-    "git_activity": "git_activity",
-    "github_activity": "github_activity",
-    "netease_music": "netease_music",
-    "screenshot_timeline": "screenshot_timeline",
-    "terminal_history": "terminal_history",
+    "screen_time": ["screen_time"],
+    "coding_agent_history": ["claude_code", "codex"],
+    "git_activity": ["git_activity"],
+    "github_activity": ["github_activity"],
+    "netease_music": ["netease_music"],
+    "screenshot_timeline": ["screenshot_timeline"],
+    "steam_play_history": ["steam"],
+    "terminal_history": ["terminal_history"],
 }
 
 
@@ -22,13 +23,14 @@ def _load_i18n(plugin_dir: str, locale: str) -> dict:
 
 
 def test_sensor_status_entries_have_localized_display_text() -> None:
-    for plugin_dir, entry_id in SENSOR_ENTRY_PLUGINS.items():
+    for plugin_dir, entry_ids in SENSOR_ENTRY_PLUGINS.items():
         for locale in ("en", "zh-CN"):
             payload = _load_i18n(plugin_dir, locale)
             root = payload[plugin_dir]
-            entry = root["entries"][entry_id]
-            assert entry["display_name"].strip(), f"{plugin_dir} {locale}"
-            assert entry["description"].strip(), f"{plugin_dir} {locale}"
+            for entry_id in entry_ids:
+                entry = root["entries"][entry_id]
+                assert entry["display_name"].strip(), f"{plugin_dir} {locale}"
+                assert entry["description"].strip(), f"{plugin_dir} {locale}"
 
 
 def test_app_usage_uses_chinese_entry_label() -> None:

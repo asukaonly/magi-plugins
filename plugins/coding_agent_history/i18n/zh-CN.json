@@ -1,17 +1,27 @@
 {
   "coding_agent_history": {
-    "name": "编程助手历史",
-    "description": "把本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息读入 Magi 的记忆。",
+    "name": "Agent 历史",
+    "description": "把本地 Agent（Claude Code、Codex）transcript 里你自己发的消息读入 Magi 的记忆。",
+    "capabilities": {
+      "agent_history": {
+        "display_name": "Agent 历史",
+        "description": "统一管理本地 Agent 会话历史入口。"
+      }
+    },
     "entries": {
-      "coding_agent_history": {
-        "display_name": "编程助手历史",
-        "description": "读取本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息。"
+      "claude_code": {
+        "display_name": "Claude Code",
+        "description": "读取本地 Claude Code transcript 里你自己发的消息。"
+      },
+      "codex": {
+        "display_name": "Codex",
+        "description": "读取本地 Codex prompt 里你自己发的消息。"
       }
     },
     "fields": {
       "source_paths": {
         "label": "Transcript 文件夹",
-        "description": "要扫描的文件夹（如 ~/.claude/projects、~/.codex）。"
+        "description": "要扫描的本地 Agent transcript 文件夹。"
       },
       "initial_sync_lookback_days": {
         "label": "首次同步窗口（天）",
@@ -25,6 +35,12 @@
     "sections": {
       "activation": "启用",
       "general": "通用"
+    },
+    "activation": {
+      "title": "连接 Agent 历史",
+      "description": "Magi 只读取你在本地 Agent transcript 里自己发出的消息。明显的密钥会先在本机脱敏。",
+      "confirm_label": "连接",
+      "cancel_label": "暂不连接"
     }
   },
   "activity": {

@@ -1,7 +1,7 @@
 # sensor.py
-"""Coding-agent history sensor: ingest the user's OWN turns from AI coding-agent
-transcripts (Claude Code, Codex), scrub secrets, and emit them as first-person
-events so L2 mines them into the user's professional profile.
+"""Agent history sensor: ingest the user's OWN turns from local agent transcripts,
+scrub secrets, and emit them as first-person events so L2 mines them into the
+user's professional profile.
 
 Authorship crux (mirrors obsidian-vault): ``memory_policy.author_type="user"`` +
 ``memory_domain="user_authored"`` make L2 render the content with the ``[USER]``
@@ -9,13 +9,16 @@ tag, which Rule 1 extracts as the user's own facts. A default sensor
 (``author_type="external"`` -> ``[EXTERNAL]``) would NOT be extracted -- so this
 policy is the whole point of the sensor.
 
-Sync model: one adapter-pluggable pull-sync sensor. ``collect_items`` dispatches
-each configured ``source_path`` through ``select_adapter`` (Claude Code vs Codex),
-applies the first-sync lookback window (``initial_sync_lookback_days``) on the
-first run only, and advances an mtime/occurred_at cursor so later runs are
-forward-incremental. ``build_output`` scrubs every user turn (``redact_secrets``)
-and pins the full joined text in ``pinned_payload`` for L2; L1's narration stays
-a lean summary. Dedup is by ``source_item_identity`` (``agent:session_id``) +
+Sync model: the plugin registers one pull-sync source per agent. Each sensor
+uses the same adapter-pluggable pipeline but filters to its configured agent, so
+Claude Code and Codex can be enabled/configured independently while still sharing
+one implementation. ``collect_items`` dispatches each configured ``source_path``
+through ``select_adapter``, applies the first-sync lookback window
+(``initial_sync_lookback_days``) on the first run only, and advances an
+mtime/occurred_at cursor so later runs are forward-incremental. ``build_output``
+scrubs every user turn (``redact_secrets``) and pins the full joined text in
+``pinned_payload`` for L2; L1's narration stays a lean summary. Dedup is by
+``source_item_identity`` (``agent:session_id``) +
 ``source_item_version_fingerprint`` (changes when the session grows).
 """
 from __future__ import annotations
@@ -58,10 +61,10 @@ def _lean_summary(text: str, *, max_chars: int = _SUMMARY_MAX_CHARS) -> str:
 
 
 class CodingAgentHistorySensor(SensorBase):
-    """Pull-sync sensor that ingests the user's own coding-agent transcript turns."""
+    """Pull-sync sensor that ingests the user's own agent transcript turns."""
 
     sensor_id = "timeline.coding_agent_history"
-    display_name = "Coding Agent History"
+    display_name = "Agent History"
     source_type = "coding_agent_history"
     polling_mode = "interval"
     default_interval = 30  # minutes
@@ -71,8 +74,12 @@ class CodingAgentHistorySensor(SensorBase):
     relation_edge_whitelist = ()
     supports_pull_sync = True
 
-    def __init__(self) -> None:
+    def __init__(self, *, agent: str, source_type: str, display_name: str) -> None:
         super().__init__()
+        self.agent = str(agent)
+        self.source_type = str(source_type)
+        self.sensor_id = f"timeline.{self.source_type}"
+        self.display_name = str(display_name)
         # THE CRUX: author_type="user" + memory_domain="user_authored" => L2 renders
         # [USER] and mines these as the user's own facts (mirrors obsidian-vault).
         # Transcripts are higher-volume / lower-signal than hand-authored notes, so
@@ -106,6 +113,10 @@ class CodingAgentHistorySensor(SensorBase):
         settings = context.plugin_settings
         sensors = settings.get("sensors", {}) if isinstance(settings, dict) else {}
         cfg = sensors.get(self.source_type, {}) if isinstance(sensors, dict) else {}
+        if not cfg and isinstance(sensors, dict):
+            # Backward compatibility for users who enabled the earlier single
+            # coding_agent_history source before entries were split by agent.
+            cfg = sensors.get("coding_agent_history", {})
         return cfg if isinstance(cfg, dict) else {}
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
@@ -144,6 +155,8 @@ class CodingAgentHistorySensor(SensorBase):
             adapter = select_adapter(path)
             if adapter is None:
                 continue  # path matches no known agent layout
+            if getattr(adapter, "agent", None) != self.agent:
+                continue
             scanned_paths += 1
             for conv in adapter.iter_conversations(
                 path, since_mtime=since_mtime, cutoff_ts=cutoff_ts
