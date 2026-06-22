@@ -26,11 +26,17 @@ from magi_plugin_sdk.sensors import (
 )
 
 from .geocoder import batch_lookup as _geo_batch_lookup, format_location
+from .apple_photos_reader import (
+    DEFAULT_PHOTOS_LIBRARY_PATH,
+    ApplePhotosReader,
+    ApplePhotosReaderError,
+)
 from .file_index import FileIndexCache
 from .locale_data import get_locale_map
 from .normalizers import (
     build_session_entity_hints,
     build_session_fact_hints,
+    build_session_relation_candidates,
 )
 from .reader import PhotoLibraryReader
 from .sessions import aggregate_sessions
@@ -64,19 +70,34 @@ class PhotoLibraryTimelineSensor(SensorBase):
         self,
         *,
         source_paths: list[str] | None = None,
+        source_mode: str = "directory",
+        photos_library_path: str = DEFAULT_PHOTOS_LIBRARY_PATH,
         max_items_per_sync: int = 200,
         analysis_features: list[str] | None = None,
         exclude_patterns: list[str] | None = None,
         settle_window_seconds: float = _DEFAULT_SETTLE_WINDOW_SECONDS,
         reader: PhotoLibraryReader | None = None,
+        apple_reader: ApplePhotosReader | None = None,
+        sensor_id: str | None = None,
+        source_type: str | None = None,
+        display_name: str | None = None,
     ) -> None:
         super().__init__()
+        if sensor_id:
+            self.sensor_id = sensor_id
+        if source_type:
+            self.source_type = source_type
+        if display_name:
+            self.display_name = display_name
         self.source_paths = source_paths or []
+        self.source_mode = source_mode
+        self.photos_library_path = photos_library_path
         self.max_items_per_sync = max_items_per_sync
         self.analysis_features = analysis_features or ["exif"]
         self.exclude_patterns = exclude_patterns or []
         self.settle_window_seconds = settle_window_seconds
         self._reader = reader or PhotoLibraryReader()
+        self._apple_reader = apple_reader or ApplePhotosReader()
 
     # ------------------------------------------------------------------
     # Identity & dedup
@@ -122,6 +143,9 @@ class PhotoLibraryTimelineSensor(SensorBase):
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
             else {}
         )
+        source_mode = str(sensor_settings.get("source_mode", self.source_mode) or "directory").strip()
+        if source_mode not in {"directory", "apple_photos"}:
+            source_mode = "directory"
 
         # Resolve source paths: prefer settings list, fall back to instance.
         source_paths: list[str] = []
@@ -131,7 +155,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         if not source_paths:
             source_paths = list(self.source_paths)
 
-        if not source_paths:
+        if source_mode == "directory" and not source_paths:
             return SensorSyncResult(
                 items=[],
                 stats={"count": 0, "error": "source_paths not configured"},
@@ -164,37 +188,69 @@ class PhotoLibraryTimelineSensor(SensorBase):
             sensor_settings.get("analysis_features", self.analysis_features)
         )
 
-        file_index: FileIndexCache | None = None
-        if "exif" in analysis_features:
-            try:
-                cache_dir = context.runtime_paths.plugin_cache_dir("photo-library")
-                file_index = FileIndexCache(cache_dir)
-            except Exception:
-                file_index = None
-        if file_index is not None:
-            self._reader._file_index = file_index
-
         all_photos: list[dict[str, Any]] = []
         total_scanned = 0
         total_errors = 0
+        source_error = ""
 
-        for src in source_paths:
-            result = await asyncio.to_thread(
-                self._reader.scan_directory,
-                src,
-                limit=photo_limit,
-                min_modified_at=min_modified_at,
-                exclude_patterns=exclude_patterns,
-                analysis_features=analysis_features,
+        if source_mode == "apple_photos":
+            photos_library_path = str(
+                sensor_settings.get("photos_library_path", self.photos_library_path)
+                or DEFAULT_PHOTOS_LIBRARY_PATH
             )
-            total_scanned += result.total_scanned
-            total_errors += result.errors
+            try:
+                result = await asyncio.to_thread(
+                    self._apple_reader.scan_library,
+                    photos_library_path,
+                    limit=photo_limit,
+                    min_modified_at=min_modified_at,
+                )
+                total_scanned += result.total_scanned
+                total_errors += result.errors
+                all_photos.extend(result.items)
+            except ApplePhotosReaderError as exc:
+                source_error = str(exc)
+        else:
+            file_index: FileIndexCache | None = None
+            if "exif" in analysis_features:
+                try:
+                    cache_dir = context.runtime_paths.plugin_cache_dir("photo-library")
+                    file_index = FileIndexCache(cache_dir)
+                except Exception:
+                    file_index = None
+            if file_index is not None:
+                self._reader._file_index = file_index
 
-            allowed_root = Path(src).expanduser().resolve()
-            for item in result.items:
-                item_path = Path(str(item.get("path", ""))).resolve()
-                if allowed_root in {item_path, *item_path.parents}:
-                    all_photos.append(item)
+            for src in source_paths:
+                result = await asyncio.to_thread(
+                    self._reader.scan_directory,
+                    src,
+                    limit=photo_limit,
+                    min_modified_at=min_modified_at,
+                    exclude_patterns=exclude_patterns,
+                    analysis_features=analysis_features,
+                )
+                total_scanned += result.total_scanned
+                total_errors += result.errors
+
+                allowed_root = Path(src).expanduser().resolve()
+                for item in result.items:
+                    item_path = Path(str(item.get("path", ""))).resolve()
+                    if allowed_root in {item_path, *item_path.parents}:
+                        all_photos.append(item)
+
+        if source_error:
+            return SensorSyncResult(
+                items=[],
+                stats={
+                    "count": 0,
+                    "photos_seen": 0,
+                    "total_scanned": total_scanned,
+                    "errors": total_errors + 1,
+                    "source_mode": source_mode,
+                    "error": source_error,
+                },
+            )
 
         # Reverse-geocode before session aggregation so location_name
         # participates in the session's representative pick.
@@ -251,6 +307,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
                 "photos_seen": len(all_photos),
                 "total_scanned": total_scanned,
                 "errors": total_errors,
+                "source_mode": source_mode,
             },
         )
 
@@ -399,5 +456,5 @@ class PhotoLibraryTimelineSensor(SensorBase):
             entities=build_session_entity_hints(item),
             tags=tags,
             fact_hints=build_session_fact_hints(item),
-            relation_candidates=[],
+            relation_candidates=build_session_relation_candidates(item),
         )

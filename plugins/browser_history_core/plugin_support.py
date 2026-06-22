@@ -28,6 +28,9 @@ DEFAULT_SETTINGS = {
     "filter_keywords": [],
 }
 _SESSION_GAP_SECONDS = 30 * 60
+BROWSER_HISTORY_CAPABILITY_ID = "browser_history"
+BROWSER_HISTORY_CAPABILITY_DISPLAY_NAME = "Browser History"
+BROWSER_HISTORY_CAPABILITY_DESCRIPTION = "Manage browser history sources that feed the timeline."
 
 _EXTRACTION_INSTRUCTIONS = (
     "These events are browser history page titles, NOT user-authored messages.\n"
@@ -246,6 +249,24 @@ def build_fields(
             placeholder="e.g. password reset",
         ),
     ]
+
+
+def build_browser_capability_metadata(
+    *,
+    entry_id: str,
+    entry_display_name: str,
+    entry_description: str,
+    entry_order: int,
+) -> dict[str, Any]:
+    return {
+        "capability_id": BROWSER_HISTORY_CAPABILITY_ID,
+        "capability_display_name": BROWSER_HISTORY_CAPABILITY_DISPLAY_NAME,
+        "capability_description": BROWSER_HISTORY_CAPABILITY_DESCRIPTION,
+        "entry_id": entry_id,
+        "entry_display_name": entry_display_name,
+        "entry_description": entry_description,
+        "entry_order": entry_order,
+    }
 
 
 def build_extraction_profiles(source_type: str) -> list[ExtractionProfileSpec]:

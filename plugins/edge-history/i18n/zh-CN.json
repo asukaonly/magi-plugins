@@ -2,6 +2,18 @@
   "edge_history": {
     "name": "Edge 浏览历史",
     "description": "本地 Microsoft Edge 浏览历史接入时间线",
+    "capabilities": {
+      "browser_history": {
+        "display_name": "浏览历史",
+        "description": "统一管理浏览器历史进入时间线的方式。"
+      }
+    },
+    "entries": {
+      "edge": {
+        "display_name": "Edge",
+        "description": "本地 Microsoft Edge 浏览历史。"
+      }
+    },
     "fields": {
       "enabled": {
         "label": "启用",

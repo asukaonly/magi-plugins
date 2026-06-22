@@ -1,0 +1,1 @@
+"""GitHub Activity plugin package."""

@@ -1,7 +1,11 @@
 """Photo library timeline plugin."""
 from __future__ import annotations
 
+import importlib.util
+import sys
 from collections import Counter
+from errno import EACCES, EPERM
+from pathlib import Path
 from typing import Any
 
 from magi_plugin_sdk import (
@@ -9,14 +13,19 @@ from magi_plugin_sdk import (
     ExtensionFieldOption,
     ExtensionFieldSpec,
     Plugin,
+    PluginSettingsResourceSpec,
     SensorSpec,
+    SettingsUIBlockSpec,
 )
+from .apple_photos_reader import DEFAULT_PHOTOS_LIBRARY_PATH
 from .photo_tools import build_photo_library_tool_classes
 from .sensor import PhotoLibraryTimelineSensor
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "enabled": False,
+    "source_mode": "directory",
+    "photos_library_path": DEFAULT_PHOTOS_LIBRARY_PATH,
     "sync_mode": "manual",
     "sync_interval_minutes": 60,
     "source_paths": [],
@@ -25,6 +34,38 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "analysis_features": ["exif"],
     "settle_window_hours": 4,
 }
+
+CAPABILITY_ID = "photo_library"
+CAPABILITY_DISPLAY_NAME = "Photo Library"
+CAPABILITY_DESCRIPTION = "Manage Apple Photos and local photo folders as timeline sources."
+APPLE_PHOTOS_SOURCE_TYPE = "photo_library_apple_photos"
+DIRECTORY_SOURCE_TYPE = "photo_library_directory"
+PHOTO_LIBRARY_SOURCE_TYPES = {APPLE_PHOTOS_SOURCE_TYPE, DIRECTORY_SOURCE_TYPE}
+
+ENTRY_DEFINITIONS: dict[str, dict[str, Any]] = {
+    APPLE_PHOTOS_SOURCE_TYPE: {
+        "entry_id": "apple_photos",
+        "display_name": "Apple Photos",
+        "description": "Read the macOS Photos library directly.",
+        "source_mode": "apple_photos",
+        "order": 10,
+    },
+    DIRECTORY_SOURCE_TYPE: {
+        "entry_id": "directory",
+        "display_name": "Local Photos",
+        "description": "Scan exported folders or local photo directories.",
+        "source_mode": "directory",
+        "order": 20,
+    },
+}
+
+
+def _apple_photos_available() -> bool:
+    return sys.platform == "darwin"
+
+
+def _default_activation_source_mode() -> str:
+    return "apple_photos" if _apple_photos_available() else "directory"
 
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
@@ -40,8 +81,15 @@ def _budget_int(budget: object | None, key: str, default: int) -> int:
         return int(default)
 
 
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    return [
+def _default_settings_for(source_type: str) -> dict[str, Any]:
+    defaults = dict(DEFAULT_SETTINGS)
+    defaults["source_mode"] = ENTRY_DEFINITIONS[source_type]["source_mode"]
+    return defaults
+
+
+def _fields(prefix: str, source_type: str) -> list[ExtensionFieldSpec]:
+    source_mode = ENTRY_DEFINITIONS[source_type]["source_mode"]
+    fields = [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
             type="switch",
@@ -52,29 +100,52 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             surface="timeline",
             order=10,
         ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.source_paths",
-            type="path",
-            label="Photo Directories",
-            description="Local directories containing photos to scan. Add one or more paths.",
-            default=[],
-            required=True,
-            section="general",
-            surface="timeline",
-            order=15,
-            placeholder="/path/to/photos",
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.exclude_patterns",
-            type="tags",
-            label="Exclude Patterns",
-            description="Glob patterns for directories or files to skip (e.g. thumbnails, .cache).",
-            default=["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"],
-            section="general",
-            surface="timeline",
-            order=16,
-            placeholder="**/thumbnails",
-        ),
+    ]
+    if source_mode == "apple_photos":
+        fields.append(
+            ExtensionFieldSpec(
+                key=f"{prefix}.photos_library_path",
+                type="path",
+                label="Apple Photos Library",
+                description="Path to the .photoslibrary package to scan with osxphotos.",
+                default=DEFAULT_PHOTOS_LIBRARY_PATH,
+                required=True,
+                section="general",
+                surface="timeline",
+                order=14,
+                placeholder=DEFAULT_PHOTOS_LIBRARY_PATH,
+            )
+        )
+    else:
+        fields.extend(
+            [
+                ExtensionFieldSpec(
+                    key=f"{prefix}.source_paths",
+                    type="path",
+                    label="Photo Directories",
+                    description="Local directories containing photos to scan. Add one or more paths.",
+                    default=[],
+                    required=True,
+                    section="general",
+                    surface="timeline",
+                    order=15,
+                    placeholder="/path/to/photos",
+                ),
+                ExtensionFieldSpec(
+                    key=f"{prefix}.exclude_patterns",
+                    type="tags",
+                    label="Exclude Patterns",
+                    description="Glob patterns for directories or files to skip (e.g. thumbnails, .cache).",
+                    default=["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"],
+                    section="general",
+                    surface="timeline",
+                    order=16,
+                    placeholder="**/thumbnails",
+                ),
+            ]
+        )
+    fields.extend(
+        [
         ExtensionFieldSpec(
             key=f"{prefix}.sync_mode",
             type="select",
@@ -140,21 +211,32 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             surface="timeline",
             order=50,
         ),
-    ]
+        ]
+    )
+    return fields
 
 
-def _build_activation_flow(prefix: str) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Enable Photo Library",
-        description=(
-            "Photo library is sensitive local data. Pick the folder(s) to scan; "
-            "Magi reads photo metadata (time, place, camera) to build your timeline."
-        ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        fields=[
+def _build_activation_flow(prefix: str, source_type: str) -> ActivationFlowSpec:
+    source_mode = ENTRY_DEFINITIONS[source_type]["source_mode"]
+    entry_label = str(ENTRY_DEFINITIONS[source_type]["display_name"])
+    fields: list[ExtensionFieldSpec] = []
+    if source_mode == "apple_photos":
+        fields.append(
+            ExtensionFieldSpec(
+                key=f"{prefix}.photos_library_path",
+                type="path",
+                label="Apple Photos Library",
+                description="Path to the .photoslibrary package to scan.",
+                default=DEFAULT_PHOTOS_LIBRARY_PATH,
+                required=True,
+                section="activation",
+                surface="timeline",
+                order=8,
+                placeholder=DEFAULT_PHOTOS_LIBRARY_PATH,
+            )
+        )
+    else:
+        fields.append(
             ExtensionFieldSpec(
                 key=f"{prefix}.source_paths",
                 type="path",
@@ -166,9 +248,55 @@ def _build_activation_flow(prefix: str) -> ActivationFlowSpec:
                 surface="timeline",
                 order=10,
                 placeholder="/path/to/photos",
-            ),
-        ],
+            )
+        )
+    return ActivationFlowSpec(
+        title=f"Enable {entry_label}",
+        description=(
+            f"{entry_label} is sensitive local data. Magi reads photo metadata "
+            "(time, place, camera) to build your timeline."
+        ),
+        confirm_label="Enable source",
+        cancel_label="Not now",
+        enabled_key=f"{prefix}.enabled",
+        configured_key=f"{prefix}.initial_sync_configured",
+        fields=fields,
     )
+
+
+def _settings_ui_blocks(prefix: str, source_type: str) -> list[SettingsUIBlockSpec]:
+    if source_type != APPLE_PHOTOS_SOURCE_TYPE:
+        return []
+    return [
+        SettingsUIBlockSpec(
+            block_id="apple_photos_permissions",
+            type="resource_picker",
+            title="Apple Photos Access",
+            description="Apple Photos mode needs osxphotos and macOS permission to read the Photos library database.",
+            resource_name="apple_photos_permissions",
+            value_key="_readonly",
+            presentation="permission_status",
+        ),
+    ]
+
+
+def _capability_metadata(source_type: str) -> dict[str, Any]:
+    entry = ENTRY_DEFINITIONS[source_type]
+    metadata = {
+        "capability_id": CAPABILITY_ID,
+        "capability_display_name": CAPABILITY_DISPLAY_NAME,
+        "capability_description": CAPABILITY_DESCRIPTION,
+        "entry_id": entry["entry_id"],
+        "entry_display_name": entry["display_name"],
+        "entry_description": entry["description"],
+        "entry_order": entry["order"],
+    }
+    if source_type == APPLE_PHOTOS_SOURCE_TYPE:
+        metadata["available"] = _apple_photos_available()
+        metadata["platforms"] = ["darwin"]
+        if not metadata["available"]:
+            metadata["unavailable_reason"] = "Apple Photos is only available on macOS."
+    return metadata
 
 
 class PhotoLibraryPlugin(Plugin):
@@ -178,61 +306,122 @@ class PhotoLibraryPlugin(Plugin):
         sensors_settings = self.settings.get("sensors", {})
         settings: dict[str, Any] = {}
         if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("photo_library", {}))
+            apple_settings = dict(sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {}))
+            directory_settings = dict(sensors_settings.get(DIRECTORY_SOURCE_TYPE, {}))
+            if apple_settings.get("enabled"):
+                settings = {**apple_settings, "source_mode": "apple_photos"}
+            else:
+                settings = {**directory_settings, "source_mode": "directory"}
         return build_photo_library_tool_classes(settings)
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        settings: dict[str, Any] = {}
         sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("photo_library", {}))
+        sensors_payload = sensors_settings if isinstance(sensors_settings, dict) else {}
+        registered: list[tuple[str, object, SensorSpec]] = []
+        for source_type in (APPLE_PHOTOS_SOURCE_TYPE, DIRECTORY_SOURCE_TYPE):
+            entry = ENTRY_DEFINITIONS[source_type]
+            settings = dict(sensors_payload.get(source_type, {}))
+            defaults = _default_settings_for(source_type)
+            source_mode = str(entry["source_mode"])
 
-        # Support both legacy source_path (string) and new source_paths (list)
-        source_paths: list[str] = []
-        raw_paths = settings.get("source_paths")
-        if isinstance(raw_paths, list):
-            source_paths = [str(p) for p in raw_paths if p]
-        elif not raw_paths:
-            legacy = settings.get("source_path")
-            if legacy:
-                source_paths = [str(legacy)]
+            source_paths: list[str] = []
+            raw_paths = settings.get("source_paths")
+            if isinstance(raw_paths, list):
+                source_paths = [str(p) for p in raw_paths if p]
 
-        # Resolve exclude patterns
-        raw_excludes = settings.get("exclude_patterns")
-        exclude_patterns: list[str] = []
-        if isinstance(raw_excludes, list):
-            exclude_patterns = [str(p) for p in raw_excludes if p]
+            raw_excludes = settings.get("exclude_patterns")
+            exclude_patterns = [str(p) for p in raw_excludes if p] if isinstance(raw_excludes, list) else []
 
-        sensor = PhotoLibraryTimelineSensor(
-            source_paths=source_paths,
-            max_items_per_sync=int(settings.get("max_items_per_sync", DEFAULT_SETTINGS["max_items_per_sync"])),
-            analysis_features=list(settings.get("analysis_features", DEFAULT_SETTINGS["analysis_features"])),
-            exclude_patterns=exclude_patterns,
-            settle_window_seconds=float(
-                settings.get("settle_window_hours", DEFAULT_SETTINGS["settle_window_hours"])
-            ) * 3600.0,
-        )
-        return [
-            (
-                "timeline.photo_library",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.photo_library",
-                    display_name="Photo Library",
-                    description="Scan a local photo directory, extract EXIF metadata, and ingest into the timeline.",
-                    domain="timeline",
-                    surface="timeline",
-                    sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=_fields("sensors.photo_library"),
-                    metadata={
-                        "source_type": "photo_library",
-                        "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _build_activation_flow("sensors.photo_library").model_dump(),
-                    },
+            sensor_id = f"timeline.photo_library.{entry['entry_id']}"
+            sensor = PhotoLibraryTimelineSensor(
+                sensor_id=sensor_id,
+                source_type=source_type,
+                display_name=str(entry["display_name"]),
+                source_paths=source_paths,
+                source_mode=source_mode,
+                photos_library_path=str(
+                    settings.get("photos_library_path", defaults["photos_library_path"])
                 ),
+                max_items_per_sync=int(settings.get("max_items_per_sync", defaults["max_items_per_sync"])),
+                analysis_features=list(settings.get("analysis_features", defaults["analysis_features"])),
+                exclude_patterns=exclude_patterns,
+                settle_window_seconds=float(settings.get("settle_window_hours", defaults["settle_window_hours"])) * 3600.0,
             )
+            prefix = f"sensors.{source_type}"
+            metadata = {
+                "source_type": source_type,
+                "default_settings": defaults,
+                "activation_flow": _build_activation_flow(prefix, source_type).model_dump(),
+                "settings_ui_blocks": [
+                    block.model_dump() for block in _settings_ui_blocks(prefix, source_type)
+                ],
+                **_capability_metadata(source_type),
+            }
+            registered.append(
+                (
+                    sensor_id,
+                    sensor,
+                    SensorSpec(
+                        sensor_id=sensor_id,
+                        display_name=str(entry["display_name"]),
+                        description=str(entry["description"]),
+                        domain="timeline",
+                        surface="timeline",
+                        sync_mode=str(settings.get("sync_mode", defaults["sync_mode"])),
+                        polling_mode=getattr(sensor, "polling_mode", "interval"),
+                        fields=_fields(prefix, source_type),
+                        metadata=metadata,
+                    ),
+                )
+            )
+        return registered
+
+    def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
+        return [
+            PluginSettingsResourceSpec(
+                resource_name="apple_photos_permissions",
+                resource_type="channel_status",
+                description="Live macOS dependency and permission status for Apple Photos mode.",
+            ),
         ]
+
+    def read_settings_resource(self, resource_name: str) -> Any:
+        if resource_name != "apple_photos_permissions":
+            raise KeyError(resource_name)
+        settings = _photo_library_settings(self.settings)
+        photos_library_path = str(
+            settings.get("photos_library_path", DEFAULT_PHOTOS_LIBRARY_PATH)
+            or DEFAULT_PHOTOS_LIBRARY_PATH
+        )
+        library_status = _photos_library_access_status(photos_library_path)
+        dependency_status = (
+            "granted" if importlib.util.find_spec("osxphotos") is not None else "denied"
+        )
+        return {
+            "items": [
+                {
+                    "id": "osxphotos_dependency",
+                    "label": "osxphotos dependency",
+                    "label_i18n_key": "photo_library.permissions.osxphotos_dependency.label",
+                    "description": "Required to read Apple Photos metadata without parsing Photos internals directly.",
+                    "description_i18n_key": "photo_library.permissions.osxphotos_dependency.description",
+                    "status": dependency_status,
+                    "required": True,
+                },
+                {
+                    "id": "photos_library_access",
+                    "label": "Photos Library Access",
+                    "label_i18n_key": "photo_library.permissions.photos_library_access.label",
+                    "description": "Required to read the local Photos library database. Grant Photos or Full Disk Access to the app running Magi if this is denied.",
+                    "description_i18n_key": "photo_library.permissions.photos_library_access.description",
+                    "status": library_status,
+                    "required": True,
+                    "settings_url": (
+                        "x-apple.systempreferences:com.apple.preference.security?Privacy_Photos"
+                    ),
+                },
+            ],
+        }
 
     def build_recall_artifacts(
         self,
@@ -244,7 +433,7 @@ class PhotoLibraryPlugin(Plugin):
     ) -> dict[str, object] | None:
         """Project photo-session memories into generic answer-facing asset refs."""
         _ = query, query_mode
-        if source_type != "photo_library" or not events:
+        if source_type not in PHOTO_LIBRARY_SOURCE_TYPES or not events:
             return None
 
         asset_refs: list[dict[str, Any]] = []
@@ -267,7 +456,7 @@ class PhotoLibraryPlugin(Plugin):
     ) -> dict[str, object] | None:
         """Aggregate session events into period-level features."""
         _ = summary_category, period_start, period_end
-        if source_type != "photo_library":
+        if source_type not in PHOTO_LIBRARY_SOURCE_TYPES:
             return None
         if not events:
             return None
@@ -351,7 +540,8 @@ class PhotoLibraryPlugin(Plugin):
 def _build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
     metadata = event.get("metadata_json") if isinstance(event.get("metadata_json"), dict) else {}
     timeline = metadata.get("timeline") if isinstance(metadata.get("timeline"), dict) else {}
-    if str(timeline.get("source_type") or "").strip() != "photo_library":
+    event_source_type = str(timeline.get("source_type") or "").strip()
+    if event_source_type not in PHOTO_LIBRARY_SOURCE_TYPES:
         return []
 
     provenance = timeline.get("provenance") if isinstance(timeline.get("provenance"), dict) else {}
@@ -390,7 +580,7 @@ def _build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
             "asset_ref_id": asset_ref_id,
             "kind": "image",
             "event_id": event_id,
-            "source_type": "photo_library",
+            "source_type": event_source_type,
             "source_item_id": asset_ref_id,
             "display_name": title,
             "captured_at": item.get("capture_ts") or provenance.get("first_capture_ts") or occurred_at,
@@ -407,3 +597,51 @@ def _build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
         )
 
     return asset_refs
+
+
+def _photo_library_settings(plugin_settings: dict[str, Any]) -> dict[str, Any]:
+    sensors_settings = plugin_settings.get("sensors", {})
+    if isinstance(sensors_settings, dict):
+        settings = sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
+        if isinstance(settings, dict):
+            return dict(settings)
+    return {}
+
+
+def _photos_library_access_status(photos_library_path: str) -> str:
+    if sys.platform != "darwin":
+        return "unknown"
+    library_path = Path(photos_library_path or DEFAULT_PHOTOS_LIBRARY_PATH).expanduser()
+    try:
+        if not library_path.exists():
+            return "unknown"
+    except OSError as exc:
+        if exc.errno in {EACCES, EPERM}:
+            return "denied"
+        return "unknown"
+
+    database_dir = library_path / "database"
+    candidates = [
+        database_dir / "Photos.sqlite",
+        database_dir / "photos.db",
+        database_dir / "photos.sqlite",
+    ]
+    try:
+        existing_candidates = [path for path in candidates if path.exists()]
+    except OSError as exc:
+        if exc.errno in {EACCES, EPERM}:
+            return "denied"
+        return "unknown"
+
+    for candidate in existing_candidates:
+        try:
+            with candidate.open("rb") as handle:
+                handle.read(1)
+            return "granted"
+        except PermissionError:
+            return "denied"
+        except OSError as exc:
+            if exc.errno in {EACCES, EPERM}:
+                return "denied"
+            continue
+    return "unknown"

@@ -531,6 +531,86 @@
       }
     },
     {
+      "plugin_id": "github-activity",
+      "name": "GitHub Activity",
+      "name_i18n": {
+        "zh-CN": "GitHub 活动"
+      },
+      "icon": "brand:github",
+      "version": "0.1.0",
+      "path": "plugins/github_activity",
+      "description": "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status.",
+      "description_i18n": {
+        "zh-CN": "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "network",
+          "scope": [
+            "api.github.com",
+            "github.com"
+          ],
+          "reason_i18n": {
+            "en": "Connect to GitHub from this device and pull selected repository activity",
+            "zh-CN": "从本机连接 GitHub，拉取你选择的仓库动态"
+          }
+        }
+      ],
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "code_activity",
+        "platform_support": [
+          "darwin",
+          "win32",
+          "linux"
+        ],
+        "setup_time_estimate_seconds": 45,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "GitHub",
+              "github",
+              "PR",
+              "issue",
+              "代码评审",
+              "review",
+              "仓库",
+              "CI",
+              "提交",
+              "pull request"
+            ],
+            "en": [
+              "GitHub",
+              "pull request",
+              "PR",
+              "issue",
+              "review",
+              "repository",
+              "CI",
+              "commit"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "magi 能在本机读取你选择的 GitHub 仓库动态，理解项目进展和协作关系",
+          "en": "Lets magi locally read selected GitHub repository activity to understand project progress and collaboration"
+        }
+      }
+    },
+    {
       "plugin_id": "local-documents",
       "name": "Local Documents",
       "name_i18n": {
@@ -766,7 +846,7 @@
         "zh-CN": "照片库"
       },
       "icon": "lucide:image",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/photo-library",
       "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
       "description_i18n": {

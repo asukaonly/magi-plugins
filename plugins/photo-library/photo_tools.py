@@ -14,23 +14,37 @@ from magi_plugin_sdk.tools import (
     ToolSchema,
 )
 
+from .apple_photos_reader import (
+    DEFAULT_PHOTOS_LIBRARY_PATH,
+    ApplePhotosReader,
+    ApplePhotosReaderError,
+)
 from .reader import PhotoLibraryReader
 
 
 def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool]]:
     """Build configured tool classes for the current plugin settings."""
+    source_mode = _resolve_source_mode(settings)
+    photos_library_path = str(
+        settings.get("photos_library_path", DEFAULT_PHOTOS_LIBRARY_PATH)
+        or DEFAULT_PHOTOS_LIBRARY_PATH
+    )
     source_paths = _resolve_source_paths(settings)
     exclude_patterns = _resolve_string_list(settings.get("exclude_patterns"))
     analysis_features = _resolve_string_list(settings.get("analysis_features")) or ["exif"]
 
     class PhotoLibraryResolvePhotoRefsTool(Tool):
+        _source_mode = source_mode
+        _photos_library_path = photos_library_path
         _source_paths = list(source_paths)
         _exclude_patterns = list(exclude_patterns)
         _analysis_features = list(analysis_features)
         _reader_factory = PhotoLibraryReader
+        _apple_reader_factory = ApplePhotosReader
 
         def __init__(self) -> None:
             self._reader = self._reader_factory()
+            self._apple_reader = self._apple_reader_factory()
             super().__init__()
 
         def _init_schema(self) -> None:
@@ -58,13 +72,6 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
             context: ToolExecutionContext,
         ) -> ToolResult:
             _ = context
-            if not self._source_paths:
-                return ToolResult(
-                    success=False,
-                    error="photo_library source_paths are not configured.",
-                    error_code=ToolErrorCode.INVALID_CONFIG.value,
-                )
-
             asset_ref_ids = parameters.get("asset_ref_ids")
             if not isinstance(asset_ref_ids, list) or not asset_ref_ids:
                 return ToolResult(
@@ -81,24 +88,43 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                     error_code=ToolErrorCode.INVALID_PARAMETERS.value,
                 )
 
-            items = _scan_photo_items(
-                reader=self._reader,
-                source_paths=self._source_paths,
-                exclude_patterns=self._exclude_patterns,
-                analysis_features=self._analysis_features,
-                min_modified_at=0.0,
-                max_scan_items=max(len(requested_ids) * 200, 1000),
-            )
-            indexed = {_asset_ref_id(item): item for item in items}
+            if self._source_mode == "apple_photos":
+                try:
+                    resolved_items, missing_ids = self._apple_reader.resolve_asset_refs(
+                        requested_ids,
+                        self._photos_library_path,
+                    )
+                except ApplePhotosReaderError as exc:
+                    return ToolResult(
+                        success=False,
+                        error=str(exc),
+                        error_code=ToolErrorCode.INVALID_CONFIG.value,
+                    )
+            else:
+                if not self._source_paths:
+                    return ToolResult(
+                        success=False,
+                        error="photo_library source_paths are not configured.",
+                        error_code=ToolErrorCode.INVALID_CONFIG.value,
+                    )
+                items = _scan_photo_items(
+                    reader=self._reader,
+                    source_paths=self._source_paths,
+                    exclude_patterns=self._exclude_patterns,
+                    analysis_features=self._analysis_features,
+                    min_modified_at=0.0,
+                    max_scan_items=max(len(requested_ids) * 200, 1000),
+                )
+                indexed = {_asset_ref_id(item): item for item in items}
 
-            resolved_items: list[dict[str, Any]] = []
-            missing_ids: list[str] = []
-            for asset_ref_id in requested_ids:
-                item = indexed.get(asset_ref_id)
-                if item is None:
-                    missing_ids.append(asset_ref_id)
-                    continue
-                resolved_items.append(item)
+                resolved_items = []
+                missing_ids = []
+                for asset_ref_id in requested_ids:
+                    item = indexed.get(asset_ref_id)
+                    if item is None:
+                        missing_ids.append(asset_ref_id)
+                        continue
+                    resolved_items.append(item)
 
             resolved_refs = [
                 _build_asset_ref(item, resolution_state="resolved")
@@ -122,6 +148,11 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
             )
 
     return [PhotoLibraryResolvePhotoRefsTool]
+
+
+def _resolve_source_mode(settings: dict[str, Any]) -> str:
+    source_mode = str(settings.get("source_mode", "directory") or "directory").strip()
+    return source_mode if source_mode in {"directory", "apple_photos"} else "directory"
 
 
 def _resolve_source_paths(settings: dict[str, Any]) -> list[str]:

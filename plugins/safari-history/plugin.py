@@ -15,6 +15,7 @@ if str(_CORE_PARENT) not in sys.path:
 from browser_history_core.plugin_support import (
     DEFAULT_SETTINGS,
     build_activation_flow,
+    build_browser_capability_metadata,
     build_extraction_profiles,
     build_fields,
     build_summary_profile,
@@ -103,6 +104,12 @@ class SafariHistoryPlugin(Plugin):
                         },
                         "activation_flow": build_activation_flow("sensors.safari_history", "Safari").model_dump(),
                         "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks()],
+                        **build_browser_capability_metadata(
+                            entry_id="safari",
+                            entry_display_name="Safari",
+                            entry_description="Local Safari browsing history.",
+                            entry_order=20,
+                        ),
                     },
                 ),
             )

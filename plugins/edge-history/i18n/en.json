@@ -2,6 +2,18 @@
   "edge_history": {
     "name": "Edge History",
     "description": "Local Microsoft Edge browsing history ingestion for the timeline",
+    "capabilities": {
+      "browser_history": {
+        "display_name": "Browser History",
+        "description": "Manage browser history sources that feed the timeline."
+      }
+    },
+    "entries": {
+      "edge": {
+        "display_name": "Edge",
+        "description": "Local Microsoft Edge browsing history."
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enabled",

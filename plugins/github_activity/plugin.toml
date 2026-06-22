@@ -1,0 +1,47 @@
+[plugin]
+id = "github-activity"
+name = "GitHub Activity"
+name_i18n = { "zh-CN" = "GitHub 活动" }
+icon = "brand:github"
+version = "0.1.0"
+description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
+description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "GitHubActivityPlugin"
+official = true
+data_locality = "local_only"
+contribution_types = ["sensor"]
+platforms = ["macos", "windows", "linux"]
+
+[plugin.default_settings.sensors.github_activity]
+enabled = false
+client_id = ""
+access_token = ""
+repositories = []
+sync_interval_minutes = 30
+initial_sync_lookback_days = 30
+initial_sync_configured = false
+
+[plugin.suggestion_descriptor]
+category = "code_activity"
+platform_support = ["darwin", "win32", "linux"]
+setup_time_estimate_seconds = 45
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["GitHub", "github", "PR", "issue", "代码评审", "review", "仓库", "CI", "提交", "pull request"]
+en = ["GitHub", "pull request", "PR", "issue", "review", "repository", "CI", "commit"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "magi 能在本机读取你选择的 GitHub 仓库动态，理解项目进展和协作关系"
+en = "Lets magi locally read selected GitHub repository activity to understand project progress and collaboration"
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["api.github.com", "github.com"]
+reason_i18n = { en = "Connect to GitHub from this device and pull selected repository activity", "zh-CN" = "从本机连接 GitHub，拉取你选择的仓库动态" }

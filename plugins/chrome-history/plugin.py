@@ -34,6 +34,15 @@ DEFAULT_SETTINGS = {
     "filter_keywords": [],
 }
 _SESSION_GAP_SECONDS = 30 * 60
+BROWSER_HISTORY_CAPABILITY_METADATA = {
+    "capability_id": "browser_history",
+    "capability_display_name": "Browser History",
+    "capability_description": "Manage browser history sources that feed the timeline.",
+    "entry_id": "chrome",
+    "entry_display_name": "Chrome",
+    "entry_description": "Local Google Chrome browsing history.",
+    "entry_order": 10,
+}
 
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
@@ -338,6 +347,7 @@ class ChromeHistoryPlugin(Plugin):
                         "source_type": "chrome_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "activation_flow": _activation_flow("sensors.chrome_history").model_dump(),
+                        **BROWSER_HISTORY_CAPABILITY_METADATA,
                     },
                 ),
             )

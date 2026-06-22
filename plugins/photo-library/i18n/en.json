@@ -1,7 +1,24 @@
 {
   "photo_library": {
     "name": "Photo Library",
-    "description": "Scan local photo directories, extract EXIF metadata, and ingest into the timeline",
+    "description": "Read Apple Photos or local photo directories, extract capture time, location, and device metadata, and ingest into the timeline",
+    "capabilities": {
+      "photo_library": {
+        "display_name": "Photo Library",
+        "description": "Manage photo sources that feed the timeline."
+      }
+    },
+    "entries": {
+      "apple_photos": {
+        "display_name": "Apple Photos",
+        "description": "Read the macOS Photos library directly.",
+        "unavailable_reason": "Apple Photos is only available on macOS."
+      },
+      "directory": {
+        "display_name": "Local Photos",
+        "description": "Scan selected local photo folders."
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enable",
@@ -10,6 +27,14 @@
       "source_paths": {
         "label": "Photo Directories",
         "description": "Local directories containing photos to scan. Add one or more paths."
+      },
+      "source_mode": {
+        "label": "Source",
+        "description": "Choose whether to scan exported folders or the macOS Apple Photos library."
+      },
+      "photos_library_path": {
+        "label": "Apple Photos Library",
+        "description": "Path to the .photoslibrary package to scan with osxphotos."
       },
       "exclude_patterns": {
         "label": "Exclude Patterns",
@@ -46,6 +71,10 @@
         "manual": "Manual",
         "interval": "Interval"
       },
+      "source_mode": {
+        "directory": "Photo directories",
+        "apple_photos": "Apple Photos"
+      },
       "analysis_features": {
         "exif": "EXIF Metadata",
         "geocode": "GPS Geocoding"
@@ -53,6 +82,41 @@
     },
     "sections": {
       "general": "General"
+    },
+    "activation": {
+      "title": "Enable Photo Library",
+      "description": "Photo library is sensitive local data. Choose Apple Photos or local folders before this source starts running.",
+      "confirm_label": "Enable source",
+      "cancel_label": "Not now"
+    },
+    "settings_layout": {
+      "tabs": {
+        "directory": {
+          "label": "Local Photos",
+          "description": "Scan exported folders or any local photo directories."
+        },
+        "apple_photos": {
+          "label": "Apple Photos",
+          "description": "Read the macOS Photos library directly.",
+          "unavailable_reason": "Apple Photos is only available on macOS."
+        }
+      }
+    },
+    "ui_blocks": {
+      "apple_photos_permissions": {
+        "title": "Apple Photos Access",
+        "description": "Apple Photos mode needs osxphotos and macOS permission to read the Photos library."
+      }
+    },
+    "permissions": {
+      "osxphotos_dependency": {
+        "label": "osxphotos dependency",
+        "description": "Required to read Apple Photos metadata without parsing Photos internals directly."
+      },
+      "photos_library_access": {
+        "label": "Photos Library Access",
+        "description": "Required to read the local Photos library database. Grant Photos or Full Disk Access to the app running Magi if this is denied."
+      }
     }
   },
   "weekday": {

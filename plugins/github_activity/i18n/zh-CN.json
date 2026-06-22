@@ -1,0 +1,14 @@
+{
+  "activity": {
+    "source": {
+      "github": "GitHub"
+    },
+    "action": {
+      "pull_request": "PR",
+      "pull_request_review": "代码评审",
+      "issue": "Issue",
+      "commit": "提交",
+      "check_run": "CI 检查"
+    }
+  }
+}

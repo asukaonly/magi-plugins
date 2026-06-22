@@ -14,6 +14,7 @@ if str(_CORE_PARENT) not in sys.path:
 from browser_history_core.plugin_support import (
     DEFAULT_SETTINGS,
     build_activation_flow,
+    build_browser_capability_metadata,
     build_extraction_profiles,
     build_fields,
     build_summary_profile,
@@ -60,6 +61,12 @@ class EdgeHistoryPlugin(Plugin):
                         "source_type": "edge_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "activation_flow": build_activation_flow("sensors.edge_history", "Edge").model_dump(),
+                        **build_browser_capability_metadata(
+                            entry_id="edge",
+                            entry_display_name="Edge",
+                            entry_description="Local Microsoft Edge browsing history.",
+                            entry_order=40,
+                        ),
                     },
                 ),
             )

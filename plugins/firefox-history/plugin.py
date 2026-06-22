@@ -14,6 +14,7 @@ if str(_CORE_PARENT) not in sys.path:
 from browser_history_core.plugin_support import (
     DEFAULT_SETTINGS,
     build_activation_flow,
+    build_browser_capability_metadata,
     build_extraction_profiles,
     build_fields,
     build_summary_profile,
@@ -67,6 +68,12 @@ class FirefoxHistoryPlugin(Plugin):
                         "source_type": "firefox_history",
                         "default_settings": {**dict(DEFAULT_SETTINGS), "profile": ""},
                         "activation_flow": build_activation_flow("sensors.firefox_history", "Firefox").model_dump(),
+                        **build_browser_capability_metadata(
+                            entry_id="firefox",
+                            entry_display_name="Firefox",
+                            entry_description="Local Firefox browsing history.",
+                            entry_order=30,
+                        ),
                     },
                 ),
             )

@@ -1,7 +1,24 @@
 {
   "photo_library": {
     "name": "照片库",
-    "description": "扫描本地照片目录，提取 EXIF 元数据并接入时间线",
+    "description": "读取 Apple Photos 或本地照片目录，提取拍摄时间、地点和设备信息并接入时间线",
+    "capabilities": {
+      "photo_library": {
+        "display_name": "照片库",
+        "description": "统一管理照片进入时间线的方式。"
+      }
+    },
+    "entries": {
+      "apple_photos": {
+        "display_name": "Apple Photos",
+        "description": "直接读取 macOS 照片图库。",
+        "unavailable_reason": "Apple Photos 仅在 macOS 上可用。"
+      },
+      "directory": {
+        "display_name": "本地照片",
+        "description": "扫描你选择的本地照片文件夹。"
+      }
+    },
     "fields": {
       "enabled": {
         "label": "启用",
@@ -10,6 +27,14 @@
       "source_paths": {
         "label": "照片目录",
         "description": "要扫描的本地照片目录列表，可添加多个路径。"
+      },
+      "source_mode": {
+        "label": "来源",
+        "description": "选择扫描导出的照片目录，或直接读取 macOS Apple Photos 照片库。"
+      },
+      "photos_library_path": {
+        "label": "Apple Photos 照片库",
+        "description": "要通过 osxphotos 扫描的 .photoslibrary 路径。"
       },
       "exclude_patterns": {
         "label": "排除规则",
@@ -46,6 +71,10 @@
         "manual": "手动",
         "interval": "定时"
       },
+      "source_mode": {
+        "directory": "照片目录",
+        "apple_photos": "Apple Photos"
+      },
       "analysis_features": {
         "exif": "EXIF 元数据",
         "geocode": "GPS 地理编码"
@@ -53,6 +82,41 @@
     },
     "sections": {
       "general": "常规"
+    },
+    "activation": {
+      "title": "启用照片库",
+      "description": "照片库属于敏感的本地数据。启用前请选择读取 Apple Photos，还是扫描本地照片文件夹。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
+    },
+    "settings_layout": {
+      "tabs": {
+        "directory": {
+          "label": "本地照片",
+          "description": "扫描你选择的本地照片文件夹。"
+        },
+        "apple_photos": {
+          "label": "Apple Photos",
+          "description": "直接读取 macOS 照片图库。",
+          "unavailable_reason": "Apple Photos 仅在 macOS 上可用。"
+        }
+      }
+    },
+    "ui_blocks": {
+      "apple_photos_permissions": {
+        "title": "Apple Photos 访问权限",
+        "description": "Apple Photos 模式需要 osxphotos 依赖和 macOS 照片库读取权限。"
+      }
+    },
+    "permissions": {
+      "osxphotos_dependency": {
+        "label": "osxphotos 依赖",
+        "description": "用于读取 Apple Photos 元数据，避免直接解析照片图库内部结构。"
+      },
+      "photos_library_access": {
+        "label": "照片图库访问权限",
+        "description": "读取本机照片图库数据库所必需。若未授权，请给运行 Magi 的应用授予“照片”或“完全磁盘访问权限”。"
+      }
     }
   },
   "weekday": {

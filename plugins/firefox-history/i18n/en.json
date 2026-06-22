@@ -2,6 +2,18 @@
   "firefox_history": {
     "name": "Firefox History",
     "description": "Local Firefox browsing history ingestion for the timeline",
+    "capabilities": {
+      "browser_history": {
+        "display_name": "Browser History",
+        "description": "Manage browser history sources that feed the timeline."
+      }
+    },
+    "entries": {
+      "firefox": {
+        "display_name": "Firefox",
+        "description": "Local Firefox browsing history."
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enabled",
