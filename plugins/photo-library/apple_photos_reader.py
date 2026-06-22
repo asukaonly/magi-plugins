@@ -43,6 +43,9 @@ class ApplePhotosReader:
         *,
         limit: int = 500,
         min_modified_at: float = 0.0,
+        capture_before: float | None = None,
+        order_by: str = "modified_at",
+        descending: bool = False,
         include_hidden: bool = False,
     ) -> ScanResult:
         """Scan Apple Photos and return normalized photo items."""
@@ -65,15 +68,31 @@ class ApplePhotosReader:
                 errors += 1
                 continue
             if item is not None:
+                if capture_before is not None:
+                    capture_ts = float(item.get("capture_timestamp") or 0.0)
+                    if capture_ts <= 0 or capture_ts >= float(capture_before):
+                        continue
                 candidates.append(item)
 
-        candidates.sort(key=lambda item: float(item.get("modified_at") or 0.0))
+        sort_field = "capture_timestamp" if order_by == "capture_timestamp" else "modified_at"
+        candidates.sort(
+            key=lambda item: float(item.get(sort_field) or 0.0),
+            reverse=descending,
+        )
+        has_more = False
         if limit > 0:
+            has_more = len(candidates) > limit
             candidates = candidates[:limit]
+        collapsed = _collapse_bursts(candidates)
+        collapsed.sort(
+            key=lambda item: float(item.get(sort_field) or 0.0),
+            reverse=descending,
+        )
         return ScanResult(
-            items=_collapse_bursts(candidates),
+            items=collapsed,
             total_scanned=total,
             errors=errors,
+            has_more=has_more,
         )
 
     def resolve_asset_refs(

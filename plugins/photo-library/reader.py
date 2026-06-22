@@ -105,6 +105,7 @@ class ScanResult:
     items: list[dict[str, Any]] = field(default_factory=list)
     total_scanned: int = 0
     errors: int = 0
+    has_more: bool = False
 
 
 def _file_hash_quick(path: Path, chunk_size: int = 65536) -> str:
@@ -837,7 +838,12 @@ class PhotoLibraryReader:
             # Inner loop was broken (limit reached) — flush cache and return
             if cache_entries and self._file_index is not None:
                 self._file_index.put_batch(cache_entries)
-            return ScanResult(items=_collapse_bursts(items), total_scanned=total, errors=errors)
+            return ScanResult(
+                items=_collapse_bursts(items),
+                total_scanned=total,
+                errors=errors,
+                has_more=True,
+            )
 
         # Flush any remaining cache entries
         if cache_entries and self._file_index is not None:

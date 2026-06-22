@@ -44,7 +44,7 @@ def _load_sensor_module() -> ModuleType:
     return module
 
 
-def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=30, last_cursor=None):
+def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=30, last_cursor=None, limit=1000):
     """Build a real SensorSyncContext; runtime_paths is the SDK's path facade."""
     from magi_plugin_sdk.sensors import SensorSyncContext
 
@@ -57,7 +57,7 @@ def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=3
         manual=True,
         last_cursor=last_cursor,
         last_success_at=None,
-        limit=1000,
+        limit=limit,
         runtime_paths=_Paths(),
         plugin_settings={
             "sensors": {
@@ -219,6 +219,32 @@ def test_incremental_sync_ignores_lookback_window(tmp_path: Path) -> None:
         sensor.collect_items(_ctx(tmp_path, [str(root)], lookback=30, last_cursor="1.0"))
     )
     assert [it["source_item_id"] for it in res.items] == ["codex:old"]
+
+
+def test_collect_marks_has_more_when_limit_is_full(tmp_path: Path) -> None:
+    mod = _load_sensor_module()
+    root = tmp_path / ".codex"
+    root.mkdir()
+    now = time.time()
+    (root / "history.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps({"session_id": "one", "text": "first", "ts": now}),
+                json.dumps({"session_id": "two", "text": "second", "ts": now + 1}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+    )
+
+    res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [str(root)], limit=1)))
+
+    assert len(res.items) == 1
+    assert res.stats["has_more"] is True
 
 
 def test_dedup_identity_and_fingerprint() -> None:

@@ -57,6 +57,25 @@ class _FakeClient:
         ]
 
 
+class _FullClient:
+    def collect_repository_events(self, repository: str, *, since_iso: str | None, limit: int):
+        return [
+            {
+                "source_item_id": f"github:{repository}:pull_request:{idx}",
+                "repository": repository,
+                "event_kind": "pull_request",
+                "title": f"Change {idx}",
+                "summary": f"PR #{idx}",
+                "state": "open",
+                "actor": "asuka",
+                "occurred_at": f"2026-06-18T01:02:0{idx}Z",
+                "url": f"https://github.com/{repository}/pull/{idx}",
+                "number": idx,
+            }
+            for idx in range(1, limit + 1)
+        ]
+
+
 def test_collect_items_uses_selected_repositories_and_returns_cursor() -> None:
     sensor_mod = _load_module("sensor")
     fake_client = _FakeClient()
@@ -81,6 +100,29 @@ def test_collect_items_uses_selected_repositories_and_returns_cursor() -> None:
     assert len(result.items) == 2
     assert result.next_cursor is not None
     assert result.stats["repositories_processed"] == 2
+
+
+def test_collect_items_marks_has_more_when_limit_is_full() -> None:
+    sensor_mod = _load_module("sensor")
+    sensor = sensor_mod.GitHubActivitySensor(
+        access_token="token",
+        repositories=["acme/app"],
+        client_factory=lambda token: _FullClient(),
+    )
+    context = SensorSyncContext(
+        source_type="github_activity",
+        manual=True,
+        last_cursor=None,
+        last_success_at=None,
+        limit=3,
+        runtime_paths=_RuntimePaths(),
+        plugin_settings={},
+    )
+
+    result = asyncio.run(sensor.collect_items(context))
+
+    assert len(result.items) == 3
+    assert result.stats["has_more"] is True
 
 
 def test_build_output_and_metadata_preserve_project_and_interaction_signal() -> None:

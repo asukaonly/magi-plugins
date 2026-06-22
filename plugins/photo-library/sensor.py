@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import time as _time
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,69 @@ from .sessions import aggregate_sessions
 # Younger sessions are deferred so each session is written exactly once
 # with its full content (L1 store is INSERT OR IGNORE on idempotency_key).
 _DEFAULT_SETTLE_WINDOW_SECONDS = 4 * 3600
+_APPLE_PHOTOS_CURSOR_VERSION = 1
+
+
+def _float_value(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _decode_apple_photos_cursor(raw_cursor: str | None) -> dict[str, Any]:
+    if not raw_cursor:
+        return {
+            "version": _APPLE_PHOTOS_CURSOR_VERSION,
+            "mode": "backfill",
+            "capture_before": None,
+            "modified_since": 0.0,
+        }
+    try:
+        data = json.loads(raw_cursor)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        # Legacy Apple Photos cursors were modified_at timestamps. They could
+        # leave older capture-time history behind, so restart the backfill and
+        # rely on existing idempotency keys to avoid duplicate L1 events.
+        return {
+            "version": _APPLE_PHOTOS_CURSOR_VERSION,
+            "mode": "backfill",
+            "capture_before": None,
+            "modified_since": 0.0,
+        }
+    if not isinstance(data, dict):
+        return {
+            "version": _APPLE_PHOTOS_CURSOR_VERSION,
+            "mode": "backfill",
+            "capture_before": None,
+            "modified_since": 0.0,
+        }
+    mode = str(data.get("mode") or "backfill")
+    if mode not in {"backfill", "incremental"}:
+        mode = "backfill"
+    capture_before = data.get("capture_before")
+    return {
+        "version": _APPLE_PHOTOS_CURSOR_VERSION,
+        "mode": mode,
+        "capture_before": _float_value(capture_before) if capture_before is not None else None,
+        "modified_since": _float_value(data.get("modified_since")),
+    }
+
+
+def _encode_apple_photos_cursor(
+    *,
+    mode: str,
+    capture_before: float | None,
+    modified_since: float,
+) -> str:
+    payload: dict[str, Any] = {
+        "version": _APPLE_PHOTOS_CURSOR_VERSION,
+        "mode": mode,
+        "modified_since": float(modified_since),
+    }
+    if capture_before is not None:
+        payload["capture_before"] = float(capture_before)
+    return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
 class PhotoLibraryTimelineSensor(SensorBase):
@@ -168,16 +232,26 @@ class PhotoLibraryTimelineSensor(SensorBase):
             else list(self.exclude_patterns)
         )
 
-        # The cursor stores the max modified_at of photos that have already
-        # contributed to a *settled* (emitted) session. We keep a look-back
-        # window so unfinalized recent sessions get re-evaluated each sync.
+        # The directory cursor stores the max modified_at of photos that have
+        # already contributed to a settled session. Apple Photos uses an opaque
+        # cursor during capture-time history backfill, then switches back to a
+        # modified_at-based incremental cursor.
         now_ts = _time.time()
+        apple_cursor = (
+            _decode_apple_photos_cursor(context.last_cursor)
+            if source_mode == "apple_photos"
+            else None
+        )
+        apple_backfill = bool(
+            source_mode == "apple_photos"
+            and apple_cursor is not None
+            and apple_cursor.get("mode") == "backfill"
+        )
         last_cursor = 0.0
-        if context.last_cursor:
-            try:
-                last_cursor = float(context.last_cursor)
-            except (ValueError, TypeError):
-                last_cursor = 0.0
+        if source_mode == "apple_photos" and apple_cursor is not None:
+            last_cursor = _float_value(apple_cursor.get("modified_since"))
+        elif context.last_cursor:
+            last_cursor = _float_value(context.last_cursor)
         look_back = now_ts - self.settle_window_seconds * 2
         min_modified_at = max(0.0, min(last_cursor, look_back))
 
@@ -191,6 +265,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         all_photos: list[dict[str, Any]] = []
         total_scanned = 0
         total_errors = 0
+        source_has_more = False
         source_error = ""
 
         if source_mode == "apple_photos":
@@ -203,10 +278,18 @@ class PhotoLibraryTimelineSensor(SensorBase):
                     self._apple_reader.scan_library,
                     photos_library_path,
                     limit=photo_limit,
-                    min_modified_at=min_modified_at,
+                    min_modified_at=0.0 if apple_backfill else min_modified_at,
+                    capture_before=(
+                        apple_cursor.get("capture_before")
+                        if apple_backfill and apple_cursor is not None
+                        else None
+                    ),
+                    order_by="capture_timestamp" if apple_backfill else "modified_at",
+                    descending=apple_backfill,
                 )
                 total_scanned += result.total_scanned
                 total_errors += result.errors
+                source_has_more = source_has_more or bool(getattr(result, "has_more", False))
                 all_photos.extend(result.items)
             except ApplePhotosReaderError as exc:
                 source_error = str(exc)
@@ -232,6 +315,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
                 )
                 total_scanned += result.total_scanned
                 total_errors += result.errors
+                source_has_more = source_has_more or bool(getattr(result, "has_more", False))
 
                 allowed_root = Path(src).expanduser().resolve()
                 for item in result.items:
@@ -286,9 +370,13 @@ class PhotoLibraryTimelineSensor(SensorBase):
             now_ts=now_ts,
             settle_window_seconds=self.settle_window_seconds,
         )
+        if apple_backfill:
+            sessions.sort(key=lambda s: float(s.get("first_capture_ts") or 0.0), reverse=True)
 
         # Cap emission per sync to keep individual L2 batches manageable.
+        sessions_capped = False
         if len(sessions) > self.max_items_per_sync:
+            sessions_capped = True
             sessions = sessions[: self.max_items_per_sync]
             max_settled_mtime = max(
                 float(s.get("max_modified_at") or 0.0) for s in sessions
@@ -298,21 +386,67 @@ class PhotoLibraryTimelineSensor(SensorBase):
         # session. Unsettled recent photos stay within the look-back window.
         next_cursor = context.last_cursor
         watermark_ts = context.last_success_at
-        if max_settled_mtime > 0:
+        max_seen_mtime = max([last_cursor] + [float(p.get("modified_at") or 0.0) for p in all_photos])
+        has_more = bool(source_has_more or sessions_capped)
+        if source_mode == "apple_photos" and apple_cursor is not None:
+            if apple_backfill:
+                capture_candidates = [
+                    float(s.get("first_capture_ts") or 0.0)
+                    for s in sessions
+                    if float(s.get("first_capture_ts") or 0.0) > 0
+                ]
+                if not capture_candidates:
+                    capture_candidates = [
+                        float(p.get("capture_timestamp") or 0.0)
+                        for p in all_photos
+                        if float(p.get("capture_timestamp") or 0.0) > 0
+                    ]
+                capture_before = min(capture_candidates) if capture_candidates else None
+                if has_more and capture_before is not None:
+                    next_cursor = _encode_apple_photos_cursor(
+                        mode="backfill",
+                        capture_before=capture_before,
+                        modified_since=max_seen_mtime,
+                    )
+                    watermark_ts = max_seen_mtime or context.last_success_at
+                else:
+                    modified_since = max(max_seen_mtime, max_settled_mtime, now_ts)
+                    next_cursor = _encode_apple_photos_cursor(
+                        mode="incremental",
+                        capture_before=None,
+                        modified_since=modified_since,
+                    )
+                    watermark_ts = modified_since
+            else:
+                modified_since = max(max_seen_mtime, max_settled_mtime)
+                if modified_since > 0:
+                    next_cursor = _encode_apple_photos_cursor(
+                        mode="incremental",
+                        capture_before=None,
+                        modified_since=modified_since,
+                    )
+                    watermark_ts = modified_since
+        elif max_settled_mtime > 0:
             next_cursor = str(max_settled_mtime)
             watermark_ts = max_settled_mtime
+
+        stats: dict[str, Any] = {
+            "count": len(sessions),
+            "photos_seen": len(all_photos),
+            "total_scanned": total_scanned,
+            "errors": total_errors,
+            "source_mode": source_mode,
+            "has_more": has_more,
+        }
+        if source_mode == "apple_photos":
+            stats["cursor_kind"] = "opaque"
+            stats["sync_phase"] = "backfill" if apple_backfill else "incremental"
 
         return SensorSyncResult(
             items=sessions,
             next_cursor=next_cursor,
             watermark_ts=watermark_ts,
-            stats={
-                "count": len(sessions),
-                "photos_seen": len(all_photos),
-                "total_scanned": total_scanned,
-                "errors": total_errors,
-                "source_mode": source_mode,
-            },
+            stats=stats,
         )
 
     # ------------------------------------------------------------------

@@ -126,10 +126,11 @@ class TerminalHistorySensor(SensorBase):
                 start_timestamp = (datetime.now() - timedelta(days=lookback_days)).timestamp()
 
         # Read commands from history
+        pull_limit = max(1, int(context.limit or 200))
         try:
             commands = self.reader.read_commands(
                 start_timestamp=start_timestamp,
-                limit=context.limit,
+                limit=pull_limit,
             )
         except Exception as e:
             return SensorSyncResult(
@@ -192,6 +193,7 @@ class TerminalHistorySensor(SensorBase):
                 "count": len(items),
                 "shell": self.reader.shell,
                 "filtered": len(commands) - len(items),
+                "has_more": len(commands) >= pull_limit,
             },
         )
 

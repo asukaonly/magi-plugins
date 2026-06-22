@@ -393,6 +393,8 @@ class GitActivitySensor(SensorBase):
         processed_repos = 0
         raw_activity_count = 0
         blocked_count = 0
+        source_has_more = False
+        pull_limit = max(1, int(context.limit or 200))
 
         for repo_path in repos:
             repo_path = str(repo_path).strip()
@@ -419,8 +421,9 @@ class GitActivitySensor(SensorBase):
                 repo_latest_timestamp = float(start_timestamp or 0.0)
                 activities = reader.read_activities(
                     start_timestamp=start_timestamp,
-                    limit=context.limit,
+                    limit=pull_limit,
                 )
+                source_has_more = source_has_more or len(activities) >= pull_limit
 
                 repo_items: list[dict[str, Any]] = []
                 for activity in activities:
@@ -478,6 +481,7 @@ class GitActivitySensor(SensorBase):
                 "repos_processed": processed_repos,
                 "session_window_minutes": int(session_window_seconds // 60),
                 "errors": errors if errors else None,
+                "has_more": source_has_more,
             },
         )
 

@@ -138,10 +138,11 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                         "initial_sync_policy": initial_sync_policy,
                     },
                 )
+        pull_limit = max(1, context.limit)
         raw_items = self._reader.read_visits(
             source_path=source_path,
             profile=profile,
-            limit=max(1, context.limit),
+            limit=pull_limit,
             last_cursor=context.last_cursor,
             initial_lookback_hours=initial_lookback_hours,
             merge_window_seconds=float(merge_window_minutes) * 60.0,
@@ -182,6 +183,11 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                 "filtered_count": filtered_count,
                 "continued_count": continued_count,
                 "merge_window_minutes": merge_window_minutes,
+                "has_more": sum(
+                    int(item.get("merged_visit_count") or 1)
+                    for item in raw_items
+                    if item.get("_has_new_visit", True)
+                ) >= pull_limit,
             },
         )
 

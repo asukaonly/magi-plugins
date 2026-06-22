@@ -74,13 +74,21 @@ class GitHubActivitySensor(SensorBase):
         client = self._client_factory(self.access_token)
         items: list[dict[str, Any]] = []
         errors: list[str] = []
+        source_has_more = False
         for repository in self.repositories:
             try:
-                items.extend(client.collect_repository_events(repository, since_iso=since_iso, limit=per_repo_limit))
+                repo_items = client.collect_repository_events(
+                    repository,
+                    since_iso=since_iso,
+                    limit=per_repo_limit,
+                )
+                source_has_more = source_has_more or len(repo_items) >= per_repo_limit
+                items.extend(repo_items)
             except Exception as exc:  # pragma: no cover - defensive runtime reporting
                 errors.append(f"{repository}: {exc}")
 
         items.sort(key=lambda item: iso_to_timestamp(str(item.get("occurred_at") or "")), reverse=True)
+        source_has_more = source_has_more or len(items) > max(1, int(context.limit or 50))
         items = items[: max(1, int(context.limit or 50))]
         max_seen = max([iso_to_timestamp(str(item.get("occurred_at") or "")) for item in items] or [time.time()])
         next_cursor = json.dumps({"version": 1, "since": timestamp_to_iso(max_seen)}, sort_keys=True)
@@ -93,6 +101,7 @@ class GitHubActivitySensor(SensorBase):
                 "repositories_processed": len(self.repositories),
                 "since": since_iso,
                 "errors": errors if errors else None,
+                "has_more": source_has_more,
             },
         )
 

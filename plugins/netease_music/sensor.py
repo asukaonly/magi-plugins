@@ -104,10 +104,11 @@ class NeteaseMusicTimelineSensor(SensorBase):
             if initial_sync_policy == "lookback_days":
                 initial_lookback_days = initial_sync_lookback_days
 
+        pull_limit = max(1, context.limit)
         items = self._reader.read_play_records(
             source_path=source_path,
             min_play_duration=self.min_play_duration,
-            limit=max(1, context.limit),
+            limit=pull_limit,
             last_cursor=int(context.last_cursor) if context.last_cursor else None,
             initial_lookback_days=initial_lookback_days,
         )
@@ -118,8 +119,9 @@ class NeteaseMusicTimelineSensor(SensorBase):
         if items:
             # Use the highest update_time as the next cursor
             max_update_time = max(item.get("update_time", 0) for item in items)
-            # Only set next_cursor if it's different from the input cursor
-            next_cursor = str(max_update_time) if context.last_cursor is not None else None
+            # Advance even on the first sync so large history imports can page
+            # forward without repeating the same first batch.
+            next_cursor = str(max_update_time) if max_update_time > 0 else context.last_cursor
             watermark_ts = max(float(item.get("update_time", 0.0)) for item in items)
 
         return SensorSyncResult(
@@ -131,6 +133,7 @@ class NeteaseMusicTimelineSensor(SensorBase):
                 "source_path": source_path,
                 "min_play_duration": self.min_play_duration,
                 "initial_sync_policy": initial_sync_policy if context.last_cursor is None else "incremental",
+                "has_more": len(items) >= pull_limit,
             },
         )
 

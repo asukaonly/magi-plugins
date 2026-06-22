@@ -189,7 +189,11 @@ class CodingAgentHistorySensor(SensorBase):
             items=items,
             next_cursor=next_cursor,
             watermark_ts=max_mtime or time.time(),
-            stats={"count": len(items), "scanned_paths": scanned_paths},
+            stats={
+                "count": len(items),
+                "scanned_paths": scanned_paths,
+                "has_more": len(items) >= limit,
+            },
         )
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:

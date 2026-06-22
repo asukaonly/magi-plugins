@@ -36,7 +36,13 @@ class _FakePhotosDB:
         return list(self._photos)
 
 
-def _fake_photo(path: Path, *, uuid: str = "UUID-1", modified: datetime | None = None):
+def _fake_photo(
+    path: Path,
+    *,
+    uuid: str = "UUID-1",
+    captured: datetime | None = None,
+    modified: datetime | None = None,
+):
     return SimpleNamespace(
         uuid=uuid,
         path=str(path),
@@ -44,8 +50,8 @@ def _fake_photo(path: Path, *, uuid: str = "UUID-1", modified: datetime | None =
         isphoto=True,
         hidden=False,
         visible=True,
-        date=datetime(2024, 3, 2, 10, 30, tzinfo=timezone.utc),
-        date_original=datetime(2024, 3, 2, 10, 30, tzinfo=timezone.utc),
+        date=captured or datetime(2024, 3, 2, 10, 30, tzinfo=timezone.utc),
+        date_original=captured or datetime(2024, 3, 2, 10, 30, tzinfo=timezone.utc),
         date_modified=modified or datetime(2024, 3, 2, 11, 0, tzinfo=timezone.utc),
         date_added=datetime(2024, 3, 2, 10, 45, tzinfo=timezone.utc),
         original_filename="IMG_0001.HEIC",
@@ -113,6 +119,46 @@ def test_scan_library_records_apple_photos_place_details(tmp_path: Path) -> None
     assert item["location_source"] == "apple_photos"
     assert item["apple_photos_place_name"] == "Shanghai Disneyland"
     assert item["apple_photos_place_address"] == "Pudong, Shanghai"
+
+
+def test_scan_library_capture_time_page_marks_more(tmp_path: Path) -> None:
+    mod = _load_reader_module()
+    old_photo = tmp_path / "old.HEIC"
+    new_photo = tmp_path / "new.HEIC"
+    older_photo = tmp_path / "older.HEIC"
+    for path in (old_photo, new_photo, older_photo):
+        path.write_bytes(b"fake image bytes")
+    reader = mod.ApplePhotosReader(
+        photosdb_factory=lambda _path: _FakePhotosDB(
+            [
+                _fake_photo(
+                    old_photo,
+                    uuid="OLD",
+                    captured=datetime(2024, 1, 2, tzinfo=timezone.utc),
+                ),
+                _fake_photo(
+                    new_photo,
+                    uuid="NEW",
+                    captured=datetime(2024, 1, 3, tzinfo=timezone.utc),
+                ),
+                _fake_photo(
+                    older_photo,
+                    uuid="OLDER",
+                    captured=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                ),
+            ]
+        )
+    )
+
+    result = reader.scan_library(
+        "",
+        limit=2,
+        order_by="capture_timestamp",
+        descending=True,
+    )
+
+    assert result.has_more is True
+    assert [item["apple_photos_uuid"] for item in result.items] == ["NEW", "OLD"]
 
 
 def test_resolve_asset_refs_uses_uuid_lookup(tmp_path: Path) -> None:

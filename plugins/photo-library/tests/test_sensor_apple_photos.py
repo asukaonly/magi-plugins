@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -31,7 +32,7 @@ class _RuntimePaths:
 
 
 class _AppleReader:
-    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float):
+    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float, **kwargs):
         assert photos_library_path == "/Photos Library.photoslibrary"
         assert limit >= 1000
         assert min_modified_at == 0.0
@@ -54,17 +55,44 @@ class _AppleReader:
             "apple_photos_place_name": "Shanghai Disneyland",
             "apple_photos_place_address": "Pudong, Shanghai",
         }
-        return SimpleNamespace(items=[item], total_scanned=1, errors=0)
+        return SimpleNamespace(items=[item], total_scanned=1, errors=0, has_more=False)
 
 
 class _AutoLocateAppleReader(_AppleReader):
-    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float):
+    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float, **kwargs):
         assert photos_library_path == ""
         return super().scan_library(
             "/Photos Library.photoslibrary",
             limit=limit,
             min_modified_at=min_modified_at,
+            **kwargs,
         )
+
+
+class _PagedAppleReader(_AppleReader):
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float, **kwargs):
+        self.calls.append(
+            {
+                "photos_library_path": photos_library_path,
+                "limit": limit,
+                "min_modified_at": min_modified_at,
+                **kwargs,
+            }
+        )
+        assert kwargs["order_by"] == "capture_timestamp"
+        assert kwargs["descending"] is True
+        assert kwargs["capture_before"] is None
+        result = super().scan_library(
+            photos_library_path,
+            limit=limit,
+            min_modified_at=min_modified_at,
+            **kwargs,
+        )
+        result.has_more = True
+        return result
 
 
 def test_apple_photos_mode_does_not_require_source_paths() -> None:
@@ -182,3 +210,44 @@ def test_apple_photos_mode_auto_locates_library_when_path_is_unset() -> None:
 
     assert result.stats["source_mode"] == "apple_photos"
     assert result.stats["photos_seen"] == 1
+
+
+def test_apple_photos_initial_backfill_pages_by_capture_time() -> None:
+    mod = _load_sensor_module()
+    apple_reader = _PagedAppleReader()
+    sensor = mod.PhotoLibraryTimelineSensor(
+        source_mode="apple_photos",
+        photos_library_path="/Photos Library.photoslibrary",
+        apple_reader=apple_reader,
+        analysis_features=[],
+        settle_window_seconds=0,
+    )
+
+    result = asyncio.run(
+        sensor.collect_items(
+            mod.SensorSyncContext(
+                source_type="photo_library",
+                manual=True,
+                last_cursor=None,
+                last_success_at=None,
+                limit=200,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={
+                    "sensors": {
+                        "photo_library": {
+                            "source_mode": "apple_photos",
+                            "photos_library_path": "/Photos Library.photoslibrary",
+                            "analysis_features": [],
+                        }
+                    }
+                },
+            )
+        )
+    )
+
+    assert result.stats["has_more"] is True
+    assert result.stats["cursor_kind"] == "opaque"
+    cursor = json.loads(result.next_cursor or "")
+    assert cursor["mode"] == "backfill"
+    assert cursor["capture_before"] == 1_710_000_000.0
+    assert apple_reader.calls[0]["order_by"] == "capture_timestamp"
