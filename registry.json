@@ -140,6 +140,24 @@
           }
         }
       ],
+      "display_group": {
+        "id": "browser_history",
+        "name": "Browser History",
+        "name_i18n": {
+          "zh-CN": "浏览历史"
+        },
+        "description": "Manage browser history sources from installed browser plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理浏览器历史入口。"
+        },
+        "icon": "lucide:globe",
+        "order": 10,
+        "member_label": "Chrome",
+        "member_label_i18n": {
+          "zh-CN": "Chrome"
+        },
+        "member_order": 10
+      },
       "platforms": [
         "macos",
         "windows"
@@ -308,6 +326,24 @@
       "depends_on": [
         "browser_history_core"
       ],
+      "display_group": {
+        "id": "browser_history",
+        "name": "Browser History",
+        "name_i18n": {
+          "zh-CN": "浏览历史"
+        },
+        "description": "Manage browser history sources from installed browser plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理浏览器历史入口。"
+        },
+        "icon": "lucide:globe",
+        "order": 10,
+        "member_label": "Edge",
+        "member_label_i18n": {
+          "zh-CN": "Edge"
+        },
+        "member_order": 40
+      },
       "platforms": [
         "windows"
       ],
@@ -389,6 +425,24 @@
       "depends_on": [
         "browser_history_core"
       ],
+      "display_group": {
+        "id": "browser_history",
+        "name": "Browser History",
+        "name_i18n": {
+          "zh-CN": "浏览历史"
+        },
+        "description": "Manage browser history sources from installed browser plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理浏览器历史入口。"
+        },
+        "icon": "lucide:globe",
+        "order": 10,
+        "member_label": "Firefox",
+        "member_label_i18n": {
+          "zh-CN": "Firefox"
+        },
+        "member_order": 30
+      },
       "platforms": [
         "windows",
         "macos"
@@ -972,6 +1026,24 @@
       "depends_on": [
         "browser_history_core"
       ],
+      "display_group": {
+        "id": "browser_history",
+        "name": "Browser History",
+        "name_i18n": {
+          "zh-CN": "浏览历史"
+        },
+        "description": "Manage browser history sources from installed browser plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理浏览器历史入口。"
+        },
+        "icon": "lucide:globe",
+        "order": 10,
+        "member_label": "Safari",
+        "member_label_i18n": {
+          "zh-CN": "Safari"
+        },
+        "member_order": 20
+      },
       "platforms": [
         "macos"
       ],

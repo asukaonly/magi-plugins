@@ -99,6 +99,9 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     depends_on = meta.get("depends_on", [])
     if depends_on:
         entry["depends_on"] = depends_on
+    display_group = meta.get("display_group", {})
+    if display_group:
+        entry["display_group"] = display_group
     entry["platforms"] = meta.get("platforms", [])
     # Privacy-transparency signal -> "Local only" marketplace badge. Prefer the
     # top-level declaration, falling back to the suggestion_descriptor's
