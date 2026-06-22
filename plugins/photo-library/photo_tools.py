@@ -15,7 +15,6 @@ from magi_plugin_sdk.tools import (
 )
 
 from .apple_photos_reader import (
-    DEFAULT_PHOTOS_LIBRARY_PATH,
     ApplePhotosReader,
     ApplePhotosReaderError,
 )
@@ -25,10 +24,7 @@ from .reader import PhotoLibraryReader
 def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool]]:
     """Build configured tool classes for the current plugin settings."""
     source_mode = _resolve_source_mode(settings)
-    photos_library_path = str(
-        settings.get("photos_library_path", DEFAULT_PHOTOS_LIBRARY_PATH)
-        or DEFAULT_PHOTOS_LIBRARY_PATH
-    )
+    photos_library_path = str(settings.get("photos_library_path", "") or "").strip()
     source_paths = _resolve_source_paths(settings)
     exclude_patterns = _resolve_string_list(settings.get("exclude_patterns"))
     analysis_features = _resolve_string_list(settings.get("analysis_features")) or ["exif"]

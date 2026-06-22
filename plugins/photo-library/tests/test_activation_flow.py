@@ -1,4 +1,4 @@
-"""photo-library must expose an activation_flow with a required source_paths path field."""
+"""photo-library activation flows should only ask for user-known inputs."""
 from __future__ import annotations
 
 import importlib.util
@@ -75,12 +75,34 @@ def test_photo_library_apple_entry_declares_activation_flow() -> None:
     assert flow is not None, "photo-library must declare an activation_flow"
     assert flow["enabled_key"] == "sensors.photo_library_apple_photos.enabled"
     assert flow["configured_key"] == "sensors.photo_library_apple_photos.initial_sync_configured"
-    apple_path = next(
-        (f for f in flow["fields"] if f["key"] == "sensors.photo_library_apple_photos.photos_library_path"),
-        None,
-    )
-    assert apple_path is not None, "activation_flow must include the Apple Photos library path"
+    assert flow["fields"] == []
     assert all("source_mode" not in f["key"] for f in flow["fields"])
+
+
+def test_photo_library_apple_entry_defaults_to_interval_sync() -> None:
+    spec = _photo_specs_by_source_type()["photo_library_apple_photos"]
+
+    assert spec.sync_mode == "interval"
+    assert spec.metadata["default_settings"]["sync_mode"] == "interval"
+
+    sync_mode = next(
+        f
+        for f in spec.fields
+        if f.key == "sensors.photo_library_apple_photos.sync_mode"
+    )
+    assert sync_mode.default == "interval"
+
+
+def test_photo_library_apple_path_is_optional_advanced_setting() -> None:
+    spec = _photo_specs_by_source_type()["photo_library_apple_photos"]
+    apple_path = next(
+        f
+        for f in spec.fields
+        if f.key == "sensors.photo_library_apple_photos.photos_library_path"
+    )
+
+    assert apple_path.required is not True
+    assert apple_path.default == ""
 
 
 def test_photo_library_directory_entry_declares_activation_flow() -> None:

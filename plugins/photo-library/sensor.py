@@ -196,8 +196,8 @@ class PhotoLibraryTimelineSensor(SensorBase):
         if source_mode == "apple_photos":
             photos_library_path = str(
                 sensor_settings.get("photos_library_path", self.photos_library_path)
-                or DEFAULT_PHOTOS_LIBRARY_PATH
-            )
+                or ""
+            ).strip()
             try:
                 result = await asyncio.to_thread(
                     self._apple_reader.scan_library,

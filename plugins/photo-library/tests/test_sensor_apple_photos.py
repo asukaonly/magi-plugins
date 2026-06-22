@@ -54,6 +54,16 @@ class _AppleReader:
         return SimpleNamespace(items=[item], total_scanned=1, errors=0)
 
 
+class _AutoLocateAppleReader(_AppleReader):
+    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float):
+        assert photos_library_path == ""
+        return super().scan_library(
+            "/Photos Library.photoslibrary",
+            limit=limit,
+            min_modified_at=min_modified_at,
+        )
+
+
 def test_apple_photos_mode_does_not_require_source_paths() -> None:
     mod = _load_sensor_module()
     sensor = mod.PhotoLibraryTimelineSensor(
@@ -90,3 +100,38 @@ def test_apple_photos_mode_does_not_require_source_paths() -> None:
     assert result.stats["photos_seen"] == 1
     assert len(result.items) == 1
     assert result.items[0]["representative_photos"][0]["asset_local_id"] == "apple-photos:UUID-1"
+
+
+def test_apple_photos_mode_auto_locates_library_when_path_is_unset() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.PhotoLibraryTimelineSensor(
+        source_mode="apple_photos",
+        photos_library_path="",
+        apple_reader=_AutoLocateAppleReader(),
+        analysis_features=[],
+        settle_window_seconds=0,
+    )
+
+    result = asyncio.run(
+        sensor.collect_items(
+            mod.SensorSyncContext(
+                source_type="photo_library",
+                manual=True,
+                last_cursor=None,
+                last_success_at=None,
+                limit=200,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={
+                    "sensors": {
+                        "photo_library": {
+                            "source_mode": "apple_photos",
+                            "analysis_features": [],
+                        }
+                    }
+                },
+            )
+        )
+    )
+
+    assert result.stats["source_mode"] == "apple_photos"
+    assert result.stats["photos_seen"] == 1

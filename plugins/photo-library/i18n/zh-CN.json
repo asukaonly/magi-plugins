@@ -33,8 +33,8 @@
         "description": "选择扫描导出的照片目录，或直接读取 macOS Apple Photos 照片库。"
       },
       "photos_library_path": {
-        "label": "Apple Photos 照片库",
-        "description": "要通过 osxphotos 扫描的 .photoslibrary 路径。"
+        "label": "自定义 Apple Photos 照片库",
+        "description": "可选。留空时会使用系统当前的照片图库。"
       },
       "exclude_patterns": {
         "label": "排除规则",
@@ -69,7 +69,7 @@
       },
       "sync_mode": {
         "manual": "手动",
-        "interval": "定时"
+        "interval": "自动"
       },
       "source_mode": {
         "directory": "照片目录",

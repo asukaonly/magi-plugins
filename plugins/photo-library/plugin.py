@@ -24,9 +24,9 @@ from .sensor import PhotoLibraryTimelineSensor
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "enabled": False,
-    "source_mode": "directory",
-    "photos_library_path": DEFAULT_PHOTOS_LIBRARY_PATH,
-    "sync_mode": "manual",
+    "source_mode": "apple_photos",
+    "photos_library_path": "",
+    "sync_mode": "interval",
     "sync_interval_minutes": 60,
     "source_paths": [],
     "exclude_patterns": ["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"],
@@ -106,10 +106,13 @@ def _fields(prefix: str, source_type: str) -> list[ExtensionFieldSpec]:
             ExtensionFieldSpec(
                 key=f"{prefix}.photos_library_path",
                 type="path",
-                label="Apple Photos Library",
-                description="Path to the .photoslibrary package to scan with osxphotos.",
-                default=DEFAULT_PHOTOS_LIBRARY_PATH,
-                required=True,
+                label="Custom Apple Photos Library",
+                description=(
+                    "Optional .photoslibrary path. Leave empty to use the "
+                    "current system Photos library."
+                ),
+                default="",
+                required=False,
                 section="general",
                 surface="timeline",
                 order=14,
@@ -151,10 +154,11 @@ def _fields(prefix: str, source_type: str) -> list[ExtensionFieldSpec]:
             type="select",
             label="Sync Mode",
             description="How photo library should be synchronized.",
-            default="manual",
+            default="interval",
+            required=True,
             options=[
                 ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
+                ExtensionFieldOption(label="Automatic", value="interval"),
             ],
             section="general",
             surface="timeline",
@@ -221,20 +225,7 @@ def _build_activation_flow(prefix: str, source_type: str) -> ActivationFlowSpec:
     entry_label = str(ENTRY_DEFINITIONS[source_type]["display_name"])
     fields: list[ExtensionFieldSpec] = []
     if source_mode == "apple_photos":
-        fields.append(
-            ExtensionFieldSpec(
-                key=f"{prefix}.photos_library_path",
-                type="path",
-                label="Apple Photos Library",
-                description="Path to the .photoslibrary package to scan.",
-                default=DEFAULT_PHOTOS_LIBRARY_PATH,
-                required=True,
-                section="activation",
-                surface="timeline",
-                order=8,
-                placeholder=DEFAULT_PHOTOS_LIBRARY_PATH,
-            )
-        )
+        fields = []
     else:
         fields.append(
             ExtensionFieldSpec(

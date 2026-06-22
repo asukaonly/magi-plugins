@@ -18,9 +18,9 @@ dependencies = [
 
 [plugin.default_settings.sensors.photo_library]
 enabled = false
-source_mode = "directory"
-photos_library_path = "~/Pictures/Photos Library.photoslibrary"
-sync_mode = "manual"
+source_mode = "apple_photos"
+photos_library_path = ""
+sync_mode = "interval"
 sync_interval_minutes = 60
 default_retention_mode = "analyze_only"
 storage_mode = "external_reference"
