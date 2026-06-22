@@ -2,6 +2,12 @@
   "terminal_history": {
     "name": "Terminal History",
     "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
+    "entries": {
+      "terminal_history": {
+        "display_name": "Terminal History",
+        "description": "Shell command history ingestion for the timeline."
+      }
+    },
     "options": {
       "enabled": {
         "true": "Enabled",

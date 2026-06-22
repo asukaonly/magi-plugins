@@ -2,6 +2,12 @@
   "git_activity": {
     "name": "Git 活动",
     "description": "Git 仓库活动接入时间线",
+    "entries": {
+      "git_activity": {
+        "display_name": "Git 活动",
+        "description": "Git 仓库活动接入时间线。"
+      }
+    },
     "fields": {
       "repos": {
         "label": "仓库目录",

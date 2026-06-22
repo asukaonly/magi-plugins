@@ -2,6 +2,12 @@
   "screenshot_timeline": {
     "name": "屏幕快照时间线",
     "description": "持续截屏并提取屏幕文本（辅助功能优先、OCR 兜底），把你的屏幕活动接入 magi 记忆。",
+    "entries": {
+      "screenshot_timeline": {
+        "display_name": "屏幕快照时间线",
+        "description": "持续截屏并用本地 OCR 提取屏幕文本，写入 magi 记忆。"
+      }
+    },
     "fields": {
       "enabled": {
         "label": "启用",

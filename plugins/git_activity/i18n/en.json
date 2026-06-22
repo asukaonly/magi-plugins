@@ -2,6 +2,12 @@
   "git_activity": {
     "name": "Git Activity",
     "description": "Git repository activity ingestion for the timeline",
+    "entries": {
+      "git_activity": {
+        "display_name": "Git Activity",
+        "description": "Git repository activity ingestion for the timeline."
+      }
+    },
     "fields": {
       "repos": {
         "label": "Repository Folders",

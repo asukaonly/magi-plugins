@@ -2,6 +2,12 @@
   "netease_music": {
     "name": "NetEase Cloud Music",
     "description": "Play history from NetEase Cloud Music app",
+    "entries": {
+      "netease_music": {
+        "display_name": "NetEase Cloud Music",
+        "description": "Local NetEase Cloud Music play history ingestion for the timeline."
+      }
+    },
     "fields": {
       "sync_mode": {
         "label": "Sync Mode",

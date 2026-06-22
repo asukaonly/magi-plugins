@@ -2,6 +2,12 @@
   "screenshot_timeline": {
     "name": "Screenshot Timeline",
     "description": "Captures your screen, extracts on-screen text (accessibility-first, OCR fallback), and feeds magi memory.",
+    "entries": {
+      "screenshot_timeline": {
+        "display_name": "Screenshot Timeline",
+        "description": "Continuous screen capture plus local OCR fed into magi memory."
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enabled",

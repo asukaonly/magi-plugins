@@ -2,6 +2,12 @@
   "screen_time": {
     "name": "App Usage",
     "description": "Tracks which apps you use and for how long. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
+    "entries": {
+      "screen_time": {
+        "display_name": "App Usage",
+        "description": "Polls the foreground app each second and emits one summary per app per clock hour, flushed shortly after each hour ends."
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enable App Usage Sync",

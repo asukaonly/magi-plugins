@@ -2,6 +2,12 @@
   "coding_agent_history": {
     "name": "编程助手历史",
     "description": "把本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息读入 Magi 的记忆。",
+    "entries": {
+      "coding_agent_history": {
+        "display_name": "编程助手历史",
+        "description": "读取本地 AI 编程助手（Claude Code、Codex）transcript 里你自己发的消息。"
+      }
+    },
     "fields": {
       "source_paths": {
         "label": "Transcript 文件夹",

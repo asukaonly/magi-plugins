@@ -2,6 +2,12 @@
   "coding_agent_history": {
     "name": "Coding Agent History",
     "description": "Reads your own turns from local AI coding-assistant transcripts (Claude Code, Codex) into Magi's memory.",
+    "entries": {
+      "coding_agent_history": {
+        "display_name": "Coding Agent History",
+        "description": "Your own turns from AI coding-assistant transcripts (Claude Code, Codex)."
+      }
+    },
     "fields": {
       "source_paths": {
         "label": "Transcript Folders",

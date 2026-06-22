@@ -2,6 +2,12 @@
   "netease_music": {
     "name": "网易云音乐",
     "description": "网易云音乐播放记录接入时间线",
+    "entries": {
+      "netease_music": {
+        "display_name": "网易云音乐",
+        "description": "本地网易云音乐播放历史接入时间线。"
+      }
+    },
     "fields": {
       "sync_mode": {
         "label": "同步方式",
