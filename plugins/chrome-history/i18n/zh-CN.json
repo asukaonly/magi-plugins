@@ -1,23 +1,23 @@
 {
   "chrome_history": {
-    "name": "Chrome 浏览历史",
-    "description": "本地 Google Chrome 浏览历史接入时间线",
+    "name": "Chrome 浏览器历史",
+    "description": "本地 Google Chrome 浏览器历史接入时间线",
     "capabilities": {
       "browser_history": {
-        "display_name": "浏览历史",
+        "display_name": "浏览器历史",
         "description": "统一管理浏览器历史进入时间线的方式。"
       }
     },
     "entries": {
       "chrome": {
         "display_name": "Chrome",
-        "description": "本地 Google Chrome 浏览历史。"
+        "description": "本地 Google Chrome 浏览器历史。"
       }
     },
     "fields": {
       "enabled": {
         "label": "启用",
-        "description": "是否启用 Chrome 浏览历史同步。"
+        "description": "是否启用 Chrome 浏览器历史同步。"
       },
       "profile": {
         "label": "配置档案",
@@ -95,8 +95,8 @@
       "filters": "过滤"
     },
     "activation": {
-      "title": "启用 Chrome 浏览历史",
-      "description": "Chrome 浏览历史属于敏感的本地数据。请选择首次同步如何初始化时间线，再启用该来源。",
+      "title": "启用 Chrome 浏览器历史",
+      "description": "Chrome 浏览器历史属于敏感的本地数据。请选择首次同步如何初始化时间线，再启用该来源。",
       "confirm_label": "启用来源",
       "cancel_label": "暂不启用"
     }

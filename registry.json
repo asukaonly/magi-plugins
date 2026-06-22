@@ -113,10 +113,10 @@
       "plugin_id": "chrome-history",
       "name": "Chrome History",
       "name_i18n": {
-        "zh-CN": "Chrome 浏览历史"
+        "zh-CN": "Chrome 浏览器历史"
       },
       "icon": "brand:googlechrome",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -144,7 +144,7 @@
         "id": "browser_history",
         "name": "Browser History",
         "name_i18n": {
-          "zh-CN": "浏览历史"
+          "zh-CN": "浏览器历史"
         },
         "description": "Manage browser history sources from installed browser plugins.",
         "description_i18n": {
@@ -297,10 +297,10 @@
       "plugin_id": "edge-history",
       "name": "Edge History",
       "name_i18n": {
-        "zh-CN": "Edge 浏览历史"
+        "zh-CN": "Edge 浏览器历史"
       },
       "icon": "lucide:globe",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/edge-history",
       "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -330,7 +330,7 @@
         "id": "browser_history",
         "name": "Browser History",
         "name_i18n": {
-          "zh-CN": "浏览历史"
+          "zh-CN": "浏览器历史"
         },
         "description": "Manage browser history sources from installed browser plugins.",
         "description_i18n": {
@@ -378,7 +378,7 @@
           }
         },
         "rationale": {
-          "zh": "magi 能读取你的 Edge 浏览历史",
+          "zh": "magi 能读取你的 Edge 浏览器历史",
           "en": "Lets magi see your Edge browsing history"
         },
         "local_requirements": [
@@ -395,10 +395,10 @@
       "plugin_id": "firefox-history",
       "name": "Firefox History",
       "name_i18n": {
-        "zh-CN": "Firefox 浏览历史"
+        "zh-CN": "Firefox 浏览器历史"
       },
       "icon": "brand:firefoxbrowser",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/firefox-history",
       "description": "Reads your local Firefox browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -429,7 +429,7 @@
         "id": "browser_history",
         "name": "Browser History",
         "name_i18n": {
-          "zh-CN": "浏览历史"
+          "zh-CN": "浏览器历史"
         },
         "description": "Manage browser history sources from installed browser plugins.",
         "description_i18n": {
@@ -478,7 +478,7 @@
           }
         },
         "rationale": {
-          "zh": "magi 能读取你的 Firefox 浏览历史",
+          "zh": "magi 能读取你的 Firefox 浏览器历史",
           "en": "Lets magi see your Firefox browsing history"
         },
         "local_requirements": [
@@ -997,10 +997,10 @@
       "plugin_id": "safari-history",
       "name": "Safari History",
       "name_i18n": {
-        "zh-CN": "Safari 浏览历史"
+        "zh-CN": "Safari 浏览器历史"
       },
       "icon": "brand:safari",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/safari-history",
       "description": "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -1030,7 +1030,7 @@
         "id": "browser_history",
         "name": "Browser History",
         "name_i18n": {
-          "zh-CN": "浏览历史"
+          "zh-CN": "浏览器历史"
         },
         "description": "Manage browser history sources from installed browser plugins.",
         "description_i18n": {

@@ -1,9 +1,9 @@
 [plugin]
 id = "edge-history"
 name = "Edge History"
-name_i18n = { "zh-CN" = "Edge 浏览历史" }
+name_i18n = { "zh-CN" = "Edge 浏览器历史" }
 icon = "lucide:globe"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Microsoft Edge 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
 author = "Magi Team"
@@ -17,7 +17,7 @@ platforms = ["windows"]
 [plugin.display_group]
 id = "browser_history"
 name = "Browser History"
-name_i18n = { "zh-CN" = "浏览历史" }
+name_i18n = { "zh-CN" = "浏览器历史" }
 description = "Manage browser history sources from installed browser plugins."
 description_i18n = { "zh-CN" = "统一管理浏览器历史入口。" }
 icon = "lucide:globe"
@@ -41,7 +41,7 @@ zh = ["浏览", "上网", "看过", "网页", "网站", "搜过"]
 en = ["browsing", "browser", "website", "online", "bookmark", "browsed"]
 
 [plugin.suggestion_descriptor.rationale]
-zh = "magi 能读取你的 Edge 浏览历史"
+zh = "magi 能读取你的 Edge 浏览器历史"
 en = "Lets magi see your Edge browsing history"
 
 [[plugin.suggestion_descriptor.local_requirements]]

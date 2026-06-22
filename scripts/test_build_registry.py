@@ -33,7 +33,7 @@ def test_browser_history_plugins_declare_marketplace_display_group() -> None:
         group = entry["display_group"]
         assert group["id"] == "browser_history"
         assert group["name"] == "Browser History"
-        assert group["name_i18n"]["zh-CN"] == "浏览历史"
+        assert group["name_i18n"]["zh-CN"] == "浏览器历史"
         assert group["icon"] == "lucide:globe"
         assert group["member_label"] == member_label
         assert group["member_order"] == member_order
