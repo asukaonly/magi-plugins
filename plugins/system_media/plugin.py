@@ -17,6 +17,16 @@ DEFAULT_SETTINGS = {
     "pause_timeout_seconds": 300,
 }
 
+LISTENING_HISTORY_CAPABILITY_METADATA = {
+    "capability_id": "listening_history",
+    "capability_display_name": "Listening History",
+    "capability_description": "Manage music listening history sources that feed the timeline.",
+    "entry_id": "local_now_playing",
+    "entry_display_name": "Local Now Playing",
+    "entry_description": "Music playback captured from this device's system media controls.",
+    "entry_order": 20,
+}
+
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
     if budget is None:
@@ -221,8 +231,8 @@ class SystemMediaPlugin(Plugin):
                 sensor,
                 SensorSpec(
                     sensor_id="timeline.system_media",
-                    display_name="System Media",
-                    description="Tracks playback from apps that expose OS media controls. Support varies by player, and some apps may not be detected.",
+                    display_name="Local Now Playing",
+                    description="Records music playback from apps that expose OS media controls. Support varies by player, and some apps may not be detected.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
@@ -232,6 +242,7 @@ class SystemMediaPlugin(Plugin):
                         "source_type": "system_media",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "sync_interval_minutes": sync_interval,
+                        **LISTENING_HISTORY_CAPABILITY_METADATA,
                     },
                 ),
             )

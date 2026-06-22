@@ -1376,16 +1376,16 @@
     },
     {
       "plugin_id": "system-media",
-      "name": "System Media",
+      "name": "Local Now Playing",
       "name_i18n": {
-        "zh-CN": "系统媒体"
+        "zh-CN": "本机正在播放"
       },
       "icon": "lucide:music",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/system_media",
-      "description": "Tracks music and video playback from any app via system media controls, helping Magi understand what you listen to and watch.",
+      "description": "Records music currently playing on this device through system media controls.",
       "description_i18n": {
-        "zh-CN": "通过系统媒体控制记录任意应用的音乐和视频播放，帮助 Magi 了解你的收听和观看内容"
+        "zh-CN": "通过系统媒体控制记录本机正在播放的音乐"
       },
       "author": "Magi Team",
       "official": true,
@@ -1401,6 +1401,24 @@
           }
         }
       ],
+      "display_group": {
+        "id": "listening_history",
+        "name": "Listening History",
+        "name_i18n": {
+          "zh-CN": "听歌历史"
+        },
+        "description": "Manage music listening history sources from installed music plugins.",
+        "description_i18n": {
+          "zh-CN": "统一管理听歌历史入口。"
+        },
+        "icon": "lucide:music",
+        "order": 30,
+        "member_label": "Local Now Playing",
+        "member_label_i18n": {
+          "zh-CN": "本机正在播放"
+        },
+        "member_order": 20
+      },
       "platforms": [
         "windows",
         "macos"
@@ -1421,21 +1439,22 @@
             "zh": [
               "在播放",
               "正在听",
-              "正在看",
+              "听歌",
               "播放了什么",
-              "媒体"
+              "音乐"
             ],
             "en": [
               "playing",
               "now playing",
-              "media",
-              "watching"
+              "music",
+              "listening",
+              "song"
             ]
           }
         },
         "rationale": {
-          "zh": "magi 能看到你正在播放的媒体",
-          "en": "Lets magi see what media you're playing"
+          "zh": "magi 能看到本机正在播放的音乐",
+          "en": "Lets magi see music playing on this device"
         }
       }
     },

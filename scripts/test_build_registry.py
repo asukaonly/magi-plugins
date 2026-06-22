@@ -51,6 +51,14 @@ def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
             "member_label": "NetEase Cloud Music",
             "member_order": 10,
         },
+        "system_media": {
+            "id": "listening_history",
+            "name": "Listening History",
+            "name_zh": "听歌历史",
+            "icon": "lucide:music",
+            "member_label": "Local Now Playing",
+            "member_order": 20,
+        },
         "steam_play_history": {
             "id": "game_records",
             "name": "Game Records",

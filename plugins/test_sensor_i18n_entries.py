@@ -14,6 +14,7 @@ SENSOR_ENTRY_PLUGINS = {
     "netease_music": ["netease_music"],
     "screenshot_timeline": ["screenshot_timeline"],
     "steam_play_history": ["steam"],
+    "system_media": ["local_now_playing"],
     "terminal_history": ["terminal_history"],
 }
 
