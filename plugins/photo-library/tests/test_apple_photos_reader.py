@@ -62,7 +62,7 @@ def _fake_photo(path: Path, *, uuid: str = "UUID-1", modified: datetime | None =
         persons=["Asuka"],
         keywords=["trip"],
         labels_normalized=["city"],
-        place=SimpleNamespace(name="Shanghai"),
+        place=SimpleNamespace(name="Shanghai Disneyland", address_str="Pudong, Shanghai"),
         exif_info=SimpleNamespace(
             camera_make="Apple",
             camera_model="iPhone 15 Pro",
@@ -97,7 +97,22 @@ def test_scan_library_normalizes_osxphotos_photo(tmp_path: Path) -> None:
     assert item["filename"] == "IMG_0001.HEIC"
     assert item["camera_make"] == "Apple"
     assert item["latitude"] == 31.2
-    assert item["location_name"] == "Shanghai"
+    assert item["location_name"] == "Shanghai Disneyland"
+
+
+def test_scan_library_records_apple_photos_place_details(tmp_path: Path) -> None:
+    mod = _load_reader_module()
+    photo_file = tmp_path / "IMG_0001.HEIC"
+    photo_file.write_bytes(b"fake image bytes")
+    reader = mod.ApplePhotosReader(
+        photosdb_factory=lambda _path: _FakePhotosDB([_fake_photo(photo_file)])
+    )
+
+    item = reader.scan_library("", limit=10).items[0]
+
+    assert item["location_source"] == "apple_photos"
+    assert item["apple_photos_place_name"] == "Shanghai Disneyland"
+    assert item["apple_photos_place_address"] == "Pudong, Shanghai"
 
 
 def test_resolve_asset_refs_uses_uuid_lookup(tmp_path: Path) -> None:

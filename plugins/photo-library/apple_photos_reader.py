@@ -184,6 +184,10 @@ class ApplePhotosReader:
         longitude = _first_number(_safe_attr(photo, "longitude", None), _safe_attr(exif_info, "longitude", None))
         filename = _first_text(_safe_attr(photo, "original_filename", None), _safe_attr(photo, "filename", None), path.name)
         uuid = str(_safe_attr(photo, "uuid", "") or "").strip()
+        place = _safe_attr(photo, "place", None)
+        apple_place_name = _first_text(_safe_attr(place, "name", None))
+        apple_place_address = _first_text(_safe_attr(place, "address_str", None))
+        location_name = _first_text(apple_place_name, apple_place_address)
 
         item: dict[str, Any] = {
             "asset_local_id": f"{APPLE_PHOTOS_ASSET_PREFIX}{uuid}" if uuid else _file_hash_quick(path),
@@ -216,7 +220,10 @@ class ApplePhotosReader:
             "people": _string_list(_safe_attr(photo, "persons", [])),
             "keywords": _string_list(_safe_attr(photo, "keywords", [])),
             "labels": _string_list(_safe_attr(photo, "labels_normalized", [])),
-            "location_name": _place_name(_safe_attr(photo, "place", None)),
+            "location_name": location_name,
+            "location_source": "apple_photos" if location_name else "",
+            "apple_photos_place_name": apple_place_name,
+            "apple_photos_place_address": apple_place_address,
         }
 
         if bool(_safe_attr(photo, "screenshot", False)) or classify_image_type(item) == "screenshot":
@@ -327,8 +334,3 @@ def _format_iso(value: Any) -> str:
     except (TypeError, ValueError):
         return ""
     return str(number) if number > 0 else ""
-
-
-def _place_name(place: Any) -> str:
-    name = _first_text(_safe_attr(place, "name", None), _safe_attr(place, "address_str", None))
-    return name

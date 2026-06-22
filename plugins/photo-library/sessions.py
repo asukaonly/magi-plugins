@@ -160,10 +160,18 @@ def aggregate_sessions(
         )
         # Pick a representative location_name (first non-empty).
         location_name = ""
+        location_source = ""
+        apple_photos_place_name = ""
+        apple_photos_place_address = ""
         for p in sess["photos"]:
             ln = str(p.get("location_name") or "")
             if ln:
                 location_name = ln
+                location_source = str(p.get("location_source") or "")
+                apple_photos_place_name = str(p.get("apple_photos_place_name") or "")
+                apple_photos_place_address = str(
+                    p.get("apple_photos_place_address") or ""
+                )
                 break
         # Average GPS over the session for a single representative coord.
         gps_points = [
@@ -193,6 +201,12 @@ def aggregate_sessions(
                 "capture_ts": float(p.get("capture_timestamp") or 0.0),
                 "latitude": p.get("latitude"),
                 "longitude": p.get("longitude"),
+                "location_name": str(p.get("location_name") or ""),
+                "location_source": str(p.get("location_source") or ""),
+                "apple_photos_place_name": str(p.get("apple_photos_place_name") or ""),
+                "apple_photos_place_address": str(
+                    p.get("apple_photos_place_address") or ""
+                ),
             }
             for p in reps
         ]
@@ -216,6 +230,9 @@ def aggregate_sessions(
             "device_slug": sess["device_slug"],
             "device_name": device_name,
             "location_name": location_name,
+            "location_source": location_source,
+            "apple_photos_place_name": apple_photos_place_name,
+            "apple_photos_place_address": apple_photos_place_address,
             "latitude": avg_lat,
             "longitude": avg_lon,
             "geo_cell": sess["geo_cell"],

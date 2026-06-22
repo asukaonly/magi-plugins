@@ -271,10 +271,14 @@ class PhotoLibraryTimelineSensor(SensorBase):
             if coords:
                 geo_results = await asyncio.to_thread(_geo_batch_lookup, coords, cache_dir)
                 for idx, geo in zip(indices, geo_results):
-                    if geo is not None:
+                    has_source_location = bool(
+                        str(all_photos[idx].get("location_name") or "").strip()
+                    )
+                    if geo is not None and not has_source_location:
                         all_photos[idx]["location_name"] = format_location(
                             geo, locale_map=locale_map
                         )
+                        all_photos[idx]["location_source"] = "geocode"
                         all_photos[idx]["location_country"] = geo.country_code
 
         sessions, max_settled_mtime = aggregate_sessions(
@@ -402,6 +406,11 @@ class PhotoLibraryTimelineSensor(SensorBase):
             "device_name": device,
             "device_slug": str(item.get("device_slug") or ""),
             "location_name": location,
+            "location_source": str(item.get("location_source") or ""),
+            "apple_photos_place_name": str(item.get("apple_photos_place_name") or ""),
+            "apple_photos_place_address": str(
+                item.get("apple_photos_place_address") or ""
+            ),
             "latitude": item.get("latitude"),
             "longitude": item.get("longitude"),
             "photo_count": photo_count,

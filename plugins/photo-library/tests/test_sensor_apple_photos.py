@@ -49,7 +49,10 @@ class _AppleReader:
             "lens_model": "back camera",
             "latitude": 31.2,
             "longitude": 121.4,
-            "location_name": "Shanghai",
+            "location_name": "Shanghai Disneyland",
+            "location_source": "apple_photos",
+            "apple_photos_place_name": "Shanghai Disneyland",
+            "apple_photos_place_address": "Pudong, Shanghai",
         }
         return SimpleNamespace(items=[item], total_scanned=1, errors=0)
 
@@ -98,6 +101,50 @@ def test_apple_photos_mode_does_not_require_source_paths() -> None:
 
     assert result.stats["source_mode"] == "apple_photos"
     assert result.stats["photos_seen"] == 1
+
+
+def test_apple_photos_place_name_wins_over_geocode(monkeypatch) -> None:
+    mod = _load_sensor_module()
+    sensor = mod.PhotoLibraryTimelineSensor(
+        source_mode="apple_photos",
+        photos_library_path="/Photos Library.photoslibrary",
+        apple_reader=_AppleReader(),
+        analysis_features=["geocode"],
+        settle_window_seconds=0,
+    )
+    monkeypatch.setattr(
+        mod,
+        "_geo_batch_lookup",
+        lambda _coords, _cache_dir: [SimpleNamespace(country_code="CN")],
+    )
+    monkeypatch.setattr(mod, "format_location", lambda _geo, locale_map=None: "Shanghai")
+
+    result = asyncio.run(
+        sensor.collect_items(
+            mod.SensorSyncContext(
+                source_type="photo_library",
+                manual=True,
+                last_cursor=None,
+                last_success_at=None,
+                limit=200,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={
+                    "sensors": {
+                        "photo_library": {
+                            "source_mode": "apple_photos",
+                            "photos_library_path": "/Photos Library.photoslibrary",
+                            "analysis_features": ["geocode"],
+                        }
+                    }
+                },
+            )
+        )
+    )
+
+    item = result.items[0]
+    assert item["location_name"] == "Shanghai Disneyland"
+    assert item["location_source"] == "apple_photos"
+    assert item["apple_photos_place_name"] == "Shanghai Disneyland"
     assert len(result.items) == 1
     assert result.items[0]["representative_photos"][0]["asset_local_id"] == "apple-photos:UUID-1"
 
