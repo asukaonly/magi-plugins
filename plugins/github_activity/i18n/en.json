@@ -1,4 +1,57 @@
 {
+  "github_activity": {
+    "name": "GitHub Activity",
+    "description": "Sync selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status.",
+    "entries": {
+      "github_activity": {
+        "display_name": "GitHub Activity",
+        "description": "Local-only GitHub repository activity sync."
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "Enabled",
+        "description": "Whether GitHub activity sync is active."
+      },
+      "client_id": {
+        "label": "GitHub Client ID",
+        "description": "Client ID used for local GitHub web authorization."
+      },
+      "access_token": {
+        "label": "Access Token",
+        "description": "Stored locally after connecting GitHub. You can paste a token for testing."
+      },
+      "repositories": {
+        "label": "Repositories",
+        "description": "Repositories to sync, for example owner/repo or a GitHub repository URL."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to check GitHub for updates."
+      },
+      "initial_sync_lookback_days": {
+        "label": "Initial Sync Days",
+        "description": "How many recent days to import on the first sync."
+      }
+    },
+    "sections": {
+      "general": "General",
+      "connection": "Connection"
+    },
+    "activation": {
+      "title": "Connect GitHub",
+      "description": "Choose the repositories Magi should read from this device. No GitHub data is sent to a Magi cloud service.",
+      "confirm_label": "Enable GitHub sync",
+      "cancel_label": "Not now"
+    },
+    "actions": {
+      "connect_github": {
+        "label": "Connect GitHub",
+        "description": "Open the GitHub authorization page, enter the code, and save the resulting token locally.",
+        "button_label": "Connect GitHub"
+      }
+    }
+  },
   "activity": {
     "source": {
       "github": "GitHub"

@@ -1,4 +1,57 @@
 {
+  "github_activity": {
+    "name": "GitHub 活动",
+    "description": "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。",
+    "entries": {
+      "github_activity": {
+        "display_name": "GitHub 活动",
+        "description": "本机 GitHub 仓库动态同步。"
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "是否启用 GitHub 活动同步。"
+      },
+      "client_id": {
+        "label": "GitHub Client ID",
+        "description": "用于本机 GitHub 网页授权的 Client ID。"
+      },
+      "access_token": {
+        "label": "访问令牌",
+        "description": "连接 GitHub 后保存在本机的令牌，也可在测试时手动粘贴。"
+      },
+      "repositories": {
+        "label": "仓库",
+        "description": "要同步的仓库，例如 owner/repo 或 GitHub 仓库链接。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": "多久检查一次 GitHub 更新。"
+      },
+      "initial_sync_lookback_days": {
+        "label": "首次同步天数",
+        "description": "首次同步时向前导入最近多少天的动态。"
+      }
+    },
+    "sections": {
+      "general": "常规",
+      "connection": "连接"
+    },
+    "activation": {
+      "title": "连接 GitHub",
+      "description": "选择 Magi 要在本机读取的 GitHub 仓库。GitHub 数据不会发送到 Magi 云服务。",
+      "confirm_label": "启用 GitHub 同步",
+      "cancel_label": "暂不启用"
+    },
+    "actions": {
+      "connect_github": {
+        "label": "连接 GitHub",
+        "description": "打开 GitHub 授权页面，输入验证码，并把得到的令牌保存在本机。",
+        "button_label": "连接 GitHub"
+      }
+    }
+  },
   "activity": {
     "source": {
       "github": "GitHub"

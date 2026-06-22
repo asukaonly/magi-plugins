@@ -502,9 +502,9 @@ osxmetadata==1.4.1 ; sys_platform == 'darwin' \
     --hash=sha256:1011a3dbd95899ad53792a4c6d8d9283532f4c5c80fe8be892eed0f50f4bf096 \
     --hash=sha256:1e33935d8777f96808a2742d43064c9d6672148ff0b19f5713629c2de1fab795
     # via osxphotos
-osxphotos==0.75.9 ; sys_platform == 'darwin' \
-    --hash=sha256:13ec8e272142d4a8eb288914e46e02162b24002a93bf8d874cc6554bb34a72d4 \
-    --hash=sha256:e96dbb64a28504a78e100f86356e38f0524a0358e78a89a5f45de8af42d1970f
+osxphotos==0.76.1 ; sys_platform == 'darwin' \
+    --hash=sha256:ea2368cb07db80229a2938b8d5854365d339ec162f0bba59c2df6a4a6df5bb0c \
+    --hash=sha256:f493a4674f2c5981ac7c5f33dea1c5fd42db365cb4e7ec6004e5cd29ff8d667f
 packaging==26.2 ; sys_platform == 'darwin' \
     --hash=sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e \
     --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
@@ -574,15 +574,17 @@ pygments==2.20.0 ; sys_platform == 'darwin' \
     # via
     #   ptpython
     #   rich
-pyobjc-core==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:0fa950f092673883b8bd28bc18397415cabb457bf410920762109b411789ade9 \
-    --hash=sha256:2d23ee539f2ba5e9f5653d75a13f575c7e36586fc0086792739e69e4c2617eda \
-    --hash=sha256:41189c2c680931c0395a55691763c481fc681f454f21bb4f1644f98c24a45954 \
-    --hash=sha256:586e4cae966282eaa61b21cae66ccdcee9d69c036979def26eebdc08ddebe20f \
-    --hash=sha256:b9809cf96678797acb72a758f34932fe8e2602d5ab7abec15c5ac68ddb481720 \
-    --hash=sha256:bbc8de304ee322a1ee530b4d2daca135a49b4a49aa3cedc6b2c26c43885f4842 \
-    --hash=sha256:d734b9291fec91ff4e3ae38b9c6839debf02b79c07314476e87da8e90b2c68c3 \
-    --hash=sha256:fa674a39949f5cde8e5c7bbcd24496446bfc67592b028aedbec7f81dc5fc4daa
+pyobjc-core==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:17b4e003af384d3086c2f39989a0b282c5755dd1066f331cf7c9fa65febe22ce \
+    --hash=sha256:1e4216f2ec962dc13cf7f31b9bc3a7190337a0f401e7dc9de6b2d8c08b9dbb7a \
+    --hash=sha256:3137b2d14f9f2154fb5b1c092c38d15e164f68ab190c18335d76e4e7e1583f79 \
+    --hash=sha256:45fffb2b8dc0ae4480386429bd1e7fa8aabeb2eec81816d6971b33936dfcfff8 \
+    --hash=sha256:515ecf2afe168301feb66a7230d700584ce2e4b8a0ac178e19450b8898384139 \
+    --hash=sha256:51d7de4cfa32f508c6a7aac31f131b12d5e196a8dcf588e6e8d7e6337224f66d \
+    --hash=sha256:7677ed758a367bbbb5589d6f5276fb360a45c89168276c26162f61840b0fa03d \
+    --hash=sha256:9287c7c46d6ae8676b4c6c0389a8f4b5381f42ae53a47151900c08b157e5a992 \
+    --hash=sha256:a51352e478785cd7fce1604b9902125a286139caea0759cb340e59d75b594992 \
+    --hash=sha256:ac952bac8057dd0b97ee7b311c39f97cad7430b7cfbd67ca0a30135a7d17d2ab
     # via
     #   cgmetadata
     #   makelive
@@ -608,41 +610,49 @@ pyobjc-core==9.2 ; sys_platform == 'darwin' \
     #   pyobjc-framework-uniformtypeidentifiers
     #   pyobjc-framework-vision
     #   utitools
-pyobjc-framework-applescriptkit==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:4215952cc18b810ca314a59f1a0b9ddbe5d9c7f2d4cc6a866cad570ea96b7496 \
-    --hash=sha256:e7be610629371efc96b2daf8b83fee814251ce0845d8cfd4cc458a69bd67e6fb
+pyobjc-framework-applescriptkit==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:1e1f91966b42f902d954a570a2aab8a4e24af465833525863e30c8a5b47ee4f1 \
+    --hash=sha256:4b2a2f02e159c3c13834c3a605c1445563592f41d57ef6cdca2bd39e6409270d
     # via
     #   osxmetadata
     #   osxphotos
     #   photoscript
     #   py-applescript
-pyobjc-framework-applescriptobjc==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:66c1fa4239c344a1750afd5beaf6550136d777c3073c47303c8ed224e2517282 \
-    --hash=sha256:f6216bf110072e70938e1efa1a058d48452a9d9251911bee26102bad4091a051
+pyobjc-framework-applescriptobjc==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:0a3019b16959dd8bef9fb581894901e89e027fa0b8b21b8515deda13a3cd9b34 \
+    --hash=sha256:118abccae98c0af67e7c850058e4651748256eba52da382a2cd58e0e7c74418e
     # via
     #   osxmetadata
     #   osxphotos
     #   photoscript
     #   py-applescript
-pyobjc-framework-avfoundation==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:70a4504288a2ca9dccd43cbfd38a5a4c7096915b1c522cf4adb7649c071463bb \
-    --hash=sha256:7fded6b70088240418319769cf6ec854de85a9db7db3d97d9829e7aaf84bf121 \
-    --hash=sha256:96b11c7dfca6d922754549be6d7c1e7bcb1e510821fe7a47134b035a8a6feb43 \
-    --hash=sha256:ecf0db71abad6baf127e454e9995adf372249ec6b99e3ede8b6149460ee39c35
+pyobjc-framework-avfoundation==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:4b45994d9230d2751590928d0421fb7d0b7e8988e52ec1d9ab3f1d57cb869a6b \
+    --hash=sha256:593d2ec35f6799d9011f414247570457d8eaa68a1ce1381b4df2ab1daec509f5 \
+    --hash=sha256:67320d3c7cb0fe1caf019d29eea38e39ede81458e3f4c13c5483892dc66f3b3a \
+    --hash=sha256:6f03f0122e4f0b2add93f02d92bd7274abf09979116382c74f79715d33e6461d \
+    --hash=sha256:b43a0d1344a062dd983881398a75e5916c46c479b299ff89c14d298ab0a0f1f0 \
+    --hash=sha256:c71e09a7b8ff94c488086908c21e133d618139fbc40c8b366db6b2522290b276 \
+    --hash=sha256:d06443acf26f3f3e16e8a9bfad42db900af3b8c3ca34c5676343d2f8e001f56b \
+    --hash=sha256:d2535a7bc3e579bc7621066481791f53d1ac83c0bda16fedbbfa513271238b56 \
+    --hash=sha256:d60d7ee5935266907acb1a61c25a0d2750f9b1f4ffe4fa6c908440f003d1addf \
+    --hash=sha256:f2d573dcd05591e77c320559c5f09c2b345893ff31902c4cb1baa5e69030575d
     # via
     #   cgmetadata
     #   makelive
     #   osxmetadata
     #   osxphotos
-pyobjc-framework-cocoa==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:312977ce2e3989073c6b324c69ba24283de206fe7acd6dbbbaf3e29238a22537 \
-    --hash=sha256:32d9ac1033fac1b821ddee8c68f972a7074ad8c50bec0bea9a719034c1c2fb94 \
-    --hash=sha256:3b1e6287b3149e4c6679cdbccd8e9ef6557a4e492a892e80a77df143f40026d2 \
-    --hash=sha256:739a421e14382a46cbeb9a883f192dceff368ad28ec34d895c48c0ad34cf2c1d \
-    --hash=sha256:9e02d8a7cc4eb7685377c50ba4f17345701acf4c05b1e7480d421bff9e2f62a4 \
-    --hash=sha256:aae7841cf40c26dd915f4dd828f91c6616e6b7998630b72e704750c09e00f334 \
-    --hash=sha256:b236bb965e41aeb2e215d4e98a5a230d4b63252c6d26e00924ea2e69540a59d6 \
-    --hash=sha256:efd78080872d8c8de6c2b97e0e4eac99d6203a5d1637aa135d071d464eb2db53
+pyobjc-framework-cocoa==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:06cb92d97d1af9d1f459ae6cf1d1a7b824c12d3aff1b709885966acd6b7208c2 \
+    --hash=sha256:0bb7cd468ca89bbc2d1d8acb930b4f4fdce8826de30a66608fc28f8880c1f6a6 \
+    --hash=sha256:20b392e2b7241caad0538dfde12143343e5dfe48f72e7df660a7548e635903dc \
+    --hash=sha256:290e544a8c2d0786a34a359d825eaad44ebaaa3b30cdd765b2755422ca39a0d2 \
+    --hash=sha256:46b6681e2b21b099ed095339c140f2c8137d6ac5658653166ee90722f9e3c621 \
+    --hash=sha256:5a0bed77b0b56074cc2b4564aae3e6e9d5da5fdf93252f50b6dbced0f7fece3a \
+    --hash=sha256:a2efad455ded551d1a033fd22245d57b71b6c065e8b52158dceed1611b5ae033 \
+    --hash=sha256:aecfd44908fa12a9291fb6ca2458ebbc611102de6784f2202a35fd5ed9f56c60 \
+    --hash=sha256:ef679740f541c52118149b558b757d1f11d9dcf30c2a23344b13a6af6a99a1ab \
+    --hash=sha256:f0bbe0abedfb24b11ff6c71e26cdefb0df001c6482f95591fad40c2688c16498
     # via
     #   osxphotos
     #   photoscript
@@ -654,6 +664,7 @@ pyobjc-framework-cocoa==9.2 ; sys_platform == 'darwin' \
     #   pyobjc-framework-corelocation
     #   pyobjc-framework-coremedia
     #   pyobjc-framework-coreml
+    #   pyobjc-framework-coreservices
     #   pyobjc-framework-fsevents
     #   pyobjc-framework-metal
     #   pyobjc-framework-photos
@@ -661,84 +672,132 @@ pyobjc-framework-cocoa==9.2 ; sys_platform == 'darwin' \
     #   pyobjc-framework-scriptingbridge
     #   pyobjc-framework-uniformtypeidentifiers
     #   pyobjc-framework-vision
-pyobjc-framework-contacts==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:002ff8d2131e354138eae39d1a3823770cab8294d93ddbaa2f0776fdb91c11e5 \
-    --hash=sha256:1e5ae6a612cae95c010eb5ccf6c2d70a97faf25c7d62b4146fc51424d7fc4b60 \
-    --hash=sha256:ba3f55ccf5d3588b7d5765d7ebea9ddd850c16d02668ee90129c7d4084bf24a1 \
-    --hash=sha256:bcf6c6760c09b012da2b01f9b7ed1cf8716c403e3561d2e9188b2e1b49dec8fc
+pyobjc-framework-contacts==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:117989ffed4f41d0bbf7e81dde8154a31995d2adf1fe898c2917bc6e9c1dc122 \
+    --hash=sha256:1bbb9153a3ef706230d05ddabe3a953b136fccba643a404e6ca3df8068f08348 \
+    --hash=sha256:1ee92445cb2c5168df0b25bb6d897b1389d55571eb6bba229431c1d933940a7a \
+    --hash=sha256:37d4e0b512de0586f90b306a4cc4ddc0752edf7ae8caad11317516da7d17d63a \
+    --hash=sha256:3db10cb109f687d7ef28c471d54ffc63df77ec7685bd2663fd2b8c75a1be7f66 \
+    --hash=sha256:4cd0d97c47a4c6a6822fd213612a0b9a48a6f37f76f9b19bfa922b58a5ef061c \
+    --hash=sha256:50a4b3b1ba1a27691dce40db61deff1b6e52889e063076411bcf797dd958d299 \
+    --hash=sha256:63abb417bf2d3565dfc79cd8febdb2499040ec44900a972c7aeba02120bc27f1 \
+    --hash=sha256:8d50405ecf31ab5370f9ad5fe4aa4d69e0bca5c8fff0991671bb88f65ebdf3c0 \
+    --hash=sha256:91748bc3a42723d088f7ded819cf0155868b9bca16ed8cd753695bc71710f45d
     # via makelive
-pyobjc-framework-coreaudio==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:70c332c8d2b707ecef97e246f5f059beb891a83cc6065ee02f31d5bd7694e76f \
-    --hash=sha256:7b8e32e073b04896850c971a9e4c5afaf9f3343b8e525bb23f50a360c587cf87 \
-    --hash=sha256:abc90e88cd2a88746242c3cf98b11127a511d125ae6b9d335e23ff0678aab370 \
-    --hash=sha256:acbd47037eb34a2115ca812bafd0db78117825a32b3a95a0658127631d9f2d2f \
-    --hash=sha256:e1cc86834a40120140ba167923613616224692223db888f3c541d12f2e89ac16 \
-    --hash=sha256:e35c21d7c9dc16d004878c8a749a63445359ef4839de9c6ae35720fe7d5e7e8d \
-    --hash=sha256:f0dc570eb4f4c2de3ccb04749035bc827e7b63c494c09bbe5b42a43d99f82339 \
-    --hash=sha256:f29d71915d7bb50bb08993861132e4e5eadc5157b2ac6d3fdb7568edd274b5a2
+pyobjc-framework-coreaudio==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:038293a480ec3afc902541ece05404fffdb915f0a6ad60fc81156beeb256cc5f \
+    --hash=sha256:1640bf44b001c960ae7ae84a43382141711bfbee439c88dea3872c64556e0308 \
+    --hash=sha256:1990be9a9311869b551e6a997ee84bee12ea38fc978d5fa7fc0119caff2f9ba5 \
+    --hash=sha256:22451de9c391d6f82a89f8cb9a2574d89da7534ffaaddfb0b6b034709a8df5be \
+    --hash=sha256:27ef90a6414bbb156a8f2ea22afff5af080fc7fcfb570f215739c1ca136544e1 \
+    --hash=sha256:3fa7e25e6b90dab26bc9f94ad058e0346424604daa103d03ebbb6c2636772c1a \
+    --hash=sha256:4aba12b357f4e429a5c8a1bf6ccb7b5902ee8726863744284e3f6ae9b76fbdbf \
+    --hash=sha256:505564f35227b6bf3bcfcc950edeae81628724202eb2a49f4bf213be39589521 \
+    --hash=sha256:7f8ebd42735ca954d457c87e815da632e2ccd3b55ea501cda488389dd1f37093 \
+    --hash=sha256:c74eb20e20597b07a702a24ae9fd8bb986a51baf24c503e5a4de2511dc01114c
     # via pyobjc-framework-avfoundation
-pyobjc-framework-corelocation==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:31c9041f398bc1335410e3ebc9f0a64e68bc7973bb1e7fc3468e266a18cb1049 \
-    --hash=sha256:9c03064c621657b994c3d7439eaafd21b7a524189ef4dbd6fba5819ec2d6e3ae \
-    --hash=sha256:a6a59e6d1297f84c99dfa9f4ac3927af2fc851b6a1999617f5c159571f885c43 \
-    --hash=sha256:bf362a34332a986705af7e243cd018dbe33aa38db426b17de4f0df4bf5725ee1
+pyobjc-framework-corelocation==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:09f52775ffa96af024cb810bcc606aeb5e41545b6f23cf40235dcfdddaa2f007 \
+    --hash=sha256:0f24d4ecd314691d773b98276880864dc3899605b2d708c75532acaf9c517074 \
+    --hash=sha256:1e0f389140707ece2bb4d08def421e25b792dcc2a34000dfb128dec2e685d725 \
+    --hash=sha256:472b95e1a6ec6f14545d1d523f03a688d60a32ad722a267a3f9539d7d38cc94f \
+    --hash=sha256:4f556f56955e9b909fbb0ab510449c89802f2f9e287bad402d0cd1b5c4e73c4b \
+    --hash=sha256:54d47d7f8df4383a1e3d1201a80520068222fad373caffb8adbb134ef16b9b7d \
+    --hash=sha256:7515eda941b03c4e4f1e6d596383d4788997a05e30ce210ae250326ca418f240 \
+    --hash=sha256:8b355dcc544a2ab525744b777431cb902c951fbbf2281350b86323eb64c4b409 \
+    --hash=sha256:a3b70cca208369e8c68afd8cbe865d25829c34b338309a61b3b354d3824055a2 \
+    --hash=sha256:a44f5444b78cd8bb1c75c372e4418c0a2c37d5c9ebd60e5d20e3900b0192e203
     # via
     #   cgmetadata
     #   makelive
-pyobjc-framework-coremedia==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:05f7f3b346e16b05699e520762173ebfb1e3a1700800c62fc945a0faf640c929 \
-    --hash=sha256:34572b00279a119505d9002d83497a25d385b2bcea5f9c990d49553b1039b150 \
-    --hash=sha256:4fe26c31e3cbaf92ab68b51a59f6f4a8d015f389e99c50eb321478f064a45583 \
-    --hash=sha256:57a70a3f7edb69b2c2a0426d8f1c41de3f0655ec237c71d8082894a5a9b4e2b4 \
-    --hash=sha256:6345b47775aea573082e9a81bd52a3e19ce1a7d74f5064046909a8007e68dbe9 \
-    --hash=sha256:a91bb0ae332f6822fefa3686e921e4a0b6bc3c066c3f3d4e941e45d23a734c1d \
-    --hash=sha256:b542a943752404742f552652af65c787acb6f00ab9c011b86fcc45104bc85035 \
-    --hash=sha256:d7c95e21c0760bfeff25312fcd8af30c7b1a7e36294db30cedeb30cea72ec8ba
+pyobjc-framework-coremedia==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:171b8dfc6ef34678d46470b6bc176e5c3cbb39c81abbce03d276d5d3680a5ee3 \
+    --hash=sha256:2eaddb2f4e25d7b6f32d4b85b828cc89ce6ae5502d531c2913b90d93f85fc2ae \
+    --hash=sha256:422d8af0e8f62a1385aa86228e47ed7c01405831102bef1ee43f07320711c082 \
+    --hash=sha256:95ed2063cc48d73f6eb06f4e603372515b5b009bd2d6e547f90bbe9e64217206 \
+    --hash=sha256:9b75c3228732d78dacfac7a39f52470606e949f07c940b45ba73588db41fe73c \
+    --hash=sha256:c1adf7b6fcfb4c88bc2150c6f0366c19774e46c6978ebcfb7c70d02753bc0183 \
+    --hash=sha256:d9586fb8ae22ab1a500e812e5c16dde09b3ea75613a8b5ed61d17cd9ba75c809 \
+    --hash=sha256:e992147e7b0c8c435f1bb786c8c610511453cf54bdf6c6b4a17e05936bacc44b \
+    --hash=sha256:ee5889c07f61d16f8d195a793a7f0ebf7f5c4eef4d1ef2fdbf5c823c74e242d0 \
+    --hash=sha256:fff54b5907cd346daea1bf4d6554fd6da1d69ee9bf012774c3b4ec972f4257a6
     # via
     #   osxmetadata
     #   pyobjc-framework-avfoundation
-pyobjc-framework-coreml==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:47e9d40ab8eb33245233d87c74eda747e43d785825fec0bbe8ad425f5362992e \
-    --hash=sha256:4a8bfbdb8e88002d0ebdfa76de20cd411c307ba2f9fc0539ff7ad8d945ccd5cb \
-    --hash=sha256:b6d66824ab248a648a98e6f6d3151756e98c9d85ebe5d2a8a3650af5a5e88c5c \
-    --hash=sha256:f5cac466ce9280ee8620402c1b3462a7b526e0e5a5e3b9fdb936577a69cbab53
+pyobjc-framework-coreml==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:011dc67f11144817c9cf728cb7ae3d520001c4e099f9efb6a4c9fec4c19e6413 \
+    --hash=sha256:053f03cea0e7a4ab32ffaca03825ddbf1800a6a1dee1fa0e69e5b3948c5d6a56 \
+    --hash=sha256:0ab804c7fdeedaea8fd6e1ec832a23d57913b280d3cc40419adabb0032271160 \
+    --hash=sha256:64b66797b9cc1b20d726476f78ee2e69540fad60676d5dbb120530fbd429d3c7 \
+    --hash=sha256:774a28259888c1bc247e8ed5ad14d7fc8baa975591c89669cd952e1756cd7d48 \
+    --hash=sha256:8127be60808dba7e945f69598664b1a52e1ee6331f3695da08e8642b23b10f8f \
+    --hash=sha256:82dded9d153db057aae965539cb28b4dc43391e5e07f38ac60db83061a9453ca \
+    --hash=sha256:884f1f68c7a74c56d26858051da8a1e19848be97f2c4b06b32ae93e505109583 \
+    --hash=sha256:f55eb83825308fd759e053dcb9844ae5106e371645e7dcdb0777f161d59f8280 \
+    --hash=sha256:f5ebf148cedb1ee9b5183003cdb64033e97c7f50b4d073684e0fb54e63761259
     # via pyobjc-framework-vision
-pyobjc-framework-coreservices==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:3c358d93ed094e9e545abc11f54c6ca70bf462a997546654062c7d3ed599e22c \
-    --hash=sha256:4997fbcc89bb6d025a2fb03bafab775caa9612f69e7f914d237884c39c0699ac \
-    --hash=sha256:bfa3cc4a5cac5f51df4e598e552738abd605b0de35032c7aa1adcc895e84cfdc \
-    --hash=sha256:cc0287dccc7089ad13b0a44472d7fc1ce804f06ea1f4c44c5a7c5c9eb8388d72
+pyobjc-framework-coreservices==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:0a3f9593b672b52ff31674104bcdd6ce6bf9f4560ca61380f2b35c904f8d77d0 \
+    --hash=sha256:183a75dc6edeaa73f6f49b857bd5a61e522abcb5d7df1a3bee169896d0cac181 \
+    --hash=sha256:305a2c5c1830ac3c0bd18d08d7efee8345dd655d5cc79d84d3c43bb539b2f0e6 \
+    --hash=sha256:7c32519d13c882b2a8f844e4f4def32eec9bd3f29781bdff85750f80320709ee \
+    --hash=sha256:b17f2743ac0fe1245b16bccc2abc2568d4b33f0655b8f805d4bf19754284363e \
+    --hash=sha256:c07effb4e1bff841eec4304b759fe3ef73301a7b2ae3e5e3e203efe6c45e2bde \
+    --hash=sha256:c2255f66669f8a70b3badae5d728abb323a042008c01b825333f6bcb1446e2c7 \
+    --hash=sha256:c8218a3e0f0814c6e9fadc4712ab4715097f0d388e09e85fc0a025e56b67ebff \
+    --hash=sha256:ea52c77e9a162b6823c3b364f391b4369d967365e5207a0d45cf6d0e37cec0e6 \
+    --hash=sha256:fb713264a7151a92bb11e6125da06af343037b96f6f8021e7cc8f8ff42897744
     # via
     #   osxmetadata
     #   osxphotos
     #   utitools
-pyobjc-framework-fsevents==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:2328f8e125ba125489302a8800112cb65e0dade382e7fd6c2a8e21a66489b4e8 \
-    --hash=sha256:7b3d4238d253bc609bd0ce50e385514d74ad706d07862eb66350e7d5faa02150 \
-    --hash=sha256:910d3b3ae041a2a8f5bcb66749d705107ded384f9823ba44c54664a0c3ee9a65 \
-    --hash=sha256:fca5d4a60313e71d0878c9e6010207c0762269f5f5941fb7cddff206921e9f2b
+pyobjc-framework-fsevents==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:3a96802c25cbdce74b5d02bbb00cc85747f8f745102d3d22ec9bb540c2e17ac6 \
+    --hash=sha256:4f705cf041ec7094aee1be2a219dd67a206cabf935b7d6f47eba8bcff5999f55 \
+    --hash=sha256:5dea14ad5cbc42ed096e4544cde5d2a0f12cc4c6a743012095b96bea66b26df6 \
+    --hash=sha256:7665f7e2944fa50727e818dfa45a2c6d1234bd64d352559c2d6f3946febcf707 \
+    --hash=sha256:a00440f1e79f6639ffd601bf973d6c7064d82174da8433999825c33617d9c053 \
+    --hash=sha256:b4adc50338dc4f9f50f3525e2f070e2ab4b469976f9d4762e373505f82068831 \
+    --hash=sha256:b8e479864e232d76945219bcf3af12983a127a282f57af50ef089dc1b5116787 \
+    --hash=sha256:c6599daed508605916fa31b23866c20ccc12565b568f61a43b5626d9b8bb8778 \
+    --hash=sha256:caa86498ea298a542664222b33f6db2b09b7d315e1b1cb702c4652edb1fdca92 \
+    --hash=sha256:fe72e987dae3919e80e7c3641d74fee8fec2ca841268cdb855f903b0b9f6f681
     # via pyobjc-framework-coreservices
-pyobjc-framework-metal==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:4585ecda3fbd7460f047bf3b815315d4ccb0696163bb6a551e0b1b9d31bc5e85 \
-    --hash=sha256:4fab2a3cb2df366b8b1032b05ee4e2df5cc6d7d23b15774b85c4b3c60894bd32 \
-    --hash=sha256:f483c331e07b587ef6477c79ae15a309297afa9a08c07ad9fafc4be82467d008 \
-    --hash=sha256:fbec685b4240fdff0c05b8125dd999681beec604bb453abc7aa74acda68a9625
+pyobjc-framework-metal==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:06775870d7f40496d647f9ac37793e4a037ffaad43612aea7313460a52ee9e7f \
+    --hash=sha256:2ce5cd713869eaaaa8298c9e21ce750957d063cabde396e8d158c10809b452f4 \
+    --hash=sha256:3d044801562c2a411ac65ff8f2f5d4004b3d1bd41082e8bb52b1f7a87ac53813 \
+    --hash=sha256:4fb2cfd42cc8e808f08f1f2fe57de713734dd2f495c666296b2c8a5fba9be6dc \
+    --hash=sha256:538826eb6020e2d49e481f7ad390319dfa1016aeeac623f8b76bfe8aaec8a66f \
+    --hash=sha256:67619f9778593deb2596f7c7c20c230b93a1ebfd500b5cfd29c2e4d3db1e4a64 \
+    --hash=sha256:86296b6bf1b19f0e0c0d4bc1e99954eb666c48a386e61ed805cbaa961cc0cd6e \
+    --hash=sha256:9fc402fc861b49c2ad59a2342ab0d65fbe206292ab6f127cb778e6e22483e544 \
+    --hash=sha256:b9a9ba61ab834ada0e23fe7d560cf01e6948a88a4aef3342c032683b795bc908 \
+    --hash=sha256:d59ee2a3ff68367140e2a94ee3c52807defa016c2589e436f34796fea6c22405
     # via osxphotos
-pyobjc-framework-photos==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:13591fe38225bcb5dfc15d408876f309ad5c5451e841ce899364ff4e687fe458 \
-    --hash=sha256:6fbe2ceaf420db7ef3126ccef30d16e498acac343ca23a827bd8bcb5fb5bbb01 \
-    --hash=sha256:ae4f1358281196a12dbab79a9d3a7dfd60c2fe800771cfdd23ce0ee4e68c6211 \
-    --hash=sha256:b2a3c28eea5fced4dff85838fb59594e352bcc1f1fc997e7b1ab221b27c6056a
+pyobjc-framework-photos==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:0c9e2311970d031ee7fd5cb6531ac9236ed70902910cf448a2adad61c516be68 \
+    --hash=sha256:0ff24a985f6fb0a876346f320afe77f3cbc8617b8cacdb3cc010218187cb1d15 \
+    --hash=sha256:126d2d2aa78ea0e704db807ee2c7f7b418d8a859a0cb8df6ee31e66fd371c2ab \
+    --hash=sha256:1931ea06e6bbb6025c3d24b0311415c3676c61157b1ccfe4f41eda12240adeaf \
+    --hash=sha256:2f3caf43105e0d142abc6b10bb851dc107158682d9dbb612d053cee80385f0f7 \
+    --hash=sha256:59a9ac81947dc6140093ec2f4131842c8820f6ad9a51226c56e15b43ebacf011 \
+    --hash=sha256:aad8fade39d1b5e61f04755f9490a812f491d437c88dbcd42875f3cfe87bd76a \
+    --hash=sha256:b82f8aaed4f43dd344b45c81f2a661b607443b5bd221fe612f948a7f9a71acfe \
+    --hash=sha256:facf2989cdf8cac7a34d6e5b6d410aa873b78edcd90da1e5d4812e30f5ad6b5b \
+    --hash=sha256:fc7898d31a348f981f48b79554e68099dfdb66028cb6d7800a210f130fb73f7b
     # via osxphotos
-pyobjc-framework-quartz==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:0f81de8c846034e725b7ceaa2fec0cca16463a56bdbe099d1d44f20112182431 \
-    --hash=sha256:16a0e0677dae6db858cf19943e34deb0424776c9a90a7b67564d0e216861b20d \
-    --hash=sha256:5c512837c211df6a5214d4015f1f85524607952b0619789861c490900e3d5fb9 \
-    --hash=sha256:67909baadcfc3ad2864539af3e94c2c024a29d01d9d6da22bbf9b84eac50064e \
-    --hash=sha256:6f983d26720f5f9786db5b525fc61b981be50d0456da1686fc533867d8990bb9 \
-    --hash=sha256:ab346bbf410a0eaeca26d713ac1f13c014346cd1b7e195017c9502a17f6273db \
-    --hash=sha256:f586183b9b9ef7f165f0444a7b714ed965d79f6e92617caaf869150dcfd5a72b \
-    --hash=sha256:fb700b24088c8fe126dc0fb5ab4caa156e1e48c1a94839e6bd31c18b570ed53a
+pyobjc-framework-quartz==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:08f7c7b42de70875cee15f4d0e217471e382ffac44d0a5bcfd30f583b9b41adb \
+    --hash=sha256:214c19aadfd100d9202994a22fbced804f7d60f8473de6f292111cc1668f9373 \
+    --hash=sha256:2dec68f8d5b42030fb0f44bf1169a208318393f216a68048b4336649d877293a \
+    --hash=sha256:359738c88b12427a30d73a3d202002ab910e31eebf6bee4550495ec8aa64a004 \
+    --hash=sha256:4e0634ee9782e480587a074d1d08867fa7ef0d845c2f6cbaef6a48b7d2c3899f \
+    --hash=sha256:57553e7085191f9421ec78fe57a8a0c8462e39d675014ac1e4b389381f04535a \
+    --hash=sha256:6fbd127d864108103d4980292ffca32bd9c1e5f643e0abd5773fdde2918afaca \
+    --hash=sha256:8b238979d62b6e0b90d466477eee968d8f2f6720e850af2472e01cef349293b4 \
+    --hash=sha256:96201eb37192fde3abac348adacfc2d4e8af4e76d42752664d1e515f1db5d929 \
+    --hash=sha256:b343395d4790323b0376fe20c83ac468510ba19f65429323ca211708c939d107
     # via
     #   cgmetadata
     #   makelive
@@ -746,21 +805,33 @@ pyobjc-framework-quartz==9.2 ; sys_platform == 'darwin' \
     #   osxphotos
     #   pyobjc-framework-avfoundation
     #   pyobjc-framework-vision
-pyobjc-framework-scriptingbridge==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:48adc2a2b27f8f699f8d9e849c04b0a05afae8044d0435bc0765cdb79f42c051 \
-    --hash=sha256:d22d0c3f0fb402a15fc820af6e26ce9c8bb539f9ec9acf78e10e71c2bac87703 \
-    --hash=sha256:d80ed78995196d3950b520f9aac3ff2165b187f222860ef712a7eaa6e2525fd3 \
-    --hash=sha256:e7b2699b48692bd413611c664a7d218389270d46d6556be9aea29f3053c1baeb
+pyobjc-framework-scriptingbridge==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:31cf0969d00e61a2f783ca5865d9d650a4be0ad1afded93cd575125187285693 \
+    --hash=sha256:6827941b343744cdb12b13b7af908a3f67b4016d56691719d42c09137637980f \
+    --hash=sha256:8292259f1ef59c503e003d96e05e489b6834cb6ac0ae92712cefed7a957bd7f3 \
+    --hash=sha256:8dfab9213a60840f15d0ebb2572237fea569ff69d2a593f524e8c7074b6cf657 \
+    --hash=sha256:b1420622d923cfe6218904a6a997eae4984653d32554b16374690c347f8ab55d \
+    --hash=sha256:be526303d2304e1cc88f00b673153f52e4af8324d1a58833442bec9164e4342b \
+    --hash=sha256:cfc8f1fb2ecd22cdf5bd3ad7c7d1b10329d7302b69761c07a32c2810d016aa6a \
+    --hash=sha256:db40b1c7670f909198984ba1a57154ad6d896af425c9599ec8e6ba5921d0f9c4 \
+    --hash=sha256:e58d8fa7a5e51f354a07174356887b575556aee0394ce1a7c27d0c8c211e2ab8 \
+    --hash=sha256:ea7944907fe696a8192f2a9861e148b9a0161ac3415ab6ce6e76230181a10264
     # via osxmetadata
-pyobjc-framework-uniformtypeidentifiers==9.2 ; platform_release >= '20.0' and sys_platform == 'darwin' \
-    --hash=sha256:390a175f8ee279cef540151d4f55ec20a71faca2b5a0070eddd5cc9d943d3f02 \
-    --hash=sha256:dd5a4c64018f28abdc0232b2d50cb3cd9a46b9175effffb7ac958abc27f412a8
+pyobjc-framework-uniformtypeidentifiers==12.2 ; platform_release >= '20.0' and sys_platform == 'darwin' \
+    --hash=sha256:19cc82f1bbf3bc0999597779711422f6c9d7340634d699ae64d9bc7c0d79f984 \
+    --hash=sha256:f140a378cfe6a8ca47ce3b04fd5a4c4bec1fcbedac8acc87e2c18985bb805203
     # via utitools
-pyobjc-framework-vision==9.2 ; sys_platform == 'darwin' \
-    --hash=sha256:648d2224e85d45068aa8aa80527f7ae8d9d0af3bcb2a2a6e555c58e2313b3753 \
-    --hash=sha256:78668ce362925150bd74efa29881af5a61fb0ad431da9d4509c422fe17aadd62 \
-    --hash=sha256:98e70f38df47d9f97f24ec7f5b0b060d8cf3d2937207d51edf3ddc9df7bbf18d \
-    --hash=sha256:dd92fed0b3b931f33ab4c12f29ffccce59df50676d418c8952d4276a1f2ffafe
+pyobjc-framework-vision==12.2 ; sys_platform == 'darwin' \
+    --hash=sha256:0e90244f98ede5ec16ac129ed4bbd7cf0ec07247bac6f06e9cb612db23a68a3b \
+    --hash=sha256:3d9080e4882e292c2d3c0726127e516a5c7774e96faf199a2c74aafcc1b6aa60 \
+    --hash=sha256:45c7d3fda44f740b4c0a9c1b86d9af137994172f2990e0650112f7eb8e77e48e \
+    --hash=sha256:47274c6167434a20be81c3506b49414f85d946a528ff930622b8a6dd758b9b95 \
+    --hash=sha256:76737fa3440c504993995537643b6529d47c1affecba426f00c716cd93a07a9b \
+    --hash=sha256:77628f8c12a2f8072e8a8ab780cd0fd716f279153dcd883ce058bf2d1843b16d \
+    --hash=sha256:b6d12bcb96d711a4b5d1743aa7b1af7dec9e2f840b0e5ec200aed262da3fb587 \
+    --hash=sha256:c08a08dd979886e2435a53714ef95af6da4a0dc1b2e37236cdd292b5b8707060 \
+    --hash=sha256:df4d7d3ccdd723334ab62e6e2051d04e3554724be90102db353874938f101e05 \
+    --hash=sha256:ed1eed217d5c86bbc09e78b4a7f1b415116a722b55948aaf7862f555c103d771
     # via osxphotos
 pytimeparse2==1.7.1 ; sys_platform == 'darwin' \
     --hash=sha256:98668cdcba4890e1789e432e8ea0059ccf72402f13f5d52be15bdfaeb3a8b253 \
@@ -936,9 +1007,9 @@ urllib3==2.7.0 ; sys_platform == 'darwin' \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via requests
-utitools==0.4.0 ; sys_platform == 'darwin' \
-    --hash=sha256:21d6892779f6866329572146ed8dc97c19631d4c5059e49c04a5593ac06b0fbc \
-    --hash=sha256:71a7303ac26094f597999ae31848a1864ffffe3e049396459aa1458defdbaf71
+utitools==0.5.0 ; sys_platform == 'darwin' \
+    --hash=sha256:5db9e2b3f85982f6844ae4009130c82431332540f066fcf4fe63f31ab54a7d7c \
+    --hash=sha256:cfabee0037c7e2d98d3bfd9af1eda73d99bad5f32b8d35f58bd94b5545e32713
     # via
     #   cgmetadata
     #   osxphotos

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -65,3 +66,21 @@ def test_extraction_profile_keeps_github_activity_structured_and_project_focused
     assert profile.source_types == ["github_activity"]
     assert "WORKED_ON" in profile.structured_allowed_predicates
     assert profile.allow_assertion is False
+
+
+def test_github_activity_declares_sensor_ui_i18n_keys() -> None:
+    plugin_dir = Path(__file__).resolve().parents[1]
+    zh = json.loads((plugin_dir / "i18n" / "zh-CN.json").read_text())
+    en = json.loads((plugin_dir / "i18n" / "en.json").read_text())
+
+    for payload in (zh, en):
+        root = payload["github_activity"]
+        assert root["name"]
+        assert root["description"]
+        assert root["entries"]["github_activity"]["display_name"]
+        assert root["entries"]["github_activity"]["description"]
+        assert root["fields"]["repositories"]["label"]
+        assert root["activation"]["title"]
+
+    assert zh["github_activity"]["name"] == "GitHub 活动"
+    assert zh["github_activity"]["fields"]["repositories"]["label"] == "仓库"
