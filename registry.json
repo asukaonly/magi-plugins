@@ -500,7 +500,7 @@
         "zh-CN": "Git 活动"
       },
       "icon": "brand:git",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
