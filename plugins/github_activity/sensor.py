@@ -42,7 +42,7 @@ class GitHubActivitySensor(SensorBase):
     default_interval = 30
     update_key_fields = ("source_item_id",)
     supports_pull_sync = True
-    relation_edge_whitelist = ("WORKED_ON", "REVIEWED", "OPENED", "COMMITTED", "CHECKED")
+    relation_edge_whitelist = ("WORKS_WITH", "COMMITTED")
     memory_policy = SensorMemoryPolicy(
         cognition_eligible=True,
         importance_bias=0.45,
@@ -245,12 +245,6 @@ def _cursor_since(cursor: str | None) -> str | None:
 
 
 def _predicate_for_kind(event_kind: str) -> str:
-    if event_kind == "pull_request_review":
-        return "REVIEWED"
     if event_kind == "commit":
         return "COMMITTED"
-    if event_kind == "check_run":
-        return "CHECKED"
-    if event_kind in {"pull_request", "issue"}:
-        return "WORKED_ON"
-    return "WORKED_ON"
+    return "WORKS_WITH"

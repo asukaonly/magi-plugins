@@ -152,5 +152,39 @@ def test_build_output_and_metadata_preserve_project_and_interaction_signal() -> 
     assert metadata.entities == [
         {"mention_text": "acme/app", "entity_type": "software", "canonical_name_hint": "acme/app"}
     ]
-    assert metadata.fact_hints[0]["predicate"] == "WORKED_ON"
+    assert metadata.fact_hints[0]["predicate"] == "WORKS_WITH"
     assert metadata.fact_hints[0]["object_ref"] == "software:acme/app"
+
+
+def test_extract_metadata_uses_supported_l2_predicates_for_activity_kinds() -> None:
+    sensor_mod = _load_module("sensor")
+    sensor = sensor_mod.GitHubActivitySensor(access_token="token", repositories=[])
+
+    expected = {
+        "pull_request": "WORKS_WITH",
+        "pull_request_review": "WORKS_WITH",
+        "issue": "WORKS_WITH",
+        "check_run": "WORKS_WITH",
+        "commit": "COMMITTED",
+        "unknown": "WORKS_WITH",
+    }
+
+    for event_kind, predicate in expected.items():
+        metadata = asyncio.run(
+            sensor.extract_metadata(
+                {
+                    "source_item_id": f"github:acme/app:{event_kind}:1",
+                    "repository": "acme/app",
+                    "event_kind": event_kind,
+                    "title": "Activity",
+                    "summary": "Activity",
+                    "state": "open",
+                    "actor": "asuka",
+                    "occurred_at": "2026-06-18T01:02:03Z",
+                }
+            )
+        )
+
+        assert metadata.fact_hints[0]["predicate"] == predicate
+
+    assert set(sensor_mod.GitHubActivitySensor.relation_edge_whitelist) == {"WORKS_WITH", "COMMITTED"}

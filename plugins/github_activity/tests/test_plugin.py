@@ -64,7 +64,8 @@ def test_extraction_profile_keeps_github_activity_structured_and_project_focused
 
     assert profile.profile_id == "source.github_activity"
     assert profile.source_types == ["github_activity"]
-    assert "WORKED_ON" in profile.structured_allowed_predicates
+    assert set(profile.structured_allowed_predicates) == {"WORKS_WITH", "COMMITTED", "USES", "REFERENCES"}
+    assert not ({"WORKED_ON", "REVIEWED", "OPENED", "CHECKED"} & set(profile.structured_allowed_predicates))
     assert profile.allow_assertion is False
 
 

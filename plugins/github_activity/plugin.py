@@ -24,6 +24,7 @@ from .sensor import GitHubActivitySensor
 
 
 CONNECT_ACTION_ID = "connect_github"
+L2_PREDICATES = ["WORKS_WITH", "COMMITTED", "USES", "REFERENCES"]
 DEFAULT_SETTINGS = {
     "enabled": False,
     "client_id": "",
@@ -283,9 +284,9 @@ class GitHubActivityPlugin(Plugin):
                 profile_id="source.github_activity",
                 source_types=["github_activity"],
                 allowed_entity_types=["software", "person", "organization", "technology", "topic"],
-                allowed_predicates=["WORKED_ON", "REVIEWED", "OPENED", "COMMITTED", "CHECKED", "USES"],
+                allowed_predicates=L2_PREDICATES,
                 structured_allowed_entity_types=["software", "person", "organization", "technology", "topic"],
-                structured_allowed_predicates=["WORKED_ON", "REVIEWED", "OPENED", "COMMITTED", "CHECKED", "USES"],
+                structured_allowed_predicates=L2_PREDICATES,
                 allow_graph=True,
                 allow_assertion=False,
                 assertion_mode="none",
