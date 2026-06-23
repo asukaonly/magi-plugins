@@ -224,8 +224,25 @@ class TerminalHistoryPlugin(Plugin):
                 allowed_predicates=["EXECUTED", "USED", "USES"],
                 structured_allowed_entity_types=["software", "technology"],
                 structured_allowed_predicates=["EXECUTED", "USED", "USES"],
+                allowed_assertion_families=["routine_profile"],
                 allow_graph=True,
-                allow_assertion=False,
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["tool.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "terminal_history.recurring_tool",
+                        "source_predicates": ["EXECUTED"],
+                        "source_types": ["terminal_history"],
+                        "trait_family": "routine_profile",
+                        "trait_name_template": "tool.{object_slug}",
+                        "min_observations": 3,
+                        "min_distinct_days": 2,
+                        "object_types": ["software"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are shell command executions. Extract meaningful tool usage\n"
                     "patterns, not individual commands.\n\n"
@@ -239,7 +256,11 @@ class TerminalHistoryPlugin(Plugin):
                     "- Do NOT extract arguments, file paths, environment variables,\n"
                     "  or shell builtins (cd, ls, cat) as entities.\n"
                     "- Be SELECTIVE: skip noise commands and focus on tools that reveal\n"
-                    "  the user's technical stack and workflow."
+                    "  the user's technical stack and workflow.\n\n"
+                    "Assertion rules:\n"
+                    "- Do not emit Phase 2 assertion candidates for terminal events. Repeated\n"
+                    "  EXECUTED graph evidence may be aggregated later by the host-owned\n"
+                    "  derived tool rule declared in this profile."
                 ),
             )
         ]

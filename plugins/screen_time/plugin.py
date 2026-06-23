@@ -117,11 +117,25 @@ class ScreenTimePlugin(Plugin):
                 allowed_predicates=["USES", "VIEWED"],
                 structured_allowed_entity_types=["software", "media"],
                 structured_allowed_predicates=["USES", "VIEWED"],
-                allowed_assertion_families=[],
+                allowed_assertion_families=["routine_profile"],
                 allow_graph=True,
-                allow_assertion=False,
-                assertion_mode="none",
-                derived_assertion_specs=[],
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["app.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "screen_time.recurring_app_usage",
+                        "source_predicates": ["USES"],
+                        "source_types": ["screen_time"],
+                        "trait_family": "routine_profile",
+                        "trait_name_template": "app.{object_slug}",
+                        "min_observations": 3,
+                        "min_distinct_days": 2,
+                        "object_types": ["software"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are foreground-app usage duration records.\n"
                     "Each event reports how long an app was frontmost in a time window.\n\n"
@@ -134,7 +148,11 @@ class ScreenTimePlugin(Plugin):
                     "- Extract media-centric apps (Netflix, YouTube, Spotify, etc.)\n"
                     "  with the VIEWED predicate; use USES for productivity and\n"
                     "  development tools.\n"
-                    "- Skip extractions for very brief system utility interactions."
+                    "- Skip extractions for very brief system utility interactions.\n\n"
+                    "Assertion rules:\n"
+                    "- Do not emit Phase 2 assertion candidates for app-usage records. "
+                    "Repeated USES graph evidence may be aggregated later by the "
+                    "host-owned derived app-usage rule declared in this profile."
                 ),
             )
         ]

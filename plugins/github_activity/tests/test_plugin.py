@@ -66,7 +66,24 @@ def test_extraction_profile_keeps_github_activity_structured_and_project_focused
     assert profile.source_types == ["github_activity"]
     assert set(profile.structured_allowed_predicates) == {"WORKS_WITH", "COMMITTED", "USES", "REFERENCES"}
     assert not ({"WORKED_ON", "REVIEWED", "OPENED", "CHECKED"} & set(profile.structured_allowed_predicates))
-    assert profile.allow_assertion is False
+    assert profile.allow_assertion is True
+    assert profile.assertion_mode == "derived"
+    assert profile.allowed_assertion_families == ["routine_profile"]
+    assert profile.allowed_assertion_traits == ["project.*"]
+    assert profile.derived_assertion_specs == [
+        {
+            "rule_id": "github_activity.recurring_project",
+            "source_predicates": ["WORKS_WITH", "COMMITTED"],
+            "source_types": ["github_activity"],
+            "trait_family": "routine_profile",
+            "trait_name_template": "project.{object_slug}",
+            "min_observations": 2,
+            "min_distinct_days": 2,
+            "object_types": ["software"],
+            "source_domains": ["external_activity"],
+            "value_strategy": "canonical_name",
+        }
+    ]
 
 
 def test_github_activity_declares_sensor_ui_i18n_keys() -> None:

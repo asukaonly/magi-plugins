@@ -215,8 +215,25 @@ class GitActivityPlugin(Plugin):
                 allowed_predicates=["COMMITTED", "CHECKED_OUT", "MERGED", "REBASED", "WORKS_WITH", "USES"],
                 structured_allowed_entity_types=["software", "technology", "topic"],
                 structured_allowed_predicates=["COMMITTED", "CHECKED_OUT", "MERGED", "REBASED", "WORKS_WITH", "USES"],
+                allowed_assertion_families=["routine_profile"],
                 allow_graph=True,
-                allow_assertion=False,
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["project.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "git_activity.recurring_project",
+                        "source_predicates": ["COMMITTED"],
+                        "source_types": ["git_activity"],
+                        "trait_family": "routine_profile",
+                        "trait_name_template": "project.{object_slug}",
+                        "min_observations": 2,
+                        "min_distinct_days": 2,
+                        "object_types": ["software"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are git operations (commits, checkouts, merges, rebases).\n"
                     "Focus on extracting the repository/project as a `software` entity and\n"
@@ -229,7 +246,11 @@ class GitActivityPlugin(Plugin):
                     "- WORKS_WITH: for technologies used in the project.\n"
                     "- USES: for tools and platforms (GitHub, GitLab).\n"
                     "- Do NOT extract individual file paths, function names, or branch names\n"
-                    "  as entities."
+                    "  as entities.\n\n"
+                    "Assertion rules:\n"
+                    "- Do not emit Phase 2 assertion candidates for git events. Repeated\n"
+                    "  COMMITTED graph evidence may be aggregated later by the host-owned\n"
+                    "  derived project rule declared in this profile."
                 ),
             )
         ]

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import sys
 import time
 from collections import defaultdict
@@ -13,6 +14,7 @@ from magi_plugin_sdk.sensors import (
     SensorBase,
     SensorMemoryPolicy,
     SensorOutput,
+    SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
 )
@@ -37,8 +39,15 @@ class TerminalHistorySensor(SensorBase):
     supports_pull_sync = True
 
     memory_policy = SensorMemoryPolicy(
-        cognition_eligible=False,
+        memory_domain="external_activity",
+        ingest_target="l1_only",
+        cognition_eligible=True,
+        tom_depth="none",
+        retention_class="compressible",
         importance_bias=0.3,
+        author_type="external",
+        content_type="observation",
+        allow_llm_extraction=False,
     )
 
     def __init__(
@@ -261,3 +270,122 @@ class TerminalHistorySensor(SensorBase):
             },
             domain_payload={"retention_mode": self.retention_mode},
         )
+
+    async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
+        command = str(item.get("command") or "").strip()
+        tool = _command_tool_name(command)
+        if not tool:
+            return SensorOutputMetadata()
+
+        fact_hint: dict[str, Any] = {
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "EXECUTED",
+            "object_ref": f"software:{_entity_ref_suffix(tool)}",
+            "object_type": "software",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.7,
+        }
+        observed_at = _coerce_observed_at(item.get("executed_at"))
+        if observed_at is not None:
+            fact_hint["observed_at"] = observed_at
+        shell = str(item.get("shell") or "").strip()
+        if shell:
+            fact_hint["attributes"] = {"shell": shell}
+
+        return SensorOutputMetadata(
+            entities=[
+                {
+                    "mention_text": tool,
+                    "entity_type": "software",
+                    "canonical_name_hint": tool,
+                }
+            ],
+            fact_hints=[fact_hint],
+            relation_candidates=[],
+        )
+
+
+_COMMAND_PREFIXES = {"sudo", "env", "time", "command", "builtin", "noglob"}
+_SHELL_BUILTINS = {
+    "alias",
+    "bg",
+    "cat",
+    "cd",
+    "clear",
+    "echo",
+    "eval",
+    "exit",
+    "export",
+    "fg",
+    "history",
+    "jobs",
+    "kill",
+    "ls",
+    "open",
+    "popd",
+    "pushd",
+    "pwd",
+    "read",
+    "set",
+    "source",
+    "test",
+    "type",
+    "unalias",
+    "unset",
+    "which",
+}
+
+
+def _command_tool_name(command: str) -> str | None:
+    text = str(command or "").strip()
+    if not text:
+        return None
+    for separator in ("&&", ";", "|"):
+        if separator in text:
+            text = text.split(separator, 1)[0].strip()
+    tokens = [token.strip() for token in text.split() if token.strip()]
+    while tokens:
+        token = tokens.pop(0)
+        if token in _COMMAND_PREFIXES:
+            continue
+        if _looks_like_env_assignment(token):
+            continue
+        tool = token.rsplit("/", 1)[-1].strip("'\"")
+        if not tool or tool.startswith("-"):
+            continue
+        tool = tool.casefold()
+        if tool in _SHELL_BUILTINS:
+            return None
+        return tool[:64]
+    return None
+
+
+def _looks_like_env_assignment(token: str) -> bool:
+    if "=" not in token or token.startswith("-"):
+        return False
+    key = token.split("=", 1)[0]
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key))
+
+
+def _entity_ref_suffix(value: str) -> str:
+    normalized = re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip().casefold())
+    normalized = normalized.strip("._-")
+    return normalized or "unknown"
+
+
+def _coerce_observed_at(value: Any) -> float | None:
+    if isinstance(value, datetime):
+        return float(value.timestamp())
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str) and value.strip():
+        try:
+            return float(value)
+        except ValueError:
+            try:
+                return datetime.fromisoformat(value).timestamp()
+            except ValueError:
+                return None
+    return None

@@ -287,14 +287,34 @@ class GitHubActivityPlugin(Plugin):
                 allowed_predicates=L2_PREDICATES,
                 structured_allowed_entity_types=["software", "person", "organization", "technology", "topic"],
                 structured_allowed_predicates=L2_PREDICATES,
+                allowed_assertion_families=["routine_profile"],
                 allow_graph=True,
-                allow_assertion=False,
-                assertion_mode="none",
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["project.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "github_activity.recurring_project",
+                        "source_predicates": ["WORKS_WITH", "COMMITTED"],
+                        "source_types": ["github_activity"],
+                        "trait_family": "routine_profile",
+                        "trait_name_template": "project.{object_slug}",
+                        "min_observations": 2,
+                        "min_distinct_days": 2,
+                        "object_types": ["software"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
                 extraction_instructions=(
                     "These events are GitHub repository activity from repositories the user selected.\n"
                     "Treat them as external activity evidence, not user-authored profile claims.\n"
                     "Focus on repositories/projects, collaborators, pull requests, issues, commits, and CI status.\n"
-                    "Do not infer durable preferences from one-off activity."
+                    "Do not infer durable preferences from one-off activity.\n\n"
+                    "Assertion rules:\n"
+                    "- Do not emit Phase 2 assertion candidates for GitHub events. Repeated\n"
+                    "  WORKS_WITH or COMMITTED graph evidence may be aggregated later by the\n"
+                    "  host-owned derived project rule declared in this profile."
                 ),
             )
         ]
