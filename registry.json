@@ -19,10 +19,7 @@
       "official": true,
       "kind": "library",
       "contribution_types": [],
-      "platforms": [
-        "windows",
-        "macos"
-      ]
+      "platforms": ["windows", "macos"]
     },
     {
       "plugin_id": "calendar",
@@ -39,9 +36,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "calendar",
@@ -52,47 +47,26 @@
         },
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Calendars"
-          ],
+          "scope": ["~/Library/Calendars"],
           "reason_i18n": {
             "en": "Parse the local calendar store",
             "zh-CN": "解析本地日历数据"
           }
         }
       ],
-      "platforms": [
-        "macos"
-      ],
+      "platforms": ["macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "calendar",
-        "platform_support": [
-          "darwin"
-        ],
+        "platform_support": ["darwin"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "日程",
-              "日历",
-              "会议",
-              "安排",
-              "约见",
-              "提醒",
-              "什么时候"
-            ],
-            "en": [
-              "calendar",
-              "schedule",
-              "meeting",
-              "appointment",
-              "reminder",
-              "agenda"
-            ]
+            "zh": ["日程", "日历", "会议", "安排", "约见", "提醒", "什么时候"],
+            "en": ["calendar", "schedule", "meeting", "appointment", "reminder", "agenda"]
           }
         },
         "rationale": {
@@ -124,9 +98,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
@@ -158,41 +130,19 @@
         },
         "member_order": 10
       },
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "浏览",
-              "上网",
-              "看过",
-              "网页",
-              "网站",
-              "搜过",
-              "查过"
-            ],
-            "en": [
-              "browsing",
-              "browser",
-              "website",
-              "online",
-              "bookmark",
-              "browsed",
-              "history"
-            ]
+            "zh": ["浏览", "上网", "看过", "网页", "网站", "搜过", "查过"],
+            "en": ["browsing", "browser", "website", "online", "bookmark", "browsed", "history"]
           }
         },
         "rationale": {
@@ -217,7 +167,7 @@
         "zh-CN": "Agent 历史"
       },
       "icon": "lucide:bot",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/coding_agent_history",
       "description": "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
       "description_i18n": {
@@ -225,9 +175,7 @@
       },
       "author": "Magi Team",
       "official": false,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
@@ -237,19 +185,11 @@
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows",
-        "linux"
-      ],
+      "platforms": ["macos", "windows", "linux"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "code_activity",
-        "platform_support": [
-          "darwin",
-          "win32",
-          "linux"
-        ],
+        "platform_support": ["darwin", "win32", "linux"],
         "setup_time_estimate_seconds": 20,
         "data_locality": "local_only",
         "triggers": {
@@ -309,24 +249,18 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "%LOCALAPPDATA%\\Microsoft\\Edge"
-          ],
+          "scope": ["%LOCALAPPDATA%\\Microsoft\\Edge"],
           "reason_i18n": {
             "en": "Read the local Edge history database",
             "zh-CN": "读取本地 Edge 历史数据库"
           }
         }
       ],
-      "depends_on": [
-        "browser_history_core"
-      ],
+      "depends_on": ["browser_history_core"],
       "display_group": {
         "id": "browser_history",
         "name": "Browser History",
@@ -345,37 +279,19 @@
         },
         "member_order": 40
       },
-      "platforms": [
-        "windows"
-      ],
+      "platforms": ["windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
-        "platform_support": [
-          "win32"
-        ],
+        "platform_support": ["win32"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "浏览",
-              "上网",
-              "看过",
-              "网页",
-              "网站",
-              "搜过"
-            ],
-            "en": [
-              "browsing",
-              "browser",
-              "website",
-              "online",
-              "bookmark",
-              "browsed"
-            ]
+            "zh": ["浏览", "上网", "看过", "网页", "网站", "搜过"],
+            "en": ["browsing", "browser", "website", "online", "bookmark", "browsed"]
           }
         },
         "rationale": {
@@ -407,25 +323,18 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Application Support/Firefox",
-            "%APPDATA%\\Mozilla\\Firefox"
-          ],
+          "scope": ["~/Library/Application Support/Firefox", "%APPDATA%\\Mozilla\\Firefox"],
           "reason_i18n": {
             "en": "Read the local Firefox history database",
             "zh-CN": "读取本地 Firefox 历史数据库"
           }
         }
       ],
-      "depends_on": [
-        "browser_history_core"
-      ],
+      "depends_on": ["browser_history_core"],
       "display_group": {
         "id": "browser_history",
         "name": "Browser History",
@@ -444,38 +353,19 @@
         },
         "member_order": 30
       },
-      "platforms": [
-        "windows",
-        "macos"
-      ],
+      "platforms": ["windows", "macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 15,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "浏览",
-              "上网",
-              "看过",
-              "网页",
-              "网站",
-              "搜过"
-            ],
-            "en": [
-              "browsing",
-              "browser",
-              "website",
-              "online",
-              "bookmark"
-            ]
+            "zh": ["浏览", "上网", "看过", "网页", "网站", "搜过"],
+            "en": ["browsing", "browser", "website", "online", "bookmark"]
           }
         },
         "rationale": {
@@ -508,15 +398,11 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "subprocess",
-          "scope": [
-            "git"
-          ],
+          "scope": ["git"],
           "reason_i18n": {
             "en": "Run git to read commit and checkout history",
             "zh-CN": "调用 git 读取提交与检出历史"
@@ -530,34 +416,18 @@
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "code_activity",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 15,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "代码",
-              "提交",
-              "commit",
-              "改了什么",
-              "项目",
-              "仓库",
-              "repo",
-              "git",
-              "写了什么"
-            ],
+            "zh": ["代码", "提交", "commit", "改了什么", "项目", "仓库", "repo", "git", "写了什么"],
             "en": [
               "code",
               "commit",
@@ -577,10 +447,7 @@
         "local_requirements": [
           {
             "check_kind": "executable_in_path",
-            "names": [
-              "git",
-              "git.exe"
-            ]
+            "names": ["git", "git.exe"]
           }
         ]
       }
@@ -600,35 +467,22 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "network",
-          "scope": [
-            "api.github.com",
-            "github.com"
-          ],
+          "scope": ["api.github.com", "github.com"],
           "reason_i18n": {
             "en": "Connect to GitHub from this device and pull selected repository activity",
             "zh-CN": "从本机连接 GitHub，拉取你选择的仓库动态"
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows",
-        "linux"
-      ],
+      "platforms": ["macos", "windows", "linux"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "code_activity",
-        "platform_support": [
-          "darwin",
-          "win32",
-          "linux"
-        ],
+        "platform_support": ["darwin", "win32", "linux"],
         "setup_time_estimate_seconds": 45,
         "data_locality": "local_only",
         "triggers": {
@@ -647,16 +501,7 @@
               "提交",
               "pull request"
             ],
-            "en": [
-              "GitHub",
-              "pull request",
-              "PR",
-              "issue",
-              "review",
-              "repository",
-              "CI",
-              "commit"
-            ]
+            "en": ["GitHub", "pull request", "PR", "issue", "review", "repository", "CI", "commit"]
           }
         },
         "rationale": {
@@ -680,9 +525,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
@@ -692,43 +535,19 @@
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows",
-        "linux"
-      ],
+      "platforms": ["macos", "windows", "linux"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "notes",
-        "platform_support": [
-          "darwin",
-          "win32",
-          "linux"
-        ],
+        "platform_support": ["darwin", "win32", "linux"],
         "setup_time_estimate_seconds": 20,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "笔记",
-              "文档",
-              "本地文件",
-              "markdown",
-              "txt",
-              "写过",
-              "记录"
-            ],
-            "en": [
-              "notes",
-              "documents",
-              "local files",
-              "markdown",
-              "txt",
-              "wrote",
-              "recorded"
-            ]
+            "zh": ["笔记", "文档", "本地文件", "markdown", "txt", "写过", "记录"],
+            "en": ["notes", "documents", "local files", "markdown", "txt", "wrote", "recorded"]
           }
         },
         "rationale": {
@@ -752,15 +571,11 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Containers/com.netease.163music"
-          ],
+          "scope": ["~/Library/Containers/com.netease.163music"],
           "reason_i18n": {
             "en": "Read the NetEase Music local play history",
             "zh-CN": "读取网易云音乐本地播放历史"
@@ -768,9 +583,7 @@
         },
         {
           "capability": "network",
-          "scope": [
-            "ws.audioscrobbler.com"
-          ],
+          "scope": ["ws.audioscrobbler.com"],
           "reason_i18n": {
             "en": "Fetch genre tags for played tracks from the Last.fm API (only when a Last.fm API key is configured).",
             "zh-CN": "从 Last.fm API 获取所播曲目的风格标签(仅在配置了 Last.fm API key 时)。"
@@ -795,38 +608,19 @@
         },
         "member_order": 10
       },
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "uploads",
       "suggestion_descriptor": {
         "category": "music",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 15,
         "data_locality": "uploads",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "音乐",
-              "听歌",
-              "歌单",
-              "最近听了什么",
-              "单曲循环",
-              "网易云"
-            ],
-            "en": [
-              "music",
-              "listening",
-              "songs",
-              "playlist",
-              "netease"
-            ]
+            "zh": ["音乐", "听歌", "歌单", "最近听了什么", "单曲循环", "网易云"],
+            "en": ["music", "listening", "songs", "playlist", "netease"]
           }
         },
         "rationale": {
@@ -859,9 +653,7 @@
       },
       "author": "Magi Team",
       "official": false,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
@@ -871,39 +663,19 @@
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "notes",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 20,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "笔记",
-              "obsidian",
-              "vault",
-              "记了什么",
-              "写过",
-              "知识库"
-            ],
-            "en": [
-              "notes",
-              "obsidian",
-              "vault",
-              "wrote",
-              "knowledge base",
-              "markdown"
-            ]
+            "zh": ["笔记", "obsidian", "vault", "记了什么", "写过", "知识库"],
+            "en": ["notes", "obsidian", "vault", "wrote", "knowledge base", "markdown"]
           }
         },
         "rationale": {
@@ -927,10 +699,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor",
-        "tool"
-      ],
+      "contribution_types": ["sensor", "tool"],
       "capabilities": [
         {
           "capability": "photos",
@@ -941,9 +710,7 @@
         },
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Pictures"
-          ],
+          "scope": ["~/Pictures"],
           "reason_i18n": {
             "en": "Scan local photo files for metadata",
             "zh-CN": "扫描本地照片文件的元数据"
@@ -951,50 +718,26 @@
         },
         {
           "capability": "network",
-          "scope": [
-            "download.geonames.org"
-          ],
+          "scope": ["download.geonames.org"],
           "reason_i18n": {
             "en": "One-time download of the offline reverse-geocoding dataset (GeoNames); geocoding then runs locally. Your photos and locations are never uploaded.",
             "zh-CN": "一次性下载离线反向地理编码数据集(GeoNames),之后在本地完成地理编码。你的照片和位置绝不上传。"
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "photos",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 20,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "照片",
-              "图片",
-              "拍",
-              "相册",
-              "拍过",
-              "那张",
-              "影像",
-              "图像"
-            ],
-            "en": [
-              "photo",
-              "picture",
-              "image",
-              "photos",
-              "snapshot",
-              "album"
-            ]
+            "zh": ["照片", "图片", "拍", "相册", "拍过", "那张", "影像", "图像"],
+            "en": ["photo", "picture", "image", "photos", "snapshot", "album"]
           }
         },
         "rationale": {
@@ -1027,24 +770,18 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Safari"
-          ],
+          "scope": ["~/Library/Safari"],
           "reason_i18n": {
             "en": "Read the local Safari history database",
             "zh-CN": "读取本地 Safari 历史数据库"
           }
         }
       ],
-      "depends_on": [
-        "browser_history_core"
-      ],
+      "depends_on": ["browser_history_core"],
       "display_group": {
         "id": "browser_history",
         "name": "Browser History",
@@ -1063,31 +800,18 @@
         },
         "member_order": 20
       },
-      "platforms": [
-        "macos"
-      ],
+      "platforms": ["macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "browser_history",
-        "platform_support": [
-          "darwin"
-        ],
+        "platform_support": ["darwin"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "浏览",
-              "上网",
-              "看过",
-              "网页",
-              "网站",
-              "搜过",
-              "查过",
-              "Safari"
-            ],
+            "zh": ["浏览", "上网", "看过", "网页", "网站", "搜过", "查过", "Safari"],
             "en": [
               "browsing",
               "browser",
@@ -1129,51 +853,30 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Application Support/Knowledge"
-          ],
+          "scope": ["~/Library/Application Support/Knowledge"],
           "reason_i18n": {
             "en": "Read the local app-usage data source",
             "zh-CN": "读取本地应用用量数据源"
           }
         }
       ],
-      "platforms": [
-        "macos",
-        "windows"
-      ],
+      "platforms": ["macos", "windows"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "screen_context",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "屏幕时间",
-              "用了多久",
-              "用了哪些 app",
-              "使用时长",
-              "玩手机"
-            ],
-            "en": [
-              "screen time",
-              "app usage",
-              "how long",
-              "usage"
-            ]
+            "zh": ["屏幕时间", "用了多久", "用了哪些 app", "使用时长", "玩手机"],
+            "en": ["screen time", "app usage", "how long", "usage"]
           }
         },
         "rationale": {
@@ -1197,10 +900,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor",
-        "tool"
-      ],
+      "contribution_types": ["sensor", "tool"],
       "capabilities": [
         {
           "capability": "screen_recording",
@@ -1219,9 +919,7 @@
         },
         {
           "capability": "filesystem_write",
-          "scope": [
-            "~/.magi"
-          ],
+          "scope": ["~/.magi"],
           "reason_i18n": {
             "en": "Save screenshots and thumbnails",
             "zh-CN": "保存截图与缩略图"
@@ -1229,43 +927,26 @@
         },
         {
           "capability": "subprocess",
-          "scope": [
-            "magi-vision-helper"
-          ],
+          "scope": ["magi-vision-helper"],
           "reason_i18n": {
             "en": "Run the bundled OCR/vision helper",
             "zh-CN": "运行随附的 OCR/视觉助手"
           }
         }
       ],
-      "platforms": [
-        "macos"
-      ],
+      "platforms": ["macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "screen_context",
-        "platform_support": [
-          "darwin"
-        ],
+        "platform_support": ["darwin"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "截图",
-              "屏幕",
-              "屏幕上",
-              "刚才在看",
-              "看到了什么"
-            ],
-            "en": [
-              "screenshot",
-              "screen",
-              "on screen",
-              "what was on my screen"
-            ]
+            "zh": ["截图", "屏幕", "屏幕上", "刚才在看", "看到了什么"],
+            "en": ["screenshot", "screen", "on screen", "what was on my screen"]
           }
         },
         "rationale": {
@@ -1289,16 +970,11 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/Library/Application Support/Steam",
-            "C:\\Program Files (x86)\\Steam"
-          ],
+          "scope": ["~/Library/Application Support/Steam", "C:\\Program Files (x86)\\Steam"],
           "reason_i18n": {
             "en": "Read local Steam files to infer play sessions",
             "zh-CN": "读取本地 Steam 文件以推断游戏时段"
@@ -1323,39 +999,19 @@
         },
         "member_order": 10
       },
-      "platforms": [
-        "windows",
-        "macos",
-        "linux"
-      ],
+      "platforms": ["windows", "macos", "linux"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "gaming",
-        "platform_support": [
-          "win32",
-          "darwin",
-          "linux"
-        ],
+        "platform_support": ["win32", "darwin", "linux"],
         "setup_time_estimate_seconds": 15,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "玩了什么游戏",
-              "游戏",
-              "Steam",
-              "游戏时长",
-              "最近在玩"
-            ],
-            "en": [
-              "played",
-              "game",
-              "steam",
-              "playtime",
-              "gaming"
-            ]
+            "zh": ["玩了什么游戏", "游戏", "Steam", "游戏时长", "最近在玩"],
+            "en": ["played", "game", "steam", "playtime", "gaming"]
           }
         },
         "rationale": {
@@ -1389,9 +1045,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "system_media",
@@ -1419,37 +1073,19 @@
         },
         "member_order": 20
       },
-      "platforms": [
-        "windows",
-        "macos"
-      ],
+      "platforms": ["windows", "macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "media",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
+        "platform_support": ["darwin", "win32"],
         "setup_time_estimate_seconds": 5,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "在播放",
-              "正在听",
-              "听歌",
-              "播放了什么",
-              "音乐"
-            ],
-            "en": [
-              "playing",
-              "now playing",
-              "music",
-              "listening",
-              "song"
-            ]
+            "zh": ["在播放", "正在听", "听歌", "播放了什么", "音乐"],
+            "en": ["playing", "now playing", "music", "listening", "song"]
           }
         },
         "rationale": {
@@ -1473,25 +1109,18 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "channel"
-      ],
+      "contribution_types": ["channel"],
       "capabilities": [
         {
           "capability": "network",
-          "scope": [
-            "api.telegram.org"
-          ],
+          "scope": ["api.telegram.org"],
           "reason_i18n": {
             "en": "Connect to the Telegram Bot API",
             "zh-CN": "连接 Telegram Bot API"
           }
         }
       ],
-      "platforms": [
-        "windows",
-        "macos"
-      ]
+      "platforms": ["windows", "macos"]
     },
     {
       "plugin_id": "terminal-history",
@@ -1508,52 +1137,30 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor"
-      ],
+      "contribution_types": ["sensor"],
       "capabilities": [
         {
           "capability": "filesystem_read",
-          "scope": [
-            "~/.zsh_history",
-            "~/.bash_history",
-            "~/.local/share/fish"
-          ],
+          "scope": ["~/.zsh_history", "~/.bash_history", "~/.local/share/fish"],
           "reason_i18n": {
             "en": "Read your shell command history files",
             "zh-CN": "读取你的 shell 命令历史文件"
           }
         }
       ],
-      "platforms": [
-        "macos"
-      ],
+      "platforms": ["macos"],
       "data_locality": "local_only",
       "suggestion_descriptor": {
         "category": "terminal",
-        "platform_support": [
-          "darwin"
-        ],
+        "platform_support": ["darwin"],
         "setup_time_estimate_seconds": 10,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
           "entities": [],
           "keywords": {
-            "zh": [
-              "命令",
-              "终端",
-              "敲了什么",
-              "跑过什么命令",
-              "shell"
-            ],
-            "en": [
-              "terminal",
-              "command",
-              "shell",
-              "ran",
-              "cli"
-            ]
+            "zh": ["命令", "终端", "敲了什么", "跑过什么命令", "shell"],
+            "en": ["terminal", "command", "shell", "ran", "cli"]
           }
         },
         "rationale": {
@@ -1585,9 +1192,7 @@
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "channel"
-      ],
+      "contribution_types": ["channel"],
       "capabilities": [
         {
           "capability": "network",
@@ -1597,10 +1202,7 @@
           }
         }
       ],
-      "platforms": [
-        "windows",
-        "macos"
-      ]
+      "platforms": ["windows", "macos"]
     }
   ]
 }
