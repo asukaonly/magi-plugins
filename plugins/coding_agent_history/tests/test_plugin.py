@@ -77,6 +77,49 @@ def test_agent_history_entries_share_capability_group() -> None:
     assert codex_meta["entry_order"] == 20
 
 
+def test_agent_history_declares_profile_candidate_l2_profiles() -> None:
+    mod = _load_plugin_module()
+    plugin = mod.CodingAgentHistoryPlugin()
+    profiles = plugin.get_extraction_profiles()
+
+    by_source = {profile.source_types[0]: profile for profile in profiles}
+    assert set(by_source) == {"claude_code_agent_history", "codex_agent_history"}
+
+    for source_type, profile in by_source.items():
+        assert profile.profile_id == f"source.{source_type}"
+        assert profile.allow_graph is True
+        assert profile.allow_assertion is True
+        assert profile.assertion_mode == "phase2_candidate"
+        assert profile.allowed_assertion_families == [
+            "identity_profile",
+            "communication_profile",
+            "preference_profile",
+            "routine_profile",
+            "state_profile",
+        ]
+        assert profile.allowed_entity_types == [
+            "project",
+            "product",
+            "software",
+            "technology",
+            "organization",
+            "topic",
+            "concept",
+            "skill",
+            "activity",
+        ]
+        assert profile.allowed_predicates == [
+            "USES",
+            "WORKS_WITH",
+            "REFERENCES",
+            "INTERESTED_IN",
+            "CREATES",
+            "PLANS_TO",
+        ]
+        assert "WORKED_ON" not in profile.allowed_predicates
+        assert "temporary requests" in (profile.phase2_instructions or "")
+
+
 def test_metadata_carries_source_type_and_default_settings() -> None:
     sensors = _sensors_by_source()
     defaults = sensors["claude_code_agent_history"][2].metadata["default_settings"]

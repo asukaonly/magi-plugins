@@ -18,6 +18,7 @@ from typing import Any
 from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldSpec,
+    ExtractionProfileSpec,
     Plugin,
     SensorSpec,
 )
@@ -52,6 +53,35 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "sync_interval_minutes": 30,
     "initial_sync_configured": False,
 }
+
+AGENT_HISTORY_L2_ENTITY_TYPES = [
+    "project",
+    "product",
+    "software",
+    "technology",
+    "organization",
+    "topic",
+    "concept",
+    "skill",
+    "activity",
+]
+
+AGENT_HISTORY_L2_PREDICATES = [
+    "USES",
+    "WORKS_WITH",
+    "REFERENCES",
+    "INTERESTED_IN",
+    "CREATES",
+    "PLANS_TO",
+]
+
+AGENT_HISTORY_ASSERTION_FAMILIES = [
+    "identity_profile",
+    "communication_profile",
+    "preference_profile",
+    "routine_profile",
+    "state_profile",
+]
 
 
 def _default_settings_for(entry: dict[str, Any]) -> dict[str, Any]:
@@ -176,6 +206,42 @@ def _capability_metadata(entry_id: str, entry: dict[str, Any]) -> dict[str, Any]
 
 class CodingAgentHistoryPlugin(Plugin):
     """Registers agent transcript timeline sources."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id=f"source.{entry['source_type']}",
+                source_types=[str(entry["source_type"])],
+                allowed_entity_types=AGENT_HISTORY_L2_ENTITY_TYPES,
+                allowed_predicates=AGENT_HISTORY_L2_PREDICATES,
+                structured_allowed_entity_types=AGENT_HISTORY_L2_ENTITY_TYPES,
+                structured_allowed_predicates=AGENT_HISTORY_L2_PREDICATES,
+                allowed_assertion_families=AGENT_HISTORY_ASSERTION_FAMILIES,
+                allow_graph=True,
+                allow_assertion=True,
+                assertion_mode="phase2_candidate",
+                derived_assertion_specs=[],
+                extraction_instructions=(
+                    "These events are the user's own turns from local coding-agent transcripts. "
+                    "Treat them as user-authored evidence, not assistant output.\n"
+                    "Extract durable projects, products, tools, technologies, organizations, "
+                    "topics, skills, and work activities. Prefer USES for tools/platforms, "
+                    "WORKS_WITH for technologies or project contexts, REFERENCES for mentions, "
+                    "INTERESTED_IN only for repeated or explicitly stated interests, CREATES "
+                    "for authored projects/artifacts, and PLANS_TO for explicit future work.\n"
+                    "Skip secrets, stack traces, pasted logs, file paths, one-off debugging "
+                    "details, quoted assistant text, and transient command instructions."
+                ),
+                phase2_instructions=(
+                    "Assertion candidates from coding-agent history must describe stable user "
+                    "profile signals from the user's own words: identity/work context, preferred "
+                    "communication style, durable interests, recurring workflows, routines, or "
+                    "current state. Do not promote temporary requests, pasted errors, external "
+                    "docs, or assistant suggestions into long-term profile assertions."
+                ),
+            )
+            for entry in AGENT_ENTRIES.values()
+        ]
 
     def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
         sensors_settings = self.settings.get("sensors", {})

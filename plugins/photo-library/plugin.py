@@ -12,6 +12,7 @@ from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldOption,
     ExtensionFieldSpec,
+    ExtractionProfileSpec,
     Plugin,
     PluginSettingsResourceSpec,
     SensorSpec,
@@ -41,6 +42,8 @@ CAPABILITY_DESCRIPTION = "Manage Apple Photos and local photo folders as timelin
 APPLE_PHOTOS_SOURCE_TYPE = "photo_library_apple_photos"
 DIRECTORY_SOURCE_TYPE = "photo_library_directory"
 PHOTO_LIBRARY_SOURCE_TYPES = {APPLE_PHOTOS_SOURCE_TYPE, DIRECTORY_SOURCE_TYPE}
+PHOTO_LIBRARY_L2_ENTITY_TYPES = ["hardware", "place"]
+PHOTO_LIBRARY_L2_PREDICATES = ["OWNS", "VISITED"]
 
 ENTRY_DEFINITIONS: dict[str, dict[str, Any]] = {
     APPLE_PHOTOS_SOURCE_TYPE: {
@@ -292,6 +295,31 @@ def _capability_metadata(source_type: str) -> dict[str, Any]:
 
 class PhotoLibraryPlugin(Plugin):
     """Registers the photo library timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id=f"source.{source_type}",
+                source_types=[source_type],
+                allowed_entity_types=PHOTO_LIBRARY_L2_ENTITY_TYPES,
+                allowed_predicates=PHOTO_LIBRARY_L2_PREDICATES,
+                structured_allowed_entity_types=PHOTO_LIBRARY_L2_ENTITY_TYPES,
+                structured_allowed_predicates=PHOTO_LIBRARY_L2_PREDICATES,
+                allowed_assertion_families=[],
+                allow_graph=True,
+                allow_assertion=False,
+                assertion_mode="none",
+                derived_assertion_specs=[],
+                extraction_instructions=(
+                    "These events are settled photo sessions. The source already provides "
+                    "high-confidence structured hints for camera hardware and visited places.\n"
+                    "Only keep graph facts that connect the user to owned hardware or visited "
+                    "places. Do not infer preferences, identity, residence, routines, mood, "
+                    "or long-term conclusions from a photo session."
+                ),
+            )
+            for source_type in (APPLE_PHOTOS_SOURCE_TYPE, DIRECTORY_SOURCE_TYPE)
+        ]
 
     def get_tools(self) -> list[type[object]]:
         sensors_settings = self.settings.get("sensors", {})
