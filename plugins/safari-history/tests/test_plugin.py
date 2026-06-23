@@ -64,13 +64,14 @@ def test_plugin_declares_safari_extraction_and_summary_profiles() -> None:
     assert profile.allow_assertion is True
     assert profile.derived_assertion_specs == [
         {
-            "rule_id": "safari_history.viewed_interest",
-            "source_predicates": ["VIEWED"],
+            "rule_id": "safari_history.content_interest",
+            "source_predicates": ["INTERESTED_IN"],
             "source_types": ["safari_history"],
             "trait_family": "preference_profile",
             "trait_name_template": "interest.{object_slug}",
             "min_observations": 3,
-            "min_distinct_days": 1,
+            "min_distinct_days": 2,
+            "object_types": ["topic", "media", "person", "group", "organization", "product", "technology"],
             "source_domains": ["external_activity"],
             "value_strategy": "canonical_name",
         }

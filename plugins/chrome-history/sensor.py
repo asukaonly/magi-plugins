@@ -216,7 +216,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "transition": str(item.get("transition") or ""),
                 "canonical_url": url,
             },
-            domain_payload={"retention_mode": self.retention_mode},
+            domain_payload={"retention_mode": self.retention_mode, "promotion_key": domain},
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:

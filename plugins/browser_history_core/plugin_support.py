@@ -28,6 +28,15 @@ DEFAULT_SETTINGS = {
     "filter_keywords": [],
 }
 _SESSION_GAP_SECONDS = 30 * 60
+_CONTENT_INTEREST_OBJECT_TYPES = [
+    "topic",
+    "media",
+    "person",
+    "group",
+    "organization",
+    "product",
+    "technology",
+]
 BROWSER_HISTORY_CAPABILITY_ID = "browser_history"
 BROWSER_HISTORY_CAPABILITY_DISPLAY_NAME = "Browser History"
 BROWSER_HISTORY_CAPABILITY_DESCRIPTION = "Manage browser history sources that feed the timeline."
@@ -47,8 +56,8 @@ _EXTRACTION_INSTRUCTIONS = (
     "- WORKS_WITH: for professional tools/technologies seen in work context\n\n"
     "Assertion guidance:\n"
     "- Do not emit Phase 2 assertion candidates for browsing events. Repeated\n"
-    "  VIEWED graph evidence may be aggregated later by the host-owned derived\n"
-    "  interest rule declared in this profile.\n\n"
+    "  INTERESTED_IN content evidence may be aggregated later by the host-owned\n"
+    "  derived interest rule declared in this profile.\n\n"
     "Entity extraction rules (IMPORTANT):\n"
     "- Preserve the source title language/script for content entities. Do NOT\n"
     "  translate Chinese, Japanese, Korean, or other non-Latin names into\n"
@@ -320,13 +329,14 @@ def build_extraction_profiles(source_type: str) -> list[ExtractionProfileSpec]:
             allowed_assertion_traits=["interest.*"],
             derived_assertion_specs=[
                 {
-                    "rule_id": f"{source_type}.viewed_interest",
-                    "source_predicates": ["VIEWED"],
+                    "rule_id": f"{source_type}.content_interest",
+                    "source_predicates": ["INTERESTED_IN"],
                     "source_types": [source_type],
                     "trait_family": "preference_profile",
                     "trait_name_template": "interest.{object_slug}",
                     "min_observations": 3,
-                    "min_distinct_days": 1,
+                    "min_distinct_days": 2,
+                    "object_types": _CONTENT_INTEREST_OBJECT_TYPES,
                     "source_domains": ["external_activity"],
                     "value_strategy": "canonical_name",
                 }
