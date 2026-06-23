@@ -5,7 +5,13 @@ from collections import Counter
 import sys
 from typing import Any
 
-from magi_plugin_sdk import ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import (
+    ExtensionFieldOption,
+    ExtensionFieldSpec,
+    ExtractionProfileSpec,
+    Plugin,
+    SensorSpec,
+)
 
 from .sensor import SystemMediaTimelineSensor
 from .state import MediaSessionStateStore
@@ -123,6 +129,46 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 class SystemMediaPlugin(Plugin):
     """Registers the system-media timeline sensor."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.system_media",
+                source_types=["system_media"],
+                allowed_entity_types=["media", "person", "group", "software"],
+                allowed_predicates=["LISTENED", "USES"],
+                structured_allowed_entity_types=["media", "person", "group", "software"],
+                structured_allowed_predicates=["LISTENED", "USES"],
+                allowed_assertion_families=["preference_profile"],
+                allow_graph=True,
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["music.*"],
+                derived_assertion_specs=[
+                    {
+                        "rule_id": "system_media.listened_interest",
+                        "source_predicates": ["LISTENED"],
+                        "source_types": ["system_media"],
+                        "trait_family": "preference_profile",
+                        "trait_name_template": "music.{object_slug}",
+                        "min_observations": 3,
+                        "min_distinct_days": 2,
+                        "object_types": ["media"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    }
+                ],
+                extraction_instructions=(
+                    "These events are completed media playback sessions captured from OS "
+                    "media controls. Extract concrete music/media listening evidence, not "
+                    "broad identity or mood claims.\n"
+                    "Use LISTENED for the played track or media item. Use USES only for "
+                    "the playback app when it is useful as a tool/platform signal. Do not "
+                    "emit Phase 2 assertion candidates; repeated LISTENED evidence is "
+                    "aggregated later by the host-owned derived music rule."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

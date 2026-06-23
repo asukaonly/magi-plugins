@@ -117,8 +117,11 @@ class ScreenTimePlugin(Plugin):
                 allowed_predicates=["USES", "VIEWED"],
                 structured_allowed_entity_types=["software", "media"],
                 structured_allowed_predicates=["USES", "VIEWED"],
+                allowed_assertion_families=[],
                 allow_graph=True,
                 allow_assertion=False,
+                assertion_mode="none",
+                derived_assertion_specs=[],
                 extraction_instructions=(
                     "These events are foreground-app usage duration records.\n"
                     "Each event reports how long an app was frontmost in a time window.\n\n"

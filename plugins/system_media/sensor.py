@@ -10,6 +10,7 @@ from magi_plugin_sdk.sensors import (
     SensorBase,
     SensorMemoryPolicy,
     SensorOutput,
+    SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
 )
@@ -34,7 +35,7 @@ class SystemMediaTimelineSensor(SensorBase):
     memory_policy = SensorMemoryPolicy(
         memory_domain="external_activity",
         ingest_target="l1_only",
-        cognition_eligible=False,
+        cognition_eligible=True,
         tom_depth="none",
         retention_class="compressible",
         importance_bias=0.4,
@@ -60,6 +61,69 @@ class SystemMediaTimelineSensor(SensorBase):
             str(item.get("duration_seconds", 0)),
         ]
         return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+
+    async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
+        title = str(item.get("title") or "").strip()
+        artist = str(item.get("artist") or "").strip()
+        album = str(item.get("album") or "").strip()
+        if not title:
+            return SensorOutputMetadata()
+
+        entities: list[dict[str, Any]] = [
+            {
+                "mention_text": title,
+                "entity_type": "media",
+                "canonical_name_hint": title,
+            }
+        ]
+        if artist:
+            entities.append(
+                {
+                    "mention_text": artist,
+                    "entity_type": "person",
+                    "canonical_name_hint": artist,
+                }
+            )
+        if album:
+            entities.append(
+                {
+                    "mention_text": album,
+                    "entity_type": "media",
+                    "canonical_name_hint": album,
+                }
+            )
+
+        attributes: dict[str, Any] = {}
+        if artist:
+            attributes["artist"] = artist
+        if album:
+            attributes["album"] = album
+        app_name = str(item.get("app_name") or item.get("app_id") or "").strip()
+        if app_name:
+            attributes["app_name"] = app_name
+        attributes["duration_seconds"] = int(item.get("duration_seconds") or 0)
+
+        fact_hint: dict[str, Any] = {
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "LISTENED",
+            "object_ref": f"media:{title}",
+            "object_type": "media",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.9,
+            "attributes": attributes,
+        }
+        observed_at = _parse_started_at(item.get("started_at"))
+        if observed_at is not None:
+            fact_hint["observed_at"] = observed_at
+
+        return SensorOutputMetadata(
+            entities=entities,
+            tags=["media", "music", "listening"],
+            fact_hints=[fact_hint],
+            relation_candidates=[],
+        )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         now = self._now()
@@ -161,3 +225,12 @@ class SystemMediaTimelineSensor(SensorBase):
                 "duration_seconds": duration_seconds,
             },
         )
+
+
+def _parse_started_at(raw_value: object) -> float | None:
+    if not raw_value:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw_value)).timestamp()
+    except ValueError:
+        return None

@@ -28,7 +28,8 @@ def test_netease_profile_declares_derived_music_rule() -> None:
             "trait_family": "preference_profile",
             "trait_name_template": "music.{object_slug}",
             "min_observations": 3,
-            "min_distinct_days": 1,
+            "min_distinct_days": 2,
+            "object_types": ["media"],
             "source_domains": ["external_activity"],
             "value_strategy": "canonical_name",
         }

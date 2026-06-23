@@ -10,6 +10,7 @@ from magi_plugin_sdk.sensors import (
     SensorBase,
     SensorMemoryPolicy,
     SensorOutput,
+    SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
 )
@@ -34,7 +35,7 @@ class ScreenTimeTimelineSensor(SensorBase):
     memory_policy = SensorMemoryPolicy(
         memory_domain="external_activity",
         ingest_target="l1_only",
-        cognition_eligible=False,
+        cognition_eligible=True,
         tom_depth="none",
         retention_class="compressible",
         importance_bias=0.3,
@@ -201,6 +202,50 @@ class ScreenTimeTimelineSensor(SensorBase):
             ),
         )
 
+    async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
+        canonical_id = str(item.get("canonical_id") or item.get("bundle_id") or "").strip()
+        display_name = str(item.get("display_name") or item.get("app_name") or canonical_id).strip()
+        if not canonical_id or not display_name:
+            return SensorOutputMetadata()
+
+        category = str(item.get("category") or "").strip()
+        duration_seconds = int(item.get("duration_seconds") or 0)
+        session_count = int(item.get("session_count") or 0)
+        observed_at = _parse_bucket_observed_at(item.get("bucket_end"))
+
+        fact_hint: dict[str, Any] = {
+            "subject_ref": "user:self",
+            "subject_type": "user",
+            "predicate": "USES",
+            "object_ref": f"software:{_entity_ref_suffix(canonical_id)}",
+            "object_type": "software",
+            "fact_kind": "interaction_evidence",
+            "origin_mode": "source_structured",
+            "confidence": 0.75,
+            "attributes": {
+                "display_name": display_name,
+                "duration_seconds": duration_seconds,
+                "session_count": session_count,
+            },
+        }
+        if category:
+            fact_hint["attributes"]["category"] = category
+        if observed_at is not None:
+            fact_hint["observed_at"] = observed_at
+
+        return SensorOutputMetadata(
+            entities=[
+                {
+                    "mention_text": display_name,
+                    "entity_type": "software",
+                    "canonical_name_hint": canonical_id,
+                }
+            ],
+            tags=[f"app_category:{category}"] if category else [],
+            fact_hints=[fact_hint],
+            relation_candidates=[],
+        )
+
     @staticmethod
     def _build_content_blocks(
         *,
@@ -275,3 +320,22 @@ class ScreenTimeTimelineSensor(SensorBase):
             meta["category"] = category
         meta.update(extras)
         return meta
+
+
+def _parse_bucket_observed_at(raw_value: object) -> float | None:
+    if not raw_value:
+        return None
+    try:
+        bucket_end = datetime.fromisoformat(str(raw_value))
+    except ValueError:
+        return None
+    return bucket_end.timestamp() - 1.0
+
+
+def _entity_ref_suffix(value: str) -> str:
+    normalized = value.strip().lower()
+    for old, new in ((":", "_"), ("/", "_"), ("\\", "_"), (" ", "_")):
+        normalized = normalized.replace(old, new)
+    while "__" in normalized:
+        normalized = normalized.replace("__", "_")
+    return normalized.strip("_") or "unknown"

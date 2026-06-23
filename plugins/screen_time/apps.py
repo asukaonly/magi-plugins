@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import ntpath
 import os
 import threading
 from dataclasses import dataclass
@@ -88,7 +89,7 @@ class _AppCatalog:
         if platform == PLATFORM_DARWIN:
             canonical_id = self._macos_bundle_index.get(raw_bundle_id)
         elif platform == PLATFORM_WIN32:
-            basename = os.path.basename(raw_bundle_id).lower()
+            basename = _windows_basename(raw_bundle_id).lower()
             canonical_id = self._windows_exe_index.get(basename)
 
         if canonical_id is not None:
@@ -144,7 +145,7 @@ def _fallback_canonical_id(platform: str, raw_bundle_id: str) -> str:
     if not raw:
         return f"{platform or 'unknown'}:unknown"
     if platform == PLATFORM_WIN32:
-        basename = os.path.basename(raw)
+        basename = _windows_basename(raw)
         return f"{platform}:{basename.lower()}" if basename else f"{platform}:{raw.lower()}"
     return f"{platform or 'unknown'}:{raw}"
 
@@ -154,11 +155,15 @@ def _fallback_display_name(platform: str, raw_bundle_id: str) -> str:
     if not raw:
         return "Unknown App"
     if platform == PLATFORM_WIN32:
-        basename = os.path.basename(raw)
+        basename = _windows_basename(raw)
         if basename.lower().endswith(".exe"):
             basename = basename[:-4]
         return basename or raw
     return raw
+
+
+def _windows_basename(raw_path: str) -> str:
+    return ntpath.basename(raw_path) or os.path.basename(raw_path)
 
 
 _catalog_lock = threading.Lock()
