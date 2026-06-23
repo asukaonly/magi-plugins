@@ -5,10 +5,23 @@ from collections import Counter
 import sys
 from typing import Any
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
 
 from .sensor import SteamPlayHistoryTimelineSensor
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
+
+STEAM_L2_DERIVED_RULE = {
+    "rule_id": "steam_play_history.viewed_interest",
+    "source_predicates": ["VIEWED"],
+    "source_types": ["steam_play_history"],
+    "trait_family": "preference_profile",
+    "trait_name_template": "game.{object_slug}",
+    "min_observations": 2,
+    "min_distinct_days": 2,
+    "object_types": ["media"],
+    "source_domains": ["external_activity"],
+    "value_strategy": "canonical_name",
+}
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -273,6 +286,31 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
 
 class SteamPlayHistoryPlugin(Plugin):
     """Registers the Steam play-history timeline source."""
+
+    def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
+        return [
+            ExtractionProfileSpec(
+                profile_id="source.steam_play_history",
+                source_types=["steam_play_history"],
+                allowed_entity_types=["media", "software"],
+                allowed_predicates=["VIEWED", "INTERESTED_IN"],
+                structured_allowed_entity_types=["media", "software"],
+                structured_allowed_predicates=["VIEWED", "INTERESTED_IN"],
+                allowed_assertion_families=["preference_profile"],
+                allow_graph=True,
+                allow_assertion=True,
+                assertion_mode="derived",
+                allowed_assertion_traits=["game.*"],
+                derived_assertion_specs=[dict(STEAM_L2_DERIVED_RULE)],
+                extraction_instructions=(
+                    "These events are local Steam game play records. Treat them as passive "
+                    "activity evidence, not explicit user preference claims. Use VIEWED for "
+                    "the played game as media evidence. Do not emit Phase 2 assertion "
+                    "candidates; repeated VIEWED evidence is aggregated by the host-owned "
+                    "derived game interest rule declared in this profile."
+                ),
+            )
+        ]
 
     def build_temporal_summary_features(
         self,

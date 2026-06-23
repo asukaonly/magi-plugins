@@ -32,16 +32,18 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
     update_key_fields = ("event_kind", "appid", "started_at")
     supports_pull_sync = True
     supports_state_flush = True
+    relation_edge_whitelist = ("VIEWED",)
 
     memory_policy = SensorMemoryPolicy(
         memory_domain="external_activity",
         ingest_target="l1_only",
-        cognition_eligible=False,
+        cognition_eligible=True,
         tom_depth="none",
         retention_class="compressible",
         importance_bias=0.45,
         author_type="external",
         content_type="observation",
+        allow_llm_extraction=False,
     )
 
     def __init__(
@@ -254,9 +256,48 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
         appid = str(item.get("appid") or "")
         game_name = str(item.get("game_name") or "")
+        if not game_name:
+            return SensorOutputMetadata(
+                entities=[],
+                tags=_tags(appid=appid, game_name=game_name),
+                relation_candidates=[],
+            )
+        observed_at = float(
+            item.get("occurred_at")
+            or _timestamp_from_item(item, "ended_at")
+            or _timestamp_from_item(item, "started_at")
+            or 0.0
+        )
+        playtime_minutes = int(item.get("playtime_forever_minutes_after") or item.get("playtime_forever_minutes") or 0)
         return SensorOutputMetadata(
-            entities=[{"type": "game", "name": game_name, "id": appid}] if game_name else [],
+            entities=[
+                {
+                    "mention_text": game_name,
+                    "entity_type": "media",
+                    "canonical_name_hint": game_name,
+                }
+            ],
             tags=_tags(appid=appid, game_name=game_name),
+            fact_hints=[
+                {
+                    "subject_ref": "user:self",
+                    "subject_type": "user",
+                    "predicate": "VIEWED",
+                    "object_ref": f"media:{game_name}",
+                    "object_type": "media",
+                    "fact_kind": "interaction_evidence",
+                    "origin_mode": "source_structured",
+                    "confidence": 0.85,
+                    "observed_at": observed_at,
+                    "attributes": {
+                        "provider": "steam",
+                        "appid": appid,
+                        "event_kind": str(item.get("event_kind") or ""),
+                        "duration_seconds": int(item.get("duration_seconds") or 0),
+                        "playtime_forever_minutes": playtime_minutes,
+                    },
+                }
+            ],
             relation_candidates=[],
         )
 
