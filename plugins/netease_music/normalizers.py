@@ -53,3 +53,38 @@ def extract_track_info(track_data: dict[str, Any]) -> dict[str, Any]:
 def build_netease_url(track_id: str) -> str:
     """Build NetEase Cloud Music URL for a track."""
     return f"https://music.163.com/#/song?id={track_id}"
+
+
+def build_music_source_facets(item: dict[str, Any]) -> list[dict[str, Any]]:
+    """Build exact source facets for structured music recall."""
+    facets: list[dict[str, Any]] = []
+    for key, facet_name in (
+        ("track_name", "music.track"),
+        ("artist_name", "music.artist"),
+        ("album_name", "music.album"),
+        ("track_id", "music.track_id"),
+        ("artist_id", "music.artist_id"),
+        ("album_id", "music.album_id"),
+    ):
+        value = str(item.get(key) or "").strip()
+        if value:
+            facets.append({"name": facet_name, "text": value})
+    for alias in item.get("track_alias") or []:
+        value = str(alias or "").strip()
+        if value:
+            facets.append({"name": "music.track_alias", "text": value})
+
+    facets.append({"name": "music.play_count", "numeric": 1})
+    duration = _int_value(item.get("play_duration_sec"))
+    if duration is not None:
+        facets.append({"name": "music.play_duration_sec", "numeric": duration})
+    return facets
+
+
+def _int_value(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None

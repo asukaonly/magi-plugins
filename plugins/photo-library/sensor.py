@@ -6,6 +6,7 @@ Per-photo records are not surfaced individually: a typical user shoots
 hundreds of photos that compress into a handful of memorable sessions,
 and that is the unit the memory layer should index.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -39,10 +40,10 @@ from .normalizers import (
     build_session_fact_hints,
     build_session_relation_candidates,
     build_session_retrieval_terms,
+    build_session_source_facets,
 )
 from .reader import PhotoLibraryReader
 from .sessions import aggregate_sessions
-
 
 # Sessions with no new captures within this window are emitted to L1.
 # Younger sessions are deferred so each session is written exactly once
@@ -174,9 +175,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
     def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
         # Sessions are emitted exactly once when settled, so the fingerprint
         # only needs to capture identity (not content version).
-        return hashlib.sha1(
-            self.source_item_identity(item).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha1(self.source_item_identity(item).encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------------
     # L2 batching
@@ -208,7 +207,9 @@ class PhotoLibraryTimelineSensor(SensorBase):
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
             else {}
         )
-        source_mode = str(sensor_settings.get("source_mode", self.source_mode) or "directory").strip()
+        source_mode = str(
+            sensor_settings.get("source_mode", self.source_mode) or "directory"
+        ).strip()
         if source_mode not in {"directory", "apple_photos"}:
             source_mode = "directory"
 
@@ -259,9 +260,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         # The reader's per-scan limit caps photos, not sessions.
         photo_limit = max(self.max_items_per_sync, 1000)
 
-        analysis_features = list(
-            sensor_settings.get("analysis_features", self.analysis_features)
-        )
+        analysis_features = list(sensor_settings.get("analysis_features", self.analysis_features))
 
         all_photos: list[dict[str, Any]] = []
         total_scanned = 0
@@ -271,8 +270,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
 
         if source_mode == "apple_photos":
             photos_library_path = str(
-                sensor_settings.get("photos_library_path", self.photos_library_path)
-                or ""
+                sensor_settings.get("photos_library_path", self.photos_library_path) or ""
             ).strip()
             try:
                 result = await asyncio.to_thread(
@@ -341,16 +339,15 @@ class PhotoLibraryTimelineSensor(SensorBase):
         # participates in the session's representative pick.
         if "geocode" in analysis_features and all_photos:
             cache_dir = context.runtime_paths.plugin_cache_dir("photo-library")
-            locale_map = get_locale_map(
-                str(context.plugin_settings.get("locale", ""))
-            )
+            locale_map = get_locale_map(str(context.plugin_settings.get("locale", "")))
             coords = [
                 (float(p["latitude"]), float(p["longitude"]))
                 for p in all_photos
                 if p.get("latitude") is not None and p.get("longitude") is not None
             ]
             indices = [
-                i for i, p in enumerate(all_photos)
+                i
+                for i, p in enumerate(all_photos)
                 if p.get("latitude") is not None and p.get("longitude") is not None
             ]
             if coords:
@@ -379,15 +376,15 @@ class PhotoLibraryTimelineSensor(SensorBase):
         if len(sessions) > self.max_items_per_sync:
             sessions_capped = True
             sessions = sessions[: self.max_items_per_sync]
-            max_settled_mtime = max(
-                float(s.get("max_modified_at") or 0.0) for s in sessions
-            )
+            max_settled_mtime = max(float(s.get("max_modified_at") or 0.0) for s in sessions)
 
         # Cursor only advances past photos that contributed to an emitted
         # session. Unsettled recent photos stay within the look-back window.
         next_cursor = context.last_cursor
         watermark_ts = context.last_success_at
-        max_seen_mtime = max([last_cursor] + [float(p.get("modified_at") or 0.0) for p in all_photos])
+        max_seen_mtime = max(
+            [last_cursor] + [float(p.get("modified_at") or 0.0) for p in all_photos]
+        )
         has_more = bool(source_has_more or sessions_capped)
         if source_mode == "apple_photos" and apple_cursor is not None:
             if apple_backfill:
@@ -461,16 +458,14 @@ class PhotoLibraryTimelineSensor(SensorBase):
         device = str(item.get("device_name") or "").strip()
         location = str(item.get("location_name") or "").strip()
         date = str(item.get("date") or "")
-        weekday_index = int(item.get("weekday_index") if item.get("weekday_index") is not None else -1)
+        weekday_index = int(
+            item.get("weekday_index") if item.get("weekday_index") is not None else -1
+        )
         time_of_day_key = str(item.get("time_of_day") or "")
         photo_count = int(item.get("photo_count") or 0)
 
-        weekday_label = (
-            self.t(f"weekday.{weekday_index}") if 0 <= weekday_index <= 6 else ""
-        )
-        time_of_day_label = (
-            self.t(f"time_of_day.{time_of_day_key}") if time_of_day_key else ""
-        )
+        weekday_label = self.t(f"weekday.{weekday_index}") if 0 <= weekday_index <= 6 else ""
+        time_of_day_label = self.t(f"time_of_day.{time_of_day_key}") if time_of_day_key else ""
 
         title_bits = [date]
         if weekday_label:
@@ -543,9 +538,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
             "location_name": location,
             "location_source": str(item.get("location_source") or ""),
             "apple_photos_place_name": str(item.get("apple_photos_place_name") or ""),
-            "apple_photos_place_address": str(
-                item.get("apple_photos_place_address") or ""
-            ),
+            "apple_photos_place_address": str(item.get("apple_photos_place_address") or ""),
             "latitude": item.get("latitude"),
             "longitude": item.get("longitude"),
             "photo_count": photo_count,
@@ -556,7 +549,10 @@ class PhotoLibraryTimelineSensor(SensorBase):
 
         tags = build_session_retrieval_terms(item)
 
-        domain_payload = {"representative_photos": reps}
+        domain_payload = {
+            "representative_photos": reps,
+            "source_facets": build_session_source_facets(item),
+        }
 
         return self._build_output(
             source_item_id=str(item.get("session_key") or ""),

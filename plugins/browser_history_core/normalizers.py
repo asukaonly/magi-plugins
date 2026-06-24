@@ -1,4 +1,5 @@
 """Normalization helpers for browser history timeline ingestion."""
+
 from __future__ import annotations
 
 import re
@@ -130,6 +131,24 @@ def should_mark_viewed(item: dict[str, Any]) -> bool:
     if title and path:
         return True
     return visit_count >= 3 and bool(title)
+
+
+def build_source_facets(item: dict[str, Any]) -> list[dict[str, Any]]:
+    """Build exact source facets for structured browser recall."""
+    url = str(item.get("canonical_url") or item.get("url") or "").strip()
+    domain = str(item.get("domain") or normalize_domain(url)).strip().lower()
+    title = normalize_title(str(item.get("title") or ""))
+    visit_count = max(1, int(item.get("merged_visit_count") or item.get("visit_count") or 1))
+
+    facets: list[dict[str, Any]] = []
+    if domain:
+        facets.append({"name": "browser.domain", "text": domain})
+    if title:
+        facets.append({"name": "browser.title", "text": title})
+    if url:
+        facets.append({"name": "browser.url", "text": url})
+    facets.append({"name": "browser.visit_count", "numeric": visit_count})
+    return facets
 
 
 def _viewed_site_payload(item: dict[str, Any]) -> tuple[str, float, dict[str, Any]] | None:
@@ -316,9 +335,7 @@ def parse_title_entities(
             break
 
     segments = [
-        segment.strip()
-        for segment in _TITLE_SEPARATORS.split(normalized)
-        if segment.strip()
+        segment.strip() for segment in _TITLE_SEPARATORS.split(normalized) if segment.strip()
     ]
     detected_platform: str | None = None
     content_part: str = normalized

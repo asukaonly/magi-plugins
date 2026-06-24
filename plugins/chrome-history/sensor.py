@@ -1,4 +1,5 @@
 """Timeline sensor for local Chrome history."""
+
 from __future__ import annotations
 
 import logging
@@ -6,12 +7,10 @@ import re
 import time
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from magi_plugin_sdk.sensors import (
-    SensorBase,
     ContentBlock,
     L2BatchPolicy,
+    SensorBase,
     SensorMemoryPolicy,
     SensorOutput,
     SensorOutputMetadata,
@@ -20,7 +19,14 @@ from magi_plugin_sdk.sensors import (
 )
 
 from .chrome_reader import ChromeHistoryReader, _default_chrome_root
-from .normalizers import build_fact_hints, normalize_domain, parse_title_entities
+from .normalizers import (
+    build_fact_hints,
+    build_source_facets,
+    normalize_domain,
+    parse_title_entities,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class ChromeHistoryTimelineSensor(SensorBase):
@@ -88,20 +94,26 @@ class ChromeHistoryTimelineSensor(SensorBase):
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
             else {}
         )
-        source_path = str(sensor_settings.get("source_path") or self.source_path or _default_chrome_root())
+        source_path = str(
+            sensor_settings.get("source_path") or self.source_path or _default_chrome_root()
+        )
         profile = str(sensor_settings.get("profile") or self.profile or "Default")
         merge_window_minutes = max(
             1,
             int(sensor_settings.get("merge_window_minutes", self.merge_window_minutes)),
         )
         initial_sync_policy = str(sensor_settings.get("initial_sync_policy") or "lookback_days")
-        initial_sync_lookback_days = max(1, int(sensor_settings.get("initial_sync_lookback_days", 7)))
+        initial_sync_lookback_days = max(
+            1, int(sensor_settings.get("initial_sync_lookback_days", 7))
+        )
         initial_lookback_hours: int | None = max(1, initial_sync_lookback_days) * 24
         if context.last_cursor is None:
             if initial_sync_policy == "full":
                 initial_lookback_hours = None
             elif initial_sync_policy == "from_now":
-                latest_visit_id = self._reader.get_latest_visit_id(source_path=source_path, profile=profile)
+                latest_visit_id = self._reader.get_latest_visit_id(
+                    source_path=source_path, profile=profile
+                )
                 return SensorSyncResult(
                     items=[],
                     next_cursor=str(latest_visit_id) if latest_visit_id > 0 else None,
@@ -125,8 +137,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
         watermark_ts = context.last_success_at
         if raw_items:
             raw_max_visit_id = max(
-                int(item.get("last_visit_id") or item.get("visit_id") or 0)
-                for item in raw_items
+                int(item.get("last_visit_id") or item.get("visit_id") or 0) for item in raw_items
             )
             next_cursor = str(raw_max_visit_id) if raw_max_visit_id > 0 else context.last_cursor
             watermark_ts = max(float(item.get("visit_time") or 0.0) for item in raw_items)
@@ -153,7 +164,9 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "count": len(items),
                 "profile": profile,
                 "raw_count": sum(int(item.get("merged_visit_count") or 1) for item in items),
-                "initial_sync_policy": initial_sync_policy if context.last_cursor is None else "incremental",
+                "initial_sync_policy": (
+                    initial_sync_policy if context.last_cursor is None else "incremental"
+                ),
                 "filtered_count": filtered_count,
                 "continued_count": continued_count,
                 "merge_window_minutes": merge_window_minutes,
@@ -209,14 +222,22 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "first_visit_id": str(item.get("first_visit_id") or item.get("visit_id") or ""),
                 "last_visit_id": str(item.get("last_visit_id") or item.get("visit_id") or ""),
                 "merged_visit_count": merged_visit_count,
-                "burst_start_time": float(item.get("burst_start_time") or item.get("visit_time") or 0.0),
-                "burst_end_time": float(item.get("burst_end_time") or item.get("visit_time") or 0.0),
+                "burst_start_time": float(
+                    item.get("burst_start_time") or item.get("visit_time") or 0.0
+                ),
+                "burst_end_time": float(
+                    item.get("burst_end_time") or item.get("visit_time") or 0.0
+                ),
                 "domain": domain,
                 "from_visit": str(item.get("from_visit") or ""),
                 "transition": str(item.get("transition") or ""),
                 "canonical_url": url,
             },
-            domain_payload={"retention_mode": self.retention_mode, "promotion_key": domain},
+            domain_payload={
+                "retention_mode": self.retention_mode,
+                "promotion_key": domain,
+                "source_facets": build_source_facets(item),
+            },
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:

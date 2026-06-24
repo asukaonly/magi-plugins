@@ -79,3 +79,28 @@ def test_browser_history_marks_has_more_when_limit_is_full() -> None:
 
     assert result.stats["has_more"] is True
     assert result.next_cursor == "3"
+
+
+def test_browser_history_output_includes_source_facets() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.BaseBrowserHistoryTimelineSensor(reader=_Reader())
+
+    output = asyncio.run(
+        sensor.build_output(
+            {
+                "visit_id": "42",
+                "canonical_url": "https://example.com/docs",
+                "url": "https://example.com/docs",
+                "domain": "example.com",
+                "title": "Example docs",
+                "visit_time": 1_710_000_000.0,
+                "merged_visit_count": 3,
+            }
+        )
+    )
+
+    facets = output.domain_payload["source_facets"]
+    assert {"name": "browser.domain", "text": "example.com"} in facets
+    assert {"name": "browser.title", "text": "Example docs"} in facets
+    assert {"name": "browser.url", "text": "https://example.com/docs"} in facets
+    assert {"name": "browser.visit_count", "numeric": 3} in facets

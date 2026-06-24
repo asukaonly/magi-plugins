@@ -37,6 +37,34 @@ def test_system_media_policy_allows_l2_music_extraction() -> None:
     assert sensor.memory_policy.cognition_eligible is True
 
 
+def test_system_media_output_includes_music_source_facets() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.SystemMediaTimelineSensor()
+
+    output = asyncio.run(
+        sensor.build_output(
+            {
+                "started_at": "2026-05-17T03:00:00+00:00",
+                "ended_at": "2026-05-17T03:03:00+00:00",
+                "title": "Song A",
+                "artist": "Artist A",
+                "album": "Album A",
+                "duration_seconds": 180,
+                "app_name": "Music",
+                "app_id": "com.apple.Music",
+            }
+        )
+    )
+
+    facets = output.domain_payload["source_facets"]
+    assert {"name": "music.track", "text": "Song A"} in facets
+    assert {"name": "music.artist", "text": "Artist A"} in facets
+    assert {"name": "music.album", "text": "Album A"} in facets
+    assert {"name": "music.app", "text": "Music"} in facets
+    assert {"name": "music.play_count", "numeric": 1} in facets
+    assert {"name": "music.play_duration_sec", "numeric": 180} in facets
+
+
 def test_extract_metadata_emits_listened_fact_hint() -> None:
     mod = _load_sensor_module()
     sensor = mod.SystemMediaTimelineSensor()

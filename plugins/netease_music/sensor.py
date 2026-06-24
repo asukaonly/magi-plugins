@@ -1,4 +1,5 @@
 """Timeline sensor for NetEase Cloud Music."""
+
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +16,7 @@ from magi_plugin_sdk.sensors import (
     SensorSyncContext,
     SensorSyncResult,
 )
-from .normalizers import build_netease_url
+from .normalizers import build_music_source_facets, build_netease_url
 from .reader import DEFAULT_DB_PATH, NeteaseMusicReader
 
 logger = logging.getLogger(__name__)
@@ -63,11 +64,13 @@ class NeteaseMusicTimelineSensor(SensorBase):
 
     def source_item_version_fingerprint(self, item: dict) -> str:
         return hashlib.sha1(
-            "|".join([
-                str(item.get("track_id", "")),
-                str(item.get("update_time", "")),
-                str(item.get("play_duration_sec", 0))
-            ]).encode("utf-8")
+            "|".join(
+                [
+                    str(item.get("track_id", "")),
+                    str(item.get("update_time", "")),
+                    str(item.get("play_duration_sec", 0)),
+                ]
+            ).encode("utf-8")
         ).hexdigest()
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
@@ -83,7 +86,9 @@ class NeteaseMusicTimelineSensor(SensorBase):
             or DEFAULT_DB_PATH
         )
         initial_sync_policy = str(sensor_settings.get("initial_sync_policy") or "lookback_days")
-        initial_sync_lookback_days = max(1, int(sensor_settings.get("initial_sync_lookback_days", 7)))
+        initial_sync_lookback_days = max(
+            1, int(sensor_settings.get("initial_sync_lookback_days", 7))
+        )
         initial_lookback_days: int | None = None
 
         # Handle initial sync policy "from_now"
@@ -132,7 +137,9 @@ class NeteaseMusicTimelineSensor(SensorBase):
                 "count": len(items),
                 "source_path": source_path,
                 "min_play_duration": self.min_play_duration,
-                "initial_sync_policy": initial_sync_policy if context.last_cursor is None else "incremental",
+                "initial_sync_policy": (
+                    initial_sync_policy if context.last_cursor is None else "incremental"
+                ),
                 "has_more": len(items) >= pull_limit,
             },
         )
@@ -253,7 +260,10 @@ class NeteaseMusicTimelineSensor(SensorBase):
             content_blocks=content_blocks,
             tags=tags,
             provenance=provenance,
-            domain_payload={"retention_mode": self.retention_mode},
+            domain_payload={
+                "retention_mode": self.retention_mode,
+                "source_facets": build_music_source_facets(item),
+            },
         )
 
     async def extract_metadata(self, item: dict) -> SensorOutputMetadata:
@@ -265,23 +275,29 @@ class NeteaseMusicTimelineSensor(SensorBase):
         # Entity hints for L2 Phase 1 anchor injection
         entities: list[dict[str, Any]] = []
         if track_name:
-            entities.append({
-                "mention_text": track_name,
-                "entity_type": "media",
-                "canonical_name_hint": track_name,
-            })
+            entities.append(
+                {
+                    "mention_text": track_name,
+                    "entity_type": "media",
+                    "canonical_name_hint": track_name,
+                }
+            )
         if artist_name:
-            entities.append({
-                "mention_text": artist_name,
-                "entity_type": "person",
-                "canonical_name_hint": artist_name,
-            })
+            entities.append(
+                {
+                    "mention_text": artist_name,
+                    "entity_type": "person",
+                    "canonical_name_hint": artist_name,
+                }
+            )
         if album_name:
-            entities.append({
-                "mention_text": album_name,
-                "entity_type": "media",
-                "canonical_name_hint": album_name,
-            })
+            entities.append(
+                {
+                    "mention_text": album_name,
+                    "entity_type": "media",
+                    "canonical_name_hint": album_name,
+                }
+            )
 
         # Source-owned LISTENED evidence (rule-based, no LLM needed).
         fact_hints: list[dict[str, Any]] = []
@@ -299,9 +315,7 @@ class NeteaseMusicTimelineSensor(SensorBase):
             observed_at = item.get("update_time")
             if observed_at:
                 observed_ts = float(observed_at)
-                fact_hint["observed_at"] = (
-                    observed_ts / 1000 if observed_ts > 1e12 else observed_ts
-                )
+                fact_hint["observed_at"] = observed_ts / 1000 if observed_ts > 1e12 else observed_ts
             fact_hints.append(fact_hint)
 
         # Genre/style tags from configured strategy
@@ -366,7 +380,9 @@ class NeteaseMusicTimelineSensor(SensorBase):
             timeout = aiohttp.ClientTimeout(total=6)
             async with aiohttp.ClientSession() as session:
                 # Track-level tags
-                async with session.get(_LASTFM_API_URL, params=params_track, timeout=timeout) as resp:
+                async with session.get(
+                    _LASTFM_API_URL, params=params_track, timeout=timeout
+                ) as resp:
                     data = await resp.json(content_type=None)
                 track_tags = [
                     t["name"]
@@ -377,7 +393,9 @@ class NeteaseMusicTimelineSensor(SensorBase):
 
                 # Artist-level tags as supplementary genre signal when track tags are sparse
                 if len(tags) < 3:
-                    async with session.get(_LASTFM_API_URL, params=params_artist, timeout=timeout) as resp2:
+                    async with session.get(
+                        _LASTFM_API_URL, params=params_artist, timeout=timeout
+                    ) as resp2:
                         data2 = await resp2.json(content_type=None)
                     artist_tags = [
                         t["name"]

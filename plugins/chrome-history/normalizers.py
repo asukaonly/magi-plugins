@@ -1,4 +1,5 @@
 """Normalization helpers for Chrome history timeline ingestion."""
+
 from __future__ import annotations
 
 import re
@@ -142,6 +143,24 @@ def should_mark_viewed(item: dict[str, Any]) -> bool:
     return visit_count >= 3 and bool(title)
 
 
+def build_source_facets(item: dict[str, Any]) -> list[dict[str, Any]]:
+    """Build exact source facets for structured browser recall."""
+    url = str(item.get("canonical_url") or item.get("url") or "").strip()
+    domain = str(item.get("domain") or normalize_domain(url)).strip().lower()
+    title = normalize_title(str(item.get("title") or ""))
+    visit_count = max(1, int(item.get("merged_visit_count") or item.get("visit_count") or 1))
+
+    facets: list[dict[str, Any]] = []
+    if domain:
+        facets.append({"name": "browser.domain", "text": domain})
+    if title:
+        facets.append({"name": "browser.title", "text": title})
+    if url:
+        facets.append({"name": "browser.url", "text": url})
+    facets.append({"name": "browser.visit_count", "numeric": visit_count})
+    return facets
+
+
 def _viewed_site_payload(item: dict[str, Any]) -> tuple[str, float, dict[str, Any]] | None:
     domain = str(item.get("domain") or normalize_domain(str(item.get("url") or ""))).strip().lower()
     if not domain:
@@ -233,22 +252,24 @@ _PLATFORM_SUFFIX_VARIANTS: dict[str, str] = {}
 for _domain, _label in KNOWN_PLATFORM_DOMAINS.items():
     _PLATFORM_SUFFIX_VARIANTS[_label.casefold()] = _label
     _PLATFORM_SUFFIX_VARIANTS[_domain.split(".")[0].casefold()] = _label
-_PLATFORM_SUFFIX_VARIANTS.update({
-    "哔哩哔哩": "Bilibili",
-    "b站": "Bilibili",
-    "bilibili": "Bilibili",
-    "抖音": "Douyin",
-    "tiktok": "Douyin",
-    "知乎": "Zhihu",
-    "微博": "Weibo",
-    "淘宝": "Taobao",
-    "京东": "JD",
-    "小红书": "Xiaohongshu",
-    "google search": "Google",
-    "google 搜索": "Google",
-    "fandom": "Fandom",
-    "wiki.gg": "Wiki.gg",
-})
+_PLATFORM_SUFFIX_VARIANTS.update(
+    {
+        "哔哩哔哩": "Bilibili",
+        "b站": "Bilibili",
+        "bilibili": "Bilibili",
+        "抖音": "Douyin",
+        "tiktok": "Douyin",
+        "知乎": "Zhihu",
+        "微博": "Weibo",
+        "淘宝": "Taobao",
+        "京东": "JD",
+        "小红书": "Xiaohongshu",
+        "google search": "Google",
+        "google 搜索": "Google",
+        "fandom": "Fandom",
+        "wiki.gg": "Wiki.gg",
+    }
+)
 
 _WIKI_CONTEXT_SUFFIX = re.compile(r"\s*(?:wiki|维基|百科)\s*$", re.IGNORECASE)
 
@@ -329,9 +350,7 @@ def parse_title_entities(
 
     # Split the title by common separators and check the last segment
     segments = [
-        segment.strip()
-        for segment in _TITLE_SEPARATORS.split(normalized)
-        if segment.strip()
+        segment.strip() for segment in _TITLE_SEPARATORS.split(normalized) if segment.strip()
     ]
     detected_platform: str | None = None
     content_part: str = normalized

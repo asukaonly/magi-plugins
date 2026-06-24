@@ -25,6 +25,51 @@ def _load_sensor_module() -> ModuleType:
     return module
 
 
+def test_build_output_includes_photo_source_facets() -> None:
+    mod = _load_sensor_module()
+    sensor = mod.PhotoLibraryTimelineSensor()
+
+    output = asyncio.run(
+        sensor.build_output(
+            {
+                "session_key": "2026-02-01:tokyo",
+                "date": "2026-02-01",
+                "weekday_index": 6,
+                "time_of_day": "afternoon",
+                "photo_count": 3,
+                "device_name": "iPhone 15 Pro",
+                "device_slug": "iphone-15-pro",
+                "location_name": "Senso-ji, Tokyo, Japan",
+                "apple_photos_place_name": "Senso-ji",
+                "apple_photos_place_address": "2 Chome-3-1 Asakusa, Taito City, Tokyo",
+                "latitude": 35.7148,
+                "longitude": 139.7967,
+                "first_capture_ts": 1_706_000_000.0,
+                "last_capture_ts": 1_706_000_120.0,
+                "representative_photos": [
+                    {
+                        "asset_local_id": "asset-1",
+                        "path": "/tmp/photo.jpg",
+                        "location_name": "Senso-ji, Tokyo, Japan",
+                        "apple_photos_place_address": "2 Chome-3-1 Asakusa, Taito City, Tokyo",
+                        "latitude": 35.7148,
+                        "longitude": 139.7967,
+                    }
+                ],
+            }
+        )
+    )
+
+    facets = output.domain_payload["source_facets"]
+    assert {"name": "photo.count", "numeric": 3} in facets
+    assert {"name": "photo.device", "text": "iPhone 15 Pro"} in facets
+    assert {"name": "photo.location_name", "text": "Senso-ji, Tokyo, Japan"} in facets
+    assert {
+        "name": "photo.location_alias",
+        "text": "2 Chome-3-1 Asakusa, Taito City, Tokyo",
+    } in facets
+
+
 def test_extract_metadata_emits_session_facts_as_fact_hints() -> None:
     mod = _load_sensor_module()
     sensor = mod.PhotoLibraryTimelineSensor()
@@ -42,12 +87,16 @@ def test_extract_metadata_emits_session_facts_as_fact_hints() -> None:
         )
     )
 
-    relations = {(rel["predicate"], rel["object_id"], rel["object_type"]) for rel in meta.relation_candidates}
+    relations = {
+        (rel["predicate"], rel["object_id"], rel["object_type"]) for rel in meta.relation_candidates
+    }
     assert relations == {
         ("OWNS", "device:iphone15", "device"),
         ("VISITED", "location:Riverside Park", "place"),
     }
-    facts = {(fact["predicate"], fact["object_ref"], fact["object_type"]) for fact in meta.fact_hints}
+    facts = {
+        (fact["predicate"], fact["object_ref"], fact["object_type"]) for fact in meta.fact_hints
+    }
     assert facts == {
         ("OWNS", "hardware:iphone15", "hardware"),
         ("VISITED", "place:Riverside Park", "place"),
@@ -73,8 +122,7 @@ def test_extract_metadata_adds_apple_place_details_to_retrieval_terms() -> None:
                 "location_source": "apple_photos",
                 "apple_photos_place_name": "Honshu, Minato, Tokyo, Japan",
                 "apple_photos_place_address": (
-                    "大手第二ビル, 23-15, Toranomon 3-Chōme, "
-                    "Minato, Tokyo, Japan 105-0001"
+                    "大手第二ビル, 23-15, Toranomon 3-Chōme, " "Minato, Tokyo, Japan 105-0001"
                 ),
                 "photo_count": 1,
                 "first_capture_ts": 1_735_372_123.182,

@@ -44,3 +44,28 @@ def test_chrome_history_output_uses_domain_promotion_key() -> None:
     )
 
     assert output.domain_payload["promotion_key"] == "example.com"
+
+
+def test_chrome_history_output_includes_source_facets() -> None:
+    sensor_cls = _load_sensor_class()
+    sensor = sensor_cls()
+
+    output = asyncio.run(
+        sensor.build_output(
+            {
+                "visit_id": 42,
+                "url": "https://example.com/docs",
+                "canonical_url": "https://example.com/docs",
+                "domain": "example.com",
+                "title": "Example docs",
+                "visit_time": 1_710_000_000.0,
+                "merged_visit_count": 3,
+            }
+        )
+    )
+
+    facets = output.domain_payload["source_facets"]
+    assert {"name": "browser.domain", "text": "example.com"} in facets
+    assert {"name": "browser.title", "text": "Example docs"} in facets
+    assert {"name": "browser.url", "text": "https://example.com/docs"} in facets
+    assert {"name": "browser.visit_count", "numeric": 3} in facets

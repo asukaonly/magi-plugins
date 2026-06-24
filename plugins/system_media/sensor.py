@@ -1,4 +1,5 @@
 """Timeline sensor for cross-platform media playback sessions."""
+
 from __future__ import annotations
 
 import hashlib
@@ -51,7 +52,9 @@ class SystemMediaTimelineSensor(SensorBase):
         return datetime.now(timezone.utc)
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
-        return f"media:{item.get('started_at', '')}:{item.get('app_id', '')}:{item.get('title', '')}"
+        return (
+            f"media:{item.get('started_at', '')}:{item.get('app_id', '')}:{item.get('title', '')}"
+        )
 
     def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
         parts = [
@@ -147,9 +150,13 @@ class SystemMediaTimelineSensor(SensorBase):
             stats={"count": len(items)},
         )
 
-    async def flush_runtime_state(self, *, runtime_paths: Any, plugin_settings: dict[str, Any]) -> dict[str, Any]:
+    async def flush_runtime_state(
+        self, *, runtime_paths: Any, plugin_settings: dict[str, Any]
+    ) -> dict[str, Any]:
         _ = plugin_settings
-        return await self._state_store.flush_in_progress(runtime_paths=runtime_paths, now=self._now())
+        return await self._state_store.flush_in_progress(
+            runtime_paths=runtime_paths, now=self._now()
+        )
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         started_at = datetime.fromisoformat(str(item["started_at"]))
@@ -184,21 +191,21 @@ class SystemMediaTimelineSensor(SensorBase):
 
         return self._build_output(
             source_item_id=self.source_item_identity(item),
-                activity=self._build_activity(
-                    source=self._build_activity_facet(
-                        code=app_id or app_name.lower().replace(" ", "_") or "media_app",
-                        i18n_key=f"apps.{app_id or 'media'}",
-                        fallback=app_name or app_id or "Media",
-                        embedding_fallback=app_name or app_id or "媒体",
-                    ),
-                    action=self._build_activity_facet(
-                        code="playback",
-                        i18n_key="activity.action.playback",
-                        fallback="Playback",
-                        embedding_fallback="播放",
-                    ),
+            activity=self._build_activity(
+                source=self._build_activity_facet(
+                    code=app_id or app_name.lower().replace(" ", "_") or "media_app",
+                    i18n_key=f"apps.{app_id or 'media'}",
+                    fallback=app_name or app_id or "Media",
+                    embedding_fallback=app_name or app_id or "媒体",
                 ),
-                narration=self._build_narration(title=headline, body=summary),
+                action=self._build_activity_facet(
+                    code="playback",
+                    i18n_key="activity.action.playback",
+                    fallback="Playback",
+                    embedding_fallback="播放",
+                ),
+            ),
+            narration=self._build_narration(title=headline, body=summary),
             occurred_at=started_at.timestamp(),
             content_blocks=blocks,
             tags=["media", "music", "listening"],
@@ -223,8 +230,28 @@ class SystemMediaTimelineSensor(SensorBase):
                 "started_at": str(item.get("started_at", "")),
                 "ended_at": str(item.get("ended_at", "")),
                 "duration_seconds": duration_seconds,
+                "source_facets": _build_music_source_facets(item),
             },
         )
+
+
+def _build_music_source_facets(item: dict[str, Any]) -> list[dict[str, Any]]:
+    facets: list[dict[str, Any]] = []
+    for key, facet_name in (
+        ("title", "music.track"),
+        ("artist", "music.artist"),
+        ("album", "music.album"),
+        ("app_name", "music.app"),
+        ("app_id", "music.app"),
+    ):
+        value = str(item.get(key) or "").strip()
+        if value:
+            facets.append({"name": facet_name, "text": value})
+    facets.append({"name": "music.play_count", "numeric": 1})
+    facets.append(
+        {"name": "music.play_duration_sec", "numeric": int(item.get("duration_seconds") or 0)}
+    )
+    return facets
 
 
 def _parse_started_at(raw_value: object) -> float | None:
