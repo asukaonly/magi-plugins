@@ -91,7 +91,7 @@ def test_extract_metadata_emits_session_facts_as_fact_hints() -> None:
         (rel["predicate"], rel["object_id"], rel["object_type"]) for rel in meta.relation_candidates
     }
     assert relations == {
-        ("OWNS", "device:iphone15", "device"),
+        ("OWNS", "hardware:iphone15", "hardware"),
         ("VISITED", "location:Riverside Park", "place"),
     }
     facts = {

@@ -169,7 +169,7 @@ def build_session_entity_hints(session: dict[str, Any]) -> list[dict[str, Any]]:
 
     Sessions surface two kinds of first-class entities:
 
-    * ``device``  鈥?the camera identity used during the session.
+    * ``hardware``  鈥?the camera identity used during the session.
     * ``location`` 鈥?the geocoded place when GPS is available.
     """
     hints: list[dict[str, Any]] = []
@@ -180,7 +180,7 @@ def build_session_entity_hints(session: dict[str, Any]) -> list[dict[str, Any]]:
         hints.append(
             {
                 "mention_text": device_name,
-                "entity_type": "device",
+                "entity_type": "hardware",
                 "canonical_name_hint": device_slug or device_name,
             }
         )
@@ -207,7 +207,7 @@ def build_session_relation_candidates(session: dict[str, Any]) -> list[dict[str,
 
     Two predicates are emitted:
 
-    * ``user:self -OWNS-> device``  when device identity is known.
+    * ``user:self -OWNS-> hardware``  when device identity is known.
     * ``user:self -VISITED-> location``     when GPS / geocoded place is known.
 
     These are the long-lived facts a memory system actually needs about
@@ -229,8 +229,8 @@ def build_session_relation_candidates(session: dict[str, Any]) -> list[dict[str,
                 "subject_id": "user:self",
                 "subject_type": "user",
                 "predicate": "OWNS",
-                "object_id": f"device:{device_slug}",
-                "object_type": "device",
+                "object_id": f"hardware:{device_slug}",
+                "object_type": "hardware",
                 "confidence": 0.9,
                 "observed_at": observed_at,
                 "object_attributes": {
