@@ -34,6 +34,7 @@ from magi_plugin_sdk.sensors import (
     SensorOutputMetadata,
     SensorSyncContext,
     SensorSyncResult,
+    TimelinePresentation,
 )
 
 # Intra-plugin imports — fallback for test loader (spec_from_file_location)
@@ -501,6 +502,10 @@ class ScreenshotSensor(SensorBase):
             domain_payload={
                 "importance_score": _importance_for_capture(item),
             },
+            timeline_presentation=TimelinePresentation(
+                mode="evidence_only",
+                title=title or None,
+            ),
         )
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:

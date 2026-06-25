@@ -249,6 +249,29 @@ async def test_build_output_falls_back_to_ocr_when_ax_hollow(tmp_path: Path) -> 
 
 
 @pytest.mark.asyncio
+async def test_build_output_marks_ocr_as_evidence_only_for_timeline(tmp_path: Path) -> None:
+    """The main timeline should see a compact window title, not the OCR wall."""
+    sensor_mod = _load("sensor")
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    item = _ax_item(
+        used_ocr_fallback=True,
+        ocr_text=(
+            "Magi AI Agent Framework 通知 对话 时间线 记忆 任务 设置 后台任务 "
+            "调度配置 调度记录 今天 近 24 小时 近 7 天 全部 用户自定义 0"
+        ),
+    )
+
+    output = await sensor.build_output(item)
+
+    assert output.narration.body == item["ocr_text"]
+    assert output.content_blocks[0].value == item["ocr_text"]
+    assert output.timeline_presentation.mode == "evidence_only"
+    assert output.timeline_presentation.title == "Code: plugin.toml — magi-plugins"
+    assert output.timeline_presentation.summary is None
+    assert item["ocr_text"] not in output.timeline_presentation.title
+
+
+@pytest.mark.asyncio
 async def test_captures_are_l1_only_and_never_reach_l2(tmp_path: Path) -> None:
     """Screen OCR/AX text has no speaker attribution, so captures must stay out
     of L2 cognition. A chat window captured on screen would otherwise let the
