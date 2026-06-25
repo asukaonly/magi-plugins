@@ -186,6 +186,45 @@ def test_multiple_sessions_each_yield_one_conversation(tmp_path: Path) -> None:
     assert convs[1].user_turns == ["two"]
 
 
+def test_skips_subagent_transcripts(tmp_path: Path) -> None:
+    mod = _load_claude_adapter()
+    root = tmp_path / ".claude" / "projects" / "proj"
+    root.mkdir(parents=True)
+    _write(
+        root / "main.jsonl",
+        [
+            {
+                "type": "user",
+                "sessionId": "main",
+                "timestamp": "2026-06-25T10:00:00.000Z",
+                "isSidechain": False,
+                "message": {"role": "user", "content": "top-level user prompt"},
+            }
+        ],
+    )
+    subagents = root / "main" / "subagents"
+    subagents.mkdir(parents=True)
+    _write(
+        subagents / "agent-generated.jsonl",
+        [
+            {
+                "type": "user",
+                "sessionId": "agent-generated",
+                "timestamp": "2026-06-25T10:01:00.000Z",
+                "isSidechain": True,
+                "message": {"role": "user", "content": "agent delegated prompt"},
+            }
+        ],
+    )
+
+    convs = list(
+        mod.ClaudeCodeAdapter().iter_conversations(str(root.parent), since_mtime=0.0, cutoff_ts=0.0)
+    )
+
+    assert [conv.session_id for conv in convs] == ["main"]
+    assert convs[0].user_turns == ["top-level user prompt"]
+
+
 def test_mtime_and_cutoff_filters(tmp_path: Path) -> None:
     mod = _load_claude_adapter()
     root = tmp_path / ".claude" / "projects" / "p"

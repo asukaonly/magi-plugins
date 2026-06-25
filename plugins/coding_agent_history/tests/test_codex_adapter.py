@@ -89,6 +89,72 @@ def test_groups_history_by_session(tmp_path: Path) -> None:
         assert c.native_path.endswith("history.jsonl")
 
 
+def test_reads_codex_session_transcripts(tmp_path: Path) -> None:
+    mod = _load_codex_adapter()
+    codex = tmp_path / ".codex"
+    session_dir = codex / "sessions" / "2026" / "06" / "25"
+    session_dir.mkdir(parents=True)
+    transcript = session_dir / "rollout-2026-06-25T10-00-00-session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            json.dumps(o)
+            for o in [
+                {
+                    "type": "session_meta",
+                    "timestamp": "2026-06-25T10:00:00.000Z",
+                    "payload": {
+                        "id": "session-1",
+                        "cwd": "/Users/me/project",
+                    },
+                },
+                {
+                    "type": "event_msg",
+                    "timestamp": "2026-06-25T10:01:00.000Z",
+                    "payload": {
+                        "type": "user_message",
+                        "message": "build the Codex importer",
+                        "images": [],
+                        "local_images": [],
+                        "text_elements": [],
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "timestamp": "2026-06-25T10:02:00.000Z",
+                    "payload": {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "output_text", "text": "assistant text is ignored"}
+                        ],
+                    },
+                },
+                {
+                    "type": "event_msg",
+                    "timestamp": "2026-06-25T10:03:00.000Z",
+                    "payload": {
+                        "type": "user_message",
+                        "message": "verify it with tests",
+                        "images": [],
+                        "local_images": [],
+                        "text_elements": [],
+                    },
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    convs = list(mod.CodexAdapter().iter_conversations(str(codex), since_mtime=0.0, cutoff_ts=0.0))
+
+    assert len(convs) == 1
+    assert convs[0].session_id == "session-1"
+    assert convs[0].user_turns == ["build the Codex importer", "verify it with tests"]
+    assert convs[0].project_hint == "project"
+    assert convs[0].native_path == str(transcript)
+    assert convs[0].occurred_at > 0
+
+
 def test_auth_json_is_never_opened(tmp_path: Path, monkeypatch) -> None:
     """Hard guard: fail if the adapter opens any file other than history.jsonl."""
     mod = _load_codex_adapter()

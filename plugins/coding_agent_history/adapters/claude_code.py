@@ -67,6 +67,8 @@ class ClaudeCodeAdapter:
         if not root.is_dir():
             return
         for jsonl in sorted(root.rglob("*.jsonl")):
+            if "subagents" in jsonl.parts:
+                continue
             try:
                 if jsonl.stat().st_mtime <= since_mtime:
                     continue
