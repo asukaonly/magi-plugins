@@ -164,7 +164,7 @@ def test_recall_asset_refs_returns_resolver_pointer() -> None:
                     "window_title": "Claude — magi/插件改造",
                 }
             },
-            "timeline": {"provenance": {"captured_at": 1779944807.5}},
+            "activity_snapshot": {"provenance": {"captured_at": 1779944807.5}},
         },
     }
     refs = mod.build_recall_asset_refs(event)

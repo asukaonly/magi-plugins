@@ -48,20 +48,28 @@ def _event_provenance(event: dict[str, Any]) -> dict[str, Any]:
     metadata = event.get("metadata_json")
     if not isinstance(metadata, dict):
         return {}
-    timeline = metadata.get("timeline")
-    if not isinstance(timeline, dict):
+    activity_snapshot = metadata.get("activity_snapshot")
+    if not isinstance(activity_snapshot, dict):
         return {}
-    provenance = timeline.get("provenance")
+    provenance = activity_snapshot.get("provenance")
     return provenance if isinstance(provenance, dict) else {}
 
 
 def _event_text(event: dict[str, Any]) -> str:
     metadata = event.get("metadata_json")
-    timeline = metadata.get("timeline") if isinstance(metadata, dict) else None
-    timeline_text = ""
-    if isinstance(timeline, dict):
-        timeline_text = str(timeline.get("title") or timeline.get("summary") or "")
-    return str(event.get("content") or event.get("title") or event.get("summary") or timeline_text or "")
+    activity_snapshot = metadata.get("activity_snapshot") if isinstance(metadata, dict) else None
+    snapshot_text = ""
+    if isinstance(activity_snapshot, dict):
+        snapshot_text = str(
+            activity_snapshot.get("title") or activity_snapshot.get("summary") or ""
+        )
+    return str(
+        event.get("content")
+        or event.get("title")
+        or event.get("summary")
+        or snapshot_text
+        or ""
+    )
 
 
 def _command_family(event: dict[str, Any]) -> str | None:

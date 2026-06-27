@@ -21,6 +21,7 @@ from magi_plugin_sdk.sensors import (
 from .chrome_reader import ChromeHistoryReader, _default_chrome_root
 from .normalizers import (
     build_fact_hints,
+    build_relation_candidates,
     build_source_facets,
     normalize_domain,
     parse_title_entities,
@@ -248,7 +249,7 @@ class ChromeHistoryTimelineSensor(SensorBase):
             entities=entity_hints,
             tags=[tag for tag in ("chrome_history", domain) if tag],
             fact_hints=build_fact_hints(item),
-            relation_candidates=[],
+            relation_candidates=build_relation_candidates(item),
         )
 
 

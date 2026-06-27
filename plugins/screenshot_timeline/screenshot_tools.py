@@ -222,8 +222,16 @@ def build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
         return []
 
     metadata = event.get("metadata_json") if isinstance(event.get("metadata_json"), dict) else {}
-    timeline = metadata.get("timeline") if isinstance(metadata.get("timeline"), dict) else {}
-    provenance = timeline.get("provenance") if isinstance(timeline.get("provenance"), dict) else {}
+    activity_snapshot = (
+        metadata.get("activity_snapshot")
+        if isinstance(metadata.get("activity_snapshot"), dict)
+        else {}
+    )
+    provenance = (
+        activity_snapshot.get("provenance")
+        if isinstance(activity_snapshot.get("provenance"), dict)
+        else {}
+    )
     activity = metadata.get("activity") if isinstance(metadata.get("activity"), dict) else {}
     qualifiers = activity.get("qualifiers") if isinstance(activity.get("qualifiers"), dict) else {}
 

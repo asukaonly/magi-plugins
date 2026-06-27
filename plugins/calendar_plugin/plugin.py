@@ -48,10 +48,10 @@ def _event_provenance(event: dict[str, Any]) -> dict[str, Any]:
     metadata = event.get("metadata_json")
     if not isinstance(metadata, dict):
         return {}
-    timeline = metadata.get("timeline")
-    if not isinstance(timeline, dict):
+    activity_snapshot = metadata.get("activity_snapshot")
+    if not isinstance(activity_snapshot, dict):
         return {}
-    provenance = timeline.get("provenance")
+    provenance = activity_snapshot.get("provenance")
     return provenance if isinstance(provenance, dict) else {}
 
 

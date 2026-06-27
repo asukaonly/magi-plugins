@@ -418,10 +418,10 @@ class ChromeHistoryPlugin(Plugin):
             metadata = event.get("metadata_json")
             if not isinstance(metadata, dict):
                 continue
-            timeline = metadata.get("timeline")
-            if not isinstance(timeline, dict):
+            activity_snapshot = metadata.get("activity_snapshot")
+            if not isinstance(activity_snapshot, dict):
                 continue
-            provenance = timeline.get("provenance")
+            provenance = activity_snapshot.get("provenance")
             if not isinstance(provenance, dict):
                 continue
             domain = str(provenance.get("domain") or "").strip().lower()

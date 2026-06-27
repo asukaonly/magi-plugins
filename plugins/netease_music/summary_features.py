@@ -4,7 +4,7 @@ import json
 from collections import Counter
 from typing import Any
 
-_GENERIC_TIMELINE_TAGS = {"netease_music", "music", "listening", "liked"}
+_GENERIC_ACTIVITY_TAGS = {"netease_music", "music", "listening", "liked"}
 
 
 def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dict[str, Any]:
@@ -23,8 +23,8 @@ def build_netease_temporal_summary_features(events: list[dict[str, Any]]) -> dic
             continue
         total_event_count += 1
         metadata = _coerce_mapping(event.get("metadata_json"))
-        timeline = _coerce_mapping(metadata.get("timeline"))
-        provenance = _coerce_mapping(timeline.get("provenance"))
+        activity_snapshot = _coerce_mapping(metadata.get("activity_snapshot"))
+        provenance = _coerce_mapping(activity_snapshot.get("provenance"))
 
         track_name = _normalized_value(provenance.get("track_name"))
         artist_name = _normalized_value(provenance.get("artist_name"))
@@ -82,11 +82,11 @@ def _extract_event_tags(metadata: dict[str, Any]) -> list[str]:
     if retrieval_terms:
         return retrieval_terms
 
-    timeline = _coerce_mapping(metadata.get("timeline"))
+    activity_snapshot = _coerce_mapping(metadata.get("activity_snapshot"))
     return [
         tag
-        for tag in _normalize_terms(timeline.get("tags"))
-        if tag.casefold() not in _GENERIC_TIMELINE_TAGS
+        for tag in _normalize_terms(activity_snapshot.get("tags"))
+        if tag.casefold() not in _GENERIC_ACTIVITY_TAGS
     ]
 
 

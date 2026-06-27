@@ -20,6 +20,7 @@ from magi_plugin_sdk.sensors import (
 
 from .normalizers import (
     build_fact_hints,
+    build_relation_candidates,
     build_source_facets,
     normalize_domain,
     parse_title_entities,
@@ -277,7 +278,7 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
             entities=entity_hints,
             tags=[tag for tag in (self.source_type, domain) if tag],
             fact_hints=build_fact_hints(item),
-            relation_candidates=[],
+            relation_candidates=build_relation_candidates(item),
         )
 
 

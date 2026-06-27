@@ -490,10 +490,10 @@ class PhotoLibraryPlugin(Plugin):
             metadata = event.get("metadata_json")
             if not isinstance(metadata, dict):
                 continue
-            timeline = metadata.get("timeline")
-            if not isinstance(timeline, dict):
+            activity_snapshot = metadata.get("activity_snapshot")
+            if not isinstance(activity_snapshot, dict):
                 continue
-            provenance = timeline.get("provenance")
+            provenance = activity_snapshot.get("provenance")
             if not isinstance(provenance, dict):
                 continue
             device = str(provenance.get("device_name") or "").strip()
@@ -558,20 +558,33 @@ class PhotoLibraryPlugin(Plugin):
 
 def _build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
     metadata = event.get("metadata_json") if isinstance(event.get("metadata_json"), dict) else {}
-    timeline = metadata.get("timeline") if isinstance(metadata.get("timeline"), dict) else {}
-    event_source_type = str(timeline.get("source_type") or "").strip()
+    activity_snapshot = (
+        metadata.get("activity_snapshot")
+        if isinstance(metadata.get("activity_snapshot"), dict)
+        else {}
+    )
+    event_source_type = str(activity_snapshot.get("source_type") or "").strip()
     if event_source_type not in PHOTO_LIBRARY_SOURCE_TYPES:
         return []
 
-    provenance = timeline.get("provenance") if isinstance(timeline.get("provenance"), dict) else {}
+    provenance = (
+        activity_snapshot.get("provenance")
+        if isinstance(activity_snapshot.get("provenance"), dict)
+        else {}
+    )
     representative_photos = metadata.get("representative_photos")
     if not isinstance(representative_photos, list):
         return []
 
-    title = str(timeline.get("title") or "").strip() or None
+    title = str(activity_snapshot.get("title") or "").strip() or None
     location_name = str(provenance.get("location_name") or "").strip() or None
     device_name = str(provenance.get("device_name") or "").strip() or None
-    session_source_item_id = str(timeline.get("source_item_id") or event.get("source_item_id") or "").strip() or None
+    session_source_item_id = (
+        str(
+            activity_snapshot.get("source_item_id") or event.get("source_item_id") or ""
+        ).strip()
+        or None
+    )
     event_id = str(event.get("event_id") or "").strip() or None
     occurred_at = event.get("timestamp") or event.get("created_at")
 

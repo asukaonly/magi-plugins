@@ -65,9 +65,9 @@ def _weixin_metadata(event: dict[str, Any]) -> dict[str, Any]:
     channel = metadata.get("channel")
     if isinstance(channel, dict):
         return channel
-    timeline = metadata.get("timeline")
-    if isinstance(timeline, dict):
-        provenance = timeline.get("provenance")
+    activity_snapshot = metadata.get("activity_snapshot")
+    if isinstance(activity_snapshot, dict):
+        provenance = activity_snapshot.get("provenance")
         if isinstance(provenance, dict):
             return provenance
     return metadata
