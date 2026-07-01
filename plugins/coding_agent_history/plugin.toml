@@ -3,7 +3,7 @@ id = "coding_agent_history"
 name = "Agent History"
 name_i18n = { "zh-CN" = "Agent 历史" }
 icon = "lucide:bot"
-version = "0.1.3"
+version = "0.1.4"
 description = "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device."
 description_i18n = { "zh-CN" = "可选。仅读取本地 Agent（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。" }
 author = "Magi Team"

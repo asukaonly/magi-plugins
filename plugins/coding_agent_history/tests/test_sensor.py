@@ -52,6 +52,12 @@ def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=3
         def plugin_cache_dir(self, plugin_id: str) -> Path:
             return tmp_path / "cache"
 
+    sensor_cfg = {
+        "initial_sync_lookback_days": lookback,
+    }
+    if paths is not None:
+        sensor_cfg["source_paths"] = list(paths)
+
     return SensorSyncContext(
         source_type=source_type,
         manual=True,
@@ -61,10 +67,7 @@ def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=3
         runtime_paths=_Paths(),
         plugin_settings={
             "sensors": {
-                source_type: {
-                    "source_paths": list(paths),
-                    "initial_sync_lookback_days": lookback,
-                }
+                source_type: sensor_cfg
             }
         },
     )
@@ -124,6 +127,27 @@ def test_collect_and_build_output_scrubs_and_uses_user_turns(tmp_path: Path) -> 
     assert out.source_item_id == "codex:c1"
     assert out.source_type == "codex_agent_history"
     assert res.next_cursor is not None
+
+
+def test_collect_uses_default_paths_when_settings_omit_paths(tmp_path: Path) -> None:
+    mod = _load_sensor_module()
+    root = tmp_path / ".codex"
+    root.mkdir()
+    now = time.time()
+    (root / "history.jsonl").write_text(
+        json.dumps({"session_id": "c1", "text": "work from default path", "ts": now}),
+        encoding="utf-8",
+    )
+    sensor = mod.CodingAgentHistorySensor(
+        agent="codex",
+        source_type="codex_agent_history",
+        display_name="Codex",
+        default_source_paths=[str(root)],
+    )
+
+    res = asyncio.run(sensor.collect_items(_ctx(tmp_path, None)))
+
+    assert [item["source_item_id"] for item in res.items] == ["codex:c1"]
 
 
 def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:

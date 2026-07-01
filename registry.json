@@ -217,7 +217,7 @@
         "zh-CN": "Agent 历史"
       },
       "icon": "lucide:bot",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "path": "plugins/coding_agent_history",
       "description": "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
       "description_i18n": {

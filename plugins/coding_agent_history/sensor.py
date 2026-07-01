@@ -74,12 +74,20 @@ class CodingAgentHistorySensor(SensorBase):
     relation_edge_whitelist = ()
     supports_pull_sync = True
 
-    def __init__(self, *, agent: str, source_type: str, display_name: str) -> None:
+    def __init__(
+        self,
+        *,
+        agent: str,
+        source_type: str,
+        display_name: str,
+        default_source_paths: list[str] | None = None,
+    ) -> None:
         super().__init__()
         self.agent = str(agent)
         self.source_type = str(source_type)
         self.sensor_id = f"timeline.{self.source_type}"
         self.display_name = str(display_name)
+        self.default_source_paths = [str(path) for path in (default_source_paths or [])]
         # THE CRUX: author_type="user" + memory_domain="user_authored" => L2 renders
         # [USER] and mines these as the user's own facts (mirrors obsidian-vault).
         # Transcripts are higher-volume / lower-signal than hand-authored notes, so
@@ -121,7 +129,9 @@ class CodingAgentHistorySensor(SensorBase):
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         cfg = self._resolve_settings(context)
-        source_paths = [str(p) for p in (cfg.get("source_paths") or []) if str(p).strip()]
+        configured_paths = cfg.get("source_paths")
+        paths_payload = configured_paths if configured_paths else self.default_source_paths
+        source_paths = [str(p) for p in (paths_payload or []) if str(p).strip()]
         if not source_paths:
             return SensorSyncResult(
                 items=[],

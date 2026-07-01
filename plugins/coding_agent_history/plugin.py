@@ -259,6 +259,7 @@ class CodingAgentHistoryPlugin(Plugin):
                 agent=entry_id,
                 source_type=source_type,
                 display_name=str(entry["display_name"]),
+                default_source_paths=list(entry["default_source_paths"]),
             )
             prefix = f"sensors.{source_type}"
             registered.append(
