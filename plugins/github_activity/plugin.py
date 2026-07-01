@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import Any
 
 from magi_plugin_sdk import (
@@ -24,6 +25,8 @@ from .sensor import GitHubActivitySensor
 
 
 CONNECT_ACTION_ID = "connect_github"
+GITHUB_CLIENT_ID_ENV = "MAGI_GITHUB_ACTIVITY_CLIENT_ID"
+DEFAULT_GITHUB_CLIENT_ID = "Ov23liOlYZ2ibhh1I65w"
 L2_PREDICATES = ["WORKS_WITH", "COMMITTED", "USES", "REFERENCES"]
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -56,6 +59,21 @@ def _settings_value(
     return settings.get(key, default)
 
 
+def _configured_client_id(field_values: dict[str, Any] | None, settings: dict[str, Any]) -> str:
+    field_value = _settings_value(field_values, settings, "sensors.github_activity.client_id")
+    candidates = (
+        field_value,
+        settings.get("client_id"),
+        os.environ.get(GITHUB_CLIENT_ID_ENV),
+        DEFAULT_GITHUB_CLIENT_ID,
+    )
+    for candidate in candidates:
+        value = str(candidate or "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _activation_flow(prefix: str) -> ActivationFlowSpec:
     return ActivationFlowSpec(
         title="Connect GitHub",
@@ -68,17 +86,6 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
         fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.client_id",
-                type="input",
-                label="GitHub Client ID",
-                description="Client ID from the GitHub integration used for device authorization.",
-                default="",
-                required=True,
-                section="connection",
-                surface="timeline",
-                order=10,
-            ),
             ExtensionFieldSpec(
                 key=f"{prefix}.repositories",
                 type="tags",
@@ -119,26 +126,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=10,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.client_id",
-            type="input",
-            label="GitHub Client ID",
-            description="Client ID used for local device authorization.",
-            default="",
-            section="connection",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.access_token",
-            type="secret",
-            label="Access Token",
-            description="Stored locally after connecting GitHub. You can paste a token for testing.",
-            default="",
-            section="connection",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
             key=f"{prefix}.repositories",
             type="tags",
             label="Repositories",
@@ -146,7 +133,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             default=[],
             section="connection",
             surface="timeline",
-            order=40,
+            order=20,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.sync_interval_minutes",
@@ -158,7 +145,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             max=1440,
             section="general",
             surface="timeline",
-            order=50,
+            order=30,
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.initial_sync_lookback_days",
@@ -170,7 +157,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             max=365,
             section="general",
             surface="timeline",
-            order=60,
+            order=40,
         ),
     ]
 
@@ -211,9 +198,15 @@ class GitHubActivityPlugin(Plugin):
         if action_id != CONNECT_ACTION_ID:
             raise KeyError(action_id)
         settings = self._sensor_settings()
-        client_id = str(_settings_value(field_values, settings, "sensors.github_activity.client_id") or settings.get("client_id") or "").strip()
+        client_id = _configured_client_id(field_values, settings)
         if not client_id:
-            return PluginSettingsActionResult(status="failed", message="Add a GitHub Client ID before connecting.")
+            return PluginSettingsActionResult(
+                status="failed",
+                message=(
+                    "GitHub authorization is not configured for this build. "
+                    f"Set {GITHUB_CLIENT_ID_ENV} or package a GitHub OAuth client ID."
+                ),
+            )
         auth = GitHubDeviceAuthClient(client_id=client_id)
         try:
             device = auth.start()
@@ -230,6 +223,7 @@ class GitHubActivityPlugin(Plugin):
             status="pending",
             message=f"Open {device.verification_uri} and enter code {device.user_code}.",
             data={
+                "open_url": device.verification_uri,
                 "verification_uri": device.verification_uri,
                 "user_code": device.user_code,
                 "interval": device.interval,

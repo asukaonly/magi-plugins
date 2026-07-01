@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -51,9 +52,99 @@ def test_plugin_exposes_timeline_sensor_with_github_connection_action() -> None:
     assert spec.metadata["source_type"] == "github_activity"
     assert spec.metadata["activation_flow"]["enabled_key"] == "sensors.github_activity.enabled"
     field_keys = [field.key for field in spec.fields]
-    assert "sensors.github_activity.client_id" in field_keys
+    assert "sensors.github_activity.client_id" not in field_keys
+    assert "sensors.github_activity.access_token" not in field_keys
     assert "sensors.github_activity.repositories" in field_keys
+    activation_field_keys = [field["key"] for field in spec.metadata["activation_flow"]["fields"]]
+    assert "sensors.github_activity.client_id" not in activation_field_keys
     assert any(action.action_id == "connect_github" for action in actions)
+
+
+def test_connect_action_uses_configured_client_id_without_user_field(monkeypatch) -> None:
+    plugin_mod = _load_plugin_module()
+    captured: dict[str, str] = {}
+
+    class _FakeDevice:
+        device_code = "device-code"
+        user_code = "ABCD-EFGH"
+        verification_uri = "https://github.com/login/device"
+        interval = 5
+
+    class _FakeAuth:
+        def __init__(self, *, client_id: str) -> None:
+            captured["client_id"] = client_id
+
+        def start(self):
+            return _FakeDevice()
+
+    monkeypatch.setenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", "packaged-client-id")
+    monkeypatch.setattr(plugin_mod, "GitHubDeviceAuthClient", _FakeAuth)
+    plugin = plugin_mod.GitHubActivityPlugin()
+
+    result = asyncio.run(
+        plugin.start_settings_action(
+            "connect_github",
+            session_id="session-1",
+            field_values={"sensors.github_activity.repositories": ["acme/app"]},
+        )
+    )
+
+    assert captured["client_id"] == "packaged-client-id"
+    assert result.status == "pending"
+    assert result.data["open_url"] == "https://github.com/login/device"
+    assert result.data["verification_uri"] == "https://github.com/login/device"
+    assert result.data["user_code"] == "ABCD-EFGH"
+
+
+def test_connect_action_uses_packaged_client_id_without_environment_override(monkeypatch) -> None:
+    plugin_mod = _load_plugin_module()
+    captured: dict[str, str] = {}
+
+    class _FakeDevice:
+        device_code = "device-code"
+        user_code = "ABCD-EFGH"
+        verification_uri = "https://github.com/login/device"
+        interval = 5
+
+    class _FakeAuth:
+        def __init__(self, *, client_id: str) -> None:
+            captured["client_id"] = client_id
+
+        def start(self):
+            return _FakeDevice()
+
+    monkeypatch.delenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", raising=False)
+    monkeypatch.setattr(plugin_mod, "GitHubDeviceAuthClient", _FakeAuth)
+    plugin = plugin_mod.GitHubActivityPlugin()
+
+    result = asyncio.run(
+        plugin.start_settings_action(
+            "connect_github",
+            session_id="session-1",
+            field_values={"sensors.github_activity.repositories": ["acme/app"]},
+        )
+    )
+
+    assert captured["client_id"] == "Ov23liOlYZ2ibhh1I65w"
+    assert result.status == "pending"
+
+
+def test_connect_action_reports_unconfigured_authorization_without_user_field(monkeypatch) -> None:
+    plugin_mod = _load_plugin_module()
+    monkeypatch.delenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", raising=False)
+    monkeypatch.setattr(plugin_mod, "DEFAULT_GITHUB_CLIENT_ID", "")
+    plugin = plugin_mod.GitHubActivityPlugin()
+
+    result = asyncio.run(
+        plugin.start_settings_action(
+            "connect_github",
+            session_id="session-1",
+            field_values={},
+        )
+    )
+
+    assert result.status == "failed"
+    assert "not configured for this build" in result.message
 
 
 def test_extraction_profile_keeps_github_activity_structured_and_project_focused() -> None:
