@@ -161,6 +161,47 @@ def test_scan_library_capture_time_page_marks_more(tmp_path: Path) -> None:
     assert [item["apple_photos_uuid"] for item in result.items] == ["NEW", "OLD"]
 
 
+def test_scan_library_filters_capture_time_custom_range(tmp_path: Path) -> None:
+    mod = _load_reader_module()
+    before_photo = tmp_path / "before.HEIC"
+    inside_photo = tmp_path / "inside.HEIC"
+    after_photo = tmp_path / "after.HEIC"
+    for path in (before_photo, inside_photo, after_photo):
+        path.write_bytes(b"fake image bytes")
+    reader = mod.ApplePhotosReader(
+        photosdb_factory=lambda _path: _FakePhotosDB(
+            [
+                _fake_photo(
+                    before_photo,
+                    uuid="BEFORE",
+                    captured=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                ),
+                _fake_photo(
+                    inside_photo,
+                    uuid="INSIDE",
+                    captured=datetime(2024, 1, 2, tzinfo=timezone.utc),
+                ),
+                _fake_photo(
+                    after_photo,
+                    uuid="AFTER",
+                    captured=datetime(2024, 1, 4, tzinfo=timezone.utc),
+                ),
+            ]
+        )
+    )
+
+    result = reader.scan_library(
+        "",
+        limit=10,
+        order_by="capture_timestamp",
+        descending=True,
+        capture_after=datetime(2024, 1, 2, tzinfo=timezone.utc).timestamp(),
+        capture_before=datetime(2024, 1, 3, tzinfo=timezone.utc).timestamp(),
+    )
+
+    assert [item["apple_photos_uuid"] for item in result.items] == ["INSIDE"]
+
+
 def test_resolve_asset_refs_uses_uuid_lookup(tmp_path: Path) -> None:
     mod = _load_reader_module()
     photo_file = tmp_path / "IMG_0001.HEIC"

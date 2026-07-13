@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import json
+import time
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -93,6 +94,31 @@ class _PagedAppleReader(_AppleReader):
         )
         result.has_more = True
         return result
+
+
+class _CustomRangeAppleReader(_AppleReader):
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def scan_library(self, photos_library_path: str, *, limit: int, min_modified_at: float, **kwargs):
+        self.calls.append(
+            {
+                "photos_library_path": photos_library_path,
+                "limit": limit,
+                "min_modified_at": min_modified_at,
+                **kwargs,
+            }
+        )
+        assert kwargs["order_by"] == "capture_timestamp"
+        assert kwargs["descending"] is True
+        assert time.strftime("%Y-%m-%d", time.localtime(float(kwargs["capture_after"]))) == "2024-06-15"
+        assert time.strftime("%Y-%m-%d", time.localtime(float(kwargs["capture_before"]))) == "2024-06-16"
+        return super().scan_library(
+            photos_library_path,
+            limit=limit,
+            min_modified_at=min_modified_at,
+            **kwargs,
+        )
 
 
 def test_apple_photos_mode_does_not_require_source_paths() -> None:
@@ -251,3 +277,47 @@ def test_apple_photos_initial_backfill_pages_by_capture_time() -> None:
     assert cursor["mode"] == "backfill"
     assert cursor["capture_before"] == 1_710_000_000.0
     assert apple_reader.calls[0]["order_by"] == "capture_timestamp"
+
+
+def test_apple_photos_custom_range_backfill_uses_capture_bounds() -> None:
+    mod = _load_sensor_module()
+    apple_reader = _CustomRangeAppleReader()
+    sensor = mod.PhotoLibraryTimelineSensor(
+        source_mode="apple_photos",
+        photos_library_path="/Photos Library.photoslibrary",
+        apple_reader=apple_reader,
+        analysis_features=[],
+        settle_window_seconds=0,
+    )
+
+    result = asyncio.run(
+        sensor.collect_items(
+            mod.SensorSyncContext(
+                source_type="photo_library",
+                manual=True,
+                last_cursor=None,
+                last_success_at=None,
+                limit=200,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={
+                    "sensors": {
+                        "photo_library": {
+                            "source_mode": "apple_photos",
+                            "photos_library_path": "/Photos Library.photoslibrary",
+                            "analysis_features": [],
+                            "initial_sync_policy": "custom_range",
+                            "initial_sync_start_date": "2024-06-15",
+                            "initial_sync_end_date": "2024-06-15",
+                        }
+                    }
+                },
+            )
+        )
+    )
+
+    assert result.stats["has_more"] is False
+    assert result.stats["sync_phase"] == "backfill"
+    assert (
+        float(apple_reader.calls[0]["capture_before"])
+        - float(apple_reader.calls[0]["capture_after"])
+    ) == 86400.0

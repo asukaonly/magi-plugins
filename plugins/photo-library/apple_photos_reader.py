@@ -43,6 +43,7 @@ class ApplePhotosReader:
         *,
         limit: int = 500,
         min_modified_at: float = 0.0,
+        capture_after: float | None = None,
         capture_before: float | None = None,
         order_by: str = "modified_at",
         descending: bool = False,
@@ -68,6 +69,10 @@ class ApplePhotosReader:
                 errors += 1
                 continue
             if item is not None:
+                if capture_after is not None:
+                    capture_ts = float(item.get("capture_timestamp") or 0.0)
+                    if capture_ts <= 0 or capture_ts < float(capture_after):
+                        continue
                 if capture_before is not None:
                     capture_ts = float(item.get("capture_timestamp") or 0.0)
                     if capture_ts <= 0 or capture_ts >= float(capture_before):

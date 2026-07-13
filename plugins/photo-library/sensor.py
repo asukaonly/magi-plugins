@@ -114,6 +114,27 @@ def _encode_apple_photos_cursor(
     return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
+def _parse_local_date_start(value: Any) -> float | None:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return None
+    try:
+        parsed = _time.strptime(normalized, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return None
+    return float(_time.mktime(parsed))
+
+
+def _resolve_custom_capture_bounds(sensor_settings: dict[str, Any]) -> tuple[float | None, float | None]:
+    if str(sensor_settings.get("initial_sync_policy") or "") != "custom_range":
+        return None, None
+    start_ts = _parse_local_date_start(sensor_settings.get("initial_sync_start_date"))
+    end_ts = _parse_local_date_start(sensor_settings.get("initial_sync_end_date"))
+    if start_ts is None or end_ts is None or end_ts < start_ts:
+        return None, None
+    return start_ts, end_ts + 24 * 60 * 60
+
+
 class PhotoLibraryTimelineSensor(SensorBase):
     """Pull-sync sensor that aggregates a local photo directory into sessions."""
 
@@ -239,6 +260,12 @@ class PhotoLibraryTimelineSensor(SensorBase):
         # cursor during capture-time history backfill, then switches back to a
         # modified_at-based incremental cursor.
         now_ts = _time.time()
+        custom_capture_after, custom_capture_before = _resolve_custom_capture_bounds(sensor_settings)
+        apple_custom_backfill = bool(
+            source_mode == "apple_photos"
+            and custom_capture_after is not None
+            and custom_capture_before is not None
+        )
         apple_cursor = (
             _decode_apple_photos_cursor(context.last_cursor)
             if source_mode == "apple_photos"
@@ -247,7 +274,7 @@ class PhotoLibraryTimelineSensor(SensorBase):
         apple_backfill = bool(
             source_mode == "apple_photos"
             and apple_cursor is not None
-            and apple_cursor.get("mode") == "backfill"
+            and (apple_cursor.get("mode") == "backfill" or apple_custom_backfill)
         )
         last_cursor = 0.0
         if source_mode == "apple_photos" and apple_cursor is not None:
@@ -272,17 +299,24 @@ class PhotoLibraryTimelineSensor(SensorBase):
             photos_library_path = str(
                 sensor_settings.get("photos_library_path", self.photos_library_path) or ""
             ).strip()
+            apple_capture_before = (
+                apple_cursor.get("capture_before")
+                if apple_backfill and apple_cursor is not None
+                else None
+            )
+            if apple_custom_backfill and custom_capture_before is not None:
+                if apple_capture_before is None:
+                    apple_capture_before = custom_capture_before
+                else:
+                    apple_capture_before = min(float(apple_capture_before), custom_capture_before)
             try:
                 result = await asyncio.to_thread(
                     self._apple_reader.scan_library,
                     photos_library_path,
                     limit=photo_limit,
                     min_modified_at=0.0 if apple_backfill else min_modified_at,
-                    capture_before=(
-                        apple_cursor.get("capture_before")
-                        if apple_backfill and apple_cursor is not None
-                        else None
-                    ),
+                    capture_after=custom_capture_after if apple_custom_backfill else None,
+                    capture_before=apple_capture_before,
                     order_by="capture_timestamp" if apple_backfill else "modified_at",
                     descending=apple_backfill,
                 )
@@ -400,7 +434,15 @@ class PhotoLibraryTimelineSensor(SensorBase):
                         if float(p.get("capture_timestamp") or 0.0) > 0
                     ]
                 capture_before = min(capture_candidates) if capture_candidates else None
-                if has_more and capture_before is not None:
+                can_continue_backfill = has_more and capture_before is not None
+                if (
+                    can_continue_backfill
+                    and apple_custom_backfill
+                    and custom_capture_after is not None
+                    and capture_before <= custom_capture_after
+                ):
+                    can_continue_backfill = False
+                if can_continue_backfill and capture_before is not None:
                     next_cursor = _encode_apple_photos_cursor(
                         mode="backfill",
                         capture_before=capture_before,
