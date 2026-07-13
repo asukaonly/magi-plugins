@@ -31,21 +31,16 @@ def test_chrome_history_profile_declares_derived_interest_rule() -> None:
 
     assert profile.profile_id == "source.chrome_history"
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_families == ["preference_profile"]
+    assert profile.allowed_assertion_families == ["interest_profile"]
     assert profile.allowed_assertion_traits == ["interest.*"]
     assert profile.allow_assertion is True
 
     rules = profile.derived_assertion_specs
     assert len(rules) == 1
-    assert rules[0] == {
-        "rule_id": "chrome_history.content_interest",
-        "source_predicates": ["INTERESTED_IN"],
-        "source_types": ["chrome_history"],
-        "trait_family": "preference_profile",
-        "trait_name_template": "interest.{object_slug}",
-        "min_observations": 3,
-        "min_distinct_days": 2,
-        "object_types": ["topic", "media", "person", "group", "organization", "product", "technology"],
-        "source_domains": ["external_activity"],
-        "value_strategy": "canonical_name",
-    }
+    rule = rules[0]
+    assert rule.rule_id == "chrome_history.content_interest"
+    assert rule.trait_family == "interest_profile"
+    assert rule.signal_preset == "passive_exposure"
+    assert rule.durable_permitted is False
+    assert rule.min_observations == 3
+    assert rule.min_distinct_days == 2

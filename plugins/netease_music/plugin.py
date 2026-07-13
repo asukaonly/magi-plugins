@@ -213,24 +213,43 @@ class NeteaseMusicPlugin(Plugin):
                 allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
                 structured_allowed_entity_types=["media", "person", "group"],
                 structured_allowed_predicates=["LISTENED", "LIKES", "INTERESTED_IN"],
-                allowed_assertion_families=["preference_profile"],
+                allowed_assertion_families=["interest_profile", "preference_profile"],
                 allow_graph=True,
                 allow_assertion=True,
                 assertion_mode="derived",
-                allowed_assertion_traits=["music.*"],
+                allowed_assertion_traits=["interest.*", "preference.*"],
                 derived_assertion_specs=[
                     {
                         "rule_id": "netease_music.listened_interest",
                         "source_predicates": ["LISTENED"],
                         "source_types": ["netease_music"],
-                        "trait_family": "preference_profile",
-                        "trait_name_template": "music.{object_slug}",
+                        "trait_family": "interest_profile",
+                        "trait_name_template": "interest.{object_slug}",
                         "min_observations": 3,
                         "min_distinct_days": 2,
+                        "signal_preset": "sustained_engagement",
+                        "durable_permitted": True,
+                        "durable_min_observations": 8,
+                        "durable_min_distinct_days": 4,
+                        "durable_min_span_days": 21,
                         "object_types": ["media"],
                         "source_domains": ["external_activity"],
                         "value_strategy": "canonical_name",
-                    }
+                    },
+                    {
+                        "rule_id": "netease_music.explicit_like",
+                        "source_predicates": ["LIKES"],
+                        "source_types": ["netease_music"],
+                        "trait_family": "preference_profile",
+                        "trait_name_template": "preference.{object_slug}",
+                        "min_observations": 1,
+                        "min_distinct_days": 1,
+                        "signal_preset": "deliberate_choice",
+                        "durable_permitted": True,
+                        "object_types": ["media", "person", "group"],
+                        "source_domains": ["external_activity"],
+                        "value_strategy": "canonical_name",
+                    },
                 ],
                 extraction_instructions=(
                     "These events are music play records from NetEase Cloud Music. Each event\n"
@@ -247,7 +266,8 @@ class NeteaseMusicPlugin(Plugin):
                     "Assertion rules:\n"
                     "- Do not emit Phase 2 assertion candidates for play records. Repeated\n"
                     "  LISTENED graph evidence may be aggregated later by the host-owned\n"
-                    "  derived music preference rule declared in this profile."
+                    "  derived music interest rule declared in this profile. Explicit LIKES\n"
+                    "  evidence is handled separately as a durable preference."
                 ),
             )
         ]

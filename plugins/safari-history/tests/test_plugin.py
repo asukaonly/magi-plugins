@@ -59,23 +59,14 @@ def test_plugin_declares_safari_extraction_and_summary_profiles() -> None:
     assert profile.profile_id == "source.safari_history"
     assert list(profile.source_types) == ["safari_history"]
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_families == ["preference_profile"]
+    assert profile.allowed_assertion_families == ["interest_profile"]
     assert profile.allowed_assertion_traits == ["interest.*"]
     assert profile.allow_assertion is True
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "safari_history.content_interest",
-            "source_predicates": ["INTERESTED_IN"],
-            "source_types": ["safari_history"],
-            "trait_family": "preference_profile",
-            "trait_name_template": "interest.{object_slug}",
-            "min_observations": 3,
-            "min_distinct_days": 2,
-            "object_types": ["topic", "media", "person", "group", "organization", "product", "technology"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    rule = profile.derived_assertion_specs[0]
+    assert rule.rule_id == "safari_history.content_interest"
+    assert rule.trait_family == "interest_profile"
+    assert rule.signal_preset == "passive_exposure"
+    assert rule.durable_permitted is False
 
     summary = plugin.get_summary_profiles()[0]
     assert summary.profile_id == "safari-history:browser_activity"

@@ -41,19 +41,13 @@ def test_git_activity_profile_derives_recurring_projects() -> None:
     assert profile.allow_graph is True
     assert profile.allow_assertion is True
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_families == ["routine_profile"]
+    assert profile.allowed_assertion_families == ["project_profile"]
     assert profile.allowed_assertion_traits == ["project.*"]
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "git_activity.recurring_project",
-            "source_predicates": ["COMMITTED"],
-            "source_types": ["git_activity"],
-            "trait_family": "routine_profile",
-            "trait_name_template": "project.{object_slug}",
-            "min_observations": 2,
-            "min_distinct_days": 2,
-            "object_types": ["software"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    rule = profile.derived_assertion_specs[0]
+    assert rule.rule_id == "git_activity.recurring_project"
+    assert rule.trait_family == "project_profile"
+    assert rule.signal_preset == "sustained_engagement"
+    assert rule.durable_permitted is True
+    assert rule.durable_min_observations == 6
+    assert rule.durable_min_distinct_days == 3
+    assert rule.durable_min_span_days == 14

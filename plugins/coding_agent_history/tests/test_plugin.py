@@ -94,6 +94,8 @@ def test_agent_history_declares_profile_candidate_l2_profiles() -> None:
             "identity_profile",
             "communication_profile",
             "preference_profile",
+            "interest_profile",
+            "project_profile",
             "routine_profile",
             "state_profile",
         ]

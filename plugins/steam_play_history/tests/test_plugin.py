@@ -37,20 +37,14 @@ def test_extraction_profile_derives_game_interest_from_repeated_play() -> None:
     assert profile.source_types == ["steam_play_history"]
     assert profile.allowed_entity_types == ["media", "software"]
     assert profile.structured_allowed_predicates == ["VIEWED", "INTERESTED_IN"]
-    assert profile.allowed_assertion_families == ["preference_profile"]
+    assert profile.allowed_assertion_families == ["interest_profile"]
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_traits == ["game.*"]
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "steam_play_history.viewed_interest",
-            "source_predicates": ["VIEWED"],
-            "source_types": ["steam_play_history"],
-            "trait_family": "preference_profile",
-            "trait_name_template": "game.{object_slug}",
-            "min_observations": 2,
-            "min_distinct_days": 2,
-            "object_types": ["media"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    assert profile.allowed_assertion_traits == ["interest.*"]
+    rule = profile.derived_assertion_specs[0]
+    assert rule.rule_id == "steam_play_history.viewed_interest"
+    assert rule.trait_family == "interest_profile"
+    assert rule.signal_preset == "sustained_engagement"
+    assert rule.durable_permitted is True
+    assert rule.durable_min_observations == 6
+    assert rule.durable_min_distinct_days == 3
+    assert rule.durable_min_span_days == 14

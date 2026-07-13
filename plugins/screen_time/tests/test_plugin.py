@@ -40,20 +40,14 @@ def test_screen_time_profile_derives_recurring_app_usage() -> None:
     assert profile.allow_assertion is True
     assert profile.assertion_mode == "derived"
     assert profile.allowed_assertion_families == ["routine_profile"]
-    assert profile.allowed_assertion_traits == ["app.*"]
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "screen_time.recurring_app_usage",
-            "source_predicates": ["USES"],
-            "source_types": ["screen_time"],
-            "trait_family": "routine_profile",
-            "trait_name_template": "app.{object_slug}",
-            "min_observations": 3,
-            "min_distinct_days": 2,
-            "object_types": ["software"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    assert profile.allowed_assertion_traits == ["routine.app.*"]
+    rule = profile.derived_assertion_specs[0]
+    assert rule.rule_id == "screen_time.recurring_app_usage"
+    assert rule.trait_name_template == "routine.app.{object_slug}"
+    assert rule.signal_preset == "sustained_engagement"
+    assert rule.durable_permitted is True
+    assert rule.durable_min_observations == 8
+    assert rule.durable_min_distinct_days == 5
+    assert rule.durable_min_span_days == 21
     assert profile.allowed_entity_types == ["software", "media"]
     assert profile.allowed_predicates == ["USES", "VIEWED"]

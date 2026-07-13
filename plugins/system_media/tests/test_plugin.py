@@ -34,20 +34,14 @@ def test_system_media_profile_declares_derived_music_rule() -> None:
     assert profile.profile_id == "source.system_media"
     assert profile.source_types == ["system_media"]
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_families == ["preference_profile"]
-    assert profile.allowed_assertion_traits == ["music.*"]
+    assert profile.allowed_assertion_families == ["interest_profile"]
+    assert profile.allowed_assertion_traits == ["interest.*"]
     assert profile.allow_assertion is True
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "system_media.listened_interest",
-            "source_predicates": ["LISTENED"],
-            "source_types": ["system_media"],
-            "trait_family": "preference_profile",
-            "trait_name_template": "music.{object_slug}",
-            "min_observations": 3,
-            "min_distinct_days": 2,
-            "object_types": ["media"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    rule = profile.derived_assertion_specs[0]
+    assert rule.rule_id == "system_media.listened_interest"
+    assert rule.trait_family == "interest_profile"
+    assert rule.signal_preset == "sustained_engagement"
+    assert rule.durable_permitted is True
+    assert rule.durable_min_observations == 8
+    assert rule.durable_min_distinct_days == 4
+    assert rule.durable_min_span_days == 21

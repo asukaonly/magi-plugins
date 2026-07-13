@@ -79,6 +79,8 @@ AGENT_HISTORY_ASSERTION_FAMILIES = [
     "identity_profile",
     "communication_profile",
     "preference_profile",
+    "interest_profile",
+    "project_profile",
     "routine_profile",
     "state_profile",
 ]
@@ -235,8 +237,9 @@ class CodingAgentHistoryPlugin(Plugin):
                 phase2_instructions=(
                     "Assertion candidates from coding-agent history must describe stable user "
                     "profile signals from the user's own words: identity/work context, preferred "
-                    "communication style, durable interests, recurring workflows, routines, or "
-                    "current state. Do not promote temporary requests, pasted errors, external "
+                    "communication style, interests, active projects, recurring workflows, "
+                    "routines, or current state. Let the host decide whether a grounded signal "
+                    "is recent or durable. Do not promote temporary requests, pasted errors, external "
                     "docs, or assistant suggestions into long-term profile assertions."
                 ),
             )

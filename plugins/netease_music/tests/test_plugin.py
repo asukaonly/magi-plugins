@@ -17,20 +17,18 @@ def test_netease_profile_declares_derived_music_rule() -> None:
 
     assert profile.profile_id == "source.netease_music"
     assert profile.assertion_mode == "derived"
-    assert profile.allowed_assertion_families == ["preference_profile"]
-    assert profile.allowed_assertion_traits == ["music.*"]
+    assert profile.allowed_assertion_families == ["interest_profile", "preference_profile"]
+    assert profile.allowed_assertion_traits == ["interest.*", "preference.*"]
     assert profile.allow_assertion is True
-    assert profile.derived_assertion_specs == [
-        {
-            "rule_id": "netease_music.listened_interest",
-            "source_predicates": ["LISTENED"],
-            "source_types": ["netease_music"],
-            "trait_family": "preference_profile",
-            "trait_name_template": "music.{object_slug}",
-            "min_observations": 3,
-            "min_distinct_days": 2,
-            "object_types": ["media"],
-            "source_domains": ["external_activity"],
-            "value_strategy": "canonical_name",
-        }
-    ]
+    listened, liked = profile.derived_assertion_specs
+    assert listened.rule_id == "netease_music.listened_interest"
+    assert listened.trait_family == "interest_profile"
+    assert listened.signal_preset == "sustained_engagement"
+    assert listened.durable_permitted is True
+    assert listened.durable_min_observations == 8
+    assert listened.durable_min_distinct_days == 4
+    assert listened.durable_min_span_days == 21
+    assert liked.rule_id == "netease_music.explicit_like"
+    assert liked.trait_family == "preference_profile"
+    assert liked.signal_preset == "deliberate_choice"
+    assert liked.durable_permitted is True
