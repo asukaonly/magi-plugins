@@ -141,6 +141,9 @@ def test_activation_flow_has_required_path_field_and_lookback() -> None:
         assert flow is not None, "activation_flow must be present so the install panel renders"
         assert flow["enabled_key"] == f"sensors.{source_type}.enabled"
         assert flow["configured_key"] == f"sensors.{source_type}.initial_sync_configured"
+        assert flow["first_context"]["settings_overrides"] == {
+            f"sensors.{source_type}.initial_sync_lookback_days": 30,
+        }
 
         keys = {f["key"] for f in flow["fields"]}
         assert f"sensors.{source_type}.source_paths" in keys

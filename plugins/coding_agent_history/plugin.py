@@ -165,6 +165,11 @@ def _build_activation_flow(prefix: str, entry: dict[str, Any]) -> ActivationFlow
         cancel_label="Not now",
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
+        first_context={
+            "settings_overrides": {
+                f"{prefix}.initial_sync_lookback_days": 30,
+            }
+        },
         fields=[
             ExtensionFieldSpec(
                 key=f"{prefix}.source_paths",
