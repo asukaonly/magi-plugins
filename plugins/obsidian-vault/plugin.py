@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from magi_plugin_sdk import (
+    ActivationFlowSpec,
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
@@ -23,6 +24,41 @@ DEFAULT_SETTINGS = {
     "sync_interval_minutes": 10,
     "initial_sync_configured": False,
 }
+
+
+def _activation_flow() -> ActivationFlowSpec:
+    return ActivationFlowSpec(
+        title="Enable Obsidian Vault",
+        description="Choose the Obsidian vault Magi may read before enabling this source.",
+        confirm_label="Enable source",
+        cancel_label="Not now",
+        enabled_key=f"{_PREFIX}.enabled",
+        configured_key=f"{_PREFIX}.initial_sync_configured",
+        first_context={"max_items_per_sync": 200},
+        fields=[
+            ExtensionFieldSpec(
+                key=f"{_PREFIX}.vault_path",
+                type="path",
+                label="Vault Folder",
+                description="Path to your Obsidian vault.",
+                default="",
+                required=True,
+                section="activation",
+                surface="timeline",
+                order=10,
+            ),
+            ExtensionFieldSpec(
+                key=f"{_PREFIX}.cognition_exclude_folders",
+                type="tags",
+                label="Search-only Folders",
+                description="Folders read for search but kept out of knowledge extraction.",
+                default=["Clippings", "References"],
+                section="activation",
+                surface="timeline",
+                order=20,
+            ),
+        ],
+    )
 
 
 def _fields() -> list[ExtensionFieldSpec]:
@@ -92,9 +128,6 @@ class ObsidianVaultPlugin(Plugin):
     def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
         sensors_cfg = self.settings.get("sensors", {})
         cfg = dict(sensors_cfg.get("obsidian_vault", {})) if isinstance(sensors_cfg, dict) else {}
-        if not bool(cfg.get("enabled", DEFAULT_SETTINGS["enabled"])):
-            return []
-
         vault_path = str(cfg.get("vault_path", "")).strip()
         exclude = cfg.get("exclude_folders", DEFAULT_SETTINGS["exclude_folders"])
         search_only = cfg.get("cognition_exclude_folders", DEFAULT_SETTINGS["cognition_exclude_folders"])
@@ -116,6 +149,7 @@ class ObsidianVaultPlugin(Plugin):
                     "source_type": sensor.source_type,
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
+                    "activation_flow": _activation_flow().model_dump(),
                 },
             )
 

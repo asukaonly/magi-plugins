@@ -51,8 +51,8 @@ def test_plugin_registers_browser_core_sensor_spec() -> None:
     assert spec.metadata["activation_flow"]["first_context"]["settings_overrides"] == {
         "sensors.safari_history.initial_sync_policy": "lookback_days",
         "sensors.safari_history.initial_sync_lookback_days": 7,
-        "sensors.safari_history.max_items_per_sync": 200,
     }
+    assert spec.metadata["activation_flow"]["first_context"]["max_items_per_sync"] == 200
 
 
 def test_plugin_declares_safari_extraction_and_summary_profiles() -> None:

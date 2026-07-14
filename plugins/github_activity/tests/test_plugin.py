@@ -51,6 +51,7 @@ def test_plugin_exposes_timeline_sensor_with_github_connection_action() -> None:
     assert sensor.repositories == ["acme/app"]
     assert spec.metadata["source_type"] == "github_activity"
     assert spec.metadata["activation_flow"]["enabled_key"] == "sensors.github_activity.enabled"
+    assert spec.metadata["activation_flow"]["first_context"]["max_items_per_sync"] == 200
     field_keys = [field.key for field in spec.fields]
     assert "sensors.github_activity.client_id" not in field_keys
     assert "sensors.github_activity.access_token" not in field_keys

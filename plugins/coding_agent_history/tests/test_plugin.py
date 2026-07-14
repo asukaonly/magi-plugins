@@ -144,6 +144,7 @@ def test_activation_flow_has_required_path_field_and_lookback() -> None:
         assert flow["first_context"]["settings_overrides"] == {
             f"sensors.{source_type}.initial_sync_lookback_days": 30,
         }
+        assert flow["first_context"]["max_items_per_sync"] == 200
 
         keys = {f["key"] for f in flow["fields"]}
         assert f"sensors.{source_type}.source_paths" in keys

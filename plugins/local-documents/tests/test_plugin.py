@@ -54,8 +54,14 @@ def test_get_sensors_returns_knowledge_and_search_tiers_when_enabled() -> None:
     assert spec_source_types["timeline.local_documents.search"] == "local_documents_search"
 
 
-def test_get_sensors_empty_when_disabled() -> None:
-    assert _make_plugin(enabled=False).get_sensors() == []
+def test_get_sensors_stay_discoverable_when_disabled() -> None:
+    sensors = _make_plugin(enabled=False).get_sensors()
+
+    assert len(sensors) == 2
+    for _sensor_id, _sensor, spec in sensors:
+        flow = spec.metadata["activation_flow"]
+        assert flow["enabled_key"] == "sensors.local_documents.enabled"
+        assert flow["first_context"]["max_items_per_sync"] == 200
 
 
 def test_extraction_profile_only_targets_knowledge_source() -> None:

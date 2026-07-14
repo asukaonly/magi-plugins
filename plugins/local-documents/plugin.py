@@ -153,6 +153,7 @@ def _activation_flow() -> ActivationFlowSpec:
         cancel_label="Not now",
         enabled_key=f"{_PREFIX}.enabled",
         configured_key=f"{_PREFIX}.initial_sync_configured",
+        first_context={"max_items_per_sync": 200},
         fields=[
             ExtensionFieldSpec(
                 key=f"{_PREFIX}.root_paths",
@@ -223,9 +224,6 @@ class LocalDocumentsPlugin(Plugin):
     def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
         sensors_cfg = self.settings.get("sensors", {})
         cfg = dict(sensors_cfg.get("local_documents", {})) if isinstance(sensors_cfg, dict) else {}
-        if not bool(cfg.get("enabled", DEFAULT_SETTINGS["enabled"])):
-            return []
-
         root_paths = list(cfg.get("root_paths", DEFAULT_SETTINGS["root_paths"]) or [])
         include_extensions = list(cfg.get("include_extensions", DEFAULT_SETTINGS["include_extensions"]) or [])
         exclude = list(cfg.get("exclude_folders", DEFAULT_SETTINGS["exclude_folders"]) or [])
@@ -293,4 +291,3 @@ class LocalDocumentsPlugin(Plugin):
                 prompt_hints={"category": "document_activity"},
             )
         ]
-

@@ -96,6 +96,7 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
         cancel_label="Not now",
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
+        first_context={"max_items_per_sync": 200},
         fields=[
             ExtensionFieldSpec(
                 key=f"{prefix}.initial_sync_policy",

@@ -3,7 +3,7 @@ id = "coding_agent_history"
 name = "Agent History"
 name_i18n = { "zh-CN" = "Agent 历史" }
 icon = "lucide:bot"
-version = "0.1.4"
+version = "0.1.5"
 description = "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device."
 description_i18n = { "zh-CN" = "可选。仅读取本地 Agent（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。" }
 author = "Magi Team"
@@ -44,6 +44,24 @@ en = ["claude code", "codex", "agent", "coding agent", "ai coding", "building", 
 [plugin.suggestion_descriptor.rationale]
 zh = "让 magi 了解你在 Agent 会话里做了什么"
 en = "Lets magi learn what you're building with your agents"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 20
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 从 Claude Code / Codex 会话看到你在做什么"
+en = "Lets magi see what you're doing in Claude Code / Codex sessions"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 30
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从你发给编程助手的问题中理解正在推进的项目"
+en = "Understand active projects from questions you asked coding agents"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "最近 30 天内你自己发出的内容"
+en = "Your own messages from the last 30 days"
 
 # Only recommend when the user actually has coding-agent transcripts.
 # local_requirements are AND-combined, so gate on Claude Code's dir (the common

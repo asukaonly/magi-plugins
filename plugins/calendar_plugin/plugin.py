@@ -70,6 +70,7 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
         authorize_on_confirm=True,
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.authorization_configured",
+        first_context={"max_items_per_sync": 200},
         fields=[],
     )
 

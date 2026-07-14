@@ -3,7 +3,7 @@ id = "git-activity"
 name = "Git Activity"
 name_i18n = { "zh-CN" = "Git 活动" }
 icon = "brand:git"
-version = "0.1.1"
+version = "0.1.2"
 description = "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow."
 description_i18n = { "zh-CN" = "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流" }
 author = "Magi Team"
@@ -40,6 +40,24 @@ en = ["code", "commit", "changed", "repo", "repository", "project", "git", "pull
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能看到你的代码改动和项目进度"
 en = "Lets magi see what you've been building"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 40
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 看到你在做什么项目"
+en = "Lets magi see what you've been building"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 40
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从提交记录中了解正在推进的项目"
+en = "Understand active projects from recent commits"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "最近 30 天的提交和分支活动"
+en = "Commits and branch activity from the last 30 days"
 
 [[plugin.suggestion_descriptor.local_requirements]]
 check_kind = "executable_in_path"

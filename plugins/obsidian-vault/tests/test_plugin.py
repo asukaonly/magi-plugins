@@ -48,9 +48,16 @@ def test_get_sensors_returns_two_tiers_when_enabled() -> None:
     assert spec_src["timeline.obsidian_vault.search"] == "obsidian_vault_search"
 
 
-def test_get_sensors_empty_when_disabled() -> None:
+def test_get_sensors_stay_discoverable_when_disabled() -> None:
     plugin = _make_plugin(enabled=False)
-    assert plugin.get_sensors() == []
+    sensors = plugin.get_sensors()
+
+    assert len(sensors) == 2
+    for _sensor_id, _sensor, spec in sensors:
+        flow = spec.metadata["activation_flow"]
+        assert flow["enabled_key"] == "sensors.obsidian_vault.enabled"
+        assert flow["first_context"]["max_items_per_sync"] == 200
+        assert any(field["key"] == "sensors.obsidian_vault.vault_path" for field in flow["fields"])
 
 
 def test_extraction_profile_uses_registry_predicates() -> None:

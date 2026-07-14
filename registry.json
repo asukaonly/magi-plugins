@@ -9,7 +9,7 @@
         "zh-CN": "浏览器历史核心库"
       },
       "icon": "lucide:globe",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/browser_history_core",
       "description": "Shared ingestion primitives consumed by Chrome/Firefox/Edge history plugins. Installed automatically as a dependency; not user-toggleable.",
       "description_i18n": {
@@ -31,7 +31,7 @@
         "zh-CN": "日历"
       },
       "icon": "brand:googlecalendar",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
@@ -99,6 +99,26 @@
           "zh": "magi 能看到你的日程，回答'我今天有什么会'这类问题",
           "en": "Lets magi see what's on your calendar"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 30,
+            "rationale": {
+              "zh": "让 magi 看到你的日程",
+              "en": "Lets magi see what's on your schedule"
+            }
+          },
+          "first_context": {
+            "order": 20,
+            "rationale": {
+              "zh": "让第一次对话知道你最近的安排与节奏",
+              "en": "Give the first conversation a sense of your recent plans and rhythm"
+            },
+            "scope": {
+              "zh": "最近 30 天的事件和提醒",
+              "en": "Events and reminders from the last 30 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -116,7 +136,7 @@
         "zh-CN": "Chrome 浏览器历史"
       },
       "icon": "brand:googlechrome",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -199,6 +219,26 @@
           "zh": "magi 能读取你的 Chrome 历史，帮你回想最近看过什么",
           "en": "Lets magi see what you've been reading in Chrome"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 10,
+            "rationale": {
+              "zh": "让 magi 看到你最近在网上读什么",
+              "en": "Lets magi see what you've been reading online"
+            }
+          },
+          "first_context": {
+            "order": 10,
+            "rationale": {
+              "zh": "从最近浏览中了解你正在关注的问题",
+              "en": "Continue from the topics you have been exploring recently"
+            },
+            "scope": {
+              "zh": "最近 7 天的页面标题和时间",
+              "en": "Page titles and timestamps from the last 7 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -217,7 +257,7 @@
         "zh-CN": "Agent 历史"
       },
       "icon": "lucide:bot",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "path": "plugins/coding_agent_history",
       "description": "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
       "description_i18n": {
@@ -282,6 +322,26 @@
           "zh": "让 magi 了解你在 Agent 会话里做了什么",
           "en": "Lets magi learn what you're building with your agents"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 20,
+            "rationale": {
+              "zh": "让 magi 从 Claude Code / Codex 会话看到你在做什么",
+              "en": "Lets magi see what you're doing in Claude Code / Codex sessions"
+            }
+          },
+          "first_context": {
+            "order": 30,
+            "rationale": {
+              "zh": "从你发给编程助手的问题中理解正在推进的项目",
+              "en": "Understand active projects from questions you asked coding agents"
+            },
+            "scope": {
+              "zh": "最近 30 天内你自己发出的内容",
+              "en": "Your own messages from the last 30 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -301,7 +361,7 @@
         "zh-CN": "Edge 浏览器历史"
       },
       "icon": "lucide:globe",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/edge-history",
       "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -382,6 +442,26 @@
           "zh": "magi 能读取你的 Edge 浏览器历史",
           "en": "Lets magi see your Edge browsing history"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 13,
+            "rationale": {
+              "zh": "让 magi 看到你最近在网上读什么",
+              "en": "Lets magi see what you've been reading online"
+            }
+          },
+          "first_context": {
+            "order": 13,
+            "rationale": {
+              "zh": "从最近浏览中了解你正在关注的问题",
+              "en": "Continue from the topics you have been exploring recently"
+            },
+            "scope": {
+              "zh": "最近 7 天的页面标题和时间",
+              "en": "Page titles and timestamps from the last 7 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -399,7 +479,7 @@
         "zh-CN": "Firefox 浏览器历史"
       },
       "icon": "brand:firefoxbrowser",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/firefox-history",
       "description": "Reads your local Firefox browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -482,6 +562,26 @@
           "zh": "magi 能读取你的 Firefox 浏览器历史",
           "en": "Lets magi see your Firefox browsing history"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 12,
+            "rationale": {
+              "zh": "让 magi 看到你最近在网上读什么",
+              "en": "Lets magi see what you've been reading online"
+            }
+          },
+          "first_context": {
+            "order": 12,
+            "rationale": {
+              "zh": "从最近浏览中了解你正在关注的问题",
+              "en": "Continue from the topics you have been exploring recently"
+            },
+            "scope": {
+              "zh": "最近 7 天的页面标题和时间",
+              "en": "Page titles and timestamps from the last 7 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -500,7 +600,7 @@
         "zh-CN": "Git 活动"
       },
       "icon": "brand:git",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
@@ -574,6 +674,26 @@
           "zh": "magi 能看到你的代码改动和项目进度",
           "en": "Lets magi see what you've been building"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 40,
+            "rationale": {
+              "zh": "让 magi 看到你在做什么项目",
+              "en": "Lets magi see what you've been building"
+            }
+          },
+          "first_context": {
+            "order": 40,
+            "rationale": {
+              "zh": "从提交记录中了解正在推进的项目",
+              "en": "Understand active projects from recent commits"
+            },
+            "scope": {
+              "zh": "最近 30 天的提交和分支活动",
+              "en": "Commits and branch activity from the last 30 days"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "executable_in_path",
@@ -592,7 +712,7 @@
         "zh-CN": "GitHub 活动"
       },
       "icon": "brand:github",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/github_activity",
       "description": "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status.",
       "description_i18n": {
@@ -662,6 +782,19 @@
         "rationale": {
           "zh": "magi 能在本机读取你选择的 GitHub 仓库动态，理解项目进展和协作关系",
           "en": "Lets magi locally read selected GitHub repository activity to understand project progress and collaboration"
+        },
+        "surfaces": {
+          "first_context": {
+            "order": 41,
+            "rationale": {
+              "zh": "从仓库动态中了解项目进展与协作关系",
+              "en": "Understand project progress and collaboration from repository activity"
+            },
+            "scope": {
+              "zh": "你选择仓库的近期活动",
+              "en": "Recent activity from repositories you choose"
+            }
+          }
         }
       }
     },
@@ -672,7 +805,7 @@
         "zh-CN": "本地文档"
       },
       "icon": "lucide:file-text",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/local-documents",
       "description": "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory.",
       "description_i18n": {
@@ -734,6 +867,19 @@
         "rationale": {
           "zh": "magi 能读取你指定文件夹里的本地笔记和文档",
           "en": "Lets magi read local notes and documents from folders you choose"
+        },
+        "surfaces": {
+          "first_context": {
+            "order": 51,
+            "rationale": {
+              "zh": "从本地笔记和文档中补充已有背景",
+              "en": "Add existing context from local notes and documents"
+            },
+            "scope": {
+              "zh": "你选择文件夹中的文本与 Markdown",
+              "en": "Text and Markdown from folders you choose"
+            }
+          }
         }
       }
     },
@@ -851,7 +997,7 @@
         "zh-CN": "Obsidian 笔记库"
       },
       "icon": "brand:obsidian",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/obsidian-vault",
       "description": "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder.",
       "description_i18n": {
@@ -909,6 +1055,19 @@
         "rationale": {
           "zh": "magi 能看到你在笔记里写了什么",
           "en": "Lets magi see what you write in your notes"
+        },
+        "surfaces": {
+          "first_context": {
+            "order": 50,
+            "rationale": {
+              "zh": "从笔记中了解你正在整理和思考的内容",
+              "en": "Understand what you are organizing and thinking about from your notes"
+            },
+            "scope": {
+              "zh": "你选择笔记库中的 Markdown",
+              "en": "Markdown from the vault you choose"
+            }
+          }
         }
       }
     },
@@ -918,8 +1077,8 @@
       "name_i18n": {
         "zh-CN": "照片库"
       },
-      "icon": "lucide:image",
-      "version": "0.1.2",
+      "icon": "custom:photo-library",
+      "version": "0.1.3",
       "path": "plugins/photo-library",
       "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
       "description_i18n": {
@@ -1001,6 +1160,26 @@
           "zh": "magi 能看到你的照片和最近的瞬间",
           "en": "Lets magi see your photos and recent moments"
         },
+        "surfaces": {
+          "empty_state": {
+            "order": 50,
+            "rationale": {
+              "zh": "让 magi 看到你的照片",
+              "en": "Lets magi see your photos and recent moments"
+            }
+          },
+          "first_context": {
+            "order": 60,
+            "rationale": {
+              "zh": "从时间和地点信息中回想最近的经历",
+              "en": "Recall recent experiences from time and location metadata"
+            },
+            "scope": {
+              "zh": "照片的时间、地点和设备信息",
+              "en": "Photo time, location, and device metadata"
+            }
+          }
+        },
         "local_requirements": [
           {
             "check_kind": "file_exists",
@@ -1019,7 +1198,7 @@
         "zh-CN": "Safari 浏览器历史"
       },
       "icon": "brand:safari",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/safari-history",
       "description": "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -1103,6 +1282,26 @@
         "rationale": {
           "zh": "magi 能读取你的 Safari 历史，帮你回想最近看过什么",
           "en": "Lets magi see what you've been reading in Safari"
+        },
+        "surfaces": {
+          "empty_state": {
+            "order": 11,
+            "rationale": {
+              "zh": "让 magi 看到你最近在网上读什么",
+              "en": "Lets magi see what you've been reading online"
+            }
+          },
+          "first_context": {
+            "order": 11,
+            "rationale": {
+              "zh": "从最近浏览中了解你正在关注的问题",
+              "en": "Continue from the topics you have been exploring recently"
+            },
+            "scope": {
+              "zh": "最近 7 天的页面标题和时间",
+              "en": "Page titles and timestamps from the last 7 days"
+            }
+          }
         },
         "local_requirements": [
           {

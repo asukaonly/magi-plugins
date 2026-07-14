@@ -3,7 +3,7 @@ id = "chrome-history"
 name = "Chrome History"
 name_i18n = { "zh-CN" = "Chrome 浏览器历史" }
 icon = "brand:googlechrome"
-version = "0.1.1"
+version = "0.1.2"
 description = "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Chrome 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
 author = "Magi Team"
@@ -53,6 +53,24 @@ en = ["browsing", "browser", "website", "online", "bookmark", "browsed", "histor
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能读取你的 Chrome 历史，帮你回想最近看过什么"
 en = "Lets magi see what you've been reading in Chrome"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 10
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 看到你最近在网上读什么"
+en = "Lets magi see what you've been reading online"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 10
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从最近浏览中了解你正在关注的问题"
+en = "Continue from the topics you have been exploring recently"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "最近 7 天的页面标题和时间"
+en = "Page titles and timestamps from the last 7 days"
 
 [[plugin.suggestion_descriptor.local_requirements]]
 check_kind = "file_exists"

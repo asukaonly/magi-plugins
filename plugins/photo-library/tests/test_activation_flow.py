@@ -75,9 +75,8 @@ def test_photo_library_apple_entry_declares_activation_flow() -> None:
     assert flow is not None, "photo-library must declare an activation_flow"
     assert flow["enabled_key"] == "sensors.photo_library_apple_photos.enabled"
     assert flow["configured_key"] == "sensors.photo_library_apple_photos.initial_sync_configured"
-    assert flow["first_context"]["settings_overrides"] == {
-        "sensors.photo_library_apple_photos.max_items_per_sync": 200,
-    }
+    assert flow["first_context"]["settings_overrides"] == {}
+    assert flow["first_context"]["max_items_per_sync"] == 200
     assert flow["fields"] == []
     assert all("source_mode" not in f["key"] for f in flow["fields"])
 
@@ -114,9 +113,8 @@ def test_photo_library_directory_entry_declares_activation_flow() -> None:
     assert flow is not None, "directory entry must declare an activation_flow"
     assert flow["enabled_key"] == "sensors.photo_library_directory.enabled"
     assert flow["configured_key"] == "sensors.photo_library_directory.initial_sync_configured"
-    assert flow["first_context"]["settings_overrides"] == {
-        "sensors.photo_library_directory.max_items_per_sync": 200,
-    }
+    assert flow["first_context"]["settings_overrides"] == {}
+    assert flow["first_context"]["max_items_per_sync"] == 200
     source_paths = next(
         (f for f in flow["fields"] if f["key"] == "sensors.photo_library_directory.source_paths"),
         None,

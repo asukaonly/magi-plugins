@@ -39,3 +39,5 @@ def test_git_activity_flow_includes_repos() -> None:
     assert "sensors.git_activity.repos" in keys, "repos must be in the activation_flow"
     repos = next(f for f in flow.fields if f.key == "sensors.git_activity.repos")
     assert repos.type == "path" and repos.required is True
+    assert flow.first_context is not None
+    assert flow.first_context.max_items_per_sync == 200

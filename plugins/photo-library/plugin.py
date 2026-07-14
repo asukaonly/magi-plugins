@@ -255,9 +255,7 @@ def _build_activation_flow(prefix: str, source_type: str) -> ActivationFlowSpec:
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
         first_context={
-            "settings_overrides": {
-                f"{prefix}.max_items_per_sync": 200,
-            }
+            "max_items_per_sync": 200,
         },
         fields=fields,
     )

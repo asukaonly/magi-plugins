@@ -55,5 +55,5 @@ def test_chrome_history_activation_flow_declares_first_context_overrides() -> No
     assert flow["first_context"]["settings_overrides"] == {
         "sensors.chrome_history.initial_sync_policy": "lookback_days",
         "sensors.chrome_history.initial_sync_lookback_days": 7,
-        "sensors.chrome_history.max_items_per_sync": 200,
     }
+    assert flow["first_context"]["max_items_per_sync"] == 200

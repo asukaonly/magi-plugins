@@ -119,10 +119,10 @@ def build_activation_flow(prefix: str, browser_label: str) -> ActivationFlowSpec
         enabled_key=f"{prefix}.enabled",
         configured_key=f"{prefix}.initial_sync_configured",
         first_context={
+            "max_items_per_sync": 200,
             "settings_overrides": {
                 f"{prefix}.initial_sync_policy": "lookback_days",
                 f"{prefix}.initial_sync_lookback_days": 7,
-                f"{prefix}.max_items_per_sync": 200,
             }
         },
         fields=[

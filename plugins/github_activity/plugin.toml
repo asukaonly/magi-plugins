@@ -3,7 +3,7 @@ id = "github-activity"
 name = "GitHub Activity"
 name_i18n = { "zh-CN" = "GitHub 活动" }
 icon = "brand:github"
-version = "0.1.0"
+version = "0.1.1"
 description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
 description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
 author = "Magi Team"
@@ -40,6 +40,17 @@ en = ["GitHub", "pull request", "PR", "issue", "review", "repository", "CI", "co
 [plugin.suggestion_descriptor.rationale]
 zh = "magi 能在本机读取你选择的 GitHub 仓库动态，理解项目进展和协作关系"
 en = "Lets magi locally read selected GitHub repository activity to understand project progress and collaboration"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 41
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从仓库动态中了解项目进展与协作关系"
+en = "Understand project progress and collaboration from repository activity"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "你选择仓库的近期活动"
+en = "Recent activity from repositories you choose"
 
 [[plugin.permissions.capabilities]]
 capability = "network"
