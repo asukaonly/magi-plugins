@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from datetime import date, datetime, time as datetime_time, timedelta
 from typing import Any
 
 from magi_plugin_sdk.sensors import (
@@ -108,6 +109,11 @@ class ChromeHistoryTimelineSensor(SensorBase):
             1, int(sensor_settings.get("initial_sync_lookback_days", 7))
         )
         initial_lookback_hours: int | None = max(1, initial_sync_lookback_days) * 24
+        initial_start_time: float | None = None
+        initial_end_time: float | None = None
+        if initial_sync_policy == "custom_range":
+            initial_start_time, initial_end_time = _custom_range_bounds(sensor_settings)
+            initial_lookback_hours = None
         if context.last_cursor is None:
             if initial_sync_policy == "full":
                 initial_lookback_hours = None
@@ -132,6 +138,8 @@ class ChromeHistoryTimelineSensor(SensorBase):
             limit=max(1, context.limit),
             last_cursor=context.last_cursor,
             initial_lookback_hours=initial_lookback_hours,
+            initial_start_time=initial_start_time,
+            initial_end_time=initial_end_time,
             merge_window_seconds=float(merge_window_minutes) * 60.0,
         )
         next_cursor = context.last_cursor
@@ -171,6 +179,12 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 "filtered_count": filtered_count,
                 "continued_count": continued_count,
                 "merge_window_minutes": merge_window_minutes,
+                "has_more": sum(
+                    int(item.get("merged_visit_count") or 1)
+                    for item in raw_items
+                    if item.get("_has_new_visit", True)
+                )
+                >= max(1, context.limit),
             },
         )
 
@@ -306,3 +320,20 @@ def _item_matches_filters(
             if keyword in haystack:
                 return True
     return False
+
+
+def _custom_range_bounds(sensor_settings: dict[str, Any]) -> tuple[float, float]:
+    """Return local-day Unix bounds for a custom history backfill."""
+
+    start_text = str(sensor_settings.get("initial_sync_start_date") or "").strip()
+    end_text = str(sensor_settings.get("initial_sync_end_date") or "").strip()
+    try:
+        start_date = date.fromisoformat(start_text)
+        end_date = date.fromisoformat(end_text)
+    except ValueError as exc:
+        raise ValueError("Custom Chrome history sync requires valid start and end dates") from exc
+    if start_date > end_date:
+        raise ValueError("Custom Chrome history sync end date cannot be earlier than start date")
+    start_at = datetime.combine(start_date, datetime_time.min)
+    end_at = datetime.combine(end_date + timedelta(days=1), datetime_time.min)
+    return start_at.timestamp(), end_at.timestamp()

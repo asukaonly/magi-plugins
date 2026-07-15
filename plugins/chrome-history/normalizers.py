@@ -38,6 +38,12 @@ def chrome_time_to_unix_seconds(value: int | float | str | None) -> float:
     return max(0.0, (numeric / 1_000_000.0) - WINDOWS_TO_UNIX_EPOCH_SECONDS)
 
 
+def unix_seconds_to_chrome_time(value: int | float) -> int:
+    """Convert Unix seconds into Chrome/WebKit microseconds since 1601."""
+
+    return int((float(value) + WINDOWS_TO_UNIX_EPOCH_SECONDS) * 1_000_000)
+
+
 _UNREAD_COUNT_PREFIX = re.compile(r"^(?:\(\d+\)\s*)+")
 
 

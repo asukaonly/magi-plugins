@@ -136,7 +136,7 @@
         "zh-CN": "Chrome 浏览器历史"
       },
       "icon": "brand:googlechrome",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {

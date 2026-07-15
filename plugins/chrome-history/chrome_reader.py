@@ -15,6 +15,7 @@ from .normalizers import (
     normalize_domain,
     normalize_title,
     should_merge_visit,
+    unix_seconds_to_chrome_time,
 )
 
 # Chrome's PageTransition core type & qualifier flags. Match the filter the
@@ -76,6 +77,8 @@ class ChromeHistoryReader:
         limit: int = 200,
         last_cursor: str | None = None,
         initial_lookback_hours: int | None = 24,
+        initial_start_time: float | None = None,
+        initial_end_time: float | None = None,
         merge_window_seconds: float = 30 * 60.0,
     ) -> list[dict[str, Any]]:
         profile_dir = self.resolve_profile_dir(source_path=source_path, profile=profile)
@@ -87,6 +90,8 @@ class ChromeHistoryReader:
                 limit=limit,
                 last_cursor=last_cursor,
                 initial_lookback_hours=initial_lookback_hours,
+                initial_start_time=initial_start_time,
+                initial_end_time=initial_end_time,
                 merge_window_seconds=merge_window_seconds,
             )
         finally:
@@ -119,9 +124,21 @@ class ChromeHistoryReader:
         limit: int,
         last_cursor: str | None,
         initial_lookback_hours: int | None,
+        initial_start_time: float | None,
+        initial_end_time: float | None,
         merge_window_seconds: float,
     ) -> list[dict[str, Any]]:
         last_visit_id = int(last_cursor) if str(last_cursor or "").isdigit() else 0
+        start_chrome_time = (
+            unix_seconds_to_chrome_time(initial_start_time)
+            if initial_start_time is not None
+            else None
+        )
+        end_chrome_time = (
+            unix_seconds_to_chrome_time(initial_end_time)
+            if initial_end_time is not None
+            else None
+        )
         connection = sqlite3.connect(str(copy_path))
         connection.row_factory = sqlite3.Row
         try:
@@ -139,12 +156,21 @@ class ChromeHistoryReader:
                     FROM visits
                     JOIN urls ON visits.url = urls.id
                     WHERE visits.id > ?
+                      AND (? IS NULL OR visits.visit_time >= ?)
+                      AND (? IS NULL OR visits.visit_time < ?)
                       AND (visits.transition & 255) != 3
                       AND (visits.transition & 536870912) != 0
                     ORDER BY visits.id ASC
                     LIMIT ?
                     """,
-                    (last_visit_id, max(1, limit)),
+                    (
+                        last_visit_id,
+                        start_chrome_time,
+                        start_chrome_time,
+                        end_chrome_time,
+                        end_chrome_time,
+                        max(1, limit),
+                    ),
                 )
                 new_rows = new_cursor.fetchall()
                 rows = []
@@ -167,14 +193,52 @@ class ChromeHistoryReader:
                             JOIN urls ON visits.url = urls.id
                             WHERE visits.id <= ?
                               AND visits.visit_time >= ?
+                              AND (? IS NULL OR visits.visit_time >= ?)
+                              AND (? IS NULL OR visits.visit_time < ?)
                               AND (visits.transition & 255) != 3
                               AND (visits.transition & 536870912) != 0
                             ORDER BY visits.id ASC
                             """,
-                            (last_visit_id, earliest_new_visit_time - merge_window_microseconds),
+                            (
+                                last_visit_id,
+                                earliest_new_visit_time - merge_window_microseconds,
+                                start_chrome_time,
+                                start_chrome_time,
+                                end_chrome_time,
+                                end_chrome_time,
+                            ),
                         )
                         seed_rows = seed_cursor.fetchall()
                     rows = [*seed_rows, *new_rows]
+            elif start_chrome_time is not None or end_chrome_time is not None:
+                cursor = connection.execute(
+                    """
+                    SELECT
+                        visits.id AS visit_id,
+                        urls.url AS url,
+                        urls.title AS title,
+                        urls.visit_count AS visit_count,
+                        visits.visit_time AS raw_visit_time,
+                        visits.from_visit AS from_visit,
+                        visits.transition AS transition
+                    FROM visits
+                    JOIN urls ON visits.url = urls.id
+                    WHERE (? IS NULL OR visits.visit_time >= ?)
+                      AND (? IS NULL OR visits.visit_time < ?)
+                      AND (visits.transition & 255) != 3
+                      AND (visits.transition & 536870912) != 0
+                    ORDER BY visits.id ASC
+                    LIMIT ?
+                    """,
+                    (
+                        start_chrome_time,
+                        start_chrome_time,
+                        end_chrome_time,
+                        end_chrome_time,
+                        max(1, limit),
+                    ),
+                )
+                rows = cursor.fetchall()
             elif initial_lookback_hours is not None:
                 lookback_microseconds = max(1, initial_lookback_hours) * 3600 * 1_000_000
                 cursor = connection.execute(

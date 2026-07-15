@@ -3,8 +3,11 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import sys
+from datetime import datetime
 from pathlib import Path
 from types import ModuleType
+
+from magi_plugin_sdk.sensors import SensorSyncContext
 
 
 def _load_sensor_class():
@@ -69,3 +72,62 @@ def test_chrome_history_output_includes_source_facets() -> None:
     assert {"name": "browser.title", "text": "Example docs"} in facets
     assert {"name": "browser.url", "text": "https://example.com/docs"} in facets
     assert {"name": "browser.visit_count", "numeric": 3} in facets
+
+
+class _RuntimePaths:
+    pass
+
+
+class _Reader:
+    def __init__(self) -> None:
+        self.kwargs = {}
+
+    def read_visits(self, *, limit: int, **kwargs):
+        self.kwargs = {"limit": limit, **kwargs}
+        return [
+            {
+                "visit_id": str(index),
+                "last_visit_id": str(index),
+                "visit_time": 1_710_000_000.0 + index,
+                "canonical_url": f"https://example.com/{index}",
+                "url": f"https://example.com/{index}",
+                "domain": "example.com",
+                "title": f"Page {index}",
+                "merged_visit_count": 1,
+            }
+            for index in range(1, limit + 1)
+        ]
+
+
+def test_chrome_history_custom_range_uses_local_day_bounds_and_continues() -> None:
+    sensor_cls = _load_sensor_class()
+    reader = _Reader()
+    sensor = sensor_cls(reader=reader)
+
+    result = asyncio.run(
+        sensor.collect_items(
+            SensorSyncContext(
+                source_type="chrome_history",
+                manual=True,
+                last_cursor=None,
+                last_success_at=None,
+                limit=2,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={
+                    "sensors": {
+                        "chrome_history": {
+                            "initial_sync_policy": "custom_range",
+                            "initial_sync_start_date": "2026-06-01",
+                            "initial_sync_end_date": "2026-06-30",
+                        }
+                    }
+                },
+            )
+        )
+    )
+
+    assert reader.kwargs["initial_lookback_hours"] is None
+    assert datetime.fromtimestamp(reader.kwargs["initial_start_time"]).date().isoformat() == "2026-06-01"
+    assert datetime.fromtimestamp(reader.kwargs["initial_end_time"]).date().isoformat() == "2026-07-01"
+    assert result.next_cursor == "2"
+    assert result.stats["has_more"] is True
