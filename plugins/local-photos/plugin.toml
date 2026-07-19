@@ -2,7 +2,7 @@
 id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
-icon = "custom:photo-library"
+icon = "lucide:images"
 version = "0.1.0"
 description = "Scans photo folders you choose and reads capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息" }
@@ -20,7 +20,7 @@ name = "Photo Library"
 name_i18n = { "zh-CN" = "照片库" }
 description = "Manage installed photo sources."
 description_i18n = { "zh-CN" = "统一管理已安装的照片来源。" }
-icon = "custom:photo-library"
+icon = "lucide:images"
 order = 30
 member_label = "Local Photos"
 member_label_i18n = { "zh-CN" = "本地照片" }

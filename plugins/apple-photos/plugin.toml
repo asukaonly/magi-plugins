@@ -2,7 +2,7 @@
 id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
-icon = "custom:photo-library"
+icon = "custom:apple-photos"
 version = "0.1.0"
 description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
@@ -23,7 +23,7 @@ name = "Photo Library"
 name_i18n = { "zh-CN" = "照片库" }
 description = "Manage installed photo sources."
 description_i18n = { "zh-CN" = "统一管理已安装的照片来源。" }
-icon = "custom:photo-library"
+icon = "lucide:images"
 order = 30
 member_label = "Apple Photos"
 member_label_i18n = { "zh-CN" = "Apple Photos" }

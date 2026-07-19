@@ -2,7 +2,7 @@
 id = "claude-code"
 name = "Claude Code"
 name_i18n = { "zh-CN" = "Claude Code" }
-icon = "lucide:bot"
+icon = "brand:claudecode"
 version = "0.1.0"
 description = "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build."
 description_i18n = { "zh-CN" = "仅读取本地 Claude Code 会话中你自己发送的内容，让 Magi 了解你在做什么" }

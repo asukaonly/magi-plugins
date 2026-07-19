@@ -2,7 +2,7 @@
 id = "photo_library_core"
 name = "Photo Library Core"
 name_i18n = { "zh-CN" = "照片来源核心库" }
-icon = "custom:photo-library"
+icon = "lucide:images"
 version = "0.1.0"
 description = "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency."
 description_i18n = { "zh-CN" = "本地照片和 Apple Photos 共用的照片读取与元数据处理能力。作为依赖自动安装。" }

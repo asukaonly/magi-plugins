@@ -31,7 +31,7 @@
       "name_i18n": {
         "zh-CN": "Apple Photos"
       },
-      "icon": "custom:photo-library",
+      "icon": "custom:apple-photos",
       "version": "0.1.0",
       "path": "plugins/apple-photos",
       "description": "Reads your macOS Photos library and extracts capture time, location, and camera metadata.",
@@ -77,7 +77,7 @@
         "description_i18n": {
           "zh-CN": "统一管理已安装的照片来源。"
         },
-        "icon": "custom:photo-library",
+        "icon": "lucide:images",
         "order": 30,
         "member_label": "Apple Photos",
         "member_label_i18n": {
@@ -176,7 +176,7 @@
       "name_i18n": {
         "zh-CN": "日历"
       },
-      "icon": "brand:googlecalendar",
+      "icon": "lucide:calendar-days",
       "version": "0.1.2",
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
@@ -402,7 +402,7 @@
       "name_i18n": {
         "zh-CN": "Claude Code"
       },
-      "icon": "lucide:bot",
+      "icon": "brand:claudecode",
       "version": "0.1.0",
       "path": "plugins/claude-code",
       "description": "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build.",
@@ -525,7 +525,7 @@
       "name_i18n": {
         "zh-CN": "Codex"
       },
-      "icon": "lucide:bot",
+      "icon": "custom:codex",
       "version": "0.1.0",
       "path": "plugins/codex",
       "description": "Reads only your own messages from local Codex transcripts so Magi can learn what you build.",
@@ -648,7 +648,7 @@
       "name_i18n": {
         "zh-CN": "Edge 浏览器历史"
       },
-      "icon": "lucide:globe",
+      "icon": "custom:microsoft-edge",
       "version": "0.1.2",
       "path": "plugins/edge-history",
       "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
@@ -1177,7 +1177,7 @@
       "name_i18n": {
         "zh-CN": "本地照片"
       },
-      "icon": "custom:photo-library",
+      "icon": "lucide:images",
       "version": "0.1.0",
       "path": "plugins/local-photos",
       "description": "Scans photo folders you choose and reads capture time, location, and camera metadata.",
@@ -1226,7 +1226,7 @@
         "description_i18n": {
           "zh-CN": "统一管理已安装的照片来源。"
         },
-        "icon": "custom:photo-library",
+        "icon": "lucide:images",
         "order": 30,
         "member_label": "Local Photos",
         "member_label_i18n": {
@@ -1494,7 +1494,7 @@
       "name_i18n": {
         "zh-CN": "照片来源核心库"
       },
-      "icon": "custom:photo-library",
+      "icon": "lucide:images",
       "version": "0.1.0",
       "path": "plugins/photo_library_core",
       "description": "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency.",
@@ -1638,7 +1638,7 @@
       "name_i18n": {
         "zh-CN": "屏幕使用"
       },
-      "icon": "lucide:monitor",
+      "icon": "lucide:chart-no-axes-column",
       "version": "0.2.6",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
@@ -1706,7 +1706,7 @@
       "name_i18n": {
         "zh-CN": "屏幕快照时间线"
       },
-      "icon": "lucide:monitor",
+      "icon": "lucide:scan",
       "version": "0.5.2",
       "path": "plugins/screenshot_timeline",
       "description": "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days.",
