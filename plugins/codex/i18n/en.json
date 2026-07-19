@@ -1,0 +1,56 @@
+{
+  "codex": {
+    "name": "Codex",
+    "description": "Read only your own messages from local Codex transcripts.",
+    "capabilities": {
+      "agent_history": {
+        "display_name": "Agent History",
+        "description": "Manage installed coding-agent history sources."
+      }
+    },
+    "entries": {
+      "codex": {
+        "display_name": "Codex",
+        "description": "Your own turns from local Codex prompts and sessions."
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "Enable",
+        "description": "Enable Codex history sync."
+      },
+      "source_paths": {
+        "label": "Transcript Folders",
+        "description": "Folders containing Codex transcripts."
+      },
+      "initial_sync_lookback_days": {
+        "label": "First-sync window (days)",
+        "description": "How many recent days to include on first sync."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to check for new Codex sessions."
+      }
+    },
+    "sections": {
+      "general": "General"
+    },
+    "activation": {
+      "title": "Connect Codex history",
+      "description": "Magi reads only your own messages from local Codex transcripts.",
+      "confirm_label": "Connect",
+      "cancel_label": "Not now"
+    }
+  },
+  "activity": {
+    "source": {
+      "codex": "Codex"
+    },
+    "action": {
+      "wrote": "Wrote"
+    },
+    "object": {
+      "agent_session": "Agent session"
+    }
+  }
+}

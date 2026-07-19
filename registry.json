@@ -3,6 +3,152 @@
   "repo_url": "https://github.com/asukaonly/magi-plugins.git",
   "plugins": [
     {
+      "plugin_id": "agent_history_core",
+      "name": "Agent History Core",
+      "name_i18n": {
+        "zh-CN": "Agent 历史核心库"
+      },
+      "icon": "lucide:bot",
+      "version": "0.1.0",
+      "path": "plugins/agent_history_core",
+      "description": "Shared transcript parsing and redaction used by the Codex and Claude Code plugins. Installed automatically as a dependency.",
+      "description_i18n": {
+        "zh-CN": "Codex 和 Claude Code 插件共用的会话读取与脱敏能力。作为依赖自动安装。"
+      },
+      "author": "Magi Team",
+      "official": false,
+      "kind": "library",
+      "contribution_types": [],
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ]
+    },
+    {
+      "plugin_id": "apple-photos",
+      "name": "Apple Photos",
+      "name_i18n": {
+        "zh-CN": "Apple Photos"
+      },
+      "icon": "custom:photo-library",
+      "version": "0.1.0",
+      "path": "plugins/apple-photos",
+      "description": "Reads your macOS Photos library and extracts capture time, location, and camera metadata.",
+      "description_i18n": {
+        "zh-CN": "读取 macOS 照片图库，提取拍摄时间、地点和设备信息"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor",
+        "tool"
+      ],
+      "capabilities": [
+        {
+          "capability": "photos",
+          "reason_i18n": {
+            "en": "Read your Apple Photos library and its metadata",
+            "zh-CN": "读取你的 Apple Photos 照片图库及其元数据"
+          }
+        },
+        {
+          "capability": "network",
+          "scope": [
+            "download.geonames.org"
+          ],
+          "optional": true,
+          "reason_i18n": {
+            "en": "Optionally download the offline GeoNames dataset for local geocoding",
+            "zh-CN": "可选下载 GeoNames 离线数据，用于在本地识别照片地点"
+          }
+        }
+      ],
+      "depends_on": [
+        "photo_library_core"
+      ],
+      "display_group": {
+        "id": "photo_library",
+        "name": "Photo Library",
+        "name_i18n": {
+          "zh-CN": "照片库"
+        },
+        "description": "Manage installed photo sources.",
+        "description_i18n": {
+          "zh-CN": "统一管理已安装的照片来源。"
+        },
+        "icon": "custom:photo-library",
+        "order": 30,
+        "member_label": "Apple Photos",
+        "member_label_i18n": {
+          "zh-CN": "Apple Photos"
+        },
+        "member_order": 10
+      },
+      "platforms": [
+        "macos"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "photos",
+        "platform_support": [
+          "darwin"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "Apple Photos",
+              "苹果照片",
+              "系统相册",
+              "照片图库"
+            ],
+            "en": [
+              "Apple Photos",
+              "Photos library",
+              "macOS photos",
+              "photo library"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "让 magi 读取你的 Apple Photos 照片图库",
+          "en": "Lets magi read your Apple Photos library"
+        },
+        "surfaces": {
+          "empty_state": {
+            "order": 50,
+            "rationale": {
+              "zh": "让 magi 看到 Apple Photos 中的最近瞬间",
+              "en": "Lets magi see recent moments from Apple Photos"
+            }
+          },
+          "first_context": {
+            "order": 60,
+            "rationale": {
+              "zh": "从照片的时间和地点信息中回想最近的经历",
+              "en": "Recall recent experiences from photo time and location metadata"
+            },
+            "scope": {
+              "zh": "Apple Photos 中照片的时间、地点和设备信息",
+              "en": "Photo time, location, and device metadata from Apple Photos"
+            }
+          }
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Pictures/Photos Library.photoslibrary"
+            }
+          }
+        ]
+      }
+    },
+    {
       "plugin_id": "browser_history_core",
       "name": "Browser History Core",
       "name_i18n": {
@@ -251,17 +397,17 @@
       }
     },
     {
-      "plugin_id": "coding_agent_history",
-      "name": "Agent History",
+      "plugin_id": "claude-code",
+      "name": "Claude Code",
       "name_i18n": {
-        "zh-CN": "Agent 历史"
+        "zh-CN": "Claude Code"
       },
       "icon": "lucide:bot",
-      "version": "0.1.5",
-      "path": "plugins/coding_agent_history",
-      "description": "Optional. Reads ONLY your own messages from local agent transcripts (Claude Code, Codex) so Magi can learn what you build. Off by default; obvious secrets are scrubbed before anything leaves your device.",
+      "version": "0.1.0",
+      "path": "plugins/claude-code",
+      "description": "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build.",
       "description_i18n": {
-        "zh-CN": "可选。仅读取本地 Agent（Claude Code、Codex）transcript 里你自己发的消息，让 Magi 了解你在做什么。默认关闭；明显的密钥会在内容离开本机前先被脱敏。"
+        "zh-CN": "仅读取本地 Claude Code 会话中你自己发送的内容，让 Magi 了解你在做什么"
       },
       "author": "Magi Team",
       "official": false,
@@ -271,12 +417,37 @@
       "capabilities": [
         {
           "capability": "filesystem_read",
+          "scope": [
+            "~/.claude/projects",
+            "%USERPROFILE%/.claude/projects"
+          ],
           "reason_i18n": {
-            "en": "Read your own turns from local agent transcripts",
-            "zh-CN": "读取本地 Agent transcript 中你自己发送的消息"
+            "en": "Read your own turns from local Claude Code transcripts",
+            "zh-CN": "读取本地 Claude Code 会话中你自己发送的内容"
           }
         }
       ],
+      "depends_on": [
+        "agent_history_core"
+      ],
+      "display_group": {
+        "id": "agent_history",
+        "name": "Agent History",
+        "name_i18n": {
+          "zh-CN": "Agent 历史"
+        },
+        "description": "Manage installed coding-agent history sources.",
+        "description_i18n": {
+          "zh-CN": "统一管理已安装的编程助手历史来源。"
+        },
+        "icon": "lucide:bot",
+        "order": 40,
+        "member_label": "Claude Code",
+        "member_label_i18n": {
+          "zh-CN": "Claude Code"
+        },
+        "member_order": 10
+      },
       "platforms": [
         "macos",
         "windows",
@@ -290,7 +461,7 @@
           "win32",
           "linux"
         ],
-        "setup_time_estimate_seconds": 20,
+        "setup_time_estimate_seconds": 15,
         "data_locality": "local_only",
         "triggers": {
           "intents": [],
@@ -298,43 +469,37 @@
           "keywords": {
             "zh": [
               "claude code",
-              "codex",
-              "agent",
-              "ai 编程",
+              "编程助手",
               "写代码",
               "做了什么",
-              "在搞什么",
               "项目"
             ],
             "en": [
               "claude code",
-              "codex",
-              "agent",
               "coding agent",
-              "ai coding",
               "building",
               "working on",
-              "side project"
+              "project"
             ]
           }
         },
         "rationale": {
-          "zh": "让 magi 了解你在 Agent 会话里做了什么",
-          "en": "Lets magi learn what you're building with your agents"
+          "zh": "让 magi 了解你在 Claude Code 会话里做了什么",
+          "en": "Lets magi learn what you are building with Claude Code"
         },
         "surfaces": {
           "empty_state": {
             "order": 20,
             "rationale": {
-              "zh": "让 magi 从 Claude Code / Codex 会话看到你在做什么",
-              "en": "Lets magi see what you're doing in Claude Code / Codex sessions"
+              "zh": "让 magi 从 Claude Code 会话看到你在做什么",
+              "en": "Lets magi see what you are doing in Claude Code sessions"
             }
           },
           "first_context": {
             "order": 30,
             "rationale": {
-              "zh": "从你发给编程助手的问题中理解正在推进的项目",
-              "en": "Understand active projects from questions you asked coding agents"
+              "zh": "从你发给 Claude Code 的问题中理解正在推进的项目",
+              "en": "Understand active projects from questions you asked Claude Code"
             },
             "scope": {
               "zh": "最近 30 天内你自己发出的内容",
@@ -349,6 +514,129 @@
               "darwin": "~/.claude/projects",
               "win32": "%USERPROFILE%/.claude/projects",
               "linux": "~/.claude/projects"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "plugin_id": "codex",
+      "name": "Codex",
+      "name_i18n": {
+        "zh-CN": "Codex"
+      },
+      "icon": "lucide:bot",
+      "version": "0.1.0",
+      "path": "plugins/codex",
+      "description": "Reads only your own messages from local Codex transcripts so Magi can learn what you build.",
+      "description_i18n": {
+        "zh-CN": "仅读取本地 Codex 会话中你自己发送的内容，让 Magi 了解你在做什么"
+      },
+      "author": "Magi Team",
+      "official": false,
+      "contribution_types": [
+        "sensor"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/.codex",
+            "%USERPROFILE%/.codex"
+          ],
+          "reason_i18n": {
+            "en": "Read your own turns from local Codex transcripts",
+            "zh-CN": "读取本地 Codex 会话中你自己发送的内容"
+          }
+        }
+      ],
+      "depends_on": [
+        "agent_history_core"
+      ],
+      "display_group": {
+        "id": "agent_history",
+        "name": "Agent History",
+        "name_i18n": {
+          "zh-CN": "Agent 历史"
+        },
+        "description": "Manage installed coding-agent history sources.",
+        "description_i18n": {
+          "zh-CN": "统一管理已安装的编程助手历史来源。"
+        },
+        "icon": "lucide:bot",
+        "order": 40,
+        "member_label": "Codex",
+        "member_label_i18n": {
+          "zh-CN": "Codex"
+        },
+        "member_order": 20
+      },
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "code_activity",
+        "platform_support": [
+          "darwin",
+          "win32",
+          "linux"
+        ],
+        "setup_time_estimate_seconds": 15,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "codex",
+              "编程助手",
+              "写代码",
+              "做了什么",
+              "项目"
+            ],
+            "en": [
+              "codex",
+              "coding agent",
+              "building",
+              "working on",
+              "project"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "让 magi 了解你在 Codex 会话里做了什么",
+          "en": "Lets magi learn what you are building with Codex"
+        },
+        "surfaces": {
+          "empty_state": {
+            "order": 20,
+            "rationale": {
+              "zh": "让 magi 从 Codex 会话看到你在做什么",
+              "en": "Lets magi see what you are doing in Codex sessions"
+            }
+          },
+          "first_context": {
+            "order": 30,
+            "rationale": {
+              "zh": "从你发给 Codex 的问题中理解正在推进的项目",
+              "en": "Understand active projects from questions you asked Codex"
+            },
+            "scope": {
+              "zh": "最近 30 天内你自己发出的内容",
+              "en": "Your own messages from the last 30 days"
+            }
+          }
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/.codex",
+              "win32": "%USERPROFILE%/.codex",
+              "linux": "~/.codex"
             }
           }
         ]
@@ -884,6 +1172,135 @@
       }
     },
     {
+      "plugin_id": "local-photos",
+      "name": "Local Photos",
+      "name_i18n": {
+        "zh-CN": "本地照片"
+      },
+      "icon": "custom:photo-library",
+      "version": "0.1.0",
+      "path": "plugins/local-photos",
+      "description": "Scans photo folders you choose and reads capture time, location, and camera metadata.",
+      "description_i18n": {
+        "zh-CN": "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "sensor",
+        "tool"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "scope": [
+            "~/Pictures"
+          ],
+          "reason_i18n": {
+            "en": "Read photos from folders you choose",
+            "zh-CN": "读取你选择的本地照片文件夹"
+          }
+        },
+        {
+          "capability": "network",
+          "scope": [
+            "download.geonames.org"
+          ],
+          "optional": true,
+          "reason_i18n": {
+            "en": "Optionally download the offline GeoNames dataset for local geocoding",
+            "zh-CN": "可选下载 GeoNames 离线数据，用于在本地识别照片地点"
+          }
+        }
+      ],
+      "depends_on": [
+        "photo_library_core"
+      ],
+      "display_group": {
+        "id": "photo_library",
+        "name": "Photo Library",
+        "name_i18n": {
+          "zh-CN": "照片库"
+        },
+        "description": "Manage installed photo sources.",
+        "description_i18n": {
+          "zh-CN": "统一管理已安装的照片来源。"
+        },
+        "icon": "custom:photo-library",
+        "order": 30,
+        "member_label": "Local Photos",
+        "member_label_i18n": {
+          "zh-CN": "本地照片"
+        },
+        "member_order": 20
+      },
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "data_locality": "local_only",
+      "suggestion_descriptor": {
+        "category": "photos",
+        "platform_support": [
+          "darwin",
+          "win32"
+        ],
+        "setup_time_estimate_seconds": 20,
+        "data_locality": "local_only",
+        "triggers": {
+          "intents": [],
+          "entities": [],
+          "keywords": {
+            "zh": [
+              "本地照片",
+              "照片文件夹",
+              "导出照片",
+              "图片目录"
+            ],
+            "en": [
+              "local photos",
+              "photo folder",
+              "exported photos",
+              "picture directory"
+            ]
+          }
+        },
+        "rationale": {
+          "zh": "让 magi 读取你选择的照片文件夹",
+          "en": "Lets magi read the photo folders you choose"
+        },
+        "surfaces": {
+          "empty_state": {
+            "order": 55,
+            "rationale": {
+              "zh": "让 magi 看到你选择的本地照片",
+              "en": "Lets magi see photos from folders you choose"
+            }
+          },
+          "first_context": {
+            "order": 65,
+            "rationale": {
+              "zh": "从照片的时间和地点信息中回想最近的经历",
+              "en": "Recall recent experiences from photo time and location metadata"
+            },
+            "scope": {
+              "zh": "所选文件夹中照片的时间、地点和设备信息",
+              "en": "Photo time, location, and device metadata from selected folders"
+            }
+          }
+        },
+        "local_requirements": [
+          {
+            "check_kind": "file_exists",
+            "paths_per_platform": {
+              "darwin": "~/Pictures",
+              "win32": "%USERPROFILE%/Pictures"
+            }
+          }
+        ]
+      }
+    },
+    {
       "plugin_id": "netease-music",
       "name": "NetEase Cloud Music",
       "name_i18n": {
@@ -1072,124 +1489,26 @@
       }
     },
     {
-      "plugin_id": "photo-library",
-      "name": "Photo Library",
+      "plugin_id": "photo_library_core",
+      "name": "Photo Library Core",
       "name_i18n": {
-        "zh-CN": "照片库"
+        "zh-CN": "照片来源核心库"
       },
       "icon": "custom:photo-library",
-      "version": "0.1.3",
-      "path": "plugins/photo-library",
-      "description": "Scans your local photo library and reads metadata (time, location, camera) so Magi can build a record of your experiences and places visited.",
+      "version": "0.1.0",
+      "path": "plugins/photo_library_core",
+      "description": "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency.",
       "description_i18n": {
-        "zh-CN": "扫描本地照片，读取拍摄时间、地点等元数据，帮助 Magi 还原你的生活记录和去过的地方"
+        "zh-CN": "本地照片和 Apple Photos 共用的照片读取与元数据处理能力。作为依赖自动安装。"
       },
       "author": "Magi Team",
       "official": true,
-      "contribution_types": [
-        "sensor",
-        "tool"
-      ],
-      "capabilities": [
-        {
-          "capability": "photos",
-          "reason_i18n": {
-            "en": "Access your photo library and its metadata",
-            "zh-CN": "访问你的照片库及其元数据"
-          }
-        },
-        {
-          "capability": "filesystem_read",
-          "scope": [
-            "~/Pictures"
-          ],
-          "reason_i18n": {
-            "en": "Scan local photo files for metadata",
-            "zh-CN": "扫描本地照片文件的元数据"
-          }
-        },
-        {
-          "capability": "network",
-          "scope": [
-            "download.geonames.org"
-          ],
-          "reason_i18n": {
-            "en": "One-time download of the offline reverse-geocoding dataset (GeoNames); geocoding then runs locally. Your photos and locations are never uploaded.",
-            "zh-CN": "一次性下载离线反向地理编码数据集(GeoNames),之后在本地完成地理编码。你的照片和位置绝不上传。"
-          }
-        }
-      ],
+      "kind": "library",
+      "contribution_types": [],
       "platforms": [
         "macos",
         "windows"
-      ],
-      "data_locality": "local_only",
-      "suggestion_descriptor": {
-        "category": "photos",
-        "platform_support": [
-          "darwin",
-          "win32"
-        ],
-        "setup_time_estimate_seconds": 20,
-        "data_locality": "local_only",
-        "triggers": {
-          "intents": [],
-          "entities": [],
-          "keywords": {
-            "zh": [
-              "照片",
-              "图片",
-              "拍",
-              "相册",
-              "拍过",
-              "那张",
-              "影像",
-              "图像"
-            ],
-            "en": [
-              "photo",
-              "picture",
-              "image",
-              "photos",
-              "snapshot",
-              "album"
-            ]
-          }
-        },
-        "rationale": {
-          "zh": "magi 能看到你的照片和最近的瞬间",
-          "en": "Lets magi see your photos and recent moments"
-        },
-        "surfaces": {
-          "empty_state": {
-            "order": 50,
-            "rationale": {
-              "zh": "让 magi 看到你的照片",
-              "en": "Lets magi see your photos and recent moments"
-            }
-          },
-          "first_context": {
-            "order": 60,
-            "rationale": {
-              "zh": "从时间和地点信息中回想最近的经历",
-              "en": "Recall recent experiences from time and location metadata"
-            },
-            "scope": {
-              "zh": "照片的时间、地点和设备信息",
-              "en": "Photo time, location, and device metadata"
-            }
-          }
-        },
-        "local_requirements": [
-          {
-            "check_kind": "file_exists",
-            "paths_per_platform": {
-              "darwin": "~/Pictures",
-              "win32": "%USERPROFILE%/Pictures"
-            }
-          }
-        ]
-      }
+      ]
     },
     {
       "plugin_id": "safari-history",

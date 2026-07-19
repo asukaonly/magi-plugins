@@ -1,0 +1,93 @@
+[plugin]
+id = "local-photos"
+name = "Local Photos"
+name_i18n = { "zh-CN" = "本地照片" }
+icon = "custom:photo-library"
+version = "0.1.0"
+description = "Scans photo folders you choose and reads capture time, location, and camera metadata."
+description_i18n = { "zh-CN" = "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "LocalPhotosPlugin"
+official = true
+contribution_types = ["sensor", "tool"]
+platforms = ["macos", "windows"]
+depends_on = ["photo_library_core"]
+
+[plugin.display_group]
+id = "photo_library"
+name = "Photo Library"
+name_i18n = { "zh-CN" = "照片库" }
+description = "Manage installed photo sources."
+description_i18n = { "zh-CN" = "统一管理已安装的照片来源。" }
+icon = "custom:photo-library"
+order = 30
+member_label = "Local Photos"
+member_label_i18n = { "zh-CN" = "本地照片" }
+member_order = 20
+
+[plugin.default_settings.sensors.photo_library_directory]
+enabled = false
+source_mode = "directory"
+sync_mode = "interval"
+sync_interval_minutes = 60
+default_retention_mode = "analyze_only"
+storage_mode = "external_reference"
+source_paths = []
+exclude_patterns = []
+analysis_features = ["exif"]
+edge_whitelist = ["CAPTURED", "RELATED_TO", "INTERACTED_WITH", "CREATED"]
+
+[plugin.suggestion_descriptor]
+category = "photos"
+platform_support = ["darwin", "win32"]
+setup_time_estimate_seconds = 20
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["本地照片", "照片文件夹", "导出照片", "图片目录"]
+en = ["local photos", "photo folder", "exported photos", "picture directory"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "让 magi 读取你选择的照片文件夹"
+en = "Lets magi read the photo folders you choose"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 55
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 看到你选择的本地照片"
+en = "Lets magi see photos from folders you choose"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 65
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从照片的时间和地点信息中回想最近的经历"
+en = "Recall recent experiences from photo time and location metadata"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "所选文件夹中照片的时间、地点和设备信息"
+en = "Photo time, location, and device metadata from selected folders"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Pictures"
+win32 = "%USERPROFILE%/Pictures"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/Pictures"]
+reason_i18n = { en = "Read photos from folders you choose", "zh-CN" = "读取你选择的本地照片文件夹" }
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["download.geonames.org"]
+optional = true
+reason_i18n = { en = "Optionally download the offline GeoNames dataset for local geocoding", "zh-CN" = "可选下载 GeoNames 离线数据，用于在本地识别照片地点" }

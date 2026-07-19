@@ -61,6 +61,21 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
         data = tomllib.load(f)
     meta = data.get("plugin", {})
     plugin_id = meta.get("id", plugin_dir.name)
+    default_settings = meta.get("default_settings") or {}
+    default_sensors = (
+        (default_settings.get("sensors") or {})
+        if isinstance(default_settings, dict)
+        else {}
+    )
+    if (
+        meta.get("kind", "plugin") != "library"
+        and "sensor" in meta.get("contribution_types", [])
+        and len(default_sensors) > 1
+    ):
+        raise ValueError(
+            f"{plugin_id} bundles multiple independently installable sources: "
+            f"{', '.join(sorted(default_sensors))}"
+        )
     entry: dict = {
         "plugin_id": plugin_id,
         "name": meta.get("name", plugin_dir.name),

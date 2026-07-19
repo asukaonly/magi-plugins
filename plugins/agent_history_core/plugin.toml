@@ -1,0 +1,13 @@
+[plugin]
+id = "agent_history_core"
+name = "Agent History Core"
+name_i18n = { "zh-CN" = "Agent 历史核心库" }
+icon = "lucide:bot"
+version = "0.1.0"
+description = "Shared transcript parsing and redaction used by the Codex and Claude Code plugins. Installed automatically as a dependency."
+description_i18n = { "zh-CN" = "Codex 和 Claude Code 插件共用的会话读取与脱敏能力。作为依赖自动安装。" }
+author = "Magi Team"
+official = false
+kind = "library"
+contribution_types = []
+platforms = ["macos", "windows", "linux"]

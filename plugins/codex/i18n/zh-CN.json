@@ -1,0 +1,56 @@
+{
+  "codex": {
+    "name": "Codex",
+    "description": "仅读取本地 Codex 会话中你自己发送的内容。",
+    "capabilities": {
+      "agent_history": {
+        "display_name": "Agent 历史",
+        "description": "统一管理已安装的编程助手历史来源。"
+      }
+    },
+    "entries": {
+      "codex": {
+        "display_name": "Codex",
+        "description": "读取本地 Codex 提问与会话中你自己发送的内容。"
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "开启 Codex 历史同步。"
+      },
+      "source_paths": {
+        "label": "会话文件夹",
+        "description": "包含 Codex 会话记录的文件夹。"
+      },
+      "initial_sync_lookback_days": {
+        "label": "首次同步天数",
+        "description": "首次同步包含最近多少天的内容。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": "检查新 Codex 会话的频率。"
+      }
+    },
+    "sections": {
+      "general": "常规"
+    },
+    "activation": {
+      "title": "连接 Codex 历史",
+      "description": "Magi 仅读取本地 Codex 会话中你自己发送的内容。",
+      "confirm_label": "连接",
+      "cancel_label": "暂不连接"
+    }
+  },
+  "activity": {
+    "source": {
+      "codex": "Codex"
+    },
+    "action": {
+      "wrote": "发送"
+    },
+    "object": {
+      "agent_session": "Agent 会话"
+    }
+  }
+}

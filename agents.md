@@ -45,7 +45,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 | **URL** | `github.com/asukaonly/magi` | `github.com/asukaonly/magi-plugins` |
 | **Owns** | Plugin runtime, contracts, manager, API, frontend | Plugin source code, registry index |
 | **Core plugins** | `plugins/core-tools`, `plugins/core-actions` (bundled in app) | — |
-| **Optional plugins** | — | All 8 optional plugins (installed via marketplace) |
+| **Optional plugins** | — | Marketplace plugins and hidden shared libraries |
 | **Registry** | Backend fetches `registry.json` from this repo | Hosts and maintains `registry.json` |
 | **Docs** | `docs/plugin-development-guide.md`, `docs/plugin-extension-architecture.md` | This file (`agents.md`) |
 
@@ -67,9 +67,14 @@ magi-plugins/
 ├── plugins/
 │   ├── calendar_plugin/           # Sensor: Calendar events (macOS/iOS)
 │   ├── chrome-history/            # Sensor: Chrome browsing history
+│   ├── claude-code/               # Sensor: Claude Code transcripts
+│   ├── codex/                     # Sensor: Codex transcripts
 │   ├── git_activity/              # Sensor: Git repository activity
 │   ├── netease_music/             # Sensor: NetEase Cloud Music history
-│   ├── photo-library/             # Sensor: Local photo library
+│   ├── apple-photos/              # Sensor: Apple Photos (macOS)
+│   ├── local-photos/              # Sensor: User-selected local photo folders
+│   ├── agent_history_core/        # Hidden shared transcript library
+│   ├── photo_library_core/        # Hidden shared photo library
 │   ├── screen_time/               # Sensor: App usage tracking (macOS)
 │   ├── system_media/              # Sensor: Media playback tracking
 │   └── terminal_history/          # Sensor: Terminal command history (macOS)

@@ -7,8 +7,11 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parent
 
 SENSOR_ENTRY_PLUGINS = {
+    "apple-photos": ["apple_photos"],
+    "local-photos": ["directory"],
     "screen_time": ["screen_time"],
-    "coding_agent_history": ["claude_code", "codex"],
+    "claude-code": ["claude_code"],
+    "codex": ["codex"],
     "git_activity": ["git_activity"],
     "github_activity": ["github_activity"],
     "netease_music": ["netease_music"],
@@ -27,7 +30,7 @@ def test_sensor_status_entries_have_localized_display_text() -> None:
     for plugin_dir, entry_ids in SENSOR_ENTRY_PLUGINS.items():
         for locale in ("en", "zh-CN"):
             payload = _load_i18n(plugin_dir, locale)
-            root = payload[plugin_dir]
+            root = payload[plugin_dir.replace("-", "_")]
             for entry_id in entry_ids:
                 entry = root["entries"][entry_id]
                 assert entry["display_name"].strip(), f"{plugin_dir} {locale}"

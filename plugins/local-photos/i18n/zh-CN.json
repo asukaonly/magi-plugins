@@ -1,0 +1,107 @@
+{
+  "local_photos": {
+    "name": "本地照片",
+    "description": "读取你选择的照片文件夹，提取拍摄时间、地点和设备信息。",
+    "capabilities": {
+      "photo_library": {
+        "display_name": "照片库",
+        "description": "统一管理已安装的照片来源。"
+      }
+    },
+    "entries": {
+      "directory": {
+        "display_name": "本地照片",
+        "description": "扫描你选择的本地照片文件夹。"
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "启用",
+        "description": "开启本地照片文件夹同步。"
+      },
+      "source_paths": {
+        "label": "照片目录",
+        "description": "要扫描的本地照片目录，可添加多个路径。"
+      },
+      "exclude_patterns": {
+        "label": "排除规则",
+        "description": "要跳过的目录或文件。",
+        "placeholder": "**/thumbnails"
+      },
+      "sync_mode": {
+        "label": "同步方式",
+        "description": "选择手动触发还是定时自动同步。"
+      },
+      "sync_interval_minutes": {
+        "label": "定时间隔（分钟）",
+        "description": "自动同步的执行间隔。"
+      },
+      "max_items_per_sync": {
+        "label": "单次最大数量",
+        "description": "每次同步最多处理的照片数量。"
+      },
+      "settle_window_hours": {
+        "label": "照片活动等待时间（小时）",
+        "description": "最后一张照片出现后等待多久，才把这次拍摄视为完成。"
+      },
+      "analysis_features": {
+        "label": "分析能力",
+        "description": "要提取的照片信息。"
+      }
+    },
+    "options": {
+      "sync_mode": {
+        "manual": "手动",
+        "interval": "自动"
+      },
+      "analysis_features": {
+        "exif": "照片元数据",
+        "geocode": "地点识别"
+      }
+    },
+    "sections": {
+      "general": "常规"
+    },
+    "activation": {
+      "title": "启用本地照片",
+      "description": "请选择允许 Magi 读取的本地照片文件夹。",
+      "confirm_label": "启用来源",
+      "cancel_label": "暂不启用"
+    }
+  },
+  "weekday": {
+    "0": "周一",
+    "1": "周二",
+    "2": "周三",
+    "3": "周四",
+    "4": "周五",
+    "5": "周六",
+    "6": "周日"
+  },
+  "time_of_day": {
+    "morning": "上午",
+    "afternoon": "下午",
+    "evening": "傍晚",
+    "night": "夜晚"
+  },
+  "activity": {
+    "source": {
+      "photos": "照片"
+    },
+    "action": {
+      "capture": "拍摄"
+    },
+    "object": {
+      "photo": "照片"
+    }
+  },
+  "summary": {
+    "place_unknown": "某处",
+    "photo_count_one": "{count} 张照片",
+    "photo_count_many": "{count} 张照片",
+    "when": "{date} {weekday}{time_of_day}",
+    "session_with_device": "{when}用 {device} 在{place}拍摄了{photo_count}",
+    "session_no_device": "{when}在{place}拍摄了{photo_count}",
+    "with_time_range": "{summary}（{start}–{end}）"
+  }
+}

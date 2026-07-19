@@ -1,0 +1,93 @@
+[plugin]
+id = "apple-photos"
+name = "Apple Photos"
+name_i18n = { "zh-CN" = "Apple Photos" }
+icon = "custom:photo-library"
+version = "0.1.0"
+description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
+description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "ApplePhotosPlugin"
+official = true
+contribution_types = ["sensor", "tool"]
+platforms = ["macos"]
+depends_on = ["photo_library_core"]
+dependencies = [
+    "osxphotos>=0.76.1; sys_platform == 'darwin'",
+]
+
+[plugin.display_group]
+id = "photo_library"
+name = "Photo Library"
+name_i18n = { "zh-CN" = "照片库" }
+description = "Manage installed photo sources."
+description_i18n = { "zh-CN" = "统一管理已安装的照片来源。" }
+icon = "custom:photo-library"
+order = 30
+member_label = "Apple Photos"
+member_label_i18n = { "zh-CN" = "Apple Photos" }
+member_order = 10
+
+[plugin.default_settings.sensors.photo_library_apple_photos]
+enabled = false
+source_mode = "apple_photos"
+photos_library_path = ""
+sync_mode = "interval"
+sync_interval_minutes = 60
+default_retention_mode = "analyze_only"
+storage_mode = "external_reference"
+analysis_features = ["exif"]
+edge_whitelist = ["CAPTURED", "RELATED_TO", "INTERACTED_WITH", "CREATED"]
+
+[plugin.suggestion_descriptor]
+category = "photos"
+platform_support = ["darwin"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["Apple Photos", "苹果照片", "系统相册", "照片图库"]
+en = ["Apple Photos", "Photos library", "macOS photos", "photo library"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "让 magi 读取你的 Apple Photos 照片图库"
+en = "Lets magi read your Apple Photos library"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 50
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 看到 Apple Photos 中的最近瞬间"
+en = "Lets magi see recent moments from Apple Photos"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 60
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从照片的时间和地点信息中回想最近的经历"
+en = "Recall recent experiences from photo time and location metadata"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "Apple Photos 中照片的时间、地点和设备信息"
+en = "Photo time, location, and device metadata from Apple Photos"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/Pictures/Photos Library.photoslibrary"
+
+[[plugin.permissions.capabilities]]
+capability = "photos"
+reason_i18n = { en = "Read your Apple Photos library and its metadata", "zh-CN" = "读取你的 Apple Photos 照片图库及其元数据" }
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["download.geonames.org"]
+optional = true
+reason_i18n = { en = "Optionally download the offline GeoNames dataset for local geocoding", "zh-CN" = "可选下载 GeoNames 离线数据，用于在本地识别照片地点" }

@@ -32,9 +32,14 @@ magi-plugins/
 ├── plugins/
 │   ├── calendar_plugin/           # Calendar event ingestion (macOS/iOS)
 │   ├── chrome-history/            # Chrome browsing history sensor
+│   ├── claude-code/               # Claude Code transcript source
+│   ├── codex/                     # Codex transcript source
 │   ├── git_activity/              # Git repository activity sensor
 │   ├── netease_music/             # NetEase Cloud Music history sensor
-│   ├── photo-library/             # Local photo library sensor
+│   ├── apple-photos/              # Apple Photos library sensor (macOS)
+│   ├── local-photos/              # User-selected local photo folders
+│   ├── agent_history_core/        # Hidden shared transcript library
+│   ├── photo_library_core/        # Hidden shared photo library
 │   ├── screen_time/               # App usage tracking sensor (macOS)
 │   ├── steam_play_history/        # Steam gameplay history sensor
 │   ├── system_media/              # Cross-platform media playback sensor
@@ -46,7 +51,8 @@ magi-plugins/
 
 ## Plugin Directory Layout
 
-Every plugin is a self-contained directory under `plugins/`:
+Every installable source has its own directory under `plugins/`. Shared code may
+live in a hidden library package installed automatically through `depends_on`:
 
 ```
 plugins/<plugin_name>/

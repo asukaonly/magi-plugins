@@ -1,5 +1,6 @@
 {
   "official_plugin_ids": [
+    "apple-photos",
     "browser_history_core",
     "calendar",
     "chrome-history",
@@ -9,7 +10,8 @@
     "github-activity",
     "local-documents",
     "netease-music",
-    "photo-library",
+    "local-photos",
+    "photo_library_core",
     "safari-history",
     "screen-time",
     "screenshot_timeline",

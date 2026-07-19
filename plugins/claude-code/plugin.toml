@@ -1,0 +1,83 @@
+[plugin]
+id = "claude-code"
+name = "Claude Code"
+name_i18n = { "zh-CN" = "Claude Code" }
+icon = "lucide:bot"
+version = "0.1.0"
+description = "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build."
+description_i18n = { "zh-CN" = "仅读取本地 Claude Code 会话中你自己发送的内容，让 Magi 了解你在做什么" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "ClaudeCodePlugin"
+official = false
+contribution_types = ["sensor"]
+platforms = ["macos", "windows", "linux"]
+depends_on = ["agent_history_core"]
+
+[plugin.display_group]
+id = "agent_history"
+name = "Agent History"
+name_i18n = { "zh-CN" = "Agent 历史" }
+description = "Manage installed coding-agent history sources."
+description_i18n = { "zh-CN" = "统一管理已安装的编程助手历史来源。" }
+icon = "lucide:bot"
+order = 40
+member_label = "Claude Code"
+member_label_i18n = { "zh-CN" = "Claude Code" }
+member_order = 10
+
+[plugin.default_settings.sensors.claude_code_agent_history]
+enabled = false
+source_paths = ["~/.claude/projects"]
+initial_sync_lookback_days = 30
+sync_interval_minutes = 30
+initial_sync_configured = false
+
+[plugin.suggestion_descriptor]
+category = "code_activity"
+platform_support = ["darwin", "win32", "linux"]
+setup_time_estimate_seconds = 15
+data_locality = "local_only"
+
+[plugin.suggestion_descriptor.triggers]
+intents = []
+entities = []
+
+[plugin.suggestion_descriptor.triggers.keywords]
+zh = ["claude code", "编程助手", "写代码", "做了什么", "项目"]
+en = ["claude code", "coding agent", "building", "working on", "project"]
+
+[plugin.suggestion_descriptor.rationale]
+zh = "让 magi 了解你在 Claude Code 会话里做了什么"
+en = "Lets magi learn what you are building with Claude Code"
+
+[plugin.suggestion_descriptor.surfaces.empty_state]
+order = 20
+
+[plugin.suggestion_descriptor.surfaces.empty_state.rationale]
+zh = "让 magi 从 Claude Code 会话看到你在做什么"
+en = "Lets magi see what you are doing in Claude Code sessions"
+
+[plugin.suggestion_descriptor.surfaces.first_context]
+order = 30
+
+[plugin.suggestion_descriptor.surfaces.first_context.rationale]
+zh = "从你发给 Claude Code 的问题中理解正在推进的项目"
+en = "Understand active projects from questions you asked Claude Code"
+
+[plugin.suggestion_descriptor.surfaces.first_context.scope]
+zh = "最近 30 天内你自己发出的内容"
+en = "Your own messages from the last 30 days"
+
+[[plugin.suggestion_descriptor.local_requirements]]
+check_kind = "file_exists"
+
+[plugin.suggestion_descriptor.local_requirements.paths_per_platform]
+darwin = "~/.claude/projects"
+win32 = "%USERPROFILE%/.claude/projects"
+linux = "~/.claude/projects"
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["~/.claude/projects", "%USERPROFILE%/.claude/projects"]
+reason_i18n = { en = "Read your own turns from local Claude Code transcripts", "zh-CN" = "读取本地 Claude Code 会话中你自己发送的内容" }

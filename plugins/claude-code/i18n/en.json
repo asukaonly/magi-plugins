@@ -1,0 +1,56 @@
+{
+  "claude_code": {
+    "name": "Claude Code",
+    "description": "Read only your own messages from local Claude Code transcripts.",
+    "capabilities": {
+      "agent_history": {
+        "display_name": "Agent History",
+        "description": "Manage installed coding-agent history sources."
+      }
+    },
+    "entries": {
+      "claude_code": {
+        "display_name": "Claude Code",
+        "description": "Your own turns from local Claude Code transcripts."
+      }
+    },
+    "fields": {
+      "enabled": {
+        "label": "Enable",
+        "description": "Enable Claude Code history sync."
+      },
+      "source_paths": {
+        "label": "Transcript Folders",
+        "description": "Folders containing Claude Code transcripts."
+      },
+      "initial_sync_lookback_days": {
+        "label": "First-sync window (days)",
+        "description": "How many recent days to include on first sync."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync Interval (minutes)",
+        "description": "How often to check for new Claude Code sessions."
+      }
+    },
+    "sections": {
+      "general": "General"
+    },
+    "activation": {
+      "title": "Connect Claude Code history",
+      "description": "Magi reads only your own messages from local Claude Code transcripts.",
+      "confirm_label": "Connect",
+      "cancel_label": "Not now"
+    }
+  },
+  "activity": {
+    "source": {
+      "claude_code": "Claude Code"
+    },
+    "action": {
+      "wrote": "Wrote"
+    },
+    "object": {
+      "agent_session": "Agent session"
+    }
+  }
+}

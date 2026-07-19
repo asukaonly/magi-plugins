@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,3 +80,89 @@ def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
         assert group["icon"] == spec["icon"]
         assert group["member_label"] == spec["member_label"]
         assert group["member_order"] == spec["member_order"]
+
+
+def test_each_installable_sensor_package_owns_at_most_one_source() -> None:
+    """Independent sources must remain independently installable."""
+    for manifest_path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
+        plugin = tomllib.loads(manifest_path.read_text())["plugin"]
+        if plugin.get("kind", "plugin") == "library":
+            continue
+        if "sensor" not in plugin.get("contribution_types", []):
+            continue
+        sensors = (plugin.get("default_settings") or {}).get("sensors") or {}
+        assert len(sensors) <= 1, (
+            f"{plugin['id']} bundles multiple sources: {sorted(sensors)}"
+        )
+
+
+def test_photo_sources_are_separate_marketplace_plugins() -> None:
+    build_registry = _load_build_registry_module()
+    expected = {
+        "apple-photos": ("Apple Photos", 10, {"photos", "network"}),
+        "local-photos": ("Local Photos", 20, {"filesystem_read", "network"}),
+    }
+
+    for plugin_dir, (member_label, member_order, capabilities) in expected.items():
+        entry = build_registry.build_entry(
+            ROOT / "plugins" / plugin_dir,
+            official_ids={"apple-photos", "local-photos"},
+        )
+        assert entry is not None
+        assert entry["display_group"]["id"] == "photo_library"
+        assert entry["display_group"]["member_label"] == member_label
+        assert entry["display_group"]["member_order"] == member_order
+        assert {item["capability"] for item in entry["capabilities"]} == capabilities
+
+
+def test_agent_sources_are_separate_marketplace_plugins() -> None:
+    build_registry = _load_build_registry_module()
+    expected = {
+        "claude-code": ("Claude Code", 10),
+        "codex": ("Codex", 20),
+    }
+
+    for plugin_dir, (member_label, member_order) in expected.items():
+        entry = build_registry.build_entry(
+            ROOT / "plugins" / plugin_dir,
+            official_ids=set(),
+        )
+        assert entry is not None
+        assert entry["display_group"]["id"] == "agent_history"
+        assert entry["display_group"]["member_label"] == member_label
+        assert entry["display_group"]["member_order"] == member_order
+
+
+def test_split_sources_do_not_install_their_siblings() -> None:
+    build_registry = _load_build_registry_module()
+    entries = {}
+    for plugin_dir in sorted((ROOT / "plugins").iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        entry = build_registry.build_entry(plugin_dir, official_ids=set())
+        if entry is not None:
+            entries[entry["plugin_id"]] = entry
+
+    def closure(plugin_id: str) -> set[str]:
+        resolved: set[str] = set()
+
+        def visit(current_id: str) -> None:
+            if current_id in resolved:
+                return
+            resolved.add(current_id)
+            for dependency in entries[current_id].get("depends_on", []):
+                visit(dependency)
+
+        visit(plugin_id)
+        return resolved
+
+    assert closure("apple-photos") == {"apple-photos", "photo_library_core"}
+    assert closure("local-photos") == {"local-photos", "photo_library_core"}
+    assert closure("claude-code") == {
+        "claude-code",
+        "agent_history_core",
+    }
+    assert closure("codex") == {
+        "codex",
+        "agent_history_core",
+    }
