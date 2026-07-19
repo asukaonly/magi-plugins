@@ -15,6 +15,7 @@ from magi_plugin_sdk.tools import (
 )
 
 from .apple_photos_reader import (
+    APPLE_PHOTOS_ASSET_PREFIX,
     ApplePhotosReader,
     ApplePhotosReaderError,
 )
@@ -23,14 +24,12 @@ from .reader import PhotoLibraryReader
 
 def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool]]:
     """Build configured tool classes for the current plugin settings."""
-    source_mode = _resolve_source_mode(settings)
     photos_library_path = str(settings.get("photos_library_path", "") or "").strip()
     source_paths = _resolve_source_paths(settings)
     exclude_patterns = _resolve_string_list(settings.get("exclude_patterns"))
     analysis_features = _resolve_string_list(settings.get("analysis_features")) or ["exif"]
 
     class PhotoLibraryResolvePhotoRefsTool(Tool):
-        _source_mode = source_mode
         _photos_library_path = photos_library_path
         _source_paths = list(source_paths)
         _exclude_patterns = list(exclude_patterns)
@@ -84,10 +83,20 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                     error_code=ToolErrorCode.INVALID_PARAMETERS.value,
                 )
 
-            if self._source_mode == "apple_photos":
+            # Dispatch by ref shape, not by which source is currently enabled:
+            # memory can hold refs from either source (ingested via backfill or
+            # before a source was disabled), and Apple Photos refs always resolve
+            # against the Photos library — no source_paths needed.
+            apple_ids = [ref_id for ref_id in requested_ids if ref_id.startswith(APPLE_PHOTOS_ASSET_PREFIX)]
+            directory_ids = [ref_id for ref_id in requested_ids if not ref_id.startswith(APPLE_PHOTOS_ASSET_PREFIX)]
+
+            resolved_by_id: dict[str, dict[str, Any]] = {}
+            directory_config_missing = False
+
+            if apple_ids:
                 try:
-                    resolved_items, missing_ids = self._apple_reader.resolve_asset_refs(
-                        requested_ids,
+                    apple_items, _ = self._apple_reader.resolve_asset_refs(
+                        apple_ids,
                         self._photos_library_path,
                     )
                 except ApplePhotosReaderError as exc:
@@ -96,30 +105,40 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                         error=str(exc),
                         error_code=ToolErrorCode.INVALID_CONFIG.value,
                     )
-            else:
-                if not self._source_paths:
-                    return ToolResult(
-                        success=False,
-                        error="photo_library source_paths are not configured.",
-                        error_code=ToolErrorCode.INVALID_CONFIG.value,
-                    )
-                items = _scan_photo_items(
-                    reader=self._reader,
-                    source_paths=self._source_paths,
-                    exclude_patterns=self._exclude_patterns,
-                    analysis_features=self._analysis_features,
-                    min_modified_at=0.0,
-                    max_scan_items=max(len(requested_ids) * 200, 1000),
-                )
-                indexed = {_asset_ref_id(item): item for item in items}
+                for item in apple_items:
+                    resolved_by_id[_asset_ref_id(item)] = item
 
-                resolved_items = []
-                missing_ids = []
-                for asset_ref_id in requested_ids:
-                    item = indexed.get(asset_ref_id)
-                    if item is None:
-                        missing_ids.append(asset_ref_id)
-                        continue
+            if directory_ids:
+                if not self._source_paths:
+                    if not apple_ids:
+                        return ToolResult(
+                            success=False,
+                            error="photo_library source_paths are not configured.",
+                            error_code=ToolErrorCode.INVALID_CONFIG.value,
+                        )
+                    directory_config_missing = True
+                else:
+                    items = _scan_photo_items(
+                        reader=self._reader,
+                        source_paths=self._source_paths,
+                        exclude_patterns=self._exclude_patterns,
+                        analysis_features=self._analysis_features,
+                        min_modified_at=0.0,
+                        max_scan_items=max(len(directory_ids) * 200, 1000),
+                    )
+                    indexed = {_asset_ref_id(item): item for item in items}
+                    for ref_id in directory_ids:
+                        item = indexed.get(ref_id)
+                        if item is not None:
+                            resolved_by_id[ref_id] = item
+
+            resolved_items = []
+            missing_ids = []
+            for ref_id in requested_ids:
+                item = resolved_by_id.get(ref_id)
+                if item is None:
+                    missing_ids.append(ref_id)
+                else:
                     resolved_items.append(item)
 
             resolved_refs = [
@@ -127,6 +146,13 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                 for item in resolved_items
             ]
             file_paths = [str(item.get("path") or "") for item in resolved_items if str(item.get("path") or "")]
+
+            summary = f"Resolved {len(file_paths)} photo asset(s)."
+            if missing_ids:
+                summary += f" {len(missing_ids)} asset ref(s) could not be resolved."
+            if directory_config_missing:
+                summary += " photo_library source_paths are not configured; skipped non-Apple Photos refs."
+            summary += " Call prepare_chat_attachments with file_paths to send them in chat."
 
             return ToolResult(
                 success=True,
@@ -136,19 +162,11 @@ def build_photo_library_tool_classes(settings: dict[str, Any]) -> list[type[Tool
                     "file_paths": file_paths,
                     "resolved_count": len(file_paths),
                     "missing_asset_ref_ids": missing_ids,
-                    "summary": (
-                        f"Resolved {len(file_paths)} photo asset(s). "
-                        "Call prepare_chat_attachments with file_paths to send them in chat."
-                    ),
+                    "summary": summary,
                 },
             )
 
     return [PhotoLibraryResolvePhotoRefsTool]
-
-
-def _resolve_source_mode(settings: dict[str, Any]) -> str:
-    source_mode = str(settings.get("source_mode", "directory") or "directory").strip()
-    return source_mode if source_mode in {"directory", "apple_photos"} else "directory"
 
 
 def _resolve_source_paths(settings: dict[str, Any]) -> list[str]:

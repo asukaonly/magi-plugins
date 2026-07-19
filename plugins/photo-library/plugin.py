@@ -326,14 +326,24 @@ class PhotoLibraryPlugin(Plugin):
 
     def get_tools(self) -> list[type[object]]:
         sensors_settings = self.settings.get("sensors", {})
-        settings: dict[str, Any] = {}
+        apple_settings: dict[str, Any] = {}
+        directory_settings: dict[str, Any] = {}
         if isinstance(sensors_settings, dict):
-            apple_settings = dict(sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {}))
-            directory_settings = dict(sensors_settings.get(DIRECTORY_SOURCE_TYPE, {}))
-            if apple_settings.get("enabled"):
-                settings = {**apple_settings, "source_mode": "apple_photos"}
-            else:
-                settings = {**directory_settings, "source_mode": "directory"}
+            raw_apple = sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
+            raw_directory = sensors_settings.get(DIRECTORY_SOURCE_TYPE, {})
+            if isinstance(raw_apple, dict):
+                apple_settings = dict(raw_apple)
+            if isinstance(raw_directory, dict):
+                directory_settings = dict(raw_directory)
+        # The resolver serves refs previously ingested into memory, so it must
+        # work regardless of which source is currently enabled: pass both
+        # sources' settings and let the tool dispatch per ref.
+        settings: dict[str, Any] = {
+            "photos_library_path": apple_settings.get("photos_library_path", ""),
+            "source_paths": directory_settings.get("source_paths", []),
+            "exclude_patterns": directory_settings.get("exclude_patterns", []),
+            "analysis_features": directory_settings.get("analysis_features") or ["exif"],
+        }
         return build_photo_library_tool_classes(settings)
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
