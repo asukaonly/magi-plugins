@@ -1,9 +1,12 @@
 """Tests for generated marketplace registry metadata."""
 from __future__ import annotations
 
+import base64
 import importlib.util
 from pathlib import Path
 import tomllib
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -166,3 +169,86 @@ def test_split_sources_do_not_install_their_siblings() -> None:
         "codex",
         "agent_history_core",
     }
+
+
+def test_brand_plugins_embed_safe_package_owned_icons() -> None:
+    build_registry = _load_build_registry_module()
+    plugin_dirs = {
+        "apple-photos",
+        "chrome-history",
+        "claude-code",
+        "codex",
+        "edge-history",
+        "firefox-history",
+        "git_activity",
+        "github_activity",
+        "netease_music",
+        "obsidian-vault",
+        "safari-history",
+        "steam_play_history",
+        "telegram",
+        "weixin",
+    }
+
+    for plugin_dir in sorted(plugin_dirs):
+        entry = build_registry.build_entry(
+            ROOT / "plugins" / plugin_dir,
+            official_ids=set(),
+        )
+        assert entry is not None
+        assert entry["icon"] == "asset:assets/icon.svg"
+        prefix, encoded = entry["icon_data"].split(",", 1)
+        assert prefix == "data:image/svg+xml;base64"
+        assert base64.b64decode(encoded).lstrip().startswith(b"<svg")
+
+
+def test_every_plugin_declares_a_supported_icon_source() -> None:
+    for manifest_path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
+        plugin = tomllib.loads(manifest_path.read_text())["plugin"]
+        icon = plugin.get("icon", "")
+        assert icon.startswith(("asset:", "lucide:")), (
+            f"{plugin['id']} uses unsupported icon declaration: {icon}"
+        )
+
+
+def test_asset_icon_rejects_unsafe_svg(tmp_path: Path) -> None:
+    build_registry = _load_build_registry_module()
+    plugin_dir = tmp_path / "unsafe-plugin"
+    asset_dir = plugin_dir / "assets"
+    asset_dir.mkdir(parents=True)
+    (plugin_dir / "plugin.toml").write_text(
+        """
+[plugin]
+id = "unsafe-plugin"
+name = "Unsafe Plugin"
+version = "0.1.0"
+icon = "asset:assets/icon.svg"
+contribution_types = []
+""".strip(),
+        encoding="utf-8",
+    )
+    (asset_dir / "icon.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="forbidden <script>"):
+        build_registry.build_entry(plugin_dir, official_ids=set())
+
+
+def test_asset_icon_rejects_path_traversal(tmp_path: Path) -> None:
+    build_registry = _load_build_registry_module()
+
+    with pytest.raises(ValueError, match="Invalid plugin icon asset path"):
+        build_registry.encode_icon_asset(tmp_path, "asset:../icon.svg")
+
+
+def test_asset_icon_rejects_symlink(tmp_path: Path) -> None:
+    build_registry = _load_build_registry_module()
+    target = tmp_path / "target.svg"
+    target.write_text("<svg/>", encoding="utf-8")
+    link = tmp_path / "icon.svg"
+    link.symlink_to(target)
+
+    with pytest.raises(ValueError, match="cannot be a symlink"):
+        build_registry.encode_icon_asset(tmp_path, "asset:icon.svg")

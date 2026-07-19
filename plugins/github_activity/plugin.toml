@@ -2,7 +2,7 @@
 id = "github-activity"
 name = "GitHub Activity"
 name_i18n = { "zh-CN" = "GitHub 活动" }
-icon = "brand:github"
+icon = "asset:assets/icon.svg"
 version = "0.1.1"
 description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
 description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }

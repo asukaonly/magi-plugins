@@ -90,6 +90,8 @@ Every plugin is a directory under `plugins/` with at minimum:
 
 ```text
 plugins/<plugin_name>/
+├── assets/              # Packaged brand/static assets (optional)
+│   └── icon.svg
 ├── plugin.toml          # Manifest — declares id, version, contribution types
 ├── plugin.py            # Entry class inheriting magi.plugins.Plugin
 ├── sensor.py            # Sensor implementation (optional, for timeline sensors)
@@ -110,6 +112,7 @@ plugins/<plugin_name>/
 | `version` | Yes | Semver version string |
 | `description` | Yes | One-line description |
 | `author` | Yes | Author name |
+| `icon` | No | `asset:assets/icon.svg` for packaged brand art, or `lucide:<name>` for a generic host icon |
 | `entry_module` | Yes | Python module name (usually `plugin`) |
 | `entry_class` | Yes | Class name in entry module |
 | `official` | No | `true` for Magi Team plugins |
@@ -132,6 +135,9 @@ plugins/<plugin_name>/
 
 ### Plugin-Specific Rules
 - Each plugin must be fully self-contained — no cross-imports between plugins.
+- Brand icons must live inside the plugin package and use an `asset:` path.
+- Generic icons may use any icon from the host's Lucide library through a `lucide:` value.
+- Packaged icons must be SVG, PNG, or WebP, no larger than 64 KiB, and pass the registry's safety validation.
 - Use relative imports within a plugin (`from .reader import ...`).
 - Do not import from `magi.plugins` internals beyond the public contracts (`Plugin`, `Sensor`, `BaseAction`, field specs).
 - If a plugin needs third-party packages, declare them in `plugin.toml` `dependencies`. They will be pip-installed into the plugin's `.deps/` directory at install time.
