@@ -39,8 +39,11 @@ def _activation_flow() -> ActivationFlowSpec:
             ExtensionFieldSpec(
                 key=f"{_PREFIX}.vault_path",
                 type="path",
-                label="Vault Folder",
-                description="Path to your Obsidian vault.",
+                path_kind="directory",
+                label="Obsidian Vault Folder",
+                description=(
+                    "Choose the vault root folder that contains the .obsidian directory."
+                ),
                 default="",
                 required=True,
                 section="activation",
@@ -69,8 +72,9 @@ def _fields() -> list[ExtensionFieldSpec]:
             default=False, section="general", surface="timeline", order=10,
         ),
         ExtensionFieldSpec(
-            key=f"{_PREFIX}.vault_path", type="path", label="Vault Folder",
-            description="Path to your Obsidian vault.",
+            key=f"{_PREFIX}.vault_path", type="path", path_kind="directory",
+            label="Obsidian Vault Folder",
+            description="Choose the vault root folder that contains the .obsidian directory.",
             default="", required=True, section="general", surface="timeline", order=20,
         ),
         ExtensionFieldSpec(

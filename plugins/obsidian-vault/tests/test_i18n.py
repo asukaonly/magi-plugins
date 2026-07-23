@@ -20,8 +20,9 @@ def test_en_and_zh_have_matching_keys_and_required_namespaces() -> None:
     zh = json.loads((root / "zh-CN.json").read_text(encoding="utf-8"))
     assert _leaf_keys(en) == _leaf_keys(zh)
     # Plugin-scoped schema (per the frontend contract): fields live under the plugin id.
-    assert "obsidian-vault" in en
-    assert "fields" in en["obsidian-vault"]
+    assert "obsidian_vault" in en
+    assert "fields" in en["obsidian_vault"]
+    assert "activation" in en["obsidian_vault"]
     # Activity facet i18n keys used by the sensor must resolve.
     assert en["activity"]["source"]["obsidian"]
     assert en["activity"]["object"]["note"]

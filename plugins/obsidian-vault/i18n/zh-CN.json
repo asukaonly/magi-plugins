@@ -1,11 +1,17 @@
 {
-  "obsidian-vault": {
+  "obsidian_vault": {
     "name": "Obsidian 笔记库",
     "description": "将 Obsidian 库中的 markdown 笔记读入 Magi 的记忆。",
+    "activation": {
+      "title": "连接 Obsidian 笔记库",
+      "description": "选择 Magi 可以读取的 Obsidian 笔记库。",
+      "confirm_label": "连接",
+      "cancel_label": "暂不"
+    },
     "fields": {
       "vault_path": {
-        "label": "库目录",
-        "description": "你的 Obsidian 库路径。"
+        "label": "Obsidian 笔记库文件夹",
+        "description": "选择包含 .obsidian 文件夹的笔记库根目录。Magi 只会读取其中的 Markdown 笔记。"
       },
       "exclude_folders": {
         "label": "排除的文件夹",

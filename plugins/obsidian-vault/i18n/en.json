@@ -1,11 +1,17 @@
 {
-  "obsidian-vault": {
+  "obsidian_vault": {
     "name": "Obsidian Vault",
     "description": "Reads markdown notes from your Obsidian vault into Magi's memory.",
+    "activation": {
+      "title": "Connect Obsidian Vault",
+      "description": "Choose the Obsidian vault Magi may read.",
+      "confirm_label": "Connect",
+      "cancel_label": "Not now"
+    },
     "fields": {
       "vault_path": {
-        "label": "Vault Folder",
-        "description": "Path to your Obsidian vault."
+        "label": "Obsidian Vault Folder",
+        "description": "Choose the vault root folder that contains the .obsidian directory. Magi reads only Markdown notes inside it."
       },
       "exclude_folders": {
         "label": "Excluded Folders",

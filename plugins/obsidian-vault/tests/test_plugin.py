@@ -57,7 +57,12 @@ def test_get_sensors_stay_discoverable_when_disabled() -> None:
         flow = spec.metadata["activation_flow"]
         assert flow["enabled_key"] == "sensors.obsidian_vault.enabled"
         assert flow["first_context"]["max_items_per_sync"] == 200
-        assert any(field["key"] == "sensors.obsidian_vault.vault_path" for field in flow["fields"])
+        vault_field = next(
+            field
+            for field in flow["fields"]
+            if field["key"] == "sensors.obsidian_vault.vault_path"
+        )
+        assert vault_field["path_kind"] == "directory"
 
 
 def test_extraction_profile_uses_registry_predicates() -> None:
