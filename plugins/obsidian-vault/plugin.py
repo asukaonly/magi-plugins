@@ -15,6 +15,9 @@ from magi_plugin_sdk import (
 from .sensor import ObsidianVaultSensor
 
 _PREFIX = "sensors.obsidian_vault"
+_SOURCE_ENTRY_ID = "obsidian_vault"
+_SOURCE_DISPLAY_NAME = "Obsidian Vault"
+_SOURCE_DESCRIPTION = "Obsidian vault note ingestion for the timeline."
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -140,8 +143,8 @@ class ObsidianVaultPlugin(Plugin):
         def _spec(sensor: ObsidianVaultSensor) -> SensorSpec:
             return SensorSpec(
                 sensor_id=sensor.sensor_id,
-                display_name="Obsidian Vault",
-                description="Obsidian vault note ingestion for the timeline.",
+                display_name=_SOURCE_DISPLAY_NAME,
+                description=_SOURCE_DESCRIPTION,
                 domain="timeline",
                 surface="timeline",
                 sync_mode="interval",
@@ -154,6 +157,12 @@ class ObsidianVaultPlugin(Plugin):
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
                     "activation_flow": _activation_flow().model_dump(),
+                    "capability_id": _SOURCE_ENTRY_ID,
+                    "capability_display_name": _SOURCE_DISPLAY_NAME,
+                    "capability_description": _SOURCE_DESCRIPTION,
+                    "entry_id": _SOURCE_ENTRY_ID,
+                    "entry_display_name": _SOURCE_DISPLAY_NAME,
+                    "entry_description": _SOURCE_DESCRIPTION,
                 },
             )
 

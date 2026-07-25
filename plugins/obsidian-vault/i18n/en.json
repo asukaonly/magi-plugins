@@ -2,6 +2,18 @@
   "obsidian_vault": {
     "name": "Obsidian Vault",
     "description": "Reads markdown notes from your Obsidian vault into Magi's memory.",
+    "capabilities": {
+      "obsidian_vault": {
+        "display_name": "Obsidian Vault",
+        "description": "Reads markdown notes from your Obsidian vault into Magi's memory."
+      }
+    },
+    "entries": {
+      "obsidian_vault": {
+        "display_name": "Obsidian Vault",
+        "description": "Reads markdown notes from your Obsidian vault into Magi's memory."
+      }
+    },
     "activation": {
       "title": "Connect Obsidian Vault",
       "description": "Choose the Obsidian vault Magi may read.",

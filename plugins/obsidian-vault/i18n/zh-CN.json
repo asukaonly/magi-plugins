@@ -2,6 +2,18 @@
   "obsidian_vault": {
     "name": "Obsidian 笔记库",
     "description": "将 Obsidian 库中的 markdown 笔记读入 Magi 的记忆。",
+    "capabilities": {
+      "obsidian_vault": {
+        "display_name": "Obsidian 笔记库",
+        "description": "将 Obsidian 库中的 Markdown 笔记读入 Magi 的记忆。"
+      }
+    },
+    "entries": {
+      "obsidian_vault": {
+        "display_name": "Obsidian 笔记库",
+        "description": "将 Obsidian 库中的 Markdown 笔记读入 Magi 的记忆。"
+      }
+    },
     "activation": {
       "title": "连接 Obsidian 笔记库",
       "description": "选择 Magi 可以读取的 Obsidian 笔记库。",

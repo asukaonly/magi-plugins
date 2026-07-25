@@ -39,6 +39,10 @@ def test_get_sensors_returns_two_tiers_when_enabled() -> None:
     cog = {sid: inst.memory_policy.cognition_eligible for sid, inst, _ in sensors}
     assert cog["timeline.obsidian_vault.knowledge"] is True
     assert cog["timeline.obsidian_vault.search"] is False
+    for _, _, spec in sensors:
+        assert spec.metadata["capability_id"] == "obsidian_vault"
+        assert spec.metadata["entry_id"] == "obsidian_vault"
+        assert spec.metadata["entry_display_name"] == "Obsidian Vault"
     # Distinct source_type per tier so the host doesn't collide them: resolve/schedule/
     # cursor are keyed by (plugin_id, source_type), first-match-wins.
     src = {sid: inst.source_type for sid, inst, _ in sensors}
