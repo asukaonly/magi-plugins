@@ -2,6 +2,18 @@
   "local_documents": {
     "name": "Local Documents",
     "description": "Local notes and text documents ingested into the timeline",
+    "capabilities": {
+      "local_documents": {
+        "display_name": "Local Documents",
+        "description": "Local notes and text documents ingested into the timeline"
+      }
+    },
+    "entries": {
+      "local_documents": {
+        "display_name": "Local Documents",
+        "description": "Local notes and text documents ingested into the timeline"
+      }
+    },
     "fields": {
       "enabled": {
         "label": "Enabled",
@@ -71,4 +83,3 @@
     }
   }
 }
-

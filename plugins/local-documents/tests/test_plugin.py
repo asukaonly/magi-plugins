@@ -52,6 +52,10 @@ def test_get_sensors_returns_knowledge_and_search_tiers_when_enabled() -> None:
     assert policies["timeline.local_documents.search"] is False
     spec_source_types = {sensor_id: spec.metadata["source_type"] for sensor_id, _inst, spec in sensors}
     assert spec_source_types["timeline.local_documents.search"] == "local_documents_search"
+    for _, _, spec in sensors:
+        assert spec.metadata["capability_id"] == "local_documents"
+        assert spec.metadata["entry_id"] == "local_documents"
+        assert spec.metadata["entry_display_name"] == "Local Documents"
 
 
 def test_get_sensors_stay_discoverable_when_disabled() -> None:

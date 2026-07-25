@@ -2,6 +2,18 @@
   "local_documents": {
     "name": "本地文档",
     "description": "本地笔记和文本类文档接入时间线",
+    "capabilities": {
+      "local_documents": {
+        "display_name": "本地文档",
+        "description": "将本地笔记和文本类文档接入时间线"
+      }
+    },
+    "entries": {
+      "local_documents": {
+        "display_name": "本地文档",
+        "description": "将本地笔记和文本类文档接入时间线"
+      }
+    },
     "fields": {
       "enabled": {
         "label": "启用",
@@ -71,4 +83,3 @@
     }
   }
 }
-

@@ -1101,7 +1101,7 @@
         "zh-CN": "本地文档"
       },
       "icon": "lucide:file-text",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/local-documents",
       "description": "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory.",
       "description_i18n": {

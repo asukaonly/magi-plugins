@@ -17,6 +17,9 @@ from .reader import DEFAULT_EXTENSIONS
 from .sensor import DEFAULT_EXCLUDE_FOLDERS, DEFAULT_SEARCH_ONLY_FOLDERS, LocalDocumentsSensor
 
 _PREFIX = "sensors.local_documents"
+_SOURCE_ENTRY_ID = "local_documents"
+_SOURCE_DISPLAY_NAME = "Local Documents"
+_SOURCE_DESCRIPTION = "Local notes and text documents ingested into the user timeline."
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -238,8 +241,8 @@ class LocalDocumentsPlugin(Plugin):
         def _spec(sensor: LocalDocumentsSensor) -> SensorSpec:
             return SensorSpec(
                 sensor_id=sensor.sensor_id,
-                display_name="Local Documents",
-                description="Local notes and text documents ingested into the user timeline.",
+                display_name=_SOURCE_DISPLAY_NAME,
+                description=_SOURCE_DESCRIPTION,
                 domain="timeline",
                 surface="timeline",
                 sync_mode=sync_mode,
@@ -250,6 +253,12 @@ class LocalDocumentsPlugin(Plugin):
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
                     "activation_flow": _activation_flow().model_dump(),
+                    "capability_id": _SOURCE_ENTRY_ID,
+                    "capability_display_name": _SOURCE_DISPLAY_NAME,
+                    "capability_description": _SOURCE_DESCRIPTION,
+                    "entry_id": _SOURCE_ENTRY_ID,
+                    "entry_display_name": _SOURCE_DISPLAY_NAME,
+                    "entry_description": _SOURCE_DESCRIPTION,
                 },
             )
 
