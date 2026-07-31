@@ -2,3 +2,14 @@
 # badge. Changes require maintainer review (enable "Require review from
 # Code Owners" in branch protection for this to be enforced).
 /official-plugins.json   @asukaonly
+
+# Package identity and append-only publication history are security boundaries.
+/.github/CODEOWNERS                    @asukaonly
+/.github/workflows/ci.yml            @asukaonly
+/scripts/build-registry.py           @asukaonly
+/scripts/check-version-history.py    @asukaonly
+/scripts/package_identity.py         @asukaonly
+/scripts/registry-requirements.txt   @asukaonly
+/scripts/registry_contract.py        @asukaonly
+/scripts/version_history.py          @asukaonly
+/version-history.json                @asukaonly

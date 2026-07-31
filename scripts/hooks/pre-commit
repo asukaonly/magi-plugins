@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # In-repo git pre-commit hook for magi-plugins.
 #
-# When a commit stages any ``plugins/*/plugin.toml``, this hook auto-runs
-# ``scripts/lock-deps.py <plugin>`` for each changed plugin and then
-# rebuilds + post-processes registry.json. Any drift gets staged into the
-# in-progress commit so the registry-in-sync + lockfiles-in-sync CI
-# checks pass on the first try.
+# When a commit stages any file inside ``plugins/<package>/``, this hook
+# rebuilds registry.json + version-history.json. Changed manifests also
+# regenerate their dependency locks. Any drift gets staged into the
+# in-progress commit so CI checks pass on the first try.
 #
 # To enable for this clone:
 #   git config core.hooksPath scripts/hooks
@@ -18,28 +17,43 @@
 #
 # This hook is intentionally idempotent: when nothing changed it's a no-op.
 # It does NOT run ``ruff`` / tests — those live in CI and are too slow for
-# every commit. Its only job is to keep the manifest-derived artifacts
-# (registry.json + requirements.lock) in lockstep with the manifests.
+# every commit. Its only job is to keep the package-derived artifacts
+# (registry.json + version-history.json + requirements.lock) in lockstep.
 
 set -euo pipefail
 
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
-# Collect plugin.toml files in the staged change set. ``mapfile`` is bash 4+
+# Collect package files in the staged change set. ``mapfile`` is bash 4+
 # only; macOS still ships bash 3.2 by default and git invokes hooks with the
 # system shell, so we use a portable newline-joined string and split on it.
+changed_package_files=$(
+  git diff --cached --name-only --diff-filter=ACMRD \
+    | grep -E '^plugins/[^/]+/' || true
+)
 changed_manifests=$(
   git diff --cached --name-only --diff-filter=ACMR \
     | grep -E '^plugins/[^/]+/plugin\.toml$' || true
 )
 
-if [ -z "$changed_manifests" ]; then
+if [ -z "$changed_package_files" ]; then
   exit 0
 fi
 
-echo "[pre-commit] plugin manifest changes detected:"
-echo "$changed_manifests" | sed 's/^/  /'
+echo "[pre-commit] plugin package changes detected:"
+echo "$changed_package_files" | sed 's/^/  /'
+
+unstaged_package_files=$(
+  git diff --name-only --diff-filter=ACMRD -- plugins \
+    | grep -E '^plugins/[^/]+/' || true
+)
+if [ -n "$unstaged_package_files" ]; then
+  echo "[pre-commit] error: plugin package files have unstaged changes:" >&2
+  echo "$unstaged_package_files" | sed 's/^/  /' >&2
+  echo "[pre-commit] stage complete package changes before committing." >&2
+  exit 1
+fi
 
 regen_needed=0
 
@@ -58,14 +72,18 @@ done <<< "$changed_manifests"
 
 echo "[pre-commit] rebuilding registry.json..."
 python scripts/build-registry.py
-python scripts/gen_registry.py
 
 if ! git diff --quiet -- registry.json 2>/dev/null \
     || [ -n "$(git status --porcelain -- registry.json)" ]; then
   git add registry.json
   regen_needed=1
 fi
+if ! git diff --quiet -- version-history.json 2>/dev/null \
+    || [ -n "$(git status --porcelain -- version-history.json)" ]; then
+  git add version-history.json
+  regen_needed=1
+fi
 
 if [ "$regen_needed" -eq 1 ]; then
-  echo "[pre-commit] auto-staged regenerated artifacts (registry.json / requirements.lock)."
+  echo "[pre-commit] auto-staged generated registry, history, and lockfiles."
 fi

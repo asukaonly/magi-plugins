@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Generate registry.json from all plugin.toml files in plugins/.
+"""Generate registry v4 and immutable package-version history.
+
+Stage every plugin package change before running this command. Generation reads
+one frozen snapshot of the staged Git index, never unstaged package content.
 
 Usage:
     python scripts/build-registry.py
 """
+
 from __future__ import annotations
 
 import base64
@@ -11,6 +15,7 @@ import json
 import sys
 from pathlib import Path
 from pathlib import PurePosixPath
+from typing import Callable
 from xml.etree import ElementTree
 
 try:
@@ -18,20 +23,38 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[import-untyped,no-redef]
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-PLUGINS_DIR = REPO_ROOT / "plugins"
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from package_identity import (  # noqa: E402
+    PackageIdentityError,
+    snapshot_git_index,
+    tracked_plugin_directories,
+    tracked_plugin_package_metadata,
+    tracked_repository_file_bytes,
+    validate_plugin_worktree,
+)
+from registry_contract import (  # noqa: E402
+    REGISTRY_VERSION,
+    RegistryContractError,
+    validate_plugin_manifest,
+    validate_registry_index,
+)
+from version_history import (  # noqa: E402
+    VersionHistoryError,
+    assert_current_version_is_latest,
+    bind_package_version,
+    load_version_history,
+    package_version_key,
+    write_version_history,
+)
+
+REPO_ROOT = SCRIPT_DIR.parent
 REGISTRY_PATH = REPO_ROOT / "registry.json"
 OFFICIAL_ALLOWLIST_PATH = REPO_ROOT / "official-plugins.json"
+VERSION_HISTORY_PATH = REPO_ROOT / "version-history.json"
 
-# Authoritative known-capability enum. The wire model (magi SDK) is permissive
-# (str) for forward-compat; THIS is the gate that keeps typos / unknown
-# capabilities out of registry.json. Adding a capability is a deliberate act:
-# update this set AND the magi SDK + frontend category map together.
-KNOWN_CAPABILITIES = {
-    "screen_recording", "accessibility", "calendar", "photos",
-    "contacts", "system_media",
-    "filesystem_read", "filesystem_write", "network", "subprocess",
-}
 ASSET_ICON_PREFIX = "asset:"
 MAX_ICON_BYTES = 64 * 1024
 ICON_MIME_TYPES = {
@@ -53,14 +76,17 @@ FORBIDDEN_SVG_ELEMENTS = {
 }
 
 
-def load_official_ids() -> set[str]:
+def load_official_ids(
+    *,
+    content_reader: Callable[[Path], bytes] | None = None,
+) -> set[str]:
     """Maintainer-controlled set of plugin_ids allowed to be `official`.
 
     Authority for the `official` flag lives here, NOT in each plugin's
     plugin.toml — a third-party PR touching only plugins/<their-plugin>/
     cannot grant itself official status.
     """
-    if not OFFICIAL_ALLOWLIST_PATH.exists():
+    if content_reader is None and not OFFICIAL_ALLOWLIST_PATH.exists():
         print(
             f"note: {OFFICIAL_ALLOWLIST_PATH.name} not found; all plugins "
             f"marked non-official",
@@ -68,14 +94,22 @@ def load_official_ids() -> set[str]:
         )
         return set()
     try:
-        with open(OFFICIAL_ALLOWLIST_PATH, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
+        if content_reader is None:
+            with open(OFFICIAL_ALLOWLIST_PATH, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        else:
+            data = json.loads(content_reader(OFFICIAL_ALLOWLIST_PATH).decode("utf-8"))
     except json.JSONDecodeError as exc:
         sys.exit(f"error: {OFFICIAL_ALLOWLIST_PATH.name} is not valid JSON: {exc}")
     return set(data.get("official_plugin_ids", []))
 
 
-def _asset_icon_path(plugin_dir: Path, icon: str) -> Path | None:
+def _asset_icon_path(
+    plugin_dir: Path,
+    icon: str,
+    *,
+    validate_filesystem: bool = True,
+) -> Path | None:
     if not icon.startswith(ASSET_ICON_PREFIX):
         return None
     raw_path = icon.removeprefix(ASSET_ICON_PREFIX).strip()
@@ -86,14 +120,16 @@ def _asset_icon_path(plugin_dir: Path, icon: str) -> Path | None:
         or any(part in {"", ".", ".."} for part in relative.parts)
     ):
         raise ValueError(f"Invalid plugin icon asset path: {icon}")
-    root = plugin_dir.resolve()
     candidate = plugin_dir / Path(*relative.parts)
+    if not validate_filesystem:
+        return candidate
+    root = plugin_dir.resolve()
     if candidate.is_symlink():
         raise ValueError(f"Plugin icon asset cannot be a symlink: {icon}")
-    path = candidate.resolve()
-    if not path.is_relative_to(root):
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(root):
         raise ValueError(f"Plugin icon asset escapes package directory: {icon}")
-    return path
+    return resolved
 
 
 def _validate_svg_icon(data: bytes, *, path: Path) -> None:
@@ -126,17 +162,26 @@ def _validate_svg_icon(data: bytes, *, path: Path) -> None:
                 )
 
 
-def encode_icon_asset(plugin_dir: Path, icon: str) -> str | None:
-    path = _asset_icon_path(plugin_dir, icon)
+def encode_icon_asset(
+    plugin_dir: Path,
+    icon: str,
+    *,
+    content_reader: Callable[[Path], bytes] | None = None,
+) -> str | None:
+    path = _asset_icon_path(
+        plugin_dir,
+        icon,
+        validate_filesystem=content_reader is None,
+    )
     if path is None:
         return None
-    if not path.is_file():
+    if content_reader is None and not path.is_file():
         raise ValueError(f"Plugin icon asset does not exist: {path}")
     suffix = path.suffix.lower()
     mime_type = ICON_MIME_TYPES.get(suffix)
     if mime_type is None:
         raise ValueError(f"Unsupported plugin icon format: {path}")
-    data = path.read_bytes()
+    data = content_reader(path) if content_reader is not None else path.read_bytes()
     if not data or len(data) > MAX_ICON_BYTES:
         raise ValueError(
             f"Plugin icon must be between 1 and {MAX_ICON_BYTES} bytes: {path}"
@@ -145,22 +190,31 @@ def encode_icon_asset(plugin_dir: Path, icon: str) -> str | None:
         _validate_svg_icon(data, path=path)
     elif suffix == ".png" and not data.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError(f"Plugin icon is not a valid PNG: {path}")
-    elif suffix == ".webp" and not (
-        data.startswith(b"RIFF") and data[8:12] == b"WEBP"
-    ):
+    elif suffix == ".webp" and not (data.startswith(b"RIFF") and data[8:12] == b"WEBP"):
         raise ValueError(f"Plugin icon is not a valid WebP image: {path}")
     encoded = base64.b64encode(data).decode("ascii")
     return f"data:{mime_type};base64,{encoded}"
 
 
-def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
+def build_entry(
+    plugin_dir: Path,
+    official_ids: set[str],
+    *,
+    content_reader: Callable[[Path], bytes] | None = None,
+) -> dict | None:
     toml_path = plugin_dir / "plugin.toml"
-    if not toml_path.exists():
+    if content_reader is None and not toml_path.exists():
         return None
-    with open(toml_path, "rb") as f:
-        data = tomllib.load(f)
+    if content_reader is None:
+        with open(toml_path, "rb") as f:
+            data = tomllib.load(f)
+    else:
+        data = tomllib.loads(content_reader(toml_path).decode("utf-8"))
     meta = data.get("plugin", {})
+    validate_plugin_manifest(meta, package_name=plugin_dir.name)
     plugin_id = meta.get("id", plugin_dir.name)
+    version = meta.get("version", "0.0.0")
+    package_version_key(plugin_id, version)
     default_settings = meta.get("default_settings") or {}
     default_sensors = (
         (default_settings.get("sensors") or {})
@@ -185,10 +239,14 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     icon = str(meta.get("icon", "") or "").strip()
     if icon:
         entry["icon"] = icon
-        icon_data = encode_icon_asset(plugin_dir, icon)
+        icon_data = encode_icon_asset(
+            plugin_dir,
+            icon,
+            content_reader=content_reader,
+        )
         if icon_data is not None:
             entry["icon_data"] = icon_data
-    entry["version"] = meta.get("version", "0.0.0")
+    entry["version"] = version
     entry["path"] = f"plugins/{plugin_dir.name}"
     entry["description"] = meta.get("description", "")
     if "description_i18n" in meta:
@@ -230,48 +288,73 @@ def build_entry(plugin_dir: Path, official_ids: set[str]) -> dict | None:
     ).get("data_locality", "")
     if data_locality:
         entry["data_locality"] = data_locality
+    suggestion_descriptor = meta.get("suggestion_descriptor")
+    if suggestion_descriptor is not None:
+        entry["suggestion_descriptor"] = suggestion_descriptor
     return entry
 
 
 def main() -> None:
-    official_ids = load_official_ids()
+    validate_plugin_worktree(REPO_ROOT)
+    tree_id = snapshot_git_index(REPO_ROOT)
+
+    def content_reader(path: Path) -> bytes:
+        return tracked_repository_file_bytes(REPO_ROOT, path, tree_id=tree_id)
+
+    official_ids = load_official_ids(content_reader=content_reader)
+    version_history = load_version_history(VERSION_HISTORY_PATH)
     entries = []
-    for child in sorted(PLUGINS_DIR.iterdir()):
-        if not child.is_dir():
-            continue
-        entry = build_entry(child, official_ids)
+
+    for child in tracked_plugin_directories(REPO_ROOT, tree_id):
+        publication_metadata = tracked_plugin_package_metadata(
+            REPO_ROOT,
+            child,
+            tree_id=tree_id,
+        )
+        entry = build_entry(
+            child,
+            official_ids,
+            content_reader=content_reader,
+        )
         if entry:
+            entry["package_sha256"] = publication_metadata.package_sha256
+            assert_current_version_is_latest(
+                version_history,
+                plugin_id=entry["plugin_id"],
+                version=entry["version"],
+            )
+            bind_package_version(
+                version_history,
+                plugin_id=entry["plugin_id"],
+                version=entry["version"],
+                package_sha256=publication_metadata.package_sha256,
+                executable_paths=publication_metadata.executable_paths,
+            )
             entries.append(entry)
             print(f"  + {entry['plugin_id']} v{entry['version']}")
 
-    unknown: list[str] = []
-    for entry in entries:
-        for cap in entry.get("capabilities", []):
-            name = cap.get("capability") if isinstance(cap, dict) else None
-            if name not in KNOWN_CAPABILITIES:
-                unknown.append(f"{entry['plugin_id']}: {name!r}")
-    if unknown:
-        print("\nERROR: unknown capability(ies) declared:", file=sys.stderr)
-        for u in unknown:
-            print(f"  ! {u}", file=sys.stderr)
-        print(
-            "Allowed: " + ", ".join(sorted(KNOWN_CAPABILITIES)),
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
     registry = {
-        "registry_version": "3",
+        "registry_version": REGISTRY_VERSION,
         "repo_url": "https://github.com/asukaonly/magi-plugins.git",
         "plugins": entries,
     }
+    validate_registry_index(registry)
 
     with open(REGISTRY_PATH, "w", encoding="utf-8") as f:
         json.dump(registry, f, indent=2, ensure_ascii=False)
         f.write("\n")
+    write_version_history(VERSION_HISTORY_PATH, version_history)
 
     print(f"\nWrote {len(entries)} plugins to {REGISTRY_PATH}")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (
+        PackageIdentityError,
+        RegistryContractError,
+        VersionHistoryError,
+        ValueError,
+    ) as exc:
+        raise SystemExit(f"error: {exc}") from exc

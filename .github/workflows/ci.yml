@@ -22,20 +22,41 @@ jobs:
         run: python scripts/lock-deps.py --check
 
   registry-in-sync:
-    name: registry.json in sync with manifests
+    name: registry and package history in sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+      - name: Install registry test dependencies
+        run: python -m pip install -r scripts/registry-requirements.txt
+      - name: Test registry package identity
+        run: >-
+          python -m pytest -p no:cacheprovider
+          scripts/test_build_registry.py
+          scripts/test_package_identity.py
+          scripts/test_refresh_script.py
+          scripts/test_registry_contract.py
+          scripts/test_version_history.py
+          -q
       - name: Regenerate registry
+        run: python scripts/build-registry.py
+      - name: Assert generated files are committed
         run: |
-          python scripts/build-registry.py
-          python scripts/gen_registry.py
-      - name: Assert registry committed up to date
-        run: |
-          if ! git diff --exit-code -- registry.json; then
-            echo "::error::registry.json is stale. Run scripts/build-registry.py then scripts/gen_registry.py and commit."
+          if ! git diff --exit-code -- registry.json version-history.json; then
+            echo "::error::Registry outputs are stale. Run scripts/build-registry.py and commit registry.json + version-history.json."
             exit 1
           fi
+      - name: Fetch pull-request base
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha }}"
+      - name: Enforce append-only version history against pull-request base
+        if: github.event_name == 'pull_request'
+        run: python scripts/check-version-history.py "${{ github.event.pull_request.base.sha }}"
+      - name: Fetch pushed branch base
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: git fetch --no-tags --depth=1 origin "${{ github.event.before }}"
+      - name: Enforce append-only version history against pushed branch base
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: python scripts/check-version-history.py "${{ github.event.before }}"

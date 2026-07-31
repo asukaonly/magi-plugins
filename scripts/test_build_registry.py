@@ -1,13 +1,14 @@
 """Tests for generated marketplace registry metadata."""
+
 from __future__ import annotations
 
 import base64
 import importlib.util
+import json
 from pathlib import Path
 import tomllib
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "build-registry.py"
@@ -32,7 +33,9 @@ def test_browser_history_plugins_declare_marketplace_display_group() -> None:
     }
 
     for plugin_dir, (member_label, member_order) in expected.items():
-        entry = build_registry.build_entry(ROOT / "plugins" / plugin_dir, official_ids=set())
+        entry = build_registry.build_entry(
+            ROOT / "plugins" / plugin_dir, official_ids=set()
+        )
         assert entry is not None
         group = entry["display_group"]
         assert group["id"] == "browser_history"
@@ -41,6 +44,20 @@ def test_browser_history_plugins_declare_marketplace_display_group() -> None:
         assert group["icon"] == "lucide:globe"
         assert group["member_label"] == member_label
         assert group["member_order"] == member_order
+
+
+def test_suggestion_descriptor_is_generated_in_the_primary_pass() -> None:
+    build_registry = _load_build_registry_module()
+    entry = build_registry.build_entry(
+        ROOT / "plugins" / "chrome-history",
+        official_ids=set(),
+    )
+
+    assert entry is not None
+    assert (
+        entry["suggestion_descriptor"]["local_requirements"][0]["check_kind"]
+        == "file_exists"
+    )
 
 
 def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
@@ -74,7 +91,9 @@ def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
     }
 
     for plugin_dir, spec in expected.items():
-        entry = build_registry.build_entry(ROOT / "plugins" / plugin_dir, official_ids=set())
+        entry = build_registry.build_entry(
+            ROOT / "plugins" / plugin_dir, official_ids=set()
+        )
         assert entry is not None
         group = entry["display_group"]
         assert group["id"] == spec["id"]
@@ -94,9 +113,9 @@ def test_each_installable_sensor_package_owns_at_most_one_source() -> None:
         if "sensor" not in plugin.get("contribution_types", []):
             continue
         sensors = (plugin.get("default_settings") or {}).get("sensors") or {}
-        assert len(sensors) <= 1, (
-            f"{plugin['id']} bundles multiple sources: {sorted(sensors)}"
-        )
+        assert (
+            len(sensors) <= 1
+        ), f"{plugin['id']} bundles multiple sources: {sorted(sensors)}"
 
 
 def test_photo_sources_are_separate_marketplace_plugins() -> None:
@@ -206,9 +225,33 @@ def test_every_plugin_declares_a_supported_icon_source() -> None:
     for manifest_path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
         plugin = tomllib.loads(manifest_path.read_text())["plugin"]
         icon = plugin.get("icon", "")
-        assert icon.startswith(("asset:", "lucide:")), (
-            f"{plugin['id']} uses unsupported icon declaration: {icon}"
+        assert icon.startswith(
+            ("asset:", "lucide:")
+        ), f"{plugin['id']} uses unsupported icon declaration: {icon}"
+
+
+def test_generated_registry_and_history_match_frozen_package_metadata() -> None:
+    build_registry = _load_build_registry_module()
+    registry = json.loads((ROOT / "registry.json").read_text(encoding="utf-8"))
+    history = json.loads((ROOT / "version-history.json").read_text(encoding="utf-8"))[
+        "packages"
+    ]
+
+    assert registry["registry_version"] == "4"
+    assert registry["plugins"]
+    for entry in registry["plugins"]:
+        digest = entry["package_sha256"]
+        assert len(digest) == 64
+        assert set(digest) <= set("0123456789abcdef")
+        metadata = build_registry.tracked_plugin_package_metadata(
+            ROOT,
+            ROOT / entry["path"],
         )
+        assert digest == metadata.package_sha256
+        assert history[f"{entry['plugin_id']}@{entry['version']}"] == {
+            "package_sha256": digest,
+            "executable_paths": list(metadata.executable_paths),
+        }
 
 
 def test_asset_icon_rejects_unsafe_svg(tmp_path: Path) -> None:
@@ -252,3 +295,51 @@ def test_asset_icon_rejects_symlink(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="cannot be a symlink"):
         build_registry.encode_icon_asset(tmp_path, "asset:icon.svg")
+
+
+@pytest.mark.parametrize(
+    ("manifest", "message"),
+    [
+        (
+            """
+[plugin]
+id = "Bad.ID"
+name = "Invalid"
+version = "1.0.0"
+""",
+            "plugin.id",
+        ),
+        (
+            """
+[plugin]
+id = "invalid-kind"
+name = "Invalid"
+version = "1.0.0"
+kind = "not-a-kind"
+""",
+            "plugin.kind",
+        ),
+        (
+            """
+[plugin]
+id = "invalid-dependency"
+name = "Invalid"
+version = "1.0.0"
+depends_on = ["../../escape"]
+""",
+            "depends_on",
+        ),
+    ],
+)
+def test_primary_generator_rejects_host_invalid_manifests(
+    tmp_path: Path,
+    manifest: str,
+    message: str,
+) -> None:
+    build_registry = _load_build_registry_module()
+    plugin_dir = tmp_path / "invalid-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.toml").write_text(manifest.strip(), encoding="utf-8")
+
+    with pytest.raises(build_registry.RegistryContractError, match=message):
+        build_registry.build_entry(plugin_dir, official_ids=set())

@@ -1,5 +1,5 @@
 {
-  "registry_version": "3",
+  "registry_version": "4",
   "repo_url": "https://github.com/asukaonly/magi-plugins.git",
   "plugins": [
     {
@@ -23,7 +23,8 @@
         "macos",
         "windows",
         "linux"
-      ]
+      ],
+      "package_sha256": "7641d1af97e605cb9c565f4ca027837d5d83a93a74ed815ec579fe525d8303d7"
     },
     {
       "plugin_id": "apple-photos",
@@ -147,7 +148,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "09827a11070c27e49baf12319590beaa18182fa679f2272ef7c9828026e02f29"
     },
     {
       "plugin_id": "browser_history_core",
@@ -169,7 +171,8 @@
       "platforms": [
         "windows",
         "macos"
-      ]
+      ],
+      "package_sha256": "6dd5ca7debe5f7e76414abb0f33b863e00e2412fc77c02cdbb549ca9b9e1d24a"
     },
     {
       "plugin_id": "calendar",
@@ -274,7 +277,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "9590ce4d9fbafd1de6e4b948148b058477c6b39794bc03e22b1969df017d9138"
     },
     {
       "plugin_id": "chrome-history",
@@ -396,7 +400,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "89b967bc5218e0e377ddb786fff5b2309c259fb79bfd2fc0ad7a9814b677c2f4"
     },
     {
       "plugin_id": "claude-code",
@@ -520,7 +525,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "39cdefcfba338b4eeb64a2f50ee25bb80064641891c6d31f3e938d2077c29111"
     },
     {
       "plugin_id": "codex",
@@ -644,7 +650,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "10e7d1ef1838c30ef36cbea1d03c363461fe74b33c1c876cff045e447bd8c73a"
     },
     {
       "plugin_id": "edge-history",
@@ -763,7 +770,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "1d29953fbcfddb26487b407c57ff0552ec5c9398beb2538bef6c7b7164b8431c"
     },
     {
       "plugin_id": "firefox-history",
@@ -885,7 +893,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "1da11248de10c892a9009f16204f65cd52a22e2b3028488af4589bf829ddbb6f"
     },
     {
       "plugin_id": "git-activity",
@@ -998,7 +1007,8 @@
             ]
           }
         ]
-      }
+      },
+      "package_sha256": "de6cd91397579b415210f2889bcdb0ecf4b015edbcf65d58869e192c3e6739f8"
     },
     {
       "plugin_id": "github-activity",
@@ -1092,7 +1102,8 @@
             }
           }
         }
-      }
+      },
+      "package_sha256": "e7a3e64ee2129962ddfea5f227819916eec6b3116dfbcae333a78719d948f6c2"
     },
     {
       "plugin_id": "local-documents",
@@ -1177,7 +1188,8 @@
             }
           }
         }
-      }
+      },
+      "package_sha256": "7178ec6f85ffbc85dd3f845b8bde240b2e0d6596d5f5983851fb16fbac118ee8"
     },
     {
       "plugin_id": "local-photos",
@@ -1306,7 +1318,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "f9fcd8f2af7473091632d98f489600986f8b6f26aeac4c7c58d8c51ae4f19b54"
     },
     {
       "plugin_id": "netease-music",
@@ -1414,7 +1427,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "4342c36ca9f813e1d44ad84af1cf98a7fc669725dc9e71ed8c43835ab37a72ef"
     },
     {
       "plugin_id": "obsidian-vault",
@@ -1496,7 +1510,8 @@
             }
           }
         }
-      }
+      },
+      "package_sha256": "3e724f92b01e33b10bcbf6809ec193c08e4820009b6c6b8a3ca56ce7e0f7c5ba"
     },
     {
       "plugin_id": "photo_library_core",
@@ -1518,7 +1533,8 @@
       "platforms": [
         "macos",
         "windows"
-      ]
+      ],
+      "package_sha256": "a1feb77d1f3baf89922702d9fabc6aa2bb53461eb23228c25ec6e18796714cd9"
     },
     {
       "plugin_id": "safari-history",
@@ -1641,7 +1657,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "22546175ca3fa163a0abdae0512f12466b1bf9be7e5ed2482cf6bc5a4b708409"
     },
     {
       "plugin_id": "screen-time",
@@ -1709,7 +1726,8 @@
           "zh": "magi 能看到你的屏幕使用情况",
           "en": "Lets magi see your screen-time usage"
         }
-      }
+      },
+      "package_sha256": "0f1e0a8b3558633fc52b43d39b4b1da01d6f3a90eb1f55e98fe5786e6ba03b8d"
     },
     {
       "plugin_id": "screenshot_timeline",
@@ -1801,7 +1819,8 @@
           "zh": "magi 能看到你屏幕上发生了什么",
           "en": "Lets magi see what's on your screen"
         }
-      }
+      },
+      "package_sha256": "baa1831a83feb15e9219fb980cf3d3b9440751474bc0220d0913ff4e977c9849"
     },
     {
       "plugin_id": "steam-play-history",
@@ -1902,7 +1921,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "06e4af4cbf7d53d733b93e174bccfbab46917cc42e248c536c688a48b5410add"
     },
     {
       "plugin_id": "system-media",
@@ -1986,7 +2006,8 @@
           "zh": "magi 能看到本机正在播放的音乐",
           "en": "Lets magi see music playing on this device"
         }
-      }
+      },
+      "package_sha256": "d289be73fdd3d8536e04f22e6e1afedc5eb3ef726a94d29eeeb3ecb1ae1b0967"
     },
     {
       "plugin_id": "telegram",
@@ -2022,7 +2043,8 @@
       "platforms": [
         "windows",
         "macos"
-      ]
+      ],
+      "package_sha256": "0a22bf5fae425f987602282d197562e2495cfd99ceff5c0cfbe09066aff799e1"
     },
     {
       "plugin_id": "terminal-history",
@@ -2099,7 +2121,8 @@
             }
           }
         ]
-      }
+      },
+      "package_sha256": "891ce3aa4fac9f305c1adfad16d0d2dbd292856f2d2d886520b37b7e96da8885"
     },
     {
       "plugin_id": "weixin",
@@ -2132,7 +2155,8 @@
       "platforms": [
         "windows",
         "macos"
-      ]
+      ],
+      "package_sha256": "fa06f2e1f9b085ed32a4d3f79c336a015419bf0647cd42d9355168688b2c494f"
     }
   ]
 }

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Refresh per-plugin lockfile(s) + registry.json after manifest changes.
+# Refresh per-plugin lockfile(s), registry, and immutable version history.
 #
-# After editing ANY plugin.toml, run this script so the lockfiles and the
-# registry stay in sync with the manifests. CI enforces this with two
-# checks (lockfiles-in-sync + registry-in-sync); running this script
-# locally is the way to make them pass.
+# After editing a plugin package, bump its version and stage the complete
+# package change before running this script. Generated lockfiles are staged
+# automatically before package identity is calculated.
 #
 # Usage:
 #   bash scripts/refresh.sh                  # re-lock all plugins + regen
@@ -15,28 +14,29 @@
 #
 # What it does (in order):
 #   1. ``python scripts/lock-deps.py [plugin]``  — regenerate requirements.lock
-#   2. ``python scripts/build-registry.py``       — rebuild registry.json from manifests
-#   3. ``python scripts/gen_registry.py``         — fold suggestion_descriptors into registry
+#   2. ``python scripts/build-registry.py``       — rebuild registry + immutable
+#                                                    package-version history
 #
-# Order matters: build-registry consumes plugin.toml + requirements.lock;
-# gen_registry mutates the registry.json that build-registry just wrote.
+# Order matters: build-registry hashes the complete tracked plugin package,
+# including plugin.toml + requirements.lock.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Package identity is defined from the staged Git index. Stage only the generated
+# lock outputs here so a newly created lock participates in the same snapshot.
 if [ "$#" -ge 1 ]; then
   echo "[refresh] re-locking $1..."
   python scripts/lock-deps.py "$1"
+  git add -A -- ":(top,literal)plugins/$1/requirements.lock"
 else
   echo "[refresh] re-locking all plugins..."
   python scripts/lock-deps.py
+  git add -A -- ':(glob)plugins/*/requirements.lock'
 fi
 
 echo "[refresh] rebuilding registry.json..."
 python scripts/build-registry.py
 
-echo "[refresh] folding suggestion_descriptors..."
-python scripts/gen_registry.py
-
 echo "[refresh] done. Stage the updates:"
-echo "  git add plugins/*/requirements.lock registry.json"
+echo "  git add registry.json version-history.json"
