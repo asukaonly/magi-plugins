@@ -162,6 +162,10 @@
     "weixin@0.2.7": {
       "package_sha256": "a92752a9a90025e3d979c7e880d6e68b86d8d517cf6feda91e6e7c0bb70bac78",
       "executable_paths": []
+    },
+    "weixin@0.2.8": {
+      "package_sha256": "45f36de4b73b89671d64ae06f4115117d66058af2fe0bfe7bb0e8859e92a8928",
+      "executable_paths": []
     }
   }
 }

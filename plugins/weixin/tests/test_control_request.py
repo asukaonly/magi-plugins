@@ -1,15 +1,15 @@
 """Weixin ``deliver_control_request`` — CF-10.
 
 WeChat lacks an inline-button primitive, so the control prompt is
-rendered as a text message with explicit ``/approve <short_id>`` /
-``/deny <short_id>`` instructions. The user types the slash command
-as a regular reply; CF-6's host-side parser resolves the broker.
+rendered as a text message with natural-language approval instructions.
+The host-side parser resolves the reply and accepts an explicit short ID
+when more than one request is pending.
 
 Pins:
 * ``supports_control_requests`` is True (host fanout includes us).
 * ``deliver_control_request`` sends a single text message via
-  ``_send_text`` containing the tool name, the preview, and the
-  two slash-command instructions verbatim with the short_id.
+  ``_send_text`` containing the tool name, preview, natural-language
+  choices, and the explicit-ID fallback.
 * Exception in _send_text is swallowed (host fanout's per-channel
   isolation depends on this).
 """
@@ -96,9 +96,10 @@ async def test_deliver_control_request_sends_instructions_text(
     # Tool name and preview surfaced.
     assert "image_gen" in msg
     assert "Generate a cat" in msg
-    # Both slash commands with the short_id present and parseable.
-    assert "/approve abc123" in msg
-    assert "/deny abc123" in msg
+    # Natural-language choices and the explicit-ID fallback are present.
+    assert "回复 同意 或 拒绝" in msg
+    assert "同时有多个时请加 ID" in msg
+    assert "同意 abc123" in msg
 
 
 @pytest.mark.asyncio

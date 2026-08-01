@@ -1,20 +1,22 @@
 """End-to-end pin of the Weixin image outbound pipeline.
 
-Verifies the 3-step iLink dance happens in the right order with the
-right arguments when ``WeixinChannel.deliver`` gets a DeliveryContent
-carrying an image attachment:
+Verifies the 3-step iLink flow happens in the right order with the right
+arguments when ``WeixinChannel.deliver`` gets a DeliveryContent carrying
+an image attachment:
 
-  1. ``get_upload_url`` is called with plaintext sizes, plaintext MD5,
-     ciphertext size, and the base64 AES key.
-  2. ``upload_to_cdn`` is called (PUT) with the AES-128-ECB ciphertext.
-  3. ``send_image_message`` is called with the upload_param echoed back
-     as ``encrypt_query_param`` and the same AES key, plus thumb refs.
+  1. ``get_upload_url`` is called with plaintext metadata, ciphertext
+     size, and the hexadecimal AES key.
+  2. ``upload_to_cdn`` sends the AES-128-ECB ciphertext and returns the
+     download token supplied by the CDN.
+  3. ``send_image_message`` receives that download token and the message-
+     encoded AES key. The server generates the thumbnail.
 
 The receipt's ``external_message_id`` tracks the image's client_id
 (the LAST sent surface) so retract operates on the most recent message.
 """
 from __future__ import annotations
 
+import base64
 import io
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -49,10 +51,8 @@ def _make_channel(tmp_path: Path) -> WeixinChannel:
         "ret": 0,
         "upload_param": "ENCRYPTED-MAIN-PARAM",
         "upload_full_url": "https://cdn.example/main",
-        "thumb_upload_param": "ENCRYPTED-THUMB-PARAM",
-        "thumb_upload_full_url": "https://cdn.example/thumb",
     })
-    api.upload_to_cdn = AsyncMock(return_value=None)
+    api.upload_to_cdn = AsyncMock(return_value="DOWNLOAD-MAIN-PARAM")
     api.send_image_message = AsyncMock(return_value="magi-weixin-test-cid")
     api.send_text_message = AsyncMock(return_value="magi-weixin-text-cid")
     channel._api = api  # type: ignore[assignment]
@@ -97,45 +97,48 @@ async def test_deliver_text_plus_image_calls_3_step_pipeline(tmp_path):
     # Step 0: text fired first (existing path, separate API).
     channel._api.send_text_message.assert_awaited_once()
 
-    # Step 1: getuploadurl with correct sizes + MD5 + base64 key.
+    # Step 1: getuploadurl with the image-upload enum and current key encoding.
     channel._api.get_upload_url.assert_awaited_once()
     upload_kwargs = channel._api.get_upload_url.await_args.kwargs
     assert upload_kwargs["to_user_id"] == "o9cq_user@im.wechat"
-    assert upload_kwargs["media_type"] == 2  # MESSAGE_ITEM_IMAGE
+    assert upload_kwargs["media_type"] == 1  # UPLOAD_MEDIA_TYPE_IMAGE
     assert upload_kwargs["raw_size"] == att["size_bytes"]
     # AES-128 ciphertext is plaintext-padded to a 16-byte multiple.
     assert upload_kwargs["cipher_size"] % 16 == 0
     assert upload_kwargs["cipher_size"] >= upload_kwargs["raw_size"]
-    # Base64 of a 16-byte AES key → 24 chars including padding "=".
-    assert len(upload_kwargs["aes_key_b64"]) == 24
+    # A 16-byte AES key is sent to getuploadurl as 32 lowercase hex chars.
+    assert len(upload_kwargs["aes_key_hex"]) == 32
+    assert upload_kwargs["aes_key_hex"] == upload_kwargs["aes_key_hex"].lower()
+    assert upload_kwargs["no_need_thumb"] is True
 
-    # Step 2: PUT both ciphertexts. Order: main first, then thumb.
-    assert channel._api.upload_to_cdn.await_count == 2
-    main_call, thumb_call = channel._api.upload_to_cdn.await_args_list
+    # Step 2: upload only the main ciphertext; the server generates the thumbnail.
+    channel._api.upload_to_cdn.assert_awaited_once()
+    main_call = channel._api.upload_to_cdn.await_args
     assert main_call.kwargs["upload_full_url"] == "https://cdn.example/main"
-    assert thumb_call.kwargs["upload_full_url"] == "https://cdn.example/thumb"
 
     # The encrypted bytes should round-trip back to plaintext under the
     # same AES key, proving we PUT what the recipient will actually be
     # able to decrypt.
-    import base64
-    key = base64.b64decode(upload_kwargs["aes_key_b64"])
+    key = bytes.fromhex(upload_kwargs["aes_key_hex"])
     main_cipher = main_call.kwargs["encrypted_bytes"]
     recovered = aes_128_ecb_decrypt(main_cipher, key)
     # Recovered bytes should match the original PNG we wrote to disk.
     assert recovered == Path(att["storage_path"]).read_bytes()
 
-    # Step 3: sendmessage with the params echoed back + same key.
+    # Step 3: sendmessage receives the CDN download token and message-side key.
     channel._api.send_image_message.assert_awaited_once()
     send_kwargs = channel._api.send_image_message.await_args.kwargs
     assert send_kwargs["to_user_id"] == "o9cq_user@im.wechat"
-    assert send_kwargs["image_param"] == "ENCRYPTED-MAIN-PARAM"
-    assert send_kwargs["thumb_param"] == "ENCRYPTED-THUMB-PARAM"
-    assert send_kwargs["image_aes_key_b64"] == upload_kwargs["aes_key_b64"]
-    assert send_kwargs["thumb_aes_key_b64"] == upload_kwargs["aes_key_b64"]
-    assert send_kwargs["image_size"] == att["size_bytes"]
-    assert send_kwargs["thumb_width"] > 0
-    assert send_kwargs["thumb_height"] > 0
+    assert send_kwargs["image_param"] == "DOWNLOAD-MAIN-PARAM"
+    assert (
+        base64.b64decode(send_kwargs["image_aes_key_b64"]).decode("ascii")
+        == upload_kwargs["aes_key_hex"]
+    )
+    assert send_kwargs["image_size"] == upload_kwargs["cipher_size"]
+    assert send_kwargs["thumb_param"] is None
+    assert send_kwargs["thumb_aes_key_b64"] is None
+    assert send_kwargs["thumb_width"] is None
+    assert send_kwargs["thumb_height"] is None
 
     # Receipt tracks the LAST surface (the image, not the text).
     assert receipt.external_message_id == "magi-weixin-test-cid"
@@ -200,14 +203,13 @@ async def test_failed_attachment_does_not_abort_siblings(tmp_path):
     a = _img_attachment(tmp_path, "a.png")
     b = _img_attachment(tmp_path, "b.png")
 
-    # First CDN upload raises; second succeeds.
+    # The first CDN upload raises; the second returns its download token.
     channel._api.upload_to_cdn = AsyncMock(side_effect=[
         RuntimeError("cdn 503"),  # main of A fails
-        None,  # main of B
-        None,  # thumb of B
+        "DOWNLOAD-SECOND-PARAM",  # main of B
     ])
     channel._api.send_image_message = AsyncMock(side_effect=[
-        # First attachment's send never gets called because PUT failed,
+        # First attachment's send never gets called because its upload failed,
         # but the AsyncMock has to be ready for the second.
         "magi-weixin-second",
     ])
