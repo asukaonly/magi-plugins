@@ -10,6 +10,8 @@ import sys
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
+
 from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
 
 PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
@@ -40,6 +42,32 @@ def _context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
             }
         },
     )
+
+
+class _SimulatedReparseDirectory:
+    def __init__(self, path: str) -> None:
+        self._path = path
+        self.parent = Path("/")
+        self.removed = False
+
+    def __fspath__(self) -> str:
+        return self._path
+
+    def lstat(self) -> Any:
+        return SimpleNamespace(
+            st_mode=stat.S_IFDIR,
+            st_file_attributes=getattr(
+                stat,
+                "FILE_ATTRIBUTE_REPARSE_POINT",
+                0x0400,
+            ),
+        )
+
+    def rmdir(self) -> None:
+        self.removed = True
+
+    def unlink(self) -> None:
+        raise AssertionError("Directory reparse points must use rmdir")
 
 
 def test_clear_removes_lastfm_cache_without_network_or_configuration_changes(
@@ -148,38 +176,63 @@ def test_clear_waits_for_cache_writer_and_future_tag_fetches_resume(
     asyncio.run(run_scenario())
 
 
-def test_windows_reparse_directory_is_removed_without_scanning(
+def test_windows_root_reparse_directory_is_removed_without_scanning(
     monkeypatch: Any,
 ) -> None:
     temp_storage = importlib.import_module("netease_music.temp_storage")
-
-    class _ReparseDirectoryWithoutJunctionApi:
-        removed = False
-
-        def __fspath__(self) -> str:
-            return "C:/simulated-junction"
-
-        def lstat(self) -> Any:
-            return SimpleNamespace(
-                st_mode=stat.S_IFDIR,
-                st_file_attributes=getattr(
-                    stat,
-                    "FILE_ATTRIBUTE_REPARSE_POINT",
-                    0x0400,
-                ),
-            )
-
-        def rmdir(self) -> None:
-            self.removed = True
-
-        def unlink(self) -> None:
-            raise AssertionError("Directory reparse points must use rmdir")
-
-    reparse_directory = _ReparseDirectoryWithoutJunctionApi()
+    reparse_directory = _SimulatedReparseDirectory("/simulated-root-junction")
 
     def fail_scandir(_path: Any) -> Any:
         raise AssertionError("Directory reparse points must never be scanned")
 
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
+    monkeypatch.setattr(temp_storage.os, "scandir", fail_scandir)
+
+    temp_storage._clear_directory_contents_no_follow(reparse_directory)
+
+    assert reparse_directory.removed is True
+
+
+def test_windows_ancestor_reparse_directory_is_rejected_without_scanning(
+    monkeypatch: Any,
+) -> None:
+    temp_storage = importlib.import_module("netease_music.temp_storage")
+    reparse_directory = _SimulatedReparseDirectory(
+        "/simulated-ancestor-junction"
+    )
+
+    def fail_scandir(_path: Any) -> Any:
+        raise AssertionError("Directory reparse points must never be scanned")
+
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
+    monkeypatch.setattr(
+        temp_storage,
+        "_existing_components",
+        lambda _path: [reparse_directory],
+    )
+    monkeypatch.setattr(temp_storage.os, "scandir", fail_scandir)
+
+    with pytest.raises(
+        temp_storage.UnsafeTemporaryStoragePathError,
+        match="reparse point",
+    ):
+        temp_storage._assert_parent_chain_without_symlinks(
+            Path("/managed/root")
+        )
+
+    assert reparse_directory.removed is False
+
+
+def test_windows_child_reparse_directory_is_removed_without_scanning(
+    monkeypatch: Any,
+) -> None:
+    temp_storage = importlib.import_module("netease_music.temp_storage")
+    reparse_directory = _SimulatedReparseDirectory("/simulated-child-junction")
+
+    def fail_scandir(_path: Any) -> Any:
+        raise AssertionError("Directory reparse points must never be scanned")
+
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
     monkeypatch.setattr(temp_storage.os, "scandir", fail_scandir)
 
     temp_storage._remove_entry_no_follow(reparse_directory)
