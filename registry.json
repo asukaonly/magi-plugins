@@ -288,7 +288,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdvb2dsZSBDaHJvbWU8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTEyIDJhMTAgMTAgMCAwIDEgOC42NiA1SDEyYTUgNSAwIDAgMC00LjMzIDIuNUw1LjE3IDUuMTdBOS45NiA5Ljk2IDAgMCAxIDEyIDJaIi8+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTIwLjY2IDdBMTAgMTAgMCAwIDEgMTIgMjJsNC4zMy03LjVBNSA1IDAgMCAwIDEyIDdoOC42NloiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMTIgMjJBMTAgMTAgMCAwIDEgNS4xNyA1LjE3bDQuMzMgNy41QTUgNSAwIDAgMCAxNi4zMyAxNC41TDEyIDIyWiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjUuMTUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzLjg1IiBmaWxsPSIjNDI4NUY0Ii8+PC9zdmc+Cg==",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -311,6 +311,9 @@
             "zh-CN": "读取本地 Chrome 历史数据库"
           }
         }
+      ],
+      "depends_on": [
+        "browser_history_core"
       ],
       "display_group": {
         "id": "browser_history",
@@ -401,7 +404,7 @@
           }
         ]
       },
-      "package_sha256": "89b967bc5218e0e377ddb786fff5b2309c259fb79bfd2fc0ad7a9814b677c2f4"
+      "package_sha256": "60480f688e8631857656064916b630d9404ecbb508b81c9c790cc4610f317dbe"
     },
     {
       "plugin_id": "claude-code",

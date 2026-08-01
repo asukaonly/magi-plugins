@@ -94,3 +94,34 @@ def test_custom_date_range_is_inclusive_and_stays_bounded_on_continuation(tmp_pa
 
     assert [item["visit_id"] for item in initial] == ["2", "3"]
     assert [item["visit_id"] for item in continued] == ["3"]
+
+
+def test_read_sweeps_crash_residuals_and_preserves_the_source_database(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "source"
+    _build_history_database(source_root)
+    source_database = source_root / "Default" / "History"
+    source_bytes = source_database.read_bytes()
+    temp_root = tmp_path / "temporary-database-copies"
+    crashed_copy = temp_root / "copy-crashed"
+    crashed_copy.mkdir(parents=True)
+    (crashed_copy / "History").write_bytes(b"private browser history")
+    external_file = tmp_path / "external.db"
+    external_file.write_bytes(b"must survive")
+    (crashed_copy / "external-link").symlink_to(external_file)
+    reader_module = _load_plugin_module("chrome_reader")
+    reader = reader_module.ChromeHistoryReader(temp_root=temp_root)
+
+    items = reader.read_visits(
+        source_path=str(source_root),
+        profile="Default",
+        limit=10,
+        initial_lookback_hours=None,
+        merge_window_seconds=0,
+    )
+
+    assert len(items) == 4
+    assert source_database.read_bytes() == source_bytes
+    assert external_file.read_bytes() == b"must survive"
+    assert list(temp_root.iterdir()) == []

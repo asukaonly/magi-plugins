@@ -8,6 +8,7 @@ import time
 from datetime import date, datetime, time as datetime_time, timedelta
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
@@ -91,6 +92,14 @@ class ChromeHistoryTimelineSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        prepare_temp_storage = getattr(self._reader, "prepare_temp_storage", None)
+        if callable(prepare_temp_storage):
+            temp_root = (
+                context.runtime_paths.plugin_cache_dir(self.plugin_id)
+                / "temporary-database-copies"
+                / "browser-history"
+            )
+            prepare_temp_storage(temp_root)
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
@@ -187,6 +196,18 @@ class ChromeHistoryTimelineSensor(SensorBase):
                 >= max(1, context.limit),
             },
         )
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Remove crash-residual copies without touching the Chrome profile."""
+
+        clear_temp_copies = getattr(self._reader, "clear_temp_copies", None)
+        if callable(clear_temp_copies):
+            temp_root = (
+                context.runtime_paths.plugin_cache_dir(context.plugin_id)
+                / "temporary-database-copies"
+                / "browser-history"
+            )
+            clear_temp_copies(temp_root)
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         url = str(item.get("canonical_url") or item.get("url") or "")

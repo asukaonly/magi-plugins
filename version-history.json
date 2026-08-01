@@ -25,6 +25,10 @@
       "package_sha256": "89b967bc5218e0e377ddb786fff5b2309c259fb79bfd2fc0ad7a9814b677c2f4",
       "executable_paths": []
     },
+    "chrome-history@0.1.4": {
+      "package_sha256": "60480f688e8631857656064916b630d9404ecbb508b81c9c790cc4610f317dbe",
+      "executable_paths": []
+    },
     "claude-code@0.1.0": {
       "package_sha256": "39cdefcfba338b4eeb64a2f50ee25bb80064641891c6d31f3e938d2077c29111",
       "executable_paths": []

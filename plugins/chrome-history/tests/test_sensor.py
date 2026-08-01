@@ -99,6 +99,23 @@ class _Reader:
         ]
 
 
+class _ClearableReader(_Reader):
+    def __init__(self) -> None:
+        super().__init__()
+        self.cleared_root: Path | None = None
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self.cleared_root = temp_root
+
+
+class _PluginRuntimePaths:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+
+    def plugin_cache_dir(self, plugin_id: str) -> Path:
+        return self.root / plugin_id
+
+
 def test_chrome_history_custom_range_uses_local_day_bounds_and_continues() -> None:
     sensor_cls = _load_sensor_class()
     reader = _Reader()
@@ -131,3 +148,32 @@ def test_chrome_history_custom_range_uses_local_day_bounds_and_continues() -> No
     assert datetime.fromtimestamp(reader.kwargs["initial_end_time"]).date().isoformat() == "2026-07-01"
     assert result.next_cursor == "2"
     assert result.stats["has_more"] is True
+
+
+def test_chrome_history_clear_uses_the_plugin_owned_temp_directory(
+    tmp_path: Path,
+) -> None:
+    from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
+
+    sensor_cls = _load_sensor_class()
+    reader = _ClearableReader()
+    sensor = sensor_cls(reader=reader)
+
+    asyncio.run(
+        sensor.clear_user_content(
+            UserContentClearContext(
+                request=UserContentClearRequest(clear_generation=3),
+                runtime_paths=_PluginRuntimePaths(tmp_path),
+                plugin_id="chrome-history",
+                sensor_id="timeline.chrome_history",
+                plugin_settings={},
+            )
+        )
+    )
+
+    assert reader.cleared_root == (
+        tmp_path
+        / "chrome-history"
+        / "temporary-database-copies"
+        / "browser-history"
+    )
