@@ -6,10 +6,13 @@ import os
 import stat
 import tempfile
 from pathlib import Path
+from typing import Any
+
+from magi_plugin_sdk.fs import path_is_link
 
 
 class UnsafeTemporaryStoragePathError(RuntimeError):
-    """Raised when a temporary namespace crosses a symbolic link."""
+    """Raised when temporary storage crosses a link or reparse point."""
 
 
 class ManagedDatabaseCopyStore:
@@ -74,14 +77,6 @@ def _absolute(path: Path) -> Path:
     return Path(os.path.abspath(os.fspath(path)))
 
 
-def _path_exists_no_follow(path: Path) -> bool:
-    try:
-        path.lstat()
-    except FileNotFoundError:
-        return False
-    return True
-
-
 def _existing_components(path: Path) -> list[Path]:
     absolute = _absolute(path)
     components: list[Path] = []
@@ -94,14 +89,15 @@ def _existing_components(path: Path) -> list[Path]:
 
 def _assert_parent_chain_without_symlinks(path: Path) -> None:
     for component in _existing_components(path.parent):
-        if not _path_exists_no_follow(component):
+        try:
+            component_stat = component.lstat()
+        except FileNotFoundError:
             continue
-        mode = component.lstat().st_mode
-        if stat.S_ISLNK(mode):
+        if path_is_link(component, path_stat=component_stat):
             raise UnsafeTemporaryStoragePathError(
-                f"Temporary storage ancestor is a symbolic link: {component}"
+                f"Temporary storage ancestor is a link or reparse point: {component}"
             )
-        if not stat.S_ISDIR(mode):
+        if not stat.S_ISDIR(component_stat.st_mode):
             raise UnsafeTemporaryStoragePathError(
                 f"Temporary storage ancestor is not a directory: {component}"
             )
@@ -110,12 +106,14 @@ def _assert_parent_chain_without_symlinks(path: Path) -> None:
 def _assert_directory_without_symlinks(path: Path) -> None:
     _assert_parent_chain_without_symlinks(path)
     try:
-        mode = path.lstat().st_mode
+        path_stat = path.lstat()
     except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Temporary storage directory is missing: {path}"
         ) from exc
-    if stat.S_ISLNK(mode) or not stat.S_ISDIR(mode):
+    if path_is_link(path, path_stat=path_stat) or not stat.S_ISDIR(
+        path_stat.st_mode
+    ):
         raise UnsafeTemporaryStoragePathError(
             f"Temporary storage root is not a real directory: {path}"
         )
@@ -127,15 +125,15 @@ def _create_directory_without_symlinks(path: Path) -> None:
     for part in absolute.parts[1:]:
         current = current / part
         try:
-            mode = current.lstat().st_mode
+            current_stat = current.lstat()
         except FileNotFoundError:
             current.mkdir()
             continue
-        if stat.S_ISLNK(mode):
+        if path_is_link(current, path_stat=current_stat):
             raise UnsafeTemporaryStoragePathError(
-                f"Temporary storage path crosses a symbolic link: {current}"
+                f"Temporary storage path crosses a link or reparse point: {current}"
             )
-        if not stat.S_ISDIR(mode):
+        if not stat.S_ISDIR(current_stat.st_mode):
             raise UnsafeTemporaryStoragePathError(
                 f"Temporary storage component is not a directory: {current}"
             )
@@ -144,13 +142,13 @@ def _create_directory_without_symlinks(path: Path) -> None:
 def _clear_directory_contents_no_follow(root: Path) -> None:
     _assert_parent_chain_without_symlinks(root)
     try:
-        mode = root.lstat().st_mode
+        root_stat = root.lstat()
     except FileNotFoundError:
         return
-    if stat.S_ISLNK(mode):
-        root.unlink()
+    if path_is_link(root, path_stat=root_stat):
+        _remove_link_or_reparse(root, root_stat)
         return
-    if not stat.S_ISDIR(mode):
+    if not stat.S_ISDIR(root_stat.st_mode):
         raise UnsafeTemporaryStoragePathError(
             f"Temporary storage root is not a directory: {root}"
         )
@@ -162,10 +160,13 @@ def _clear_directory_contents_no_follow(root: Path) -> None:
 
 def _remove_entry_no_follow(path: Path) -> None:
     try:
-        mode = path.lstat().st_mode
+        path_stat = path.lstat()
     except FileNotFoundError:
         return
-    if stat.S_ISDIR(mode):
+    if path_is_link(path, path_stat=path_stat):
+        _remove_link_or_reparse(path, path_stat)
+        return
+    if stat.S_ISDIR(path_stat.st_mode):
         with os.scandir(path) as entries:
             children = [Path(entry.path) for entry in entries]
         for child in children:
@@ -173,6 +174,15 @@ def _remove_entry_no_follow(path: Path) -> None:
         path.rmdir()
         return
     path.unlink()
+
+
+def _remove_link_or_reparse(path: Any, path_stat: Any) -> None:
+    """Remove one link-like directory entry without traversing its target."""
+
+    if stat.S_ISDIR(path_stat.st_mode):
+        path.rmdir()
+    else:
+        path.unlink()
 
 
 __all__ = ["ManagedDatabaseCopyStore", "UnsafeTemporaryStoragePathError"]

@@ -2,13 +2,43 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import stat
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
+from browser_history_core import temp_storage
 from browser_history_core.temp_storage import (
     ManagedDatabaseCopyStore,
     UnsafeTemporaryStoragePathError,
 )
+
+
+class _SimulatedReparseDirectory:
+    def __init__(self, path: str) -> None:
+        self._path = path
+        self.parent = Path("/")
+        self.removed = False
+
+    def __fspath__(self) -> str:
+        return self._path
+
+    def lstat(self) -> Any:
+        return SimpleNamespace(
+            st_mode=stat.S_IFDIR,
+            st_file_attributes=getattr(
+                stat,
+                "FILE_ATTRIBUTE_REPARSE_POINT",
+                0x0400,
+            ),
+        )
+
+    def rmdir(self) -> None:
+        self.removed = True
+
+    def unlink(self) -> None:
+        raise AssertionError("Directory reparse points must use rmdir")
 
 
 def test_prepare_sweeps_crash_residuals_without_following_internal_symlinks(
@@ -81,3 +111,65 @@ def test_copy_directories_are_created_and_removed_inside_the_namespace(
     (temp_root / "copy-crashed").mkdir()
     store.clear()
     assert list(temp_root.iterdir()) == []
+
+
+def test_root_reparse_directory_is_removed_without_scanning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _SimulatedReparseDirectory("/simulated-root-junction")
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
+    monkeypatch.setattr(
+        temp_storage.os,
+        "scandir",
+        lambda _path: (_ for _ in ()).throw(
+            AssertionError("Root reparse points must never be scanned")
+        ),
+    )
+
+    temp_storage._clear_directory_contents_no_follow(root)
+
+    assert root.removed is True
+
+
+def test_ancestor_reparse_directory_is_rejected_without_scanning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ancestor = _SimulatedReparseDirectory("/simulated-ancestor-junction")
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
+    monkeypatch.setattr(
+        temp_storage,
+        "_existing_components",
+        lambda _path: [ancestor],
+    )
+    monkeypatch.setattr(
+        temp_storage.os,
+        "scandir",
+        lambda _path: (_ for _ in ()).throw(
+            AssertionError("Ancestor reparse points must never be scanned")
+        ),
+    )
+
+    with pytest.raises(UnsafeTemporaryStoragePathError, match="reparse point"):
+        temp_storage._assert_parent_chain_without_symlinks(
+            Path("/managed/root")
+        )
+
+    assert ancestor.removed is False
+
+
+def test_child_reparse_directory_is_removed_without_scanning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    child = _SimulatedReparseDirectory("/simulated-child-junction")
+    monkeypatch.setattr(Path, "is_junction", lambda _path: False, raising=False)
+    monkeypatch.setattr(
+        temp_storage.os,
+        "scandir",
+        lambda _path: (_ for _ in ()).throw(
+            AssertionError("Child reparse points must never be scanned")
+        ),
+    )
+
+    temp_storage._remove_entry_no_follow(child)
+
+    assert child.removed is True

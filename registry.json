@@ -158,7 +158,7 @@
         "zh-CN": "浏览器历史核心库"
       },
       "icon": "lucide:globe",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "path": "plugins/browser_history_core",
       "description": "Shared ingestion primitives consumed by Chrome/Firefox/Edge history plugins. Installed automatically as a dependency; not user-toggleable.",
       "description_i18n": {
@@ -172,7 +172,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "235de7f4ff92f5552b04187b99e28aff8779dd19f8fcdf626b6bf4e734a6ea7c"
+      "package_sha256": "3e2dfe772467a60cc4253427e044e4771955c7ac6d3e868305a5c5289e39ce20"
     },
     {
       "plugin_id": "calendar",
