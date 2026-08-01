@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 
 from magi_plugin_sdk import ContributionType, PluginManifest
-from magi_plugin_sdk.channels import ChannelMessageDispatchOutcome, ChannelSessionMapping, ChannelTarget, OutboundContent
+from magi_plugin_sdk.channels import (
+    ChannelInboundContext,
+    ChannelMessageDispatchOutcome,
+    ChannelSessionMapping,
+    ChannelTarget,
+    OutboundContent,
+)
 
 from weixin.adapter import WeixinChannel, WeixinChannelConfig
 from weixin.api import MESSAGE_ITEM_IMAGE, MESSAGE_ITEM_TEXT, MESSAGE_TYPE_USER, WeixinApiClient, WeixinApiError
@@ -19,6 +25,9 @@ from weixin.plugin import (
     WeixinPlugin,
 )
 from weixin.state import WeixinCredentials, WeixinStateStore
+
+
+PROVIDER_TIME_MS = 1_754_017_445_000
 
 
 class FakeMapper:
@@ -37,6 +46,14 @@ class FakeDispatcher:
         self.channel = channel
         self.messages: list[str] = []
         self.calls: list[dict] = []
+
+    async def capture_inbound_context(self, **kwargs):
+        return ChannelInboundContext(
+            channel_type=kwargs["channel_type"],
+            stream_id=kwargs["stream_id"],
+            admission_evidence=kwargs["evidence"],
+            clear_generation=0,
+        )
 
     async def dispatch_user_message(self, **kwargs):
         self.messages.append(str(kwargs["message"]))
@@ -93,6 +110,7 @@ class FakeAttachmentStore:
 def _message(message_id: str = "msg-1") -> dict:
     return {
         "message_id": message_id,
+        "create_time_ms": PROVIDER_TIME_MS,
         "message_type": MESSAGE_TYPE_USER,
         "from_user_id": "user-1",
         "item_list": [{"type": MESSAGE_ITEM_TEXT, "text_item": {"text": "hello"}}],
@@ -399,6 +417,7 @@ async def test_inbound_image_is_stored_as_attachment(tmp_path: Path, monkeypatch
         "msgs": [
             {
                 "message_id": "img-1",
+                "create_time_ms": PROVIDER_TIME_MS,
                 "message_type": MESSAGE_TYPE_USER,
                 "from_user_id": "user-1",
                 "item_list": [
@@ -429,6 +448,7 @@ async def test_reply_reference_uses_saved_magi_message_id(tmp_path: Path) -> Non
             _message("m1"),
             {
                 "message_id": "m2",
+                "create_time_ms": PROVIDER_TIME_MS + 1,
                 "message_type": MESSAGE_TYPE_USER,
                 "from_user_id": "user-1",
                 "item_list": [

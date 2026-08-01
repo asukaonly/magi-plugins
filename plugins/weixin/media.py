@@ -11,7 +11,11 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
 
-from magi_plugin_sdk.channels import ChannelAttachmentStoreProtocol
+from magi_plugin_sdk.channels import (
+    ChannelAttachmentStoreProtocol,
+    ChannelInboundContext,
+    ChannelInboundRejectedError,
+)
 
 from .api import (
     DEFAULT_CDN_BASE_URL,
@@ -36,6 +40,7 @@ class WeixinMediaResult:
 async def collect_media_attachments(
     item_list: list[dict[str, Any]],
     *,
+    inbound_context: ChannelInboundContext,
     attachment_store: ChannelAttachmentStoreProtocol,
     cdn_base_url: str,
     session_id: str,
@@ -49,6 +54,7 @@ async def collect_media_attachments(
         try:
             attachment = await _attachment_from_item(
                 item,
+                inbound_context=inbound_context,
                 attachment_store=attachment_store,
                 cdn_base_url=cdn_base_url,
                 session_id=session_id,
@@ -56,6 +62,8 @@ async def collect_media_attachments(
                 message_key=message_key,
                 index=index,
             )
+        except ChannelInboundRejectedError:
+            raise
         except Exception as exc:
             result.errors.append(str(exc))
             continue
@@ -70,6 +78,7 @@ async def collect_media_attachments(
 async def _attachment_from_item(
     item: dict[str, Any],
     *,
+    inbound_context: ChannelInboundContext,
     attachment_store: ChannelAttachmentStoreProtocol,
     cdn_base_url: str,
     session_id: str,
@@ -86,6 +95,7 @@ async def _attachment_from_item(
         content = await _download_item_media(media, cdn_base_url=cdn_base_url, aes_key=_image_aes_key(image_item, media))
         mime_type = _detect_mime(content, default="image/jpeg")
         return await attachment_store.store_attachment(
+            inbound_context=inbound_context,
             session_id=session_id,
             turn_id=turn_id,
             kind="image",
@@ -100,6 +110,7 @@ async def _attachment_from_item(
         media = _media_dict(voice_item)
         content = await _download_item_media(media, cdn_base_url=cdn_base_url, aes_key=str(media.get("aes_key") or ""))
         return await attachment_store.store_attachment(
+            inbound_context=inbound_context,
             session_id=session_id,
             turn_id=turn_id,
             kind="file",
@@ -115,6 +126,7 @@ async def _attachment_from_item(
         file_name = str(file_item.get("file_name") or f"weixin-file-{message_key}-{index}.bin")
         content = await _download_item_media(media, cdn_base_url=cdn_base_url, aes_key=str(media.get("aes_key") or ""))
         return await attachment_store.store_attachment(
+            inbound_context=inbound_context,
             session_id=session_id,
             turn_id=turn_id,
             kind="file",
@@ -129,6 +141,7 @@ async def _attachment_from_item(
         media = _media_dict(video_item)
         content = await _download_item_media(media, cdn_base_url=cdn_base_url, aes_key=str(media.get("aes_key") or ""))
         return await attachment_store.store_attachment(
+            inbound_context=inbound_context,
             session_id=session_id,
             turn_id=turn_id,
             kind="file",

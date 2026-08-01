@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 import hashlib
 import json
 import time
@@ -13,7 +15,12 @@ from magi_plugin_sdk import get_logger
 from magi_plugin_sdk.channels import (
     Channel,
     ChannelAttachmentStoreProtocol,
+    ChannelInboundClearRequest,
+    ChannelInboundClearStrategy,
+    ChannelInboundRejectedError,
+    ChannelInboundRejectionReason,
     ChannelMessageDispatcherProtocol,
+    ChannelProviderTimeEvidence,
     ChannelSessionMapperProtocol,
     ChannelTarget,
     OutboundContent,
@@ -73,6 +80,8 @@ class _CachedTypingTicket:
 class WeixinChannel(Channel):
     """Bidirectional text channel backed by the Weixin iLink bot gateway."""
 
+    inbound_clear_strategy = ChannelInboundClearStrategy.PROVIDER_TIME
+
     # === Phase H+2: opt into control-plane fanout ===
     # WeChat has no inline-button primitive, so deliver_control_request
     # renders the prompt as a text message with explicit ``/approve
@@ -100,6 +109,13 @@ class WeixinChannel(Channel):
         self._stop_event: asyncio.Event | None = None
         self._context_tokens: dict[str, str] = {}
         self._typing_cache: dict[str, _CachedTypingTicket] = {}
+        self._processed_message_ids: set[str] | None = None
+        self._inbound_condition = asyncio.Condition()
+        self._inbound_clear_lock = asyncio.Lock()
+        self._inbound_clear_active = False
+        self._applied_inbound_clear_generation = (
+            self._state.load_applied_inbound_clear_generation()
+        )
 
     @property
     def channel_type(self) -> str:
@@ -116,6 +132,78 @@ class WeixinChannel(Channel):
 
     def bind_control_port(self, control_port: Any) -> None:
         self._control_port = control_port
+
+    @asynccontextmanager
+    async def inbound_clear_boundary(
+        self,
+        request: ChannelInboundClearRequest,
+    ) -> AsyncIterator[None]:
+        """Pause inbound work and erase local conversation-derived state."""
+
+        if request.channel_type != self.channel_type:
+            raise ValueError("Weixin clear request channel type does not match")
+        generation = request.clear_generation
+        if (
+            isinstance(generation, bool)
+            or not isinstance(generation, int)
+            or generation < 0
+        ):
+            raise ValueError("Weixin clear generation must be a non-negative integer")
+
+        async with self._inbound_clear_lock:
+            async with self._inbound_condition:
+                self._inbound_clear_active = True
+                try:
+                    applied_generation = max(
+                        self._applied_inbound_clear_generation,
+                        generation,
+                    )
+                    self._state.clear_inbound_content(
+                        clear_generation=applied_generation,
+                        protected_account_ids=(
+                            self._config.account_id,
+                            self._credentials.account_id if self._credentials else "",
+                        ),
+                        protected_credentials_path=self._config.credentials_path,
+                    )
+                    self._context_tokens.clear()
+                    self._typing_cache.clear()
+                    if self._processed_message_ids is not None:
+                        self._processed_message_ids.clear()
+                    self._applied_inbound_clear_generation = applied_generation
+                except BaseException:
+                    self._inbound_clear_active = False
+                    self._inbound_condition.notify_all()
+                    raise
+            try:
+                yield
+            finally:
+                async with self._inbound_condition:
+                    self._inbound_clear_active = False
+                    self._inbound_condition.notify_all()
+
+    async def _capture_local_clear_generation(self) -> int:
+        async with self._inbound_condition:
+            await self._inbound_condition.wait_for(
+                lambda: not self._inbound_clear_active
+            )
+            return self._applied_inbound_clear_generation
+
+    async def _mutate_local_inbound_state(
+        self,
+        expected_generation: int,
+        mutation: Callable[[], Any],
+    ) -> Any:
+        async with self._inbound_condition:
+            await self._inbound_condition.wait_for(
+                lambda: not self._inbound_clear_active
+            )
+            if expected_generation != self._applied_inbound_clear_generation:
+                raise ChannelInboundRejectedError(
+                    ChannelInboundRejectionReason.CLEARED_MESSAGE,
+                    "Weixin inbound work crossed a local clear boundary",
+                )
+            return mutation()
 
     async def start(self) -> None:
         self._state.update_channel_status(state="starting", running=False, configured=False, last_error="")
@@ -138,6 +226,9 @@ class WeixinChannel(Channel):
             route_tag=self._config.route_tag,
         )
         self._context_tokens = self._state.load_context_tokens(credentials.account_id)
+        self._processed_message_ids = self._state.load_processed_message_ids(
+            credentials.account_id
+        )
         self._stop_event = asyncio.Event()
         self._poll_task = asyncio.create_task(self._poll_loop())
         self._state.update_channel_status(
@@ -333,7 +424,7 @@ class WeixinChannel(Channel):
           3. sendmessage with item_list[type=2] referencing CDNMedia.
         """
         from . import media_upload as _mu
-        from .api import UPLOAD_MEDIA_TYPE_IMAGE, WeixinApiError
+        from .api import UPLOAD_MEDIA_TYPE_IMAGE
 
         attachment_id = str(attachment.get("attachment_id") or "")
         logger.info(
@@ -413,14 +504,12 @@ class WeixinChannel(Channel):
         # generates previews from the uploaded ciphertext. Our prior
         # client-side thumbnail pipeline was a guess from outdated
         # docs; dropping it removes a moving part that doesn't add
-        # value. The thumb-related fields below are still computed
-        # for compat with get_upload_url's signature but no actual
-        # thumb is uploaded. ---
+        # value. Empty thumb payload fields are still sent for API
+        # compatibility, but no thumbnail is uploaded. ---
         no_need_thumb = True
         thumb_bytes = b""
         thumb_cipher = b""
         thumb_raw_md5 = ""
-        thumb_w = thumb_h = 0
 
         # filekey: per-upload random hex (matches openclaw
         # src/cdn/upload.ts:66 ``crypto.randomBytes(16).toString("hex")``).
@@ -616,7 +705,12 @@ class WeixinChannel(Channel):
         )
         return client_ids
 
-    async def send_typing_indicator(self, target: ChannelTarget) -> None:
+    async def send_typing_indicator(
+        self,
+        target: ChannelTarget,
+        *,
+        expected_generation: int | None = None,
+    ) -> None:
         if not self._config.enable_typing_indicator or self._api is None:
             return
         try:
@@ -624,7 +718,11 @@ class WeixinChannel(Channel):
             if not to_user_id:
                 return
             context_token = self._context_tokens.get(to_user_id)
-            ticket = await self._get_typing_ticket(to_user_id, context_token)
+            ticket = await self._get_typing_ticket(
+                to_user_id,
+                context_token,
+                expected_generation=expected_generation,
+            )
             if ticket:
                 await self._api.send_typing(
                     ilink_user_id=to_user_id,
@@ -650,27 +748,35 @@ class WeixinChannel(Channel):
             return
         account_id = self._credentials.account_id
         get_updates_buf = self._state.load_sync_buf(account_id)
-        processed_message_ids = self._state.load_processed_message_ids(account_id)
+        if self._processed_message_ids is None:
+            self._processed_message_ids = self._state.load_processed_message_ids(
+                account_id
+            )
+        processed_message_ids = self._processed_message_ids
         next_timeout_ms = self._config.poll_timeout_ms or DEFAULT_LONG_POLL_TIMEOUT_MS
         consecutive_failures = 0
 
         while not self._is_stopping():
+            poll_clear_generation = await self._capture_local_clear_generation()
             try:
                 response = await self._api.get_updates(
                     get_updates_buf=get_updates_buf,
                     timeout_ms=next_timeout_ms,
                 )
-                self._state.update_channel_status(
-                    state="running",
-                    running=True,
-                    configured=True,
-                    account_id=account_id,
-                    last_poll_at_ms=_now_ms(),
-                    last_error="",
+                await self._mutate_local_inbound_state(
+                    poll_clear_generation,
+                    lambda: None,
                 )
                 next_timeout_ms = int(response.get("longpolling_timeout_ms") or next_timeout_ms)
                 if self._is_api_error(response):
-                    pause_ms = self._handle_api_error(response, consecutive_failures, account_id)
+                    pause_ms = await self._mutate_local_inbound_state(
+                        poll_clear_generation,
+                        lambda: self._handle_api_error(
+                            response,
+                            consecutive_failures,
+                            account_id,
+                        ),
+                    )
                     consecutive_failures = (
                         0
                         if pause_ms >= self._config.session_expired_pause_ms
@@ -680,41 +786,83 @@ class WeixinChannel(Channel):
                     continue
 
                 consecutive_failures = 0
-                messages = [message for message in (response.get("msgs") or []) if isinstance(message, dict)]
+                messages = [
+                    message
+                    for message in (response.get("msgs") or [])
+                    if isinstance(message, dict)
+                ]
                 all_processed = True
-                processed_changed = False
-                for message in response.get("msgs") or []:
-                    if isinstance(message, dict):
-                        message_key = self._message_key(message)
-                        if message_key and message_key in processed_message_ids:
-                            continue
-                        processed = await self._process_inbound_message(message)
-                        if not processed:
-                            all_processed = False
-                            break
-                        if message_key:
-                            processed_message_ids.add(message_key)
-                            processed_changed = True
+                pending_processed_ids: set[str] = set()
+                seen_message_ids = set(processed_message_ids)
+                for message in messages:
+                    message_key = self._message_key(message)
+                    if message_key and message_key in seen_message_ids:
+                        continue
+                    processed = await self._process_inbound_message_unlocked(
+                        message,
+                        expected_generation=poll_clear_generation,
+                    )
+                    if not processed:
+                        all_processed = False
+                        break
+                    if message_key:
+                        pending_processed_ids.add(message_key)
+                        seen_message_ids.add(message_key)
 
-                if processed_changed:
-                    self._state.save_processed_message_ids(account_id, processed_message_ids)
+                def persist_poll_result() -> str:
+                    if pending_processed_ids:
+                        processed_message_ids.update(pending_processed_ids)
+                        self._state.save_processed_message_ids(
+                            account_id,
+                            processed_message_ids,
+                        )
+                    new_buf = response.get("get_updates_buf")
+                    committed_buf = get_updates_buf
+                    if isinstance(new_buf, str) and new_buf and all_processed:
+                        committed_buf = new_buf
+                        self._state.save_sync_buf(account_id, committed_buf)
+                    elif isinstance(new_buf, str) and new_buf and messages:
+                        logger.warning(
+                            "Weixin getUpdates cursor not advanced because a message "
+                            "was not processed"
+                        )
+                    self._state.update_channel_status(
+                        state="running",
+                        running=True,
+                        configured=True,
+                        account_id=account_id,
+                        last_poll_at_ms=_now_ms(),
+                        last_error="",
+                    )
+                    return committed_buf
 
-                new_buf = response.get("get_updates_buf")
-                if isinstance(new_buf, str) and new_buf and all_processed:
-                    get_updates_buf = new_buf
-                    self._state.save_sync_buf(account_id, get_updates_buf)
-                elif isinstance(new_buf, str) and new_buf and messages:
-                    logger.warning("Weixin getUpdates cursor not advanced because a message was not processed")
+                get_updates_buf = await self._mutate_local_inbound_state(
+                    poll_clear_generation,
+                    persist_poll_result,
+                )
             except asyncio.CancelledError:
                 raise
+            except ChannelInboundRejectedError as exc:
+                logger.info(
+                    "Dropped stale Weixin poll result after inbound clear reason=%s",
+                    exc.reason.value,
+                )
+                continue
             except Exception as exc:
                 consecutive_failures += 1
-                self._state.update_channel_status(
-                    state="degraded",
-                    running=True,
-                    last_error=str(exc),
-                    last_error_at_ms=_now_ms(),
-                )
+                error_message = str(exc)
+                try:
+                    await self._mutate_local_inbound_state(
+                        poll_clear_generation,
+                        lambda: self._state.update_channel_status(
+                            state="degraded",
+                            running=True,
+                            last_error=error_message,
+                            last_error_at_ms=_now_ms(),
+                        ),
+                    )
+                except ChannelInboundRejectedError:
+                    pass
                 logger.exception(
                     "Weixin polling failed account_id=%s consecutive_failures=%s",
                     account_id,
@@ -725,6 +873,38 @@ class WeixinChannel(Channel):
                     consecutive_failures = 0
 
     async def _process_inbound_message(self, message: dict[str, Any]) -> bool:
+        """Process one provider event, treating clear rejections as terminal."""
+
+        expected_generation = await self._capture_local_clear_generation()
+        return await self._process_inbound_message_unlocked(
+            message,
+            expected_generation=expected_generation,
+        )
+
+    async def _process_inbound_message_unlocked(
+        self,
+        message: dict[str, Any],
+        *,
+        expected_generation: int,
+    ) -> bool:
+        try:
+            return await self._process_admitted_inbound_message(
+                message,
+                expected_generation=expected_generation,
+            )
+        except ChannelInboundRejectedError as exc:
+            logger.info(
+                "Dropped Weixin inbound event rejected by host reason=%s",
+                exc.reason.value,
+            )
+            return True
+
+    async def _process_admitted_inbound_message(
+        self,
+        message: dict[str, Any],
+        *,
+        expected_generation: int,
+    ) -> bool:
         if self._credentials is None:
             return False
         if message.get("message_type") == MESSAGE_TYPE_BOT:
@@ -734,6 +914,27 @@ class WeixinChannel(Channel):
         if not from_user_id or not self._is_user_allowed(from_user_id):
             return True
 
+        provider_occurred_at_ms = self._provider_occurred_at_ms(message)
+        if provider_occurred_at_ms is None:
+            logger.warning("Dropped Weixin inbound event with invalid provider time")
+            return True
+
+        if self._session_mapper is None:
+            raise RuntimeError("Weixin channel session mapper is not bound")
+        if self._message_dispatcher is None:
+            raise RuntimeError("Weixin channel message dispatcher is not bound")
+        await self._mutate_local_inbound_state(
+            expected_generation,
+            lambda: None,
+        )
+        inbound_context = await self._message_dispatcher.capture_inbound_context(
+            channel_type=self.channel_type,
+            stream_id=from_user_id,
+            evidence=ChannelProviderTimeEvidence(
+                provider_occurred_at_ms=provider_occurred_at_ms,
+            ),
+        )
+
         raw_items = message.get("item_list")
         text = body_from_item_list(raw_items if isinstance(raw_items, list) else None).strip()
         message_key = self._message_key(message)
@@ -741,15 +942,20 @@ class WeixinChannel(Channel):
 
         context_token = str(message.get("context_token") or "").strip()
         if context_token:
-            self._context_tokens[from_user_id] = context_token
-            self._state.save_context_tokens(self._credentials.account_id, self._context_tokens)
+            def save_context_token() -> None:
+                self._context_tokens[from_user_id] = context_token
+                self._state.save_context_tokens(
+                    self._credentials.account_id,
+                    self._context_tokens,
+                )
 
-        if self._session_mapper is None:
-            raise RuntimeError("Weixin channel session mapper is not bound")
-        if self._message_dispatcher is None:
-            raise RuntimeError("Weixin channel message dispatcher is not bound")
+            await self._mutate_local_inbound_state(
+                expected_generation,
+                save_context_token,
+            )
 
         mapping = await self._session_mapper.resolve_or_create(
+            inbound_context=inbound_context,
             channel_type=self.channel_type,
             external_chat_id=from_user_id,
             external_user_id=from_user_id,
@@ -763,6 +969,7 @@ class WeixinChannel(Channel):
         # so _send_text's session-mapping resolution would otherwise fail).
         if self._control_port is not None and text and text.strip():
             result = await self._control_port.handle_command(
+                inbound_context=inbound_context,
                 message=text,
                 session_id=mapping.magi_session_id,
                 channel_type=self.channel_type,
@@ -783,7 +990,8 @@ class WeixinChannel(Channel):
                 return True
 
         await self.send_typing_indicator(
-            ChannelTarget(channel_type=self.channel_type, external_chat_id=from_user_id)
+            ChannelTarget(channel_type=self.channel_type, external_chat_id=from_user_id),
+            expected_generation=expected_generation,
         )
 
         attachments: list[dict[str, Any]] = []
@@ -791,6 +999,7 @@ class WeixinChannel(Channel):
         if self._attachment_store is not None and isinstance(raw_items, list):
             media_result = await collect_media_attachments(
                 raw_items,
+                inbound_context=inbound_context,
                 attachment_store=self._attachment_store,
                 cdn_base_url=self._config.cdn_base_url,
                 session_id=mapping.magi_session_id,
@@ -824,6 +1033,7 @@ class WeixinChannel(Channel):
             "media_errors": media_errors,
         }
         outcome = await self._message_dispatcher.dispatch_user_message(
+            inbound_context=inbound_context,
             source=self.channel_type,
             user_id=mapping.magi_user_id,
             session_id=mapping.magi_session_id,
@@ -839,39 +1049,83 @@ class WeixinChannel(Channel):
                 outcome.error_code,
                 outcome.error_message,
             )
-            self._state.update_channel_status(
-                state="degraded",
-                running=True,
-                last_error=outcome.error_message or outcome.error_code or "Weixin dispatch failed",
-                last_error_at_ms=_now_ms(),
+            await self._mutate_local_inbound_state(
+                expected_generation,
+                lambda: self._state.update_channel_status(
+                    state="degraded",
+                    running=True,
+                    last_error=(
+                        outcome.error_message
+                        or outcome.error_code
+                        or "Weixin dispatch failed"
+                    ),
+                    last_error_at_ms=_now_ms(),
+                ),
             )
             return False
         magi_message_id = str(getattr(outcome, "message_id", "") or "").strip()
         external_message_id = self._external_message_id(message)
-        if magi_message_id and external_message_id:
-            self._state.save_message_id_mapping(self._credentials.account_id, external_message_id, magi_message_id)
-        self._state.update_channel_status(
-            state="running",
-            running=True,
-            last_inbound_at_ms=_now_ms(),
-            last_inbound_chat_id=from_user_id,
-            last_error="",
+
+        def persist_dispatch_result() -> None:
+            if magi_message_id and external_message_id:
+                self._state.save_message_id_mapping(
+                    self._credentials.account_id,
+                    external_message_id,
+                    magi_message_id,
+                )
+            self._state.update_channel_status(
+                state="running",
+                running=True,
+                last_inbound_at_ms=_now_ms(),
+                last_inbound_chat_id=from_user_id,
+                last_error="",
+            )
+
+        await self._mutate_local_inbound_state(
+            expected_generation,
+            persist_dispatch_result,
         )
         return True
 
-    async def _get_typing_ticket(self, user_id: str, context_token: str | None) -> str:
+    @staticmethod
+    def _provider_occurred_at_ms(message: dict[str, Any]) -> int | None:
+        value = message.get("create_time_ms")
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            return None
+        return value
+
+    async def _get_typing_ticket(
+        self,
+        user_id: str,
+        context_token: str | None,
+        *,
+        expected_generation: int | None = None,
+    ) -> str:
         if self._api is None:
             return ""
         now_ms = int(time.time() * 1000)
-        cached = self._typing_cache.get(user_id)
+        if expected_generation is None:
+            cached = self._typing_cache.get(user_id)
+        else:
+            cached = await self._mutate_local_inbound_state(
+                expected_generation,
+                lambda: self._typing_cache.get(user_id),
+            )
         if cached and now_ms < cached.next_refresh_at_ms:
             return cached.ticket
         response = await self._api.get_config(ilink_user_id=user_id, context_token=context_token)
         ticket = str(response.get("typing_ticket") or "") if response.get("ret") == 0 else ""
-        self._typing_cache[user_id] = _CachedTypingTicket(
+        cached_ticket = _CachedTypingTicket(
             ticket=ticket,
             next_refresh_at_ms=now_ms + 24 * 60 * 60 * 1000,
         )
+        if expected_generation is None:
+            self._typing_cache[user_id] = cached_ticket
+        else:
+            await self._mutate_local_inbound_state(
+                expected_generation,
+                lambda: self._typing_cache.__setitem__(user_id, cached_ticket),
+            )
         return ticket
 
     def _is_user_allowed(self, external_user_id: str) -> bool:

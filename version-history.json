@@ -150,6 +150,10 @@
     "weixin@0.2.6": {
       "package_sha256": "fa06f2e1f9b085ed32a4d3f79c336a015419bf0647cd42d9355168688b2c494f",
       "executable_paths": []
+    },
+    "weixin@0.2.7": {
+      "package_sha256": "a92752a9a90025e3d979c7e880d6e68b86d8d517cf6feda91e6e7c0bb70bac78",
+      "executable_paths": []
     }
   }
 }

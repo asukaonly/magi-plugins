@@ -2,13 +2,39 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk.fs import (
+    atomic_write_managed_text,
+    list_managed_directory_names,
+    read_managed_text,
+    remove_managed_file,
+)
+
 from .api import DEFAULT_BASE_URL
+
+
+_CHANNEL_STATUS_CLEAR_ALLOWLIST = (
+    "state",
+    "running",
+    "configured",
+    "account_id",
+)
+_INBOUND_DERIVED_SUFFIXES = (
+    ("context tokens", ".context-tokens.json"),
+    ("processed messages", ".processed-messages.json"),
+    ("message map", ".message-map.json"),
+)
+
+
+class WeixinStatePathCollisionError(RuntimeError):
+    """Raised when one path has both credential and derived-state ownership."""
 
 
 @dataclass(slots=True)
@@ -50,6 +76,10 @@ class WeixinStateStore:
     @property
     def channel_status_path(self) -> Path:
         return self.state_dir / "channel_status.json"
+
+    @property
+    def inbound_clear_state_path(self) -> Path:
+        return self.state_dir / "inbound_clear_state.json"
 
     def load_credentials(
         self,
@@ -113,8 +143,11 @@ class WeixinStateStore:
 
     def list_account_ids(self) -> list[str]:
         try:
-            parsed = json.loads(self.account_index_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            raw_index = read_managed_text(self.account_index_path)
+            if raw_index is None:
+                return []
+            parsed = json.loads(raw_index)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return []
         if not isinstance(parsed, list):
             return []
@@ -245,10 +278,149 @@ class WeixinStateStore:
         value = self.load_message_id_map(account_id).get(external_message_id.strip())
         return value.strip() if value else None
 
+    def load_applied_inbound_clear_generation(self) -> int:
+        try:
+            raw_state = read_managed_text(self.inbound_clear_state_path)
+            if raw_state is None:
+                return 0
+            parsed = json.loads(raw_state)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return 0
+        if not isinstance(parsed, dict):
+            return 0
+        generation = parsed.get("clear_generation")
+        if (
+            isinstance(generation, bool)
+            or not isinstance(generation, int)
+            or generation < 0
+        ):
+            return 0
+        return generation
+
+    def clear_inbound_content(
+        self,
+        *,
+        clear_generation: int,
+        protected_account_ids: Iterable[str] = (),
+        protected_credentials_path: str = "",
+    ) -> None:
+        """Erase conversation-derived inbound state without touching account state."""
+
+        if (
+            isinstance(clear_generation, bool)
+            or not isinstance(clear_generation, int)
+            or clear_generation < 0
+        ):
+            raise ValueError("Weixin clear generation must be a non-negative integer")
+
+        removable_paths = self._preflight_inbound_content_paths(
+            protected_account_ids=protected_account_ids,
+            protected_credentials_path=protected_credentials_path,
+        )
+        for path in removable_paths:
+            remove_managed_file(path)
+
+        self._clear_conversation_status()
+        atomic_write_managed_text(
+            self.inbound_clear_state_path,
+            json.dumps(
+                {"clear_generation": clear_generation},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        )
+
+    def _preflight_inbound_content_paths(
+        self,
+        *,
+        protected_account_ids: Iterable[str],
+        protected_credentials_path: str,
+    ) -> list[Path]:
+        account_ids = {
+            account_id.strip()
+            for account_id in (*self.list_account_ids(), *protected_account_ids)
+            if isinstance(account_id, str) and account_id.strip()
+        }
+        credential_owners = {
+            _absolute_path(self.account_path(account_id)): account_id
+            for account_id in account_ids
+        }
+        configured_credentials = protected_credentials_path.strip()
+        if configured_credentials:
+            configured_path = _absolute_path(
+                Path(configured_credentials).expanduser()
+            )
+            if configured_path.parent == _absolute_path(self.accounts_dir):
+                credential_owners.setdefault(
+                    configured_path,
+                    "configured credentials file",
+                )
+
+        derived_owners: dict[Path, tuple[str, str]] = {}
+        for account_id in account_ids:
+            for state_kind, suffix in _INBOUND_DERIVED_SUFFIXES:
+                derived_owners[
+                    _absolute_path(
+                        self.accounts_dir / f"{safe_key(account_id)}{suffix}"
+                    )
+                ] = (account_id, state_kind)
+
+        collisions = sorted(
+            set(credential_owners).intersection(derived_owners),
+            key=os.fspath,
+        )
+        if collisions:
+            collision = collisions[0]
+            credential_owner = credential_owners[collision]
+            derived_account, state_kind = derived_owners[collision]
+            raise WeixinStatePathCollisionError(
+                "Weixin state path collision: credentials for account "
+                f"{json.dumps(credential_owner, ensure_ascii=True)} conflict with "
+                f"{state_kind} for account "
+                f"{json.dumps(derived_account, ensure_ascii=True)}. "
+                "Rename or remove one account before clearing conversation data."
+            )
+
+        protected_paths = set(credential_owners)
+        removable_paths = set(derived_owners)
+        for name in list_managed_directory_names(self.accounts_dir):
+            if any(name.endswith(suffix) for _, suffix in _INBOUND_DERIVED_SUFFIXES):
+                removable_paths.add(_absolute_path(self.accounts_dir / name))
+        return sorted(removable_paths - protected_paths, key=os.fspath)
+
+    def _clear_conversation_status(self) -> None:
+        try:
+            raw_status = read_managed_text(self.channel_status_path)
+        except UnicodeDecodeError:
+            raw_status = ""
+        if raw_status is None:
+            if not remove_managed_file(self.channel_status_path):
+                return
+            parsed = {}
+        else:
+            try:
+                parsed = json.loads(raw_status)
+            except json.JSONDecodeError:
+                parsed = {}
+        if not isinstance(parsed, dict):
+            parsed = {}
+        preserved_status = {
+            key: parsed[key]
+            for key in _CHANNEL_STATUS_CLEAR_ALLOWLIST
+            if key in parsed
+        }
+        atomic_write_managed_text(
+            self.channel_status_path,
+            json.dumps(preserved_status, ensure_ascii=False, indent=2) + "\n",
+        )
+
     def load_channel_status(self) -> dict[str, Any]:
         try:
-            parsed = json.loads(self.channel_status_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            raw_status = read_managed_text(self.channel_status_path)
+            if raw_status is None:
+                return {"state": "stopped", "running": False, "configured": False}
+            parsed = json.loads(raw_status)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return {"state": "stopped", "running": False, "configured": False}
         return parsed if isinstance(parsed, dict) else {"state": "stopped", "running": False, "configured": False}
 
@@ -257,9 +429,9 @@ class WeixinStateStore:
         status = self.load_channel_status()
         status.update(updates)
         status["updated_at_ms"] = int(time.time() * 1000)
-        self.channel_status_path.write_text(
+        atomic_write_managed_text(
+            self.channel_status_path,
             json.dumps(status, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
         )
         return status
 
@@ -288,3 +460,7 @@ class WeixinStateStore:
             or DEFAULT_BASE_URL,
             user_id=str(parsed.get("user_id") or parsed.get("ilink_user_id") or "").strip(),
         )
+
+
+def _absolute_path(path: Path) -> Path:
+    return Path(os.path.abspath(os.fspath(path)))

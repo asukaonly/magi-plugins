@@ -14,6 +14,7 @@ import pytest
 
 from magi_plugin_sdk.channels import (
     ChannelControlCommandResult,
+    ChannelInboundContext,
     ChannelMessageDispatchOutcome,
     ChannelSessionMapping,
 )
@@ -21,6 +22,9 @@ from magi_plugin_sdk.channels import (
 from weixin.adapter import WeixinChannel, WeixinChannelConfig
 from weixin.api import MESSAGE_ITEM_TEXT, MESSAGE_TYPE_USER
 from weixin.state import WeixinCredentials, WeixinStateStore
+
+
+PROVIDER_TIME_MS = 1_754_017_445_000
 
 
 class _Mapper:
@@ -39,7 +43,17 @@ class _ControlPort:
         self._result = result
         self.calls: list[str] = []
 
-    async def handle_command(self, *, message, session_id, channel_type, external_chat_id, external_user_id):
+    async def handle_command(
+        self,
+        *,
+        inbound_context,
+        message,
+        session_id,
+        channel_type,
+        external_chat_id,
+        external_user_id,
+    ):
+        _ = inbound_context
         self.calls.append(message)
         if self.channel._stop_event is not None:
             self.channel._stop_event.set()
@@ -50,6 +64,14 @@ class _Dispatcher:
     def __init__(self, channel: WeixinChannel) -> None:
         self.channel = channel
         self.dispatched: list[str] = []
+
+    async def capture_inbound_context(self, **kwargs):
+        return ChannelInboundContext(
+            channel_type=kwargs["channel_type"],
+            stream_id=kwargs["stream_id"],
+            admission_evidence=kwargs["evidence"],
+            clear_generation=0,
+        )
 
     async def dispatch_user_message(self, **kwargs):
         self.dispatched.append(str(kwargs["message"]))
@@ -80,7 +102,10 @@ class _Api:
 
 def _msg(text: str) -> dict:
     return {
-        "message_id": "m1", "message_type": MESSAGE_TYPE_USER, "from_user_id": "user-1",
+        "message_id": "m1",
+        "create_time_ms": PROVIDER_TIME_MS,
+        "message_type": MESSAGE_TYPE_USER,
+        "from_user_id": "user-1",
         "item_list": [{"type": MESSAGE_ITEM_TEXT, "text_item": {"text": text}}],
     }
 
