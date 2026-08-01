@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any
+
+from magi_plugin_sdk.fs import remove_managed_file
 
 
 _SCHEMA = """\
@@ -24,6 +27,8 @@ CREATE TABLE IF NOT EXISTS file_index (
 );
 CREATE INDEX IF NOT EXISTS idx_file_index_mtime ON file_index (mtime);
 """
+_DB_FILENAME = "file_index.db"
+_SQLITE_SIDECAR_SUFFIXES = ("-wal", "-shm", "-journal")
 
 
 class FileIndexCache:
@@ -35,28 +40,57 @@ class FileIndexCache:
     """
 
     def __init__(self, cache_dir: Path) -> None:
-        self._db_path = cache_dir / "file_index.db"
+        self._cache_dir = Path(cache_dir)
+        self._db_path = self._cache_dir / _DB_FILENAME
         self._conn: sqlite3.Connection | None = None
+        self._lock = threading.RLock()
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
     def _connect(self) -> sqlite3.Connection:
-        if self._conn is not None:
-            return self._conn
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(self._db_path), timeout=5)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
-        conn.executescript(_SCHEMA)
-        self._conn = conn
-        return conn
+        with self._lock:
+            if self._conn is not None:
+                return self._conn
+            self._db_path.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(
+                str(self._db_path),
+                timeout=5,
+                check_same_thread=False,
+            )
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.executescript(_SCHEMA)
+            self._conn = conn
+            return conn
 
     def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+        with self._lock:
+            if self._conn is None:
+                return
+            connection = self._conn
+            try:
+                connection.close()
+            finally:
+                self._conn = None
+
+    def clear_user_content(self) -> None:
+        """Close the index and delete only its database and SQLite sidecars."""
+
+        with self._lock:
+            self.close()
+            for path in self.user_content_paths:
+                remove_managed_file(path)
+
+    @property
+    def user_content_paths(self) -> tuple[Path, ...]:
+        """Return the fixed set of user-content files owned by this cache."""
+
+        return (
+            self._db_path,
+            *(Path(f"{self._db_path}{suffix}") for suffix in _SQLITE_SIDECAR_SUFFIXES),
+        )
 
     # ------------------------------------------------------------------
     # Public API
@@ -64,17 +98,18 @@ class FileIndexCache:
 
     def get(self, path: str, mtime: float, file_size: int) -> dict[str, Any] | None:
         """Return cached EXIF dict if *path* has an up-to-date entry, else ``None``."""
-        try:
-            conn = self._connect()
-        except (sqlite3.Error, OSError):
-            return None
-        try:
-            row = conn.execute(
-                "SELECT exif_json FROM file_index WHERE path = ? AND mtime = ? AND file_size = ?",
-                (path, mtime, file_size),
-            ).fetchone()
-        except sqlite3.Error:
-            return None
+        with self._lock:
+            try:
+                conn = self._connect()
+            except (sqlite3.Error, OSError):
+                return None
+            try:
+                row = conn.execute(
+                    "SELECT exif_json FROM file_index WHERE path = ? AND mtime = ? AND file_size = ?",
+                    (path, mtime, file_size),
+                ).fetchone()
+            except sqlite3.Error:
+                return None
         if row is None:
             return None
         try:
@@ -92,27 +127,35 @@ class FileIndexCache:
         updated_at: float,
     ) -> None:
         """Insert or replace a cache entry for *path*."""
-        try:
-            conn = self._connect()
-        except (sqlite3.Error, OSError):
-            return
-        try:
-            conn.execute(
-                """
-                INSERT INTO file_index (path, mtime, file_size, quick_hash, exif_json, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(path) DO UPDATE SET
-                    mtime      = excluded.mtime,
-                    file_size  = excluded.file_size,
-                    quick_hash = excluded.quick_hash,
-                    exif_json  = excluded.exif_json,
-                    updated_at = excluded.updated_at
-                """,
-                (path, mtime, file_size, quick_hash, json.dumps(exif, ensure_ascii=False), updated_at),
-            )
-            conn.commit()
-        except sqlite3.Error:
-            pass
+        with self._lock:
+            try:
+                conn = self._connect()
+            except (sqlite3.Error, OSError):
+                return
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO file_index (path, mtime, file_size, quick_hash, exif_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(path) DO UPDATE SET
+                        mtime      = excluded.mtime,
+                        file_size  = excluded.file_size,
+                        quick_hash = excluded.quick_hash,
+                        exif_json  = excluded.exif_json,
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        path,
+                        mtime,
+                        file_size,
+                        quick_hash,
+                        json.dumps(exif, ensure_ascii=False),
+                        updated_at,
+                    ),
+                )
+                conn.commit()
+            except sqlite3.Error:
+                pass
 
     def put_batch(
         self,
@@ -124,40 +167,49 @@ class FileIndexCache:
         """
         if not entries:
             return
-        try:
-            conn = self._connect()
-        except (sqlite3.Error, OSError):
-            return
-        try:
-            conn.executemany(
-                """
-                INSERT INTO file_index (path, mtime, file_size, quick_hash, exif_json, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(path) DO UPDATE SET
-                    mtime      = excluded.mtime,
-                    file_size  = excluded.file_size,
-                    quick_hash = excluded.quick_hash,
-                    exif_json  = excluded.exif_json,
-                    updated_at = excluded.updated_at
-                """,
-                [
-                    (path, mtime, file_size, quick_hash, json.dumps(exif, ensure_ascii=False), updated_at)
-                    for path, mtime, file_size, quick_hash, exif, updated_at in entries
-                ],
-            )
-            conn.commit()
-        except sqlite3.Error:
-            pass
+        with self._lock:
+            try:
+                conn = self._connect()
+            except (sqlite3.Error, OSError):
+                return
+            try:
+                conn.executemany(
+                    """
+                    INSERT INTO file_index (path, mtime, file_size, quick_hash, exif_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(path) DO UPDATE SET
+                        mtime      = excluded.mtime,
+                        file_size  = excluded.file_size,
+                        quick_hash = excluded.quick_hash,
+                        exif_json  = excluded.exif_json,
+                        updated_at = excluded.updated_at
+                    """,
+                    [
+                        (
+                            path,
+                            mtime,
+                            file_size,
+                            quick_hash,
+                            json.dumps(exif, ensure_ascii=False),
+                            updated_at,
+                        )
+                        for path, mtime, file_size, quick_hash, exif, updated_at in entries
+                    ],
+                )
+                conn.commit()
+            except sqlite3.Error:
+                pass
 
     def prune(self, older_than: float) -> int:
         """Remove entries not updated since *older_than* (Unix timestamp).
 
         Returns the number of rows deleted.
         """
-        conn = self._connect()
-        cursor = conn.execute(
-            "DELETE FROM file_index WHERE updated_at < ?",
-            (older_than,),
-        )
-        conn.commit()
-        return cursor.rowcount
+        with self._lock:
+            conn = self._connect()
+            cursor = conn.execute(
+                "DELETE FROM file_index WHERE updated_at < ?",
+                (older_than,),
+            )
+            conn.commit()
+            return cursor.rowcount

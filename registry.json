@@ -1523,7 +1523,7 @@
         "zh-CN": "照片来源核心库"
       },
       "icon": "lucide:images",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/photo_library_core",
       "description": "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency.",
       "description_i18n": {
@@ -1537,7 +1537,7 @@
         "macos",
         "windows"
       ],
-      "package_sha256": "a1feb77d1f3baf89922702d9fabc6aa2bb53461eb23228c25ec6e18796714cd9"
+      "package_sha256": "8a98678845a9bfd4bf922b6d44f89fd6da3f6ddf5d0438184abb4f22dbc273a8"
     },
     {
       "plugin_id": "safari-history",

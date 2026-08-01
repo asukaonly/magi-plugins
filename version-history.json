@@ -77,6 +77,10 @@
       "package_sha256": "a1feb77d1f3baf89922702d9fabc6aa2bb53461eb23228c25ec6e18796714cd9",
       "executable_paths": []
     },
+    "photo_library_core@0.1.1": {
+      "package_sha256": "8a98678845a9bfd4bf922b6d44f89fd6da3f6ddf5d0438184abb4f22dbc273a8",
+      "executable_paths": []
+    },
     "safari-history@0.1.2": {
       "package_sha256": "22546175ca3fa163a0abdae0512f12466b1bf9be7e5ed2482cf6bc5a4b708409",
       "executable_paths": []

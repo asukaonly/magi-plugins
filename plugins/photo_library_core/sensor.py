@@ -16,6 +16,7 @@ import time as _time
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
@@ -185,6 +186,19 @@ class PhotoLibraryTimelineSensor(SensorBase):
         self.settle_window_seconds = settle_window_seconds
         self._reader = reader or PhotoLibraryReader()
         self._apple_reader = apple_reader or ApplePhotosReader()
+        self._operation_lock = asyncio.Lock()
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Delete the local photo metadata index without touching source state."""
+
+        async with self._operation_lock:
+            current_index = getattr(self._reader, "_file_index", None)
+            if isinstance(current_index, FileIndexCache):
+                await asyncio.to_thread(current_index.close)
+            self._reader._file_index = None
+
+            cache_dir = context.runtime_paths.plugin_cache_dir(self.source_type)
+            await asyncio.to_thread(FileIndexCache(cache_dir).clear_user_content)
 
     # ------------------------------------------------------------------
     # Identity & dedup
@@ -223,6 +237,10 @@ class PhotoLibraryTimelineSensor(SensorBase):
     # ------------------------------------------------------------------
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        async with self._operation_lock:
+            return await self._collect_items(context)
+
+    async def _collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
