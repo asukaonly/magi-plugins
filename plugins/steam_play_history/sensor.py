@@ -1,10 +1,12 @@
 """Timeline sensor for Steam play history."""
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 import time
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
@@ -61,6 +63,7 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         self.retention_mode = retention_mode or "analyze_only"
         self.steam_path = steam_path
         self.account_id = account_id or "auto"
+        self._user_content_lock = asyncio.Lock()
 
     def source_item_identity(self, item: dict[str, Any]) -> str:
         event_kind = str(item.get("event_kind") or "play_session")
@@ -96,6 +99,10 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        async with self._user_content_lock:
+            return await self._collect_items(context)
+
+    async def _collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
         settings = _sensor_settings(context.plugin_settings)
         now = datetime.now(timezone.utc)
         steam_path = str(settings.get("steam_path") or self.steam_path or "")
@@ -149,6 +156,14 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
                 "errors": snapshot.errors[:3],
             },
         )
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Clear inferred Steam activity without changing settings or cursors."""
+
+        async with self._user_content_lock:
+            await self._state_store.clear_user_content(
+                runtime_paths=context.runtime_paths,
+            )
 
     async def flush_runtime_state(self, *, runtime_paths: Any, plugin_settings: dict[str, Any]) -> dict[str, Any]:
         _ = plugin_settings

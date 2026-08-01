@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk.fs import atomic_write_managed_text, remove_managed_file
+
 from .reader import SteamGameRecord
 
 DEFAULT_IDLE_TIMEOUT_S = 15 * 60
@@ -49,7 +51,10 @@ class SteamPlayStateStore:
 
     def _save(self, path: Path, state: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(state, ensure_ascii=True, sort_keys=True), encoding="utf-8")
+        atomic_write_managed_text(
+            path,
+            json.dumps(state, ensure_ascii=True, sort_keys=True),
+        )
 
     async def apply_snapshot(
         self,
@@ -158,6 +163,13 @@ class SteamPlayStateStore:
             state["completed"] = []
             self._save(path, state)
         return completed
+
+    async def clear_user_content(self, *, runtime_paths: Any) -> None:
+        """Remove plugin-owned Steam observations without reading old state."""
+
+        path = self._state_path(runtime_paths)
+        async with self._lock_for(path):
+            remove_managed_file(path)
 
     async def flush_in_progress(self, *, runtime_paths: Any, now: datetime) -> dict[str, Any]:
         """Return diagnostics about currently inferred Steam sessions."""

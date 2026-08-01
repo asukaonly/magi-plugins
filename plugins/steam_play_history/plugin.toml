@@ -3,7 +3,7 @@ id = "steam-play-history"
 name = "Steam"
 name_i18n = { "zh-CN" = "Steam" }
 icon = "asset:assets/icon.svg"
-version = "0.1.1"
+version = "0.1.2"
 description = "Infers Steam game records from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏记录" }
 author = "Magi Team"

@@ -111,6 +111,10 @@
       "package_sha256": "06e4af4cbf7d53d733b93e174bccfbab46917cc42e248c536c688a48b5410add",
       "executable_paths": []
     },
+    "steam-play-history@0.1.2": {
+      "package_sha256": "03ec4cc9a2a24a826b727448d0b4929467304e07dbbba74036873c6123c3007c",
+      "executable_paths": []
+    },
     "system-media@0.1.2": {
       "package_sha256": "d289be73fdd3d8536e04f22e6e1afedc5eb3ef726a94d29eeeb3ecb1ae1b0967",
       "executable_paths": []
