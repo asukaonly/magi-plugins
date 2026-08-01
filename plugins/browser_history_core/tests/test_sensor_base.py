@@ -33,8 +33,11 @@ def _load_sensor_module() -> ModuleType:
 
 
 class _RuntimePaths:
+    def __init__(self, root: Path = Path("/tmp")) -> None:
+        self.root = root
+
     def plugin_cache_dir(self, plugin_id: str) -> Path:
-        return Path("/tmp") / plugin_id
+        return self.root / plugin_id
 
 
 class _Reader:
@@ -55,6 +58,14 @@ class _Reader:
 
     def get_latest_visit_id(self, **kwargs) -> int:
         return 100
+
+
+class _ClearableReader(_Reader):
+    def __init__(self) -> None:
+        self.cleared_root: Path | None = None
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self.cleared_root = temp_root
 
 
 def test_browser_history_marks_has_more_when_limit_is_full() -> None:
@@ -104,3 +115,32 @@ def test_browser_history_output_includes_source_facets() -> None:
     assert {"name": "browser.title", "text": "Example docs"} in facets
     assert {"name": "browser.url", "text": "https://example.com/docs"} in facets
     assert {"name": "browser.visit_count", "numeric": 3} in facets
+
+
+def test_browser_history_clear_uses_the_plugin_owned_temp_directory(
+    tmp_path: Path,
+) -> None:
+    from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
+
+    mod = _load_sensor_module()
+    reader = _ClearableReader()
+    sensor = mod.BaseBrowserHistoryTimelineSensor(reader=reader)
+
+    asyncio.run(
+        sensor.clear_user_content(
+            UserContentClearContext(
+                request=UserContentClearRequest(clear_generation=3),
+                runtime_paths=_RuntimePaths(tmp_path),
+                plugin_id="edge-history",
+                sensor_id="timeline.edge_history",
+                plugin_settings={},
+            )
+        )
+    )
+
+    assert reader.cleared_root == (
+        tmp_path
+        / "edge-history"
+        / "temporary-database-copies"
+        / "browser-history"
+    )

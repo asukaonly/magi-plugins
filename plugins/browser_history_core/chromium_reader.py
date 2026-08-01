@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import shutil
 import sqlite3
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -15,14 +14,31 @@ from .normalizers import (
     normalize_title,
 )
 from .visit_merger import aggregate_visits
+from .temp_storage import ManagedDatabaseCopyStore
 
 
 class ChromiumHistoryReader:
     """Read and normalize Chromium browser history visits."""
 
-    def __init__(self, *, default_root: str, browser_label: str = "Chromium") -> None:
+    def __init__(
+        self,
+        *,
+        default_root: str,
+        browser_label: str = "Chromium",
+        temp_root: Path | None = None,
+    ) -> None:
         self._default_root = default_root
         self._browser_label = browser_label
+        self._temp_copies = ManagedDatabaseCopyStore(
+            namespace=f"{browser_label}-history",
+            temp_root=temp_root,
+        )
+
+    def prepare_temp_storage(self, temp_root: Path) -> None:
+        self._temp_copies.prepare(temp_root)
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self._temp_copies.clear(temp_root)
 
     def resolve_root(self, source_path: str | None = None) -> Path:
         root = Path(source_path or self._default_root).expanduser()
@@ -39,9 +55,13 @@ class ChromiumHistoryReader:
         history_file = profile_dir / "History"
         if not history_file.exists():
             raise FileNotFoundError(f"{self._browser_label} history database not found: {history_file}")
-        temp_dir = Path(tempfile.mkdtemp(prefix=f"magi-{self._browser_label.lower()}-history-"))
+        temp_dir = self._temp_copies.create_copy_dir()
         copy_path = temp_dir / "History"
-        shutil.copy2(history_file, copy_path)
+        try:
+            shutil.copy2(history_file, copy_path)
+        except Exception:
+            self._temp_copies.cleanup_copy(temp_dir)
+            raise
         return copy_path
 
     def read_visits(
@@ -66,7 +86,7 @@ class ChromiumHistoryReader:
                 merge_window_seconds=merge_window_seconds,
             )
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def get_latest_visit_id(
         self,
@@ -85,7 +105,7 @@ class ChromiumHistoryReader:
             finally:
                 connection.close()
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def _query_visits(
         self,

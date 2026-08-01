@@ -13,6 +13,10 @@
       "package_sha256": "6dd5ca7debe5f7e76414abb0f33b863e00e2412fc77c02cdbb549ca9b9e1d24a",
       "executable_paths": []
     },
+    "browser_history_core@0.1.2": {
+      "package_sha256": "235de7f4ff92f5552b04187b99e28aff8779dd19f8fcdf626b6bf4e734a6ea7c",
+      "executable_paths": []
+    },
     "calendar@0.1.2": {
       "package_sha256": "9590ce4d9fbafd1de6e4b948148b058477c6b39794bc03e22b1969df017d9138",
       "executable_paths": []

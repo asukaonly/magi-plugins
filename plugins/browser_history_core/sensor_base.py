@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 import re
 import time
 from typing import Any, Protocol
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
@@ -49,6 +51,10 @@ class BrowserHistoryReaderLike(Protocol):
         source_path: str | None = None,
         profile: str = "Default",
     ) -> int: ...
+
+    def prepare_temp_storage(self, temp_root: Path) -> None: ...
+
+    def clear_temp_copies(self, temp_root: Path) -> None: ...
 
 
 class BaseBrowserHistoryTimelineSensor(SensorBase):
@@ -115,6 +121,14 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        prepare_temp_storage = getattr(self._reader, "prepare_temp_storage", None)
+        if callable(prepare_temp_storage):
+            temp_root = (
+                context.runtime_paths.plugin_cache_dir(self.plugin_id)
+                / "temporary-database-copies"
+                / "browser-history"
+            )
+            prepare_temp_storage(temp_root)
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
@@ -203,6 +217,18 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                 >= pull_limit,
             },
         )
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Remove crash-residual database copies without touching browser data."""
+
+        clear_temp_copies = getattr(self._reader, "clear_temp_copies", None)
+        if callable(clear_temp_copies):
+            temp_root = (
+                context.runtime_paths.plugin_cache_dir(context.plugin_id)
+                / "temporary-database-copies"
+                / "browser-history"
+            )
+            clear_temp_copies(temp_root)
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         url = str(item.get("canonical_url") or item.get("url") or "")

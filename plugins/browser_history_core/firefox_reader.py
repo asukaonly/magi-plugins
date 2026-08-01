@@ -5,7 +5,6 @@ import configparser
 import shutil
 import sqlite3
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +16,7 @@ from .normalizers import (
     normalize_title,
 )
 from .visit_merger import aggregate_visits
+from .temp_storage import ManagedDatabaseCopyStore
 
 _IGNORED_VISIT_TYPES = (4, 7, 8)  # EMBED, DOWNLOAD, FRAMED_LINK
 
@@ -35,6 +35,18 @@ def _default_firefox_root() -> str:
 
 class FirefoxHistoryReader:
     """Read and normalize Mozilla Firefox history visits."""
+
+    def __init__(self, *, temp_root: Path | None = None) -> None:
+        self._temp_copies = ManagedDatabaseCopyStore(
+            namespace="firefox-history",
+            temp_root=temp_root,
+        )
+
+    def prepare_temp_storage(self, temp_root: Path) -> None:
+        self._temp_copies.prepare(temp_root)
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self._temp_copies.clear(temp_root)
 
     def resolve_root(self, source_path: str | None = None) -> Path:
         return Path(source_path or _default_firefox_root()).expanduser()
@@ -128,9 +140,13 @@ class FirefoxHistoryReader:
         places_file = profile_dir / "places.sqlite"
         if not places_file.exists():
             raise FileNotFoundError(f"Firefox places database not found: {places_file}")
-        temp_dir = Path(tempfile.mkdtemp(prefix="magi-firefox-history-"))
+        temp_dir = self._temp_copies.create_copy_dir()
         copy_path = temp_dir / "places.sqlite"
-        shutil.copy2(places_file, copy_path)
+        try:
+            shutil.copy2(places_file, copy_path)
+        except Exception:
+            self._temp_copies.cleanup_copy(temp_dir)
+            raise
         return copy_path
 
     def read_visits(
@@ -155,7 +171,7 @@ class FirefoxHistoryReader:
                 merge_window_seconds=merge_window_seconds,
             )
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def get_latest_visit_id(
         self,
@@ -174,7 +190,7 @@ class FirefoxHistoryReader:
             finally:
                 connection.close()
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def _query_visits(
         self,
