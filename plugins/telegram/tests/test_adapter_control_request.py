@@ -15,6 +15,7 @@ Pins:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -25,13 +26,15 @@ from magi_plugin_sdk import ControlRequest
 # python-telegram-bot may not be installed in the test environment.
 # Tests that exercise actual telegram-side API construction skip.
 pytest.importorskip("telegram.ext", reason="python-telegram-bot not installed")
-from magi_plugin_sdk.channels import (
+from magi_plugin_sdk.channels import (  # noqa: E402
+    ChannelInboundContext,
     ChannelMessageDispatchOutcome,
+    ChannelProviderTimeEvidence,
     ChannelSessionMapping,
     ChannelTarget,
 )
 
-from telegram.adapter import TelegramChannel, TelegramChannelConfig
+from telegram.adapter import TelegramChannel, TelegramChannelConfig  # noqa: E402
 
 
 def _make_channel(*, allowed_user_ids: list[str] | None = None) -> TelegramChannel:
@@ -147,6 +150,19 @@ class _FakeChat:
 class _FakeUser:
     id: int = 42
     username: str = "alice"
+    first_name: str = "Alice"
+    last_name: str = "Example"
+
+
+def _provider_context() -> ChannelInboundContext:
+    return ChannelInboundContext(
+        channel_type="telegram",
+        stream_id="555",
+        admission_evidence=ChannelProviderTimeEvidence(
+            provider_occurred_at_ms=1_754_006_400_000,
+        ),
+        clear_generation=0,
+    )
 
 
 @pytest.mark.asyncio
@@ -158,10 +174,11 @@ async def test_callback_query_dispatches_synthesized_slash_approve() -> None:
         success=True, user_id="local_user", session_id="sess-1",
         turn_id=None, message_id=None, error_message="✓ 已同意工具 image_gen (abc123)",
     ))
+    dispatcher.capture_inbound_context = AsyncMock(return_value=_provider_context())
     channel._message_dispatcher = dispatcher
 
     mapper = MagicMock()
-    mapper.lookup = AsyncMock(return_value=ChannelSessionMapping(
+    mapper.resolve_or_create = AsyncMock(return_value=ChannelSessionMapping(
         channel_type="telegram", external_chat_id="555",
         magi_session_id="sess-1", magi_user_id="local_user",
         metadata_json='{"external_user_id":"42"}',
@@ -170,6 +187,8 @@ async def test_callback_query_dispatches_synthesized_slash_approve() -> None:
 
     query = MagicMock()
     query.data = "magi:approve:abc123"
+    query.message = MagicMock()
+    query.message.date = datetime(2026, 8, 1, tzinfo=UTC)
     query.answer = AsyncMock()
     query.edit_message_reply_markup = AsyncMock()
     update = _FakeUpdate(
@@ -196,9 +215,10 @@ async def test_callback_query_dispatches_synthesized_slash_deny() -> None:
         success=True, user_id="local_user", session_id="sess-1",
         turn_id=None, message_id=None, error_message=None,
     ))
+    dispatcher.capture_inbound_context = AsyncMock(return_value=_provider_context())
     channel._message_dispatcher = dispatcher
     mapper = MagicMock()
-    mapper.lookup = AsyncMock(return_value=ChannelSessionMapping(
+    mapper.resolve_or_create = AsyncMock(return_value=ChannelSessionMapping(
         channel_type="telegram", external_chat_id="555",
         magi_session_id="sess-1", magi_user_id="local_user",
         metadata_json="{}",
@@ -207,6 +227,8 @@ async def test_callback_query_dispatches_synthesized_slash_deny() -> None:
 
     query = MagicMock()
     query.data = "magi:deny:xyz789"
+    query.message = MagicMock()
+    query.message.date = datetime(2026, 8, 1, tzinfo=UTC)
     query.answer = AsyncMock()
     query.edit_message_reply_markup = AsyncMock()
     update = _FakeUpdate(

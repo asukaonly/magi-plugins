@@ -2,13 +2,24 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+import math
 from typing import Any
 
 from magi_plugin_sdk import ControlRequest, get_logger
 from magi_plugin_sdk.channels import (
     Channel,
+    ChannelInboundClearRequest,
+    ChannelInboundClearStrategy,
+    ChannelInboundContext,
+    ChannelInboundRejectedError,
+    ChannelInboundRejectionReason,
     ChannelMessageDispatcherProtocol,
+    ChannelProviderTimeEvidence,
     ChannelSessionMapperProtocol,
     ChannelTarget,
     OutboundContent,
@@ -38,6 +49,8 @@ class TelegramChannelConfig:
 class TelegramChannel(Channel):
     """Bidirectional Telegram bot channel."""
 
+    inbound_clear_strategy = ChannelInboundClearStrategy.PROVIDER_TIME
+
     def __init__(
         self,
         *,
@@ -52,6 +65,11 @@ class TelegramChannel(Channel):
         self._bot_username: str = ""
         self._bot_id: int = 0
         self._control_port: Any = None
+        self._inbound_condition = asyncio.Condition()
+        self._inbound_clear_lock = asyncio.Lock()
+        self._inbound_clear_active = False
+        self._active_local_inbound = 0
+        self._applied_inbound_clear_generation: int | None = None
 
     def bind_session_mapper(self, session_mapper: ChannelSessionMapperProtocol) -> None:
         self._session_mapper = session_mapper
@@ -65,6 +83,126 @@ class TelegramChannel(Channel):
     @property
     def channel_type(self) -> str:
         return "telegram"
+
+    @asynccontextmanager
+    async def inbound_clear_boundary(
+        self,
+        request: ChannelInboundClearRequest,
+    ) -> AsyncIterator[None]:
+        """Pause local ingress and drain local provider actions without I/O."""
+
+        if request.channel_type != self.channel_type:
+            raise ValueError("Telegram clear request channel type does not match")
+        generation = request.clear_generation
+        if isinstance(generation, bool) or not isinstance(generation, int) or generation < 0:
+            raise ValueError("Telegram clear generation must be a non-negative integer")
+
+        async with self._inbound_clear_lock:
+            async with self._inbound_condition:
+                self._inbound_clear_active = True
+                applied_generation = self._applied_inbound_clear_generation
+                self._applied_inbound_clear_generation = (
+                    generation
+                    if applied_generation is None
+                    else max(applied_generation, generation)
+                )
+                try:
+                    await self._inbound_condition.wait_for(
+                        lambda: self._active_local_inbound == 0
+                    )
+                except BaseException:
+                    self._inbound_clear_active = False
+                    self._inbound_condition.notify_all()
+                    raise
+            try:
+                yield
+            finally:
+                async with self._inbound_condition:
+                    self._inbound_clear_active = False
+                    self._inbound_condition.notify_all()
+
+    async def _wait_for_local_inbound_resume(self) -> None:
+        async with self._inbound_condition:
+            await self._inbound_condition.wait_for(
+                lambda: not self._inbound_clear_active
+            )
+
+    @asynccontextmanager
+    async def _local_inbound_activity(
+        self,
+        inbound_context: ChannelInboundContext,
+    ) -> AsyncIterator[None]:
+        async with self._inbound_condition:
+            await self._inbound_condition.wait_for(
+                lambda: not self._inbound_clear_active
+            )
+            applied_generation = self._applied_inbound_clear_generation
+            if applied_generation is None:
+                self._applied_inbound_clear_generation = (
+                    inbound_context.clear_generation
+                )
+            elif inbound_context.clear_generation != applied_generation:
+                raise ChannelInboundRejectedError(
+                    ChannelInboundRejectionReason.CLEARED_MESSAGE,
+                    "Telegram inbound event crossed a destructive clear boundary",
+                )
+            self._active_local_inbound += 1
+        try:
+            yield
+        finally:
+            async with self._inbound_condition:
+                self._active_local_inbound -= 1
+                if self._active_local_inbound == 0:
+                    self._inbound_condition.notify_all()
+
+    @staticmethod
+    def _provider_occurred_at_ms(provider_message: Any) -> int | None:
+        provider_date = getattr(provider_message, "date", None)
+        if not isinstance(provider_date, datetime):
+            return None
+        try:
+            if provider_date.utcoffset() != timedelta(0):
+                return None
+            timestamp = provider_date.timestamp()
+        except (OverflowError, OSError, ValueError):
+            return None
+        if not math.isfinite(timestamp):
+            return None
+        occurred_at_ms = int(timestamp * 1000)
+        return occurred_at_ms if occurred_at_ms > 0 else None
+
+    async def _capture_inbound_context(
+        self,
+        *,
+        provider_message: Any,
+        stream_id: str,
+    ) -> ChannelInboundContext | None:
+        await self._wait_for_local_inbound_resume()
+        occurred_at_ms = self._provider_occurred_at_ms(provider_message)
+        if occurred_at_ms is None:
+            logger.warning("Dropped Telegram inbound event with invalid provider time")
+            return None
+        dispatcher = self._message_dispatcher
+        if dispatcher is None:
+            raise RuntimeError("Telegram channel message dispatcher is not bound")
+        try:
+            return await dispatcher.capture_inbound_context(
+                channel_type=self.channel_type,
+                stream_id=stream_id,
+                evidence=ChannelProviderTimeEvidence(
+                    provider_occurred_at_ms=occurred_at_ms,
+                ),
+            )
+        except ChannelInboundRejectedError as exc:
+            self._log_inbound_rejection(exc)
+            return None
+
+    @staticmethod
+    def _log_inbound_rejection(exc: ChannelInboundRejectedError) -> None:
+        logger.info(
+            "Dropped Telegram inbound event rejected by host",
+            reason=exc.reason.value,
+        )
 
     async def start(self) -> None:
         try:
@@ -562,12 +700,6 @@ class TelegramChannel(Channel):
         query = update.callback_query
         if query is None or query.data is None:
             return
-        try:
-            # Acknowledge fast so the spinner clears even if dispatch
-            # is slow.
-            await query.answer()
-        except Exception:
-            pass
 
         parts = query.data.split(":", 2)
         if len(parts) != 3 or parts[0] != "magi":
@@ -588,44 +720,66 @@ class TelegramChannel(Channel):
         external_user_id = str(user.id)
         if not self._is_user_allowed(external_user_id):
             return
-
-        # The button-tap path doesn't go through resolve_or_create —
-        # the session must already exist (otherwise there'd be no
-        # pending permission to approve). Look up.
-        mapping = await self._session_mapper.lookup(
-            "telegram", str(chat.id),
+        provider_message = getattr(query, "message", None)
+        inbound_context = await self._capture_inbound_context(
+            provider_message=provider_message,
+            stream_id=str(chat.id),
         )
-        if mapping is None:
+        if inbound_context is None:
             return
 
-        synth_text = f"/{verb} {short_id}"
-        result = None
-        if self._control_port is not None:
-            result = await self._control_port.handle_command(
-                message=synth_text,
-                session_id=mapping.magi_session_id,
-                channel_type="telegram",
-                external_chat_id=str(chat.id),
-                external_user_id=external_user_id,
-            )
-        # Brief inline acknowledgement so the user sees what happened
-        # without scrolling to find a separate confirmation message.
         try:
+            mapping = await self._session_mapper.lookup(
+                self.channel_type,
+                str(chat.id),
+            )
+            if mapping is None:
+                return
+            synth_text = f"/{verb} {short_id}"
+            result = None
+            if self._control_port is not None:
+                result = await self._control_port.handle_command(
+                    inbound_context=inbound_context,
+                    message=synth_text,
+                    session_id=mapping.magi_session_id,
+                    channel_type=self.channel_type,
+                    external_chat_id=str(chat.id),
+                    external_user_id=external_user_id,
+                )
+            else:
+                outcome = await self._message_dispatcher.dispatch_user_message(
+                    inbound_context=inbound_context,
+                    source=self.channel_type,
+                    user_id=mapping.magi_user_id,
+                    session_id=mapping.magi_session_id,
+                    message=synth_text,
+                    metadata={
+                        "channel_type": self.channel_type,
+                        "external_chat_id": str(chat.id),
+                        "external_user_id": external_user_id,
+                    },
+                )
+                if not outcome.success:
+                    return
+
             verb_zh = "同意" if verb == "approve" else "拒绝"
             ack_text = (
                 result.ack
                 if result is not None and result.ack
                 else f"✓ 已{verb_zh}"
             )
-            # Edit the original message to strip the buttons and show
-            # the result — prevents double-clicks and clutter.
-            await query.edit_message_reply_markup(reply_markup=None)
-            await context.bot.send_message(chat_id=chat.id, text=ack_text)
-        except Exception:
-            logger.debug(
-                "Telegram callback ack edit failed (non-fatal)",
-                exc_info=True,
-            )
+            async with self._local_inbound_activity(inbound_context):
+                try:
+                    await query.answer()
+                    await query.edit_message_reply_markup(reply_markup=None)
+                    await context.bot.send_message(chat_id=chat.id, text=ack_text)
+                except Exception:
+                    logger.debug(
+                        "Telegram callback ack edit failed (non-fatal)",
+                        exc_info=True,
+                    )
+        except ChannelInboundRejectedError as exc:
+            self._log_inbound_rejection(exc)
 
     async def send_typing_indicator(self, target: ChannelTarget) -> None:
         if self._application is None:
@@ -640,13 +794,27 @@ class TelegramChannel(Channel):
     # -- Telegram handlers ----------------------------------------------------
 
     async def _on_start_command(self, update: Any, context: Any) -> None:
+        message = update.effective_message
         chat = update.effective_chat
-        if chat is None:
+        if message is None or chat is None:
             return
-        await context.bot.send_message(
-            chat_id=chat.id,
-            text="Hello! I'm your Magi assistant. Send me a message to get started.",
+        inbound_context = await self._capture_inbound_context(
+            provider_message=message,
+            stream_id=str(chat.id),
         )
+        if inbound_context is None:
+            return
+        try:
+            async with self._local_inbound_activity(inbound_context):
+                await context.bot.send_message(
+                    chat_id=chat.id,
+                    text=(
+                        "Hello! I'm your Magi assistant. "
+                        "Send me a message to get started."
+                    ),
+                )
+        except ChannelInboundRejectedError as exc:
+            self._log_inbound_rejection(exc)
 
     async def _on_session_command(self, update: Any, context: Any) -> None:
         """Forward a common session command (/new, /reset) to the host's unified
@@ -703,66 +871,83 @@ class TelegramChannel(Channel):
         if self._message_dispatcher is None:
             raise RuntimeError("Telegram channel message dispatcher is not bound")
 
+        inbound_context = await self._capture_inbound_context(
+            provider_message=message,
+            stream_id=str(chat.id),
+        )
+        if inbound_context is None:
+            return
+
         is_group = chat.type in ("group", "supergroup")
         display_name = self._build_display_name(chat, user, is_group)
 
-        mapping = await self._session_mapper.resolve_or_create(
-            channel_type="telegram",
-            external_chat_id=str(chat.id),
-            external_user_id=external_user_id,
-            is_group=is_group,
-            display_name=display_name,
-        )
-
-        # Control commands (/new, /reset, /approve, /help) — handled by the host's
-        # unified control port and surfaced here; no LLM turn.
-        if self._control_port is not None:
-            result = await self._control_port.handle_command(
-                message=text,
-                session_id=mapping.magi_session_id,
-                channel_type="telegram",
+        try:
+            mapping = await self._session_mapper.resolve_or_create(
+                inbound_context=inbound_context,
+                channel_type=self.channel_type,
                 external_chat_id=str(chat.id),
                 external_user_id=external_user_id,
+                is_group=is_group,
+                display_name=display_name,
             )
-            if result is not None:
-                if result.ack:
-                    try:
-                        await self._application.bot.send_message(chat_id=chat.id, text=result.ack)
-                    except Exception:
-                        logger.warning("Telegram control-command ack send failed", exc_info=True)
-                return
+            if self._control_port is not None:
+                result = await self._control_port.handle_command(
+                    inbound_context=inbound_context,
+                    message=text,
+                    session_id=mapping.magi_session_id,
+                    channel_type=self.channel_type,
+                    external_chat_id=str(chat.id),
+                    external_user_id=external_user_id,
+                )
+                if result is not None:
+                    if result.ack:
+                        async with self._local_inbound_activity(inbound_context):
+                            try:
+                                await self._application.bot.send_message(
+                                    chat_id=chat.id,
+                                    text=result.ack,
+                                )
+                            except Exception:
+                                logger.warning(
+                                    "Telegram control-command ack send failed",
+                                    exc_info=True,
+                                )
+                    return
 
-        # Show typing indicator
-        try:
-            await self._application.bot.send_chat_action(
-                chat_id=chat.id, action="typing"
+            async with self._local_inbound_activity(inbound_context):
+                try:
+                    await self._application.bot.send_chat_action(
+                        chat_id=chat.id,
+                        action="typing",
+                    )
+                except Exception:
+                    pass
+
+            metadata = {
+                "channel_type": self.channel_type,
+                "external_chat_id": str(chat.id),
+                "external_user_id": external_user_id,
+                "external_message_id": str(message.message_id),
+                "external_username": user.username,
+                "is_group": is_group,
+            }
+
+            outcome = await self._message_dispatcher.dispatch_user_message(
+                inbound_context=inbound_context,
+                source=self.channel_type,
+                user_id=mapping.magi_user_id,
+                session_id=mapping.magi_session_id,
+                message=text.strip(),
+                metadata=metadata,
             )
-        except Exception:
-            pass
-
-        metadata = {
-            "channel_type": "telegram",
-            "external_chat_id": str(chat.id),
-            "external_user_id": external_user_id,
-            "external_message_id": str(message.message_id),
-            "external_username": user.username,
-            "is_group": is_group,
-        }
-
-        outcome = await self._message_dispatcher.dispatch_user_message(
-            source="telegram",
-            user_id=mapping.magi_user_id,
-            session_id=mapping.magi_session_id,
-            message=text.strip(),
-            metadata=metadata,
-        )
-
-        if not outcome.success:
-            logger.warning(
-                "Telegram dispatch failed",
-                error_code=outcome.error_code,
-                error_message=outcome.error_message,
-            )
+            if not outcome.success:
+                logger.warning(
+                    "Telegram dispatch failed",
+                    error_code=outcome.error_code,
+                    error_message=outcome.error_message,
+                )
+        except ChannelInboundRejectedError as exc:
+            self._log_inbound_rejection(exc)
 
     # -- Helpers --------------------------------------------------------------
 

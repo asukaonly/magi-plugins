@@ -104,6 +104,10 @@
       "package_sha256": "0a22bf5fae425f987602282d197562e2495cfd99ceff5c0cfbe09066aff799e1",
       "executable_paths": []
     },
+    "telegram@0.2.3": {
+      "package_sha256": "df1b2f23e5daa4ad257be4daee053cca70bfe37e783590cd31c09c76f96b5724",
+      "executable_paths": []
+    },
     "terminal-history@0.1.1": {
       "package_sha256": "891ce3aa4fac9f305c1adfad16d0d2dbd292856f2d2d886520b37b7e96da8885",
       "executable_paths": []

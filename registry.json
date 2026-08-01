@@ -2020,7 +2020,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlRlbGVncmFtPC90aXRsZT48cGF0aCBmaWxsPSIjMjZBNUU0IiBkPSJNMTEuOTQ0IDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwYTEyIDEyIDAgMCAwLS4wNTYgMHptNC45NjIgNy4yMjRjLjEtLjAwMi4zMjEuMDIzLjQ2NS4xNGEuNTA2LjUwNiAwIDAgMSAuMTcxLjMyNWMuMDE2LjA5My4wMzYuMzA2LjAyLjQ3Mi0uMTggMS44OTgtLjk2MiA2LjUwMi0xLjM2IDguNjI3LS4xNjguOS0uNDk5IDEuMjAxLS44MiAxLjIzLS42OTYuMDY1LTEuMjI1LS40Ni0xLjktLjkwMi0xLjA1Ni0uNjkzLTEuNjUzLTEuMTI0LTIuNjc4LTEuOC0xLjE4NS0uNzgtLjQxNy0xLjIxLjI1OC0xLjkxLjE3Ny0uMTg0IDMuMjQ3LTIuOTc3IDMuMzA3LTMuMjMuMDA3LS4wMzIuMDE0LS4xNS0uMDU2LS4yMTJzLS4xNzQtLjA0MS0uMjQ5LS4wMjRjLS4xMDYuMDI0LTEuNzkzIDEuMTQtNS4wNjEgMy4zNDUtLjQ4LjMzLS45MTMuNDktMS4zMDIuNDgtLjQyOC0uMDA4LTEuMjUyLS4yNDEtMS44NjUtLjQ0LS43NTItLjI0NS0xLjM0OS0uMzc0LTEuMjk3LS43ODkuMDI3LS4yMTYuMzI1LS40MzcuODkzLS42NjMgMy40OTgtMS41MjQgNS44My0yLjUyOSA2Ljk5OC0zLjAxNCAzLjMzMi0xLjM4NiA0LjAyNS0xLjYyNyA0LjQ3Ni0xLjYzNXoiLz48L3N2Zz4K",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -2047,7 +2047,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "0a22bf5fae425f987602282d197562e2495cfd99ceff5c0cfbe09066aff799e1"
+      "package_sha256": "df1b2f23e5daa4ad257be4daee053cca70bfe37e783590cd31c09c76f96b5724"
     },
     {
       "plugin_id": "terminal-history",
