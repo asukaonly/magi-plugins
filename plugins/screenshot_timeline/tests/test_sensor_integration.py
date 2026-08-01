@@ -19,6 +19,9 @@ def _load(name: str) -> ModuleType:
     mod = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
+    if name == "sensor":
+        mod.request_screen_recording = lambda: "granted"
+        mod.screen_recording_status = lambda: "granted"
     return mod
 
 
@@ -29,6 +32,7 @@ async def test_capture_tick_produces_one_l1_item_per_capture(tmp_path: Path) -> 
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
+        session_db_path=tmp_path / "sessions.db",
         retention_days=30,
     )
     await sensor.start()
@@ -68,6 +72,7 @@ async def test_blocked_app_skips_capture(tmp_path: Path) -> None:
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
+        session_db_path=tmp_path / "sessions.db",
         retention_days=30,
         extra_app_blocklist=("com.apple.Safari",),  # mock helper always reports Safari
     )
@@ -87,6 +92,7 @@ async def test_phash_dedup_drops_near_identical_capture(tmp_path: Path) -> None:
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
+        session_db_path=tmp_path / "sessions.db",
         retention_days=30,
         phash_dedup_threshold=5,
     )
@@ -133,6 +139,7 @@ async def test_sensor_active_window_timer_fires_capture(
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
+        session_db_path=tmp_path / "sessions.db",
         retention_days=30,
         active_window_interval_sec=0.05,    # fast tick for test
         full_screen_interval_min=999.0,      # disable in test (also: scope=active_window keeps it off)
@@ -160,6 +167,7 @@ async def test_collect_items_returns_per_capture_immediately(tmp_path: Path) -> 
     sensor = sensor_mod.ScreenshotSensor(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
+        session_db_path=tmp_path / "sessions.db",
         retention_days=30,
     )
     await sensor.start()

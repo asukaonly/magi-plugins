@@ -96,6 +96,13 @@
         "tools/sessions_cli.py"
       ]
     },
+    "screenshot_timeline@0.5.3": {
+      "package_sha256": "3340f8902051f3b834533b31a9a772107a75e09727d9159ec1891ed02447a28d",
+      "executable_paths": [
+        "bin/magi-vision-helper",
+        "tools/sessions_cli.py"
+      ]
+    },
     "steam-play-history@0.1.1": {
       "package_sha256": "06e4af4cbf7d53d733b93e174bccfbab46917cc42e248c536c688a48b5410add",
       "executable_paths": []

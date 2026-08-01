@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     L2BatchPolicy,
@@ -44,6 +45,11 @@ try:
         DEFAULT_IDLE_THRESHOLD_SECONDS,
         SessionStore,
         SessionTracker,
+    )
+    from .storage_cleanup import (
+        StorageCleanupError,
+        erase_managed_screenshot_resources,
+        erase_session_database,
     )
     from .helper_client import HelperClient, HelperCrashedError, HelperTimeoutError
     from .ids import new_capture_id
@@ -75,6 +81,10 @@ except ImportError:  # pragma: no cover - exercised when loaded outside package 
     DEFAULT_IDLE_THRESHOLD_SECONDS = _st.DEFAULT_IDLE_THRESHOLD_SECONDS
     SessionStore = _st.SessionStore
     SessionTracker = _st.SessionTracker
+    _sc = _load_sibling("storage_cleanup")
+    StorageCleanupError = _sc.StorageCleanupError
+    erase_managed_screenshot_resources = _sc.erase_managed_screenshot_resources
+    erase_session_database = _sc.erase_session_database
     _hc = _load_sibling("helper_client")
     HelperClient = _hc.HelperClient
     HelperCrashedError = _hc.HelperCrashedError
@@ -166,9 +176,7 @@ class ScreenshotSensor(SensorBase):
         # window. ~5 out of 64 bits ≈ cursor / minor anti-alias differences.
         self.phash_dedup_threshold = int(phash_dedup_threshold)
 
-        self._helper: HelperClient | None = (
-            HelperClient(binary_argv=self.helper_argv) if self.helper_argv else None
-        )
+        self._helper: HelperClient | None = self._new_helper_client()
         self._guard = PrivacyGuard(
             extra_app_blocklist=tuple(extra_app_blocklist),
             window_title_blocklist=tuple(window_title_blocklist),
@@ -205,9 +213,22 @@ class ScreenshotSensor(SensorBase):
         self._workspace_handle: object | None = None
         self._retention_task: asyncio.Task | None = None
         self._started: bool = False
-        self._start_lock: asyncio.Lock = asyncio.Lock()
+        self._clearing: bool = False
+        self._capture_generation: int = 0
+        self._capture_enabled: bool = False
+        self._active_capture_count: int = 0
+        self._captures_idle = asyncio.Event()
+        self._captures_idle.set()
+        self._capture_lock = asyncio.Lock()
+        self._observer_trigger_tasks: set[asyncio.Task[None]] = set()
+        self._lifecycle_lock = asyncio.Lock()
 
     # ------- Lifecycle -------
+
+    def _new_helper_client(self) -> HelperClient | None:
+        if not self.helper_argv:
+            return None
+        return HelperClient(binary_argv=list(self.helper_argv))
 
     async def start(self) -> None:
         """Idempotent lazy init.
@@ -217,14 +238,32 @@ class ScreenshotSensor(SensorBase):
         collect_items() call, and this method is a no-op on subsequent
         invocations. Also safe to call from tests directly.
         """
-        # Fast path without lock to avoid contention.
+        await self._start_if_current(expected_generation=None)
+
+    async def _start_if_current(self, *, expected_generation: int | None) -> bool:
+        if self._clearing:
+            return False
+        if expected_generation is not None and expected_generation != self._capture_generation:
+            return False
         if self._started:
-            return
-        async with self._start_lock:
+            return True
+        async with self._lifecycle_lock:
+            if self._clearing:
+                return False
+            if (
+                expected_generation is not None
+                and expected_generation != self._capture_generation
+            ):
+                return False
             if self._started:
-                return
-            await self._do_start()
+                return True
+            try:
+                await self._do_start()
+            except BaseException:
+                await self._quiesce_runtime(close_open_session=True)
+                raise
             self._started = True
+            return True
 
     async def _do_start(self) -> None:
         logger.info(
@@ -259,6 +298,8 @@ class ScreenshotSensor(SensorBase):
             )
             return
 
+        if self._helper is None:
+            self._helper = self._new_helper_client()
         if self._helper is not None:
             await self._helper.start()
             logger.info("sensor.start.helper_spawned argv=%s", self.helper_argv)
@@ -276,15 +317,22 @@ class ScreenshotSensor(SensorBase):
         )
 
         loop = asyncio.get_running_loop()
-        self._orchestrator = TriggerOrchestrator(
-            on_capture=self.trigger_once,
+        runtime_generation = self._capture_generation
+
+        async def _capture_for_runtime(trigger: str) -> None:
+            await self.trigger_once(trigger, generation=runtime_generation)
+
+        orchestrator = TriggerOrchestrator(
+            on_capture=_capture_for_runtime,
             global_debounce_seconds=1.5,
         )
+        self._orchestrator = orchestrator
+        self._capture_enabled = True
 
         async def _tick(trigger: str) -> None:
-            if self._orchestrator is None:
+            if not self._capture_is_current(runtime_generation):
                 return
-            await self._orchestrator.emit(trigger)
+            await orchestrator.emit(trigger)
 
         self._active_timer = IntervalTimer(
             interval_seconds=self.active_window_interval_sec,
@@ -301,14 +349,16 @@ class ScreenshotSensor(SensorBase):
             )
             await self._full_screen_timer.start()
 
-        def _on_window_switch() -> None:
-            if self._orchestrator is None:
+        def _schedule_window_switch() -> None:
+            if not self._capture_is_current(runtime_generation):
                 return
+            task = asyncio.create_task(orchestrator.emit("window_switch"))
+            self._observer_trigger_tasks.add(task)
+            task.add_done_callback(self._observer_trigger_done)
+
+        def _on_window_switch() -> None:
             try:
-                asyncio.run_coroutine_threadsafe(
-                    self._orchestrator.emit("window_switch"),
-                    loop,
-                )
+                loop.call_soon_threadsafe(_schedule_window_switch)
             except RuntimeError:
                 # Loop closed or not running — swallow; this runs on AppKit thread.
                 pass
@@ -325,22 +375,73 @@ class ScreenshotSensor(SensorBase):
         logger.info("sensor.start.complete — capture loop now live")
 
     async def stop(self) -> None:
-        # Cancel retention sweep first so it cannot race with helper shutdown.
-        if self._retention_task is not None:
-            self._retention_task.cancel()
-            try:
-                await asyncio.wait_for(self._retention_task, timeout=2.0)
-            except (asyncio.CancelledError, asyncio.TimeoutError):
-                pass
-            self._retention_task = None
+        async with self._lifecycle_lock:
+            await self._quiesce_runtime(close_open_session=True)
 
-        # Stop drivers first so no new captures are issued mid-shutdown.
-        if self._active_timer is not None:
-            await self._active_timer.stop()
-            self._active_timer = None
-        if self._full_screen_timer is not None:
-            await self._full_screen_timer.stop()
-            self._full_screen_timer = None
+    def _capture_is_current(self, generation: int) -> bool:
+        return self._capture_enabled and generation == self._capture_generation
+
+    def _observer_trigger_done(self, task: asyncio.Task[None]) -> None:
+        self._observer_trigger_tasks.discard(task)
+        if task.cancelled():
+            return
+        try:
+            error = task.exception()
+        except asyncio.CancelledError:
+            return
+        if error is not None:
+            logger.error("observer.trigger_failed err=%r", error)
+
+    def _invalidate_runtime(self) -> None:
+        self._started = False
+        self._capture_enabled = False
+        self._capture_generation += 1
+
+    async def _quiesce_runtime(self, *, close_open_session: bool) -> None:
+        """Stop every producer and wait until old captures cannot write again."""
+
+        cleanup_task = asyncio.create_task(
+            self._quiesce_runtime_impl(close_open_session=close_open_session)
+        )
+        try:
+            await asyncio.shield(cleanup_task)
+        except asyncio.CancelledError:
+            await cleanup_task
+            raise
+
+    async def _quiesce_runtime_impl(self, *, close_open_session: bool) -> None:
+        """Perform cancellation-shielded runtime teardown."""
+
+        self._invalidate_runtime()
+        first_error: BaseException | None = None
+
+        retention_task = self._retention_task
+        self._retention_task = None
+        if retention_task is not None:
+            retention_task.cancel()
+            try:
+                await retention_task
+            except asyncio.CancelledError:
+                pass
+            except BaseException as exc:  # noqa: BLE001
+                first_error = first_error or exc
+
+        timers = [
+            timer
+            for timer in (self._active_timer, self._full_screen_timer)
+            if timer is not None
+        ]
+        self._active_timer = None
+        self._full_screen_timer = None
+        if timers:
+            timer_results = await asyncio.gather(
+                *(timer.stop() for timer in timers),
+                return_exceptions=True,
+            )
+            for result in timer_results:
+                if isinstance(result, BaseException):
+                    first_error = first_error or result
+
         if self._workspace_handle is not None:
             try:
                 from AppKit import NSWorkspace  # type: ignore[import-not-found]
@@ -353,21 +454,94 @@ class ScreenshotSensor(SensorBase):
             self._workspace_handle = None
         self._orchestrator = None
 
-        # Drain pending L1 items before tearing down the helper subprocess
-        # so that anything in flight from a recent tick won't be lost.
-        await self.drain_pending_items()
-        if self._helper is not None:
-            await self._helper.shutdown()
-        # Close any open session record cleanly + release the db handle.
-        if self._session_tracker is not None:
+        observer_tasks = list(self._observer_trigger_tasks)
+        self._observer_trigger_tasks.clear()
+        for task in observer_tasks:
+            task.cancel()
+        if observer_tasks:
+            await asyncio.gather(*observer_tasks, return_exceptions=True)
+
+        helper = self._helper
+        self._helper = None
+        if helper is not None:
             try:
-                self._session_tracker.shutdown()
-            except Exception:  # noqa: BLE001
+                shutdown_task = asyncio.create_task(helper.shutdown())
+                try:
+                    await asyncio.shield(shutdown_task)
+                except asyncio.CancelledError as exc:
+                    first_error = first_error or exc
+                    await shutdown_task
+            except BaseException as exc:  # noqa: BLE001
+                first_error = first_error or exc
+
+        try:
+            await self._captures_idle.wait()
+        except BaseException as exc:  # noqa: BLE001
+            first_error = first_error or exc
+
+        tracker = self._session_tracker
+        self._session_tracker = None
+        if close_open_session and tracker is not None:
+            try:
+                tracker.shutdown()
+            except Exception as exc:  # noqa: BLE001
                 logger.exception("session.shutdown_failed")
-            self._session_tracker = None
-        if self._session_store is not None:
-            self._session_store.close()
-            self._session_store = None
+                first_error = first_error or exc
+        store = self._session_store
+        self._session_store = None
+        if store is not None:
+            try:
+                store.close()
+            except Exception as exc:  # noqa: BLE001
+                first_error = first_error or exc
+
+        self._pending_items.clear()
+        self._last_phash_by_window.clear()
+        self._helper = self._new_helper_client()
+
+        if first_error is not None:
+            raise first_error
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Stop capture and remove all plugin-owned screenshot user content."""
+
+        _ = context
+        async with self._lifecycle_lock:
+            self._clearing = True
+            try:
+                await self._quiesce_runtime(close_open_session=False)
+                self._pending_items.clear()
+                self._last_phash_by_window.clear()
+                self._guard.release_panic()
+                cleanup_task = asyncio.create_task(
+                    asyncio.to_thread(self._erase_local_user_content)
+                )
+                try:
+                    await asyncio.shield(cleanup_task)
+                except asyncio.CancelledError:
+                    await cleanup_task
+                    raise
+            finally:
+                self._invalidate_runtime()
+                self._clearing = False
+
+    def _erase_local_user_content(self) -> None:
+        failures: list[tuple[str, Exception]] = []
+        try:
+            erase_session_database(self._session_db_path)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(("session database", exc))
+        try:
+            erase_managed_screenshot_resources(self.resources_root)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(("screenshot resources", exc))
+        if len(failures) == 1:
+            raise failures[0][1]
+        if failures:
+            failed_targets = ", ".join(target for target, _error in failures)
+            raise StorageCleanupError(
+                f"Screenshot user-content cleanup failed for: {failed_targets}"
+            ) from failures[0][1]
 
     # ------- SensorBase overrides -------
 
@@ -397,12 +571,21 @@ class ScreenshotSensor(SensorBase):
             "sensor.collect_items.called started=%s pending=%d",
             self._started, len(self._pending_items),
         )
+        collect_generation = self._capture_generation
+        if self._clearing:
+            return SensorSyncResult(items=[])
         if not self._started:
             try:
-                await self.start()
+                started = await self._start_if_current(
+                    expected_generation=collect_generation,
+                )
             except Exception as exc:  # noqa: BLE001
                 logger.exception("sensor.lazy_start_failed err=%r", exc)
                 return SensorSyncResult(items=[])
+            if not started:
+                return SensorSyncResult(items=[])
+        if self._clearing or collect_generation != self._capture_generation:
+            return SensorSyncResult(items=[])
         items = list(self._pending_items)
         self._pending_items.clear()
         return SensorSyncResult(items=items)
@@ -540,19 +723,48 @@ class ScreenshotSensor(SensorBase):
 
     # ------- Live capture path -------
 
-    async def trigger_once(self, trigger: str) -> None:
-        """Run a single capture cycle. Called by the trigger orchestrator."""
+    async def trigger_once(
+        self,
+        trigger: str,
+        *,
+        generation: int | None = None,
+    ) -> None:
+        """Run one capture only while its originating runtime is still active."""
+
+        capture_generation = (
+            self._capture_generation if generation is None else generation
+        )
+        if not self._capture_is_current(capture_generation):
+            return
+        self._active_capture_count += 1
+        self._captures_idle.clear()
+        try:
+            async with self._capture_lock:
+                if not self._capture_is_current(capture_generation):
+                    return
+                await self._trigger_once_current(trigger, capture_generation)
+        finally:
+            self._active_capture_count -= 1
+            if self._active_capture_count == 0:
+                self._captures_idle.set()
+
+    async def _trigger_once_current(self, trigger: str, generation: int) -> None:
         logger.debug("trigger.fire trigger=%s", trigger)
-        if self._helper is None:
+        helper = self._helper
+        if helper is None:
             logger.warning("trigger.no_helper — sensor wasn't fully started; skipping")
             return
         rid = new_capture_id()
 
         # 1. Probe active window
         try:
-            probe = await self._helper.request({"id": f"{rid}_probe", "op": "probe_active_window"})
+            probe = await helper.request(
+                {"id": f"{rid}_probe", "op": "probe_active_window"}
+            )
         except (HelperCrashedError, HelperTimeoutError) as exc:
             logger.warning("trigger.probe_failed trigger=%s err=%r", trigger, exc)
+            return
+        if not self._capture_is_current(generation):
             return
         if not probe.get("ok"):
             logger.warning("trigger.probe_not_ok trigger=%s resp=%s", trigger, probe)
@@ -564,7 +776,9 @@ class ScreenshotSensor(SensorBase):
         )
 
         # 2. Privacy filter
-        screen_locked = await self._probe_screen_lock()
+        screen_locked = await self._probe_screen_lock(helper=helper)
+        if not self._capture_is_current(generation):
+            return
         skip_reason = self._guard.should_skip_capture(
             app_bundle=str(win.get("app_bundle_id") or ""),
             window_title=str(win.get("window_title") or ""),
@@ -596,7 +810,7 @@ class ScreenshotSensor(SensorBase):
 
         # 4. Capture + OCR via helper
         try:
-            resp = await self._helper.request(
+            resp = await helper.request(
                 {
                     "id": rid,
                     "op": "capture_and_ocr",
@@ -618,6 +832,10 @@ class ScreenshotSensor(SensorBase):
             )
         except (HelperCrashedError, HelperTimeoutError) as exc:
             logger.warning("trigger.capture_failed trigger=%s err=%r", trigger, exc)
+            return
+
+        if not self._capture_is_current(generation):
+            _delete_capture_files(original_path, thumbnail_path)
             return
 
         if not resp.get("ok"):
@@ -647,11 +865,7 @@ class ScreenshotSensor(SensorBase):
                     trigger, app_bundle, window_title, dist,
                 )
                 # Best-effort cleanup of the freshly-written jpgs.
-                for p in (original_path, thumbnail_path):
-                    try:
-                        Path(p).unlink(missing_ok=True)
-                    except OSError:
-                        pass
+                _delete_capture_files(original_path, thumbnail_path)
                 # Still record the phash so a steady-state near-identical
                 # stream remains suppressed (don't overwrite with the
                 # baseline — the new frame is similar enough to be a no-op).
@@ -716,7 +930,7 @@ class ScreenshotSensor(SensorBase):
         }
         self._pending_items.append(item)
 
-    async def _probe_screen_lock(self) -> bool:
+    async def _probe_screen_lock(self, *, helper: HelperClient | None = None) -> bool:
         """Probe whether the macOS screen is locked, via the long-running helper.
 
         Reuses the existing HelperClient subprocess (held in ``self._helper``) so
@@ -724,10 +938,11 @@ class ScreenshotSensor(SensorBase):
         helper. Returns False on any failure (no helper, crash, timeout, ok=False
         response) so capture is not falsely suppressed.
         """
-        if self._helper is None:
+        client = helper if helper is not None else self._helper
+        if client is None:
             return False
         try:
-            resp = await self._helper.request({
+            resp = await client.request({
                 "id": f"lock_{int(time.time() * 1000)}",
                 "op": "probe_screen_lock",
             })
@@ -769,6 +984,14 @@ class ScreenshotSensor(SensorBase):
                 await asyncio.sleep(interval)
         except asyncio.CancelledError:
             return
+
+
+def _delete_capture_files(*paths: str) -> None:
+    for raw_path in paths:
+        try:
+            Path(raw_path).unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _scope_for_trigger(default_scope: str, trigger: str) -> str:

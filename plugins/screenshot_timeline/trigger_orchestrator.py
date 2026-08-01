@@ -56,6 +56,10 @@ class IntervalTimer:
                 await asyncio.wait_for(self._task, timeout=2.0)
             except asyncio.TimeoutError:
                 self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    pass
             self._task = None
 
     async def _loop(self) -> None:
