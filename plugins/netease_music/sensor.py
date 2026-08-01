@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import time
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     SensorBase,
     ContentBlock,
@@ -58,6 +60,7 @@ class NeteaseMusicTimelineSensor(SensorBase):
         self.lastfm_api_key = lastfm_api_key
         # In-process cache keyed by "artist|track" to avoid redundant Last.fm calls
         self._lastfm_cache: dict[str, list[str]] = {}
+        self._user_content_lock = asyncio.Lock()
 
     def source_item_identity(self, item: dict) -> str:
         return f"netease_{item.get('track_id')}_{item.get('update_time')}"
@@ -74,6 +77,14 @@ class NeteaseMusicTimelineSensor(SensorBase):
         ).hexdigest()
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+        prepare_temp_storage = getattr(self._reader, "prepare_temp_storage", None)
+        if callable(prepare_temp_storage):
+            temp_root = (
+                context.runtime_paths.plugin_cache_dir(self.plugin_id)
+                / "temporary-database-copies"
+                / "netease-music"
+            )
+            prepare_temp_storage(temp_root)
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
@@ -346,6 +357,10 @@ class NeteaseMusicTimelineSensor(SensorBase):
         return []
 
     async def _fetch_lastfm_tags(self, artist: str, track: str) -> list[str]:
+        async with self._user_content_lock:
+            return await self._fetch_lastfm_tags_locked(artist, track)
+
+    async def _fetch_lastfm_tags_locked(self, artist: str, track: str) -> list[str]:
         """Query Last.fm track.getTopTags (and artist.getTopTags as fallback).
 
         Results are cached in memory for the lifetime of the sensor instance
@@ -420,3 +435,17 @@ class NeteaseMusicTimelineSensor(SensorBase):
 
         self._lastfm_cache[cache_key] = deduped
         return deduped
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Clear temporary copies and derived tags without changing source progress."""
+
+        async with self._user_content_lock:
+            self._lastfm_cache.clear()
+            clear_temp_copies = getattr(self._reader, "clear_temp_copies", None)
+            if callable(clear_temp_copies):
+                temp_root = (
+                    context.runtime_paths.plugin_cache_dir(context.plugin_id)
+                    / "temporary-database-copies"
+                    / "netease-music"
+                )
+                clear_temp_copies(temp_root)

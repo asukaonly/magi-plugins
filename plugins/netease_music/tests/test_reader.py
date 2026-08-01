@@ -11,7 +11,10 @@ PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
 if PLUGINS_ROOT not in sys.path:
     sys.path.insert(0, PLUGINS_ROOT)
 
-from netease_music.reader import NeteaseMusicDatabaseSchemaError, NeteaseMusicReader
+from netease_music.reader import (  # noqa: E402
+    NeteaseMusicDatabaseSchemaError,
+    NeteaseMusicReader,
+)
 
 
 def _write_history_db(
@@ -113,3 +116,46 @@ def test_read_play_records_raises_schema_error_when_playback_tables_are_missing(
 
     with pytest.raises(NeteaseMusicDatabaseSchemaError, match=r"missing required table\(s\)"):
         reader.read_play_records(source_path=str(db_path))
+
+
+def test_reader_sweeps_crash_residuals_without_touching_source_or_link_targets(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "webdb.dat"
+    _write_history_db(db_path, include_playback_tables=True)
+    source_bytes = db_path.read_bytes()
+    temp_root = tmp_path / "temporary-database-copies"
+    crashed_copy = temp_root / "copy-crashed"
+    crashed_copy.mkdir(parents=True)
+    (crashed_copy / "database.db").write_bytes(b"private listening history")
+    external_file = tmp_path / "external.db"
+    external_file.write_bytes(b"must survive")
+    (crashed_copy / "external-link").symlink_to(external_file)
+    reader = NeteaseMusicReader(temp_root=temp_root)
+
+    records = reader.read_play_records(source_path=str(db_path))
+
+    assert len(records) == 1
+    assert db_path.read_bytes() == source_bytes
+    assert external_file.read_bytes() == b"must survive"
+    assert list(temp_root.iterdir()) == []
+
+
+def test_reader_replaces_a_symlinked_temp_root_without_following_it(tmp_path: Path) -> None:
+    db_path = tmp_path / "webdb.dat"
+    _write_history_db(db_path, include_playback_tables=True)
+    external_directory = tmp_path / "external"
+    external_directory.mkdir()
+    external_file = external_directory / "private.db"
+    external_file.write_bytes(b"must survive")
+    temp_root = tmp_path / "temporary-database-copies"
+    temp_root.symlink_to(external_directory, target_is_directory=True)
+    reader = NeteaseMusicReader(temp_root=temp_root)
+
+    records = reader.read_play_records(source_path=str(db_path))
+
+    assert len(records) == 1
+    assert temp_root.is_dir()
+    assert temp_root.is_symlink() is False
+    assert list(temp_root.iterdir()) == []
+    assert external_file.read_bytes() == b"must survive"

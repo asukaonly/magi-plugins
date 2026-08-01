@@ -5,13 +5,12 @@ import os
 import shutil
 import sqlite3
 import sys
-import tempfile
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from .normalizers import extract_track_info
+from .temp_storage import NeteaseTemporaryDatabaseStore
 
 _MACOS_DB_PATH = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
 _WINDOWS_DB_PATH = os.path.join(
@@ -28,6 +27,15 @@ class NeteaseMusicDatabaseSchemaError(RuntimeError):
 
 
 class NeteaseMusicReader:
+    def __init__(self, *, temp_root: Path | None = None) -> None:
+        self._temp_copies = NeteaseTemporaryDatabaseStore(temp_root=temp_root)
+
+    def prepare_temp_storage(self, temp_root: Path) -> None:
+        self._temp_copies.prepare(temp_root)
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self._temp_copies.clear(temp_root)
+
     def resolve_db_path(self, source_path: str | None = None) -> Path:
         """Resolve the database file path."""
         if source_path:
@@ -46,25 +54,24 @@ class NeteaseMusicReader:
         db_path = self.resolve_db_path(source_path)
         self._ensure_database_file(db_path)
 
-        # Create a temporary copy
-        temp_dir = Path(tempfile.gettempdir()) / "netease_music"
-        temp_dir.mkdir(exist_ok=True)
-
-        temp_path = temp_dir / f"temp_{datetime.now().timestamp()}.db"
+        temp_dir = self._temp_copies.create_copy_dir()
+        temp_path = temp_dir / "database.db"
 
         try:
-            # Try direct file copy first
-            shutil.copy2(db_path, temp_path)
-        except OSError:
-            # If direct copy fails, try using SQLite to create a copy
-            source_conn = sqlite3.connect(str(db_path))
-            target_conn = sqlite3.connect(str(temp_path))
-
             try:
-                source_conn.backup(target_conn)
-            finally:
-                source_conn.close()
-                target_conn.close()
+                shutil.copy2(db_path, temp_path)
+            except OSError:
+                temp_path.unlink(missing_ok=True)
+                source_conn = sqlite3.connect(str(db_path))
+                target_conn = sqlite3.connect(str(temp_path))
+                try:
+                    source_conn.backup(target_conn)
+                finally:
+                    source_conn.close()
+                    target_conn.close()
+        except Exception:
+            self._temp_copies.cleanup_copy(temp_dir)
+            raise
 
         return db_path, temp_path
 
@@ -85,7 +92,7 @@ class NeteaseMusicReader:
 
     def _cleanup_temp_copy(self, temp_db_path: Path) -> None:
         try:
-            temp_db_path.unlink()
+            self._temp_copies.cleanup_copy(temp_db_path.parent)
         except OSError:
             pass
 

@@ -59,6 +59,14 @@ class _Reader:
         return 1_710_000_999
 
 
+class _PreparingReader(_Reader):
+    def __init__(self) -> None:
+        self.prepared_root: Path | None = None
+
+    def prepare_temp_storage(self, temp_root: Path) -> None:
+        self.prepared_root = temp_root
+
+
 def test_netease_marks_has_more_when_limit_is_full() -> None:
     mod = _load_sensor_module()
     sensor = mod.NeteaseMusicTimelineSensor(reader=_Reader())
@@ -104,3 +112,32 @@ def test_netease_initial_sync_advances_cursor_when_items_are_read() -> None:
     )
 
     assert result.next_cursor == "1710000002"
+
+
+def test_netease_prepares_plugin_owned_temp_storage_before_collection() -> None:
+    mod = _load_sensor_module()
+    reader = _PreparingReader()
+    sensor = mod.NeteaseMusicTimelineSensor(reader=reader)
+
+    from magi_plugin_sdk.sensors import SensorSyncContext
+
+    asyncio.run(
+        sensor.collect_items(
+            SensorSyncContext(
+                source_type="netease_music",
+                manual=True,
+                last_cursor="1710000000",
+                last_success_at=None,
+                limit=1,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={"sensors": {"netease_music": {}}},
+            )
+        )
+    )
+
+    assert reader.prepared_root == (
+        Path("/tmp")
+        / sensor.plugin_id
+        / "temporary-database-copies"
+        / "netease-music"
+    )
