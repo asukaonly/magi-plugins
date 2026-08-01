@@ -1670,7 +1670,7 @@
         "zh-CN": "屏幕使用"
       },
       "icon": "lucide:chart-no-axes-column",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
       "description_i18n": {
@@ -1730,7 +1730,7 @@
           "en": "Lets magi see your screen-time usage"
         }
       },
-      "package_sha256": "0f1e0a8b3558633fc52b43d39b4b1da01d6f3a90eb1f55e98fe5786e6ba03b8d"
+      "package_sha256": "b31122d538fb03d3b0076678a24557176de690e85c5bf5f94e8bdc62f676b31e"
     },
     {
       "plugin_id": "screenshot_timeline",

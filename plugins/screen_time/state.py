@@ -21,6 +21,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk.fs import atomic_write_managed_text
+
+
+_SOURCE_PROGRESS_KEYS = ("cursor", "next_cursor", "watermark", "watermark_ts")
+
 
 class ScreenTimeStateStore:
     """Persist open app-usage buckets and the current active session."""
@@ -48,7 +53,29 @@ class ScreenTimeStateStore:
 
     def _save_state(self, path: Path, state: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(state, ensure_ascii=True, sort_keys=True), encoding="utf-8")
+        atomic_write_managed_text(
+            path,
+            json.dumps(state, ensure_ascii=True, sort_keys=True),
+        )
+
+    async def clear_user_content(self, *, runtime_paths: Any) -> None:
+        """Erase retained app observations while keeping source progress."""
+        path = self._state_path(runtime_paths)
+        async with self._lock_for(path):
+            if not path.exists():
+                return
+            state = self._load_state(path)
+            preserved_progress = {
+                key: state[key] for key in _SOURCE_PROGRESS_KEYS if key in state
+            }
+            self._save_state(
+                path,
+                {
+                    **preserved_progress,
+                    "last_activation": None,
+                    "open_buckets": {},
+                },
+            )
 
     def _floor_hour(self, value: datetime) -> datetime:
         return value.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)

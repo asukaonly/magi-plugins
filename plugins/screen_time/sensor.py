@@ -1,10 +1,12 @@
 """Timeline sensor for cross-platform foreground-app usage."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     SensorBase,
@@ -53,6 +55,7 @@ class ScreenTimeTimelineSensor(SensorBase):
         self._state_store = state_store or ScreenTimeStateStore()
         self._poll_interval_seconds = poll_interval_seconds
         self._watcher: ForegroundAppWatcher | None = None
+        self._operation_lock = asyncio.Lock()
 
     def _now(self) -> datetime:
         return datetime.now(timezone.utc)
@@ -83,30 +86,48 @@ class ScreenTimeTimelineSensor(SensorBase):
             self._watcher.start()
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
-        self._ensure_watcher(context.runtime_paths)
-        now = self._now()
-        items = await self._state_store.flush_completed(runtime_paths=context.runtime_paths, now=now)
-        items.sort(
-            key=lambda item: (
-                item.get("bucket_start", ""),
-                item.get("canonical_id") or item.get("bundle_id", ""),
-            ),
-            reverse=True,
-        )
-        now_ts = now.timestamp()
-        return SensorSyncResult(
-            items=items,
-            next_cursor=str(now_ts),
-            watermark_ts=now_ts,
-            stats={"count": len(items)},
-        )
+        async with self._operation_lock:
+            self._ensure_watcher(context.runtime_paths)
+            now = self._now()
+            items = await self._state_store.flush_completed(
+                runtime_paths=context.runtime_paths,
+                now=now,
+            )
+            items.sort(
+                key=lambda item: (
+                    item.get("bucket_start", ""),
+                    item.get("canonical_id") or item.get("bundle_id", ""),
+                ),
+                reverse=True,
+            )
+            now_ts = now.timestamp()
+            return SensorSyncResult(
+                items=items,
+                next_cursor=str(now_ts),
+                watermark_ts=now_ts,
+                stats={"count": len(items)},
+            )
 
     async def flush_runtime_state(self, *, runtime_paths: Any, plugin_settings: dict[str, Any]) -> dict[str, Any]:
         _ = plugin_settings
-        if self._watcher is not None:
-            await self._watcher.stop()
-            self._watcher = None
-        return await self._state_store.flush_in_progress(runtime_paths=runtime_paths, now=self._now())
+        async with self._operation_lock:
+            if self._watcher is not None:
+                await self._watcher.stop()
+                self._watcher = None
+            return await self._state_store.flush_in_progress(
+                runtime_paths=runtime_paths,
+                now=self._now(),
+            )
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Stop foreground observation and clear retained app-usage content."""
+        async with self._operation_lock:
+            if self._watcher is not None:
+                await self._watcher.stop()
+                self._watcher = None
+            await self._state_store.clear_user_content(
+                runtime_paths=context.runtime_paths,
+            )
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         bucket_start = datetime.fromisoformat(str(item["bucket_start"]))
