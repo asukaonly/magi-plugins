@@ -28,7 +28,11 @@ cd "$(dirname "$0")/.."
 if [ "$#" -ge 1 ]; then
   echo "[refresh] re-locking $1..."
   python scripts/lock-deps.py "$1"
-  git add -A -- ":(top,literal)plugins/$1/requirements.lock"
+  lockfile="plugins/$1/requirements.lock"
+  if [ -e "$lockfile" ] \
+      || git ls-files --error-unmatch -- "$lockfile" >/dev/null 2>&1; then
+    git add -A -- ":(top,literal)$lockfile"
+  fi
 else
   echo "[refresh] re-locking all plugins..."
   python scripts/lock-deps.py

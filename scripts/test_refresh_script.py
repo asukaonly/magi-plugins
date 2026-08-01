@@ -39,6 +39,10 @@ def _run_refresh(tmp_path: Path, *arguments: str) -> list[str]:
     scripts_dir.mkdir(parents=True)
     fake_bin.mkdir()
     shutil.copy2(REFRESH_SCRIPT, scripts_dir / "refresh.sh")
+    if arguments:
+        lockfile = repo / "plugins" / arguments[0] / "requirements.lock"
+        lockfile.parent.mkdir(parents=True)
+        lockfile.write_text("generated\n", encoding="utf-8")
 
     _write_recorder(fake_bin / "python", "python")
     _write_recorder(fake_bin / "git", "git")
@@ -135,6 +139,42 @@ def test_single_plugin_refresh_leaves_other_lockfile_unstaged(tmp_path: Path) ->
 
     assert staged == ["plugins/demo/requirements.lock"]
     assert unstaged == ["plugins/other/requirements.lock"]
+
+
+def test_single_plugin_refresh_accepts_a_package_without_a_lockfile(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    scripts_dir = repo / "scripts"
+    fake_bin = tmp_path / "bin"
+    plugin_dir = repo / "plugins" / "demo"
+    scripts_dir.mkdir(parents=True)
+    fake_bin.mkdir()
+    plugin_dir.mkdir(parents=True)
+    shutil.copy2(REFRESH_SCRIPT, scripts_dir / "refresh.sh")
+    _write_noop(fake_bin / "python")
+
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    environment = {
+        **os.environ,
+        "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
+    }
+
+    subprocess.run(
+        ["bash", str(scripts_dir / "refresh.sh"), "demo"],
+        cwd=repo,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert not (plugin_dir / "requirements.lock").exists()
+    assert subprocess.check_output(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=repo,
+        text=True,
+    ) == ""
 
 
 def test_full_refresh_stages_all_plugin_lockfiles(tmp_path: Path) -> None:
