@@ -9,7 +9,7 @@
         "zh-CN": "Agent 历史核心库"
       },
       "icon": "lucide:bot",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "plugins/agent_history_core",
       "description": "Shared transcript parsing and redaction used by the Codex and Claude Code plugins. Installed automatically as a dependency.",
       "description_i18n": {
@@ -24,7 +24,7 @@
         "windows",
         "linux"
       ],
-      "package_sha256": "7641d1af97e605cb9c565f4ca027837d5d83a93a74ed815ec579fe525d8303d7"
+      "package_sha256": "6cd6e4633d54733d6dcffe786ab2ee252aaffa4add79a9f007c835529281418e"
     },
     {
       "plugin_id": "apple-photos",

@@ -169,7 +169,7 @@ def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:
                 "type": "user",
                 "message": {"content": "work on claude adapter"},
                 "sessionId": "claude-1",
-                "timestamp": "2026-06-22T12:00:00Z",
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
             }
         ),
         encoding="utf-8",
