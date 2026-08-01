@@ -4,7 +4,6 @@ from __future__ import annotations
 import shutil
 import sqlite3
 import sys
-import tempfile
 from errno import EACCES, EPERM
 from pathlib import Path
 from typing import Any
@@ -13,13 +12,14 @@ _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
     sys.path.append(str(_CORE_PARENT))
 
-from browser_history_core.normalizers import (
+from browser_history_core.normalizers import (  # noqa: E402
     burst_merge_key,
     canonicalize_url,
     normalize_domain,
     normalize_title,
 )
-from browser_history_core.visit_merger import aggregate_visits
+from browser_history_core.temp_storage import ManagedDatabaseCopyStore  # noqa: E402
+from browser_history_core.visit_merger import aggregate_visits  # noqa: E402
 
 SAFARI_UNIX_OFFSET_SECONDS = 978_307_200
 DEFAULT_MACOS_SAFARI_ROOT = "~/Library/Safari"
@@ -44,6 +44,18 @@ def safari_time_to_unix_seconds(value: int | float | str | None) -> float:
 class SafariHistoryReader:
     """Read and normalize Safari browser history visits."""
 
+    def __init__(self, *, temp_root: Path | None = None) -> None:
+        self._temp_copies = ManagedDatabaseCopyStore(
+            namespace="safari-history",
+            temp_root=temp_root,
+        )
+
+    def prepare_temp_storage(self, temp_root: Path) -> None:
+        self._temp_copies.prepare(temp_root)
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self._temp_copies.clear(temp_root)
+
     def resolve_root(self, source_path: str | None = None) -> Path:
         return Path(source_path or _default_safari_root()).expanduser()
 
@@ -59,14 +71,16 @@ class SafariHistoryReader:
             if exc.errno in {EACCES, EPERM}:
                 raise _permission_error(history_file, exc) from exc
             raise
-        temp_dir = Path(tempfile.mkdtemp(prefix="magi-safari-history-"))
+        temp_dir = self._temp_copies.create_copy_dir()
         copy_path = temp_dir / "History.db"
         try:
             shutil.copy2(history_file, copy_path)
             return copy_path
         except PermissionError as exc:
+            self._temp_copies.cleanup_copy(temp_dir)
             raise _permission_error(history_file, exc) from exc
         except OSError as exc:
+            self._temp_copies.cleanup_copy(temp_dir)
             if exc.errno in {EACCES, EPERM}:
                 raise _permission_error(history_file, exc) from exc
             raise
@@ -93,7 +107,7 @@ class SafariHistoryReader:
                 merge_window_seconds=merge_window_seconds,
             )
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def get_latest_visit_id(
         self,
@@ -113,7 +127,7 @@ class SafariHistoryReader:
             finally:
                 connection.close()
         finally:
-            shutil.rmtree(copy_path.parent, ignore_errors=True)
+            self._temp_copies.cleanup_copy(copy_path.parent)
 
     def _query_visits(
         self,
