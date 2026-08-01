@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from magi_plugin_sdk.fs import atomic_write_managed_text, remove_managed_file
+
 from .models import MediaState
 
 logger = logging.getLogger(__name__)
@@ -21,7 +23,6 @@ logger = logging.getLogger(__name__)
 DEFAULT_PAUSE_TIMEOUT_S = 300
 # Sessions shorter than this are discarded as noise.
 DEFAULT_MIN_SESSION_S = 30
-
 
 class MediaSessionStateStore:
     """Persist and manage in-flight listening sessions."""
@@ -62,7 +63,16 @@ class MediaSessionStateStore:
 
     def _save(self, path: Path, state: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(state, ensure_ascii=True, sort_keys=True), encoding="utf-8")
+        atomic_write_managed_text(
+            path,
+            json.dumps(state, ensure_ascii=True, sort_keys=True),
+        )
+
+    async def clear_user_content(self, *, runtime_paths: Any) -> None:
+        """Remove plugin-owned media sessions without reading old state."""
+        path = self._state_path(runtime_paths)
+        async with self._lock_for(path):
+            remove_managed_file(path)
 
     # ------------------------------------------------------------------
     # Core state machine

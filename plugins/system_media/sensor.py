@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
+from magi_plugin_sdk import UserContentClearContext
 from magi_plugin_sdk.sensors import (
     ContentBlock,
     SensorBase,
@@ -47,6 +49,7 @@ class SystemMediaTimelineSensor(SensorBase):
     def __init__(self, *, state_store: MediaSessionStateStore | None = None) -> None:
         super().__init__()
         self._state_store = state_store or MediaSessionStateStore()
+        self._operation_lock = asyncio.Lock()
 
     def _now(self) -> datetime:
         return datetime.now(timezone.utc)
@@ -129,34 +132,46 @@ class SystemMediaTimelineSensor(SensorBase):
         )
 
     async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
-        now = self._now()
+        async with self._operation_lock:
+            now = self._now()
 
-        # 1. Poll current OS media state and feed into state store
-        media = await get_current_media()
-        await self._state_store.apply_poll(
-            runtime_paths=context.runtime_paths,
-            media=media,
-            now=now,
-        )
+            # 1. Poll current OS media state and feed into state store
+            media = await get_current_media()
+            await self._state_store.apply_poll(
+                runtime_paths=context.runtime_paths,
+                media=media,
+                now=now,
+            )
 
-        # 2. Flush completed sessions
-        items = await self._state_store.flush_completed(runtime_paths=context.runtime_paths)
-        items.sort(key=lambda i: i.get("started_at", ""), reverse=True)
+            # 2. Flush completed sessions
+            items = await self._state_store.flush_completed(
+                runtime_paths=context.runtime_paths
+            )
+            items.sort(key=lambda i: i.get("started_at", ""), reverse=True)
 
-        return SensorSyncResult(
-            items=items,
-            next_cursor=str(now.timestamp()),
-            watermark_ts=now.timestamp(),
-            stats={"count": len(items)},
-        )
+            return SensorSyncResult(
+                items=items,
+                next_cursor=str(now.timestamp()),
+                watermark_ts=now.timestamp(),
+                stats={"count": len(items)},
+            )
 
     async def flush_runtime_state(
         self, *, runtime_paths: Any, plugin_settings: dict[str, Any]
     ) -> dict[str, Any]:
         _ = plugin_settings
-        return await self._state_store.flush_in_progress(
-            runtime_paths=runtime_paths, now=self._now()
-        )
+        async with self._operation_lock:
+            return await self._state_store.flush_in_progress(
+                runtime_paths=runtime_paths,
+                now=self._now(),
+            )
+
+    async def clear_user_content(self, context: UserContentClearContext) -> None:
+        """Clear retained current and completed playback sessions."""
+        async with self._operation_lock:
+            await self._state_store.clear_user_content(
+                runtime_paths=context.runtime_paths,
+            )
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         started_at = datetime.fromisoformat(str(item["started_at"]))
