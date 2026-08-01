@@ -64,8 +64,6 @@ def _write_state(path: Path) -> None:
                     }
                 },
                 "pending_batch": [{"app_name": "Private App"}],
-                "cursor": "source-cursor-17",
-                "watermark_ts": 1_775_000_000.5,
             },
             sort_keys=True,
         ),
@@ -73,7 +71,7 @@ def _write_state(path: Path) -> None:
     )
 
 
-def test_clear_erases_content_preserves_progress_and_is_local(
+def test_clear_erases_plugin_state_and_is_local(
     tmp_path: Path,
     monkeypatch: Any,
 ) -> None:
@@ -101,12 +99,7 @@ def test_clear_erases_content_preserves_progress_and_is_local(
 
     asyncio.run(run_clear_twice())
 
-    assert json.loads(state_path.read_text(encoding="utf-8")) == {
-        "cursor": "source-cursor-17",
-        "last_activation": None,
-        "open_buckets": {},
-        "watermark_ts": 1_775_000_000.5,
-    }
+    assert not state_path.exists()
     assert settings_path.read_text(encoding="utf-8") == '{"enabled": true}'
     assert credentials_path.read_text(encoding="utf-8") == '{"token": "keep"}'
     assert context.plugin_settings["sensors"]["screen_time"]["enabled"] is True
@@ -179,7 +172,7 @@ def test_clear_waits_for_watcher_and_future_collect_restarts(
     assert state["open_buckets"] == {}
 
 
-def test_clear_replaces_state_symlink_without_touching_its_target(
+def test_clear_removes_state_symlink_without_touching_its_target(
     tmp_path: Path,
 ) -> None:
     runtime_paths = _RuntimePaths(tmp_path / "runtime")
@@ -197,11 +190,29 @@ def test_clear_replaces_state_symlink_without_touching_its_target(
     )
 
     assert external_state.read_bytes() == original
-    assert not state_path.is_symlink()
-    assert json.loads(state_path.read_text(encoding="utf-8"))["open_buckets"] == {}
+    assert not os.path.lexists(state_path)
 
 
-def test_clear_atomically_replaces_hardlinked_state(
+@pytest.mark.skipif(
+    os.name != "posix" or not hasattr(os, "mkfifo"),
+    reason="POSIX FIFOs are unavailable",
+)
+def test_clear_removes_fifo_without_opening_it(tmp_path: Path) -> None:
+    runtime_paths = _RuntimePaths(tmp_path / "runtime")
+    state_path = runtime_paths.plugin_cache_dir("screen_time") / "state.json"
+    state_path.parent.mkdir(parents=True)
+    os.mkfifo(state_path)
+
+    asyncio.run(
+        ScreenTimeTimelineSensor().clear_user_content(
+            _clear_context(runtime_paths)
+        )
+    )
+
+    assert not os.path.lexists(state_path)
+
+
+def test_clear_removes_hardlink_without_touching_other_links(
     tmp_path: Path,
 ) -> None:
     runtime_paths = _RuntimePaths(tmp_path / "runtime")
@@ -219,8 +230,25 @@ def test_clear_atomically_replaces_hardlinked_state(
     )
 
     assert external_state.read_bytes() == original
-    assert state_path.stat().st_ino != external_state.stat().st_ino
-    assert json.loads(state_path.read_text(encoding="utf-8"))["open_buckets"] == {}
+    assert not state_path.exists()
+
+
+def test_clear_missing_state_does_not_create_through_linked_ancestor(
+    tmp_path: Path,
+) -> None:
+    external_root = tmp_path / "external"
+    external_root.mkdir()
+    linked_root = tmp_path / "linked-runtime"
+    linked_root.symlink_to(external_root, target_is_directory=True)
+    runtime_paths = _RuntimePaths(linked_root)
+
+    asyncio.run(
+        ScreenTimeTimelineSensor().clear_user_content(
+            _clear_context(runtime_paths)
+        )
+    )
+
+    assert not (external_root / "screen_time").exists()
 
 
 def test_clear_rejects_linked_cache_directory(

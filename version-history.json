@@ -89,6 +89,10 @@
       "package_sha256": "b31122d538fb03d3b0076678a24557176de690e85c5bf5f94e8bdc62f676b31e",
       "executable_paths": []
     },
+    "screen-time@0.2.8": {
+      "package_sha256": "bab3cb1bb8c04013e9ba3341401e5eba635b2b9aa6ebc73c1a7ee86085c58b0a",
+      "executable_paths": []
+    },
     "screenshot_timeline@0.5.2": {
       "package_sha256": "baa1831a83feb15e9219fb980cf3d3b9440751474bc0220d0913ff4e977c9849",
       "executable_paths": [

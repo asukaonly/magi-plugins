@@ -21,10 +21,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk.fs import atomic_write_managed_text
-
-
-_SOURCE_PROGRESS_KEYS = ("cursor", "next_cursor", "watermark", "watermark_ts")
+from magi_plugin_sdk.fs import atomic_write_managed_text, remove_managed_file
 
 
 class ScreenTimeStateStore:
@@ -59,23 +56,10 @@ class ScreenTimeStateStore:
         )
 
     async def clear_user_content(self, *, runtime_paths: Any) -> None:
-        """Erase retained app observations while keeping source progress."""
+        """Erase plugin-owned app observations without reading the old state."""
         path = self._state_path(runtime_paths)
         async with self._lock_for(path):
-            if not path.exists():
-                return
-            state = self._load_state(path)
-            preserved_progress = {
-                key: state[key] for key in _SOURCE_PROGRESS_KEYS if key in state
-            }
-            self._save_state(
-                path,
-                {
-                    **preserved_progress,
-                    "last_activation": None,
-                    "open_buckets": {},
-                },
-            )
+            remove_managed_file(path)
 
     def _floor_hour(self, value: datetime) -> datetime:
         return value.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
