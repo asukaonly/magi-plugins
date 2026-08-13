@@ -281,6 +281,59 @@
       "package_sha256": "9590ce4d9fbafd1de6e4b948148b058477c6b39794bc03e22b1969df017d9138"
     },
     {
+      "plugin_id": "chatgpt-history",
+      "name": "ChatGPT History",
+      "name_i18n": {
+        "zh-CN": "ChatGPT 历史"
+      },
+      "icon": "lucide:message-square-text",
+      "version": "0.1.0",
+      "path": "plugins/chatgpt-history",
+      "description": "Imports conversations from an official ChatGPT data export without ongoing access to your account.",
+      "description_i18n": {
+        "zh-CN": "从 ChatGPT 官方数据导出文件中一次性导入对话，不会持续访问你的账户。"
+      },
+      "author": "Magi Team",
+      "official": true,
+      "contribution_types": [
+        "history_importer"
+      ],
+      "capabilities": [
+        {
+          "capability": "filesystem_read",
+          "reason_i18n": {
+            "en": "Read only the ChatGPT export files selected by the user",
+            "zh-CN": "仅读取用户选择的 ChatGPT 导出文件"
+          }
+        }
+      ],
+      "display_group": {
+        "id": "agent_history",
+        "name": "Agent History",
+        "name_i18n": {
+          "zh-CN": "Agent 历史"
+        },
+        "description": "Manage installed coding-agent history sources.",
+        "description_i18n": {
+          "zh-CN": "统一管理已安装的编程助手历史来源。"
+        },
+        "icon": "lucide:bot",
+        "order": 40,
+        "member_label": "ChatGPT",
+        "member_label_i18n": {
+          "zh-CN": "ChatGPT"
+        },
+        "member_order": 5
+      },
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "data_locality": "local_only",
+      "package_sha256": "5701c0b7c304c4b0ca58d033a302ee69ee272c9d5b1c7871edaf2af11b7e7abd"
+    },
+    {
       "plugin_id": "chrome-history",
       "name": "Chrome History",
       "name_i18n": {

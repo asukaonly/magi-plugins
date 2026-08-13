@@ -1,0 +1,76 @@
+[
+  {
+    "id": "conversation-stable-001",
+    "title": "[REDACTED CONVERSATION TITLE]",
+    "create_time": 1710000000,
+    "update_time": 1710000500,
+    "current_node": "node-user-2",
+    "mapping": {
+      "node-root": {
+        "id": "node-root",
+        "parent": null,
+        "children": ["node-user-1"],
+        "message": null
+      },
+      "node-user-1": {
+        "id": "node-user-1",
+        "parent": "node-root",
+        "children": ["node-assistant-active", "node-assistant-unused"],
+        "message": {
+          "id": "message-user-1",
+          "author": {"role": "user", "name": null},
+          "create_time": 1710000010,
+          "content": {
+            "content_type": "text",
+            "parts": ["[REDACTED USER TEXT 1]"]
+          }
+        }
+      },
+      "node-assistant-active": {
+        "id": "node-assistant-active",
+        "parent": "node-user-1",
+        "children": ["node-user-2"],
+        "message": {
+          "id": "message-assistant-active",
+          "author": {"role": "assistant", "name": null},
+          "create_time": 1710000020,
+          "content": {
+            "content_type": "text",
+            "parts": ["[REDACTED ASSISTANT TEXT]"]
+          }
+        }
+      },
+      "node-assistant-unused": {
+        "id": "node-assistant-unused",
+        "parent": "node-user-1",
+        "children": [],
+        "message": {
+          "id": "message-assistant-unused",
+          "author": {"role": "assistant", "name": null},
+          "create_time": 1710000021,
+          "content": {
+            "content_type": "text",
+            "parts": ["[REDACTED UNUSED BRANCH]"]
+          }
+        }
+      },
+      "node-user-2": {
+        "id": "node-user-2",
+        "parent": "node-assistant-active",
+        "children": [],
+        "message": {
+          "id": "message-user-2",
+          "author": {"role": "user", "name": null},
+          "create_time": 1710000030,
+          "content": {
+            "content_type": "multimodal_text",
+            "parts": [
+              "[REDACTED USER TEXT 2]",
+              {"content_type": "image_asset_pointer", "asset_pointer": "redacted"}
+            ]
+          }
+        }
+      }
+    }
+  }
+]

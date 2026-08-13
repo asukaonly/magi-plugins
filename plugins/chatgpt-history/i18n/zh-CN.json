@@ -1,0 +1,10 @@
+{
+  "chatgpt_history": {
+    "name": "ChatGPT 历史",
+    "description": "从 ChatGPT 官方数据导出文件中导入对话。",
+    "importer": {
+      "display_name": "ChatGPT 历史",
+      "description": "从 ChatGPT 官方数据导出文件中一次性导入对话；所有解析均在本机完成，不会连接你的账户。"
+    }
+  }
+}

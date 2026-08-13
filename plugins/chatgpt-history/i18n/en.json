@@ -1,0 +1,10 @@
+{
+  "chatgpt_history": {
+    "name": "ChatGPT History",
+    "description": "Import conversations from an official ChatGPT data export.",
+    "importer": {
+      "display_name": "ChatGPT history",
+      "description": "Import conversations from an official ChatGPT data export. This is a one-time local import and does not connect to your account."
+    }
+  }
+}

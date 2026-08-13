@@ -308,7 +308,7 @@ def test_all_current_packages_match_host_sdk_identity() -> None:
         ]
     }
 
-    assert len(plugin_dirs) == 24
+    assert len(plugin_dirs) == 25
     for plugin_dir in plugin_dirs:
         files = tracked_plugin_package_files(ROOT, plugin_dir, tree_id=tree_id)
         expected = sdk_package_sha256(

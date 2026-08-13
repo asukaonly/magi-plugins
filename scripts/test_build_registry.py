@@ -140,6 +140,7 @@ def test_photo_sources_are_separate_marketplace_plugins() -> None:
 def test_agent_sources_are_separate_marketplace_plugins() -> None:
     build_registry = _load_build_registry_module()
     expected = {
+        "chatgpt-history": ("ChatGPT", 5),
         "claude-code": ("Claude Code", 10),
         "codex": ("Codex", 20),
     }
