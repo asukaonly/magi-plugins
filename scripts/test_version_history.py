@@ -93,9 +93,7 @@ def _commit_publication(
     package = repo / "plugins" / "demo"
     package.mkdir(parents=True, exist_ok=True)
     (package / "plugin.toml").write_text(
-        "[plugin]\n"
-        'id = "demo"\n'
-        f'version = "{version}"\n',
+        "[plugin]\n" 'id = "demo"\n' f'version = "{version}"\n',
         encoding="utf-8",
     )
     (package / "payload.txt").write_text(content, encoding="utf-8")
@@ -116,9 +114,7 @@ def _commit_publication(
                         "plugin_id": "demo",
                         "version": version,
                         "path": "plugins/demo",
-                        "package_sha256": (
-                            registry_sha256 or metadata.package_sha256
-                        ),
+                        "package_sha256": (registry_sha256 or metadata.package_sha256),
                     }
                 ]
             }
@@ -546,4 +542,70 @@ def test_history_check_rejects_stale_intermediate_registry_digest(
     )
 
     with pytest.raises(VersionHistoryError, match="digest is stale"):
+        _validate_publication_range(checker, base_revision)
+
+
+def test_history_check_rejects_version_removed_after_intermediate_publication(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    _record_1, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.1",
+        content="two",
+    )
+    del history["demo@1.0.1"]
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+
+    with pytest.raises(VersionHistoryError, match="cannot be removed"):
+        _validate_publication_range(checker, base_revision)
+
+
+def test_history_check_rejects_base_identity_rewritten_then_restored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    base_record, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="two",
+    )
+    history["demo@1.0.0"] = base_record
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+
+    with pytest.raises(VersionHistoryError, match="cannot rewrite"):
         _validate_publication_range(checker, base_revision)

@@ -198,21 +198,43 @@ def _package_records_across_commit_range(
     """Find and validate every new package version published in the commit range."""
 
     expected = {key: current[key] for key in current.keys() - base.keys()}
-    publication_records = dict(current_packages)
-    found = {
-        key for key, record in expected.items() if current_packages.get(key) == record
-    }
+    revision_histories: list[tuple[str, dict[str, PackageVersionRecord]]] = []
 
     for revision in _commits_since(base_revision):
         revision_history = _history_at_revision(revision)
-        for key, expected_record in expected.items():
-            revision_record = revision_history.get(key)
-            if revision_record is not None and revision_record != expected_record:
+        assert_history_extends(
+            base,
+            revision_history,
+            base_label=f"{base_revision}:version-history.json",
+        )
+        revision_histories.append((revision, revision_history))
+        for key, revision_record in revision_history.items():
+            if key in base:
+                continue
+            expected_record = expected.get(key)
+            if expected_record is None:
+                expected[key] = revision_record
+                continue
+            if revision_record != expected_record:
                 raise VersionHistoryError(
                     f"New package history {key} changes identity inside "
                     f"{base_revision}..HEAD at commit {revision}"
                 )
 
+    removed = sorted(expected.keys() - current.keys())
+    if removed:
+        detail = "\n  - ".join(removed)
+        raise VersionHistoryError(
+            "Package versions recorded inside the commit range cannot be removed "
+            f"from final version-history.json:\n  - {detail}"
+        )
+
+    publication_records = dict(current_packages)
+    found = {
+        key for key, record in expected.items() if current_packages.get(key) == record
+    }
+
+    for revision, revision_history in revision_histories:
         matching_entries: dict[str, dict] = {}
         for raw_entry in _registry_at_revision(revision)["plugins"]:
             if not isinstance(raw_entry, dict):
