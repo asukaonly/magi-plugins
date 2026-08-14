@@ -255,6 +255,35 @@ def test_generated_registry_and_history_match_frozen_package_metadata() -> None:
         }
 
 
+def test_registry_rebuild_recalculates_only_uncommitted_history() -> None:
+    build_registry = _load_build_registry_module()
+    committed = {
+        "demo@1.0.0": build_registry.PackageVersionRecord("a" * 64, ()),
+    }
+    candidate = {
+        **committed,
+        "demo@1.0.1": build_registry.PackageVersionRecord("b" * 64, ()),
+    }
+
+    prepared = build_registry._prepare_version_history(committed, candidate)
+
+    assert prepared == committed
+    assert prepared is not committed
+
+
+def test_registry_rebuild_rejects_committed_history_rewrite() -> None:
+    build_registry = _load_build_registry_module()
+    committed = {
+        "demo@1.0.0": build_registry.PackageVersionRecord("a" * 64, ()),
+    }
+    candidate = {
+        "demo@1.0.0": build_registry.PackageVersionRecord("b" * 64, ()),
+    }
+
+    with pytest.raises(build_registry.VersionHistoryError, match="cannot rewrite"):
+        build_registry._prepare_version_history(committed, candidate)
+
+
 def test_asset_icon_rejects_unsafe_svg(tmp_path: Path) -> None:
     build_registry = _load_build_registry_module()
     plugin_dir = tmp_path / "unsafe-plugin"

@@ -58,6 +58,97 @@ def _git(repo: Path, *args: str) -> None:
     )
 
 
+def _git_output(repo: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _prepare_publication_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    checker = _load_history_check_module()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "test@example.com")
+    _git(repo, "config", "user.name", "Test User")
+    monkeypatch.setattr(checker, "REPO_ROOT", repo)
+    monkeypatch.setattr(checker, "VERSION_HISTORY_PATH", repo / "version-history.json")
+    monkeypatch.setattr(checker, "REGISTRY_PATH", repo / "registry.json")
+    return checker, repo
+
+
+def _commit_publication(
+    checker,
+    repo: Path,
+    history: dict[str, PackageVersionRecord],
+    *,
+    version: str,
+    content: str,
+    registry_sha256: str | None = None,
+) -> tuple[PackageVersionRecord, str]:
+    package = repo / "plugins" / "demo"
+    package.mkdir(parents=True, exist_ok=True)
+    (package / "plugin.toml").write_text(
+        "[plugin]\n"
+        'id = "demo"\n'
+        f'version = "{version}"\n',
+        encoding="utf-8",
+    )
+    (package / "payload.txt").write_text(content, encoding="utf-8")
+    _git(repo, "add", "plugins/demo/plugin.toml", "plugins/demo/payload.txt")
+    tree_id = _git_output(repo, "write-tree")
+    metadata = checker.tracked_plugin_package_metadata(
+        repo,
+        package,
+        tree_id=tree_id,
+    )
+    record = _record(metadata.package_sha256, metadata.executable_paths)
+    history[package_version_key("demo", version)] = record
+    (repo / "registry.json").write_text(
+        json.dumps(
+            {
+                "plugins": [
+                    {
+                        "plugin_id": "demo",
+                        "version": version,
+                        "path": "plugins/demo",
+                        "package_sha256": (
+                            registry_sha256 or metadata.package_sha256
+                        ),
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    write_version_history(repo / "version-history.json", history)
+    _git(repo, "add", "registry.json", "version-history.json")
+    _git(repo, "commit", "-q", "-m", f"publish demo {version}")
+    return record, _git_output(repo, "rev-parse", "HEAD")
+
+
+def _validate_publication_range(checker, base_revision: str) -> None:
+    base = checker._history_at_revision(base_revision)
+    current = load_version_history(checker.VERSION_HISTORY_PATH)
+    registry = json.loads(checker.REGISTRY_PATH.read_text(encoding="utf-8"))
+    current_packages = checker._current_package_records(registry)
+    publication_records = checker._package_records_across_commit_range(
+        base_revision,
+        base,
+        current,
+        current_packages,
+    )
+    assert_new_history_matches_current_packages(
+        base,
+        current,
+        publication_records,
+    )
+
+
 def test_bind_package_version_is_append_only() -> None:
     history = {"demo@1.0.0": _record(SHA_A)}
 
@@ -333,3 +424,126 @@ def test_history_check_derives_permissions_from_current_frozen_tree(
         metadata.package_sha256,
         ("helper",),
     )
+
+
+def test_history_check_accepts_multiple_publications_in_one_commit_range(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    _record_1, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.1",
+        content="two",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.2",
+        content="three",
+    )
+
+    _validate_publication_range(checker, base_revision)
+
+
+def test_history_check_rejects_new_history_identity_rewritten_in_range(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    _record_1, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.1",
+        content="two",
+    )
+    history["demo@1.0.1"] = _record(SHA_A)
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.2",
+        content="three",
+    )
+
+    with pytest.raises(VersionHistoryError, match="changes identity inside"):
+        _validate_publication_range(checker, base_revision)
+
+
+def test_history_check_rejects_fabricated_intermediate_version(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    _record_1, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    history["demo@1.0.1"] = _record(SHA_A)
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.2",
+        content="three",
+    )
+
+    with pytest.raises(VersionHistoryError, match="package published"):
+        _validate_publication_range(checker, base_revision)
+
+
+def test_history_check_rejects_stale_intermediate_registry_digest(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checker, repo = _prepare_publication_repo(tmp_path, monkeypatch)
+    history: dict[str, PackageVersionRecord] = {}
+    _record_1, base_revision = _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.0",
+        content="one",
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.1",
+        content="two",
+        registry_sha256=SHA_A,
+    )
+    _commit_publication(
+        checker,
+        repo,
+        history,
+        version="1.0.2",
+        content="three",
+    )
+
+    with pytest.raises(VersionHistoryError, match="digest is stale"):
+        _validate_publication_range(checker, base_revision)

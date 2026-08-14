@@ -26,6 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Version-history validation checks every package identity published
+          # by intermediate commits in one pull request or push.
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -39,6 +43,8 @@ jobs:
           scripts/test_refresh_script.py
           scripts/test_registry_contract.py
           scripts/test_version_history.py
+          plugins/chatgpt-history/tests/test_parser.py
+          plugins/chatgpt-history/tests/test_plugin.py
           -q
       - name: Regenerate registry
         run: python scripts/build-registry.py

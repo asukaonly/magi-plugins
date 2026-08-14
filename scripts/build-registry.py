@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
+import subprocess
 import sys
 from pathlib import Path
 from pathlib import PurePosixPath
@@ -42,11 +43,14 @@ from registry_contract import (  # noqa: E402
     validate_registry_index,
 )
 from version_history import (  # noqa: E402
+    PackageVersionRecord,
     VersionHistoryError,
     assert_current_version_is_latest,
+    assert_history_extends,
     bind_package_version,
     load_version_history,
     package_version_key,
+    parse_version_history,
     write_version_history,
 )
 
@@ -294,6 +298,53 @@ def build_entry(
     return entry
 
 
+def _committed_version_history() -> dict[str, PackageVersionRecord]:
+    """Read the immutable history from HEAD, before staged publication changes."""
+
+    head_check = subprocess.run(
+        ["git", "cat-file", "-e", "HEAD^{commit}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    if head_check.returncode != 0:
+        return {}
+    history_check = subprocess.run(
+        ["git", "cat-file", "-e", "HEAD:version-history.json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    if history_check.returncode != 0:
+        return {}
+    result = subprocess.run(
+        ["git", "show", "HEAD:version-history.json"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise VersionHistoryError(
+            f"Cannot read HEAD:version-history.json: {result.stderr.strip()}"
+        )
+    return parse_version_history(
+        result.stdout,
+        label="HEAD:version-history.json",
+    )
+
+
+def _prepare_version_history(
+    committed: dict[str, PackageVersionRecord],
+    candidate: dict[str, PackageVersionRecord],
+) -> dict[str, PackageVersionRecord]:
+    """Preserve committed identities and recalculate every staged publication."""
+
+    assert_history_extends(
+        committed,
+        candidate,
+        base_label="HEAD:version-history.json",
+    )
+    return dict(committed)
+
+
 def main() -> None:
     validate_plugin_worktree(REPO_ROOT)
     tree_id = snapshot_git_index(REPO_ROOT)
@@ -302,7 +353,10 @@ def main() -> None:
         return tracked_repository_file_bytes(REPO_ROOT, path, tree_id=tree_id)
 
     official_ids = load_official_ids(content_reader=content_reader)
-    version_history = load_version_history(VERSION_HISTORY_PATH)
+    version_history = _prepare_version_history(
+        _committed_version_history(),
+        load_version_history(VERSION_HISTORY_PATH),
+    )
     entries = []
 
     for child in tracked_plugin_directories(REPO_ROOT, tree_id):
