@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import re
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, TextIO
 
 
 _CONVERSATIONS_MEMBER_RE = re.compile(
@@ -21,6 +22,7 @@ _MAX_TOTAL_JSON_BYTES = 192 * 1024 * 1024
 _MAX_ARCHIVE_MEMBERS = 100_000
 _MAX_CONVERSATION_DOCUMENTS = 100
 _MAX_CONVERSATIONS = 100_000
+_MAX_CONVERSATION_JSON_CHARS = 16 * 1024 * 1024
 _MAX_MAPPING_NODES = 20_000
 _MAX_MESSAGES_TOTAL = 100_000
 _MAX_SOURCE_ID_LENGTH = 512
@@ -29,6 +31,7 @@ _MAX_SPEAKER_ID_LENGTH = 512
 _MAX_SPEAKER_NAME_LENGTH = 256
 _MAX_RESULT_WARNINGS = 200
 _MAX_SOURCE_WARNINGS = 100
+_JSON_READ_CHARS = 1024 * 1024
 _SUPPORTED_CONTENT_TYPES = frozenset({"text", "multimodal_text"})
 
 
@@ -87,9 +90,10 @@ class ChatGPTArchiveResult:
 
 
 @dataclass(frozen=True, slots=True)
-class _JsonDocument:
+class _ConversationEntry:
     source_name: str
-    payload: bytes
+    source_index: int
+    payload: Any
 
 
 @dataclass(slots=True)
@@ -150,56 +154,55 @@ def parse_chatgpt_export(path: str | Path) -> ChatGPTArchiveResult:
     conversation_count = 0
     message_count = 0
 
-    for document in _iter_documents(selected_path):
-        conversations = _decode_conversations(document)
-        conversation_count += len(conversations)
+    for entry in _iter_conversations(selected_path):
+        conversation_count += 1
         if conversation_count > _MAX_CONVERSATIONS:
             raise ChatGPTArchiveError("ChatGPT export contains too many conversations")
-        for index, raw_conversation in enumerate(conversations):
-            if not isinstance(raw_conversation, dict):
-                result_warnings.add(
-                    ChatGPTImportWarning(
-                        code="invalid_conversation",
-                        source_name=document.source_name,
-                        detail=f"index={index}",
-                    )
+        raw_conversation = entry.payload
+        if not isinstance(raw_conversation, dict):
+            result_warnings.add(
+                ChatGPTImportWarning(
+                    code="invalid_conversation",
+                    source_name=entry.source_name,
+                    detail=f"index={entry.source_index}",
                 )
-                continue
-
-            session, warnings = _parse_conversation(
-                raw_conversation,
-                source_name=document.source_name,
-                source_index=index,
             )
-            if session is None:
-                result_warnings.extend(warnings)
-                continue
-            existing_session = seen_sessions.get(session.session_id)
-            if existing_session is not None:
-                if not sessions_have_same_messages(existing_session, session):
-                    raise ChatGPTArchiveError(
-                        "ChatGPT export contains conflicting versions of one conversation"
-                    )
-                result_warnings.add(
-                    ChatGPTImportWarning(
-                        code="duplicate_session",
-                        source_name=document.source_name,
-                        session_id=session.session_id,
-                    )
+            continue
+
+        session, warnings = _parse_conversation(
+            raw_conversation,
+            source_name=entry.source_name,
+            source_index=entry.source_index,
+        )
+        if session is None:
+            result_warnings.extend(warnings)
+            continue
+        existing_session = seen_sessions.get(session.session_id)
+        if existing_session is not None:
+            if not sessions_have_same_messages(existing_session, session):
+                raise ChatGPTArchiveError(
+                    "ChatGPT export contains conflicting versions of one conversation"
                 )
-                continue
-            message_count += len(session.messages)
-            if message_count > _MAX_MESSAGES_TOTAL:
-                raise ChatGPTArchiveError("ChatGPT export contains too many messages")
-            seen_sessions[session.session_id] = session
-            result.sessions.append(session)
+            result_warnings.add(
+                ChatGPTImportWarning(
+                    code="duplicate_session",
+                    source_name=entry.source_name,
+                    session_id=session.session_id,
+                )
+            )
+            continue
+        message_count += len(session.messages)
+        if message_count > _MAX_MESSAGES_TOTAL:
+            raise ChatGPTArchiveError("ChatGPT export contains too many messages")
+        seen_sessions[session.session_id] = session
+        result.sessions.append(session)
 
     result.warnings = result_warnings.items
     return result
 
 
-def _iter_documents(path: Path) -> Iterable[_JsonDocument]:
-    """Yield supported JSON documents without retaining every archive payload."""
+def _iter_conversations(path: Path) -> Iterable[_ConversationEntry]:
+    """Yield top-level conversations without retaining complete JSON documents."""
 
     if not path.is_file():
         raise ChatGPTArchiveError("Selected ChatGPT export is not a file")
@@ -209,9 +212,19 @@ def _iter_documents(path: Path) -> Iterable[_JsonDocument]:
         if path.stat().st_size > _MAX_JSON_BYTES:
             raise ChatGPTArchiveError("ChatGPT conversations JSON is too large")
         try:
-            yield _JsonDocument(source_name=path.name, payload=path.read_bytes())
+            with path.open("r", encoding="utf-8-sig") as handle:
+                for index, payload in enumerate(
+                    _iter_json_array(handle, source_name=path.name)
+                ):
+                    yield _ConversationEntry(
+                        source_name=path.name,
+                        source_index=index,
+                        payload=payload,
+                    )
             return
-        except OSError as exc:
+        except ChatGPTArchiveError:
+            raise
+        except (OSError, UnicodeDecodeError) as exc:
             raise ChatGPTArchiveError(
                 "Unable to read ChatGPT conversations JSON"
             ) from exc
@@ -275,12 +288,33 @@ def _iter_documents(path: Path) -> Iterable[_JsonDocument]:
                 if total_json_bytes > _MAX_TOTAL_JSON_BYTES:
                     raise ChatGPTArchiveError("ChatGPT conversations JSON is too large")
                 try:
-                    payload = archive.read(member)
-                except (OSError, RuntimeError, zipfile.BadZipFile) as exc:
+                    with archive.open(member, "r") as raw_handle:
+                        with io.TextIOWrapper(
+                            raw_handle,
+                            encoding="utf-8-sig",
+                        ) as text_handle:
+                            for index, payload in enumerate(
+                                _iter_json_array(
+                                    text_handle,
+                                    source_name=member.filename,
+                                )
+                            ):
+                                yield _ConversationEntry(
+                                    source_name=member.filename,
+                                    source_index=index,
+                                    payload=payload,
+                                )
+                except ChatGPTArchiveError:
+                    raise
+                except (
+                    OSError,
+                    RuntimeError,
+                    UnicodeDecodeError,
+                    zipfile.BadZipFile,
+                ) as exc:
                     raise ChatGPTArchiveError(
                         "Unable to read ChatGPT conversations from the export"
                     ) from exc
-                yield _JsonDocument(source_name=member.filename, payload=payload)
     except ChatGPTArchiveError:
         raise
     except (OSError, zipfile.BadZipFile) as exc:
@@ -289,18 +323,124 @@ def _iter_documents(path: Path) -> Iterable[_JsonDocument]:
         ) from exc
 
 
-def _decode_conversations(document: _JsonDocument) -> list[Any]:
-    try:
-        decoded = json.loads(document.payload.decode("utf-8-sig"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ChatGPTArchiveError(
-            f"Invalid ChatGPT conversations JSON: {document.source_name}"
-        ) from exc
-    if not isinstance(decoded, list):
-        raise ChatGPTArchiveError(
-            f"ChatGPT conversations JSON must contain a list: {document.source_name}"
-        )
-    return decoded
+def _iter_json_array(handle: TextIO, *, source_name: str) -> Iterable[Any]:
+    """Decode one top-level JSON array while bounding each retained value."""
+
+    decoder = json.JSONDecoder()
+    buffer = ""
+    position = 0
+    state = "start"
+    reached_eof = False
+
+    def read_more() -> None:
+        nonlocal buffer, reached_eof
+        chunk = handle.read(_JSON_READ_CHARS)
+        if chunk:
+            buffer += chunk
+        else:
+            reached_eof = True
+
+    def skip_whitespace() -> None:
+        nonlocal position
+        while position < len(buffer) and buffer[position].isspace():
+            position += 1
+
+    while True:
+        skip_whitespace()
+        if position >= len(buffer) and not reached_eof:
+            buffer = ""
+            position = 0
+            read_more()
+            continue
+
+        if state == "start":
+            if reached_eof and position >= len(buffer):
+                raise ChatGPTArchiveError(
+                    f"Invalid ChatGPT conversations JSON: {source_name}"
+                )
+            if buffer[position] != "[":
+                raise ChatGPTArchiveError(
+                    "ChatGPT conversations JSON must contain a list: "
+                    f"{source_name}"
+                )
+            position += 1
+            state = "value_or_end"
+            continue
+
+        if state in {"value_or_end", "value"}:
+            if reached_eof and position >= len(buffer):
+                raise ChatGPTArchiveError(
+                    f"Invalid ChatGPT conversations JSON: {source_name}"
+                )
+            if position >= len(buffer):
+                read_more()
+                continue
+            if buffer[position] == "]":
+                if state == "value":
+                    raise ChatGPTArchiveError(
+                        f"Invalid ChatGPT conversations JSON: {source_name}"
+                    )
+                position += 1
+                state = "finished"
+                continue
+
+            if position:
+                buffer = buffer[position:]
+                position = 0
+            try:
+                payload, end = decoder.raw_decode(buffer)
+            except json.JSONDecodeError as exc:
+                if len(buffer) > _MAX_CONVERSATION_JSON_CHARS:
+                    raise ChatGPTArchiveError(
+                        "ChatGPT export contains an oversized conversation"
+                    ) from exc
+                if reached_eof:
+                    raise ChatGPTArchiveError(
+                        f"Invalid ChatGPT conversations JSON: {source_name}"
+                    ) from exc
+                read_more()
+                continue
+            if end > _MAX_CONVERSATION_JSON_CHARS:
+                raise ChatGPTArchiveError(
+                    "ChatGPT export contains an oversized conversation"
+                )
+            position = end
+            state = "delimiter"
+            yield payload
+            continue
+
+        if state == "delimiter":
+            if reached_eof and position >= len(buffer):
+                raise ChatGPTArchiveError(
+                    f"Invalid ChatGPT conversations JSON: {source_name}"
+                )
+            if position >= len(buffer):
+                buffer = ""
+                position = 0
+                read_more()
+                continue
+            token = buffer[position]
+            position += 1
+            if token == ",":
+                state = "value"
+                continue
+            if token == "]":
+                state = "finished"
+                continue
+            raise ChatGPTArchiveError(
+                f"Invalid ChatGPT conversations JSON: {source_name}"
+            )
+
+        if state == "finished":
+            if any(not character.isspace() for character in buffer[position:]):
+                raise ChatGPTArchiveError(
+                    f"Invalid ChatGPT conversations JSON: {source_name}"
+                )
+            if reached_eof:
+                return
+            buffer = ""
+            position = 0
+            read_more()
 
 
 def _parse_conversation(

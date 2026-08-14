@@ -72,6 +72,21 @@ def test_parses_official_zip_without_extracting_files(tmp_path: Path) -> None:
     assert result.sessions[0].source_name == "export/conversations.json"
 
 
+def test_json_input_is_streamed_without_reading_the_complete_file(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def reject_read_bytes(path: Path) -> bytes:
+        raise AssertionError(f"unexpected whole-file read: {path}")
+
+    monkeypatch.setattr(Path, "read_bytes", reject_read_bytes)
+
+    result = parse_chatgpt_export(FIXTURE)
+
+    assert [session.session_id for session in result.sessions] == [
+        "conversation-stable-001"
+    ]
+
+
 def test_reads_numbered_conversation_json_members(tmp_path: Path) -> None:
     first = _fixture_payload()
     second = _fixture_payload()
@@ -299,6 +314,48 @@ def test_rejects_oversized_conversations_entry_from_zip_metadata(
 
     with pytest.raises(ChatGPTArchiveError, match="too large"):
         parse_chatgpt_export(archive_path)
+
+
+def test_rejects_oversized_json_before_opening_it(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "conversations.json"
+    path.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(parser_module, "_MAX_JSON_BYTES", 1)
+
+    def reject_open(*args: object, **kwargs: object) -> object:
+        raise AssertionError("oversized input should be rejected before opening")
+
+    monkeypatch.setattr(Path, "open", reject_open)
+
+    with pytest.raises(ChatGPTArchiveError, match="too large"):
+        parse_chatgpt_export(path)
+
+
+def test_rejects_one_oversized_conversation_without_truncating_it(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "conversations.json"
+    path.write_text(json.dumps([{"title": "x" * 100}]), encoding="utf-8")
+    monkeypatch.setattr(parser_module, "_MAX_CONVERSATION_JSON_CHARS", 32)
+    monkeypatch.setattr(parser_module, "_JSON_READ_CHARS", 8)
+
+    with pytest.raises(ChatGPTArchiveError, match="oversized conversation"):
+        parse_chatgpt_export(path)
+
+
+@pytest.mark.parametrize("raw", ["[null,]", "[null] trailing", "[null null]"])
+def test_streaming_decoder_rejects_invalid_array_boundaries(
+    tmp_path: Path,
+    raw: str,
+) -> None:
+    path = tmp_path / "conversations.json"
+    path.write_text(raw, encoding="utf-8")
+
+    with pytest.raises(ChatGPTArchiveError, match="Invalid ChatGPT conversations JSON"):
+        parse_chatgpt_export(path)
 
 
 def test_rejects_duplicate_conversations_members(tmp_path: Path) -> None:

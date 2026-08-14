@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import importlib.util
 import json
 import sys
@@ -53,7 +52,7 @@ def test_importer_keeps_each_conversation_as_a_source() -> None:
     importer = module.ChatGPTHistoryImporter()
     fixture = PLUGIN_DIR / "tests" / "fixtures" / "conversations.json"
 
-    result = asyncio.run(importer.parse([fixture]))
+    result = importer.parse([fixture])
 
     assert len(result.sources) == 1
     source = result.sources[0]
@@ -74,6 +73,24 @@ def test_importer_keeps_each_conversation_as_a_source() -> None:
     assert any("null_message" in warning for warning in source.warnings)
 
 
+def test_importer_bounds_display_title_without_changing_source_identity(
+    tmp_path: Path,
+) -> None:
+    module = _load_plugin_module()
+    fixture = PLUGIN_DIR / "tests" / "fixtures" / "conversations.json"
+    payload = json.loads(fixture.read_text(encoding="utf-8"))
+    payload[0]["title"] = "T" * 600
+    path = tmp_path / "conversations.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    source = module.ChatGPTHistoryImporter().parse([path]).sources[0]
+
+    assert len(source.source_name) == 512
+    assert source.source_name.endswith("…")
+    assert source.source_id == "conversation-stable-001"
+    assert source.session_key == "conversation-stable-001"
+
+
 def test_importer_drops_parent_reference_when_parent_content_is_unsupported(
     tmp_path: Path,
 ) -> None:
@@ -87,7 +104,7 @@ def test_importer_drops_parent_reference_when_parent_content_is_unsupported(
     path = tmp_path / "conversations.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = asyncio.run(module.ChatGPTHistoryImporter().parse([path]))
+    result = module.ChatGPTHistoryImporter().parse([path])
 
     source = result.sources[0]
     assert [record.message_key for record in source.records] == [
@@ -108,7 +125,7 @@ def test_non_user_export_roles_are_not_promoted_to_user(tmp_path: Path) -> None:
     path = tmp_path / "conversations.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
-    result = asyncio.run(module.ChatGPTHistoryImporter().parse([path]))
+    result = module.ChatGPTHistoryImporter().parse([path])
 
     tool_record = result.sources[0].records[1]
     assert tool_record.speaker_id == "tool"
@@ -124,7 +141,7 @@ def test_importer_bounds_result_source_and_warning_text(tmp_path: Path) -> None:
     path = tmp_path / "conversations.json"
     path.write_text(json.dumps(conversations), encoding="utf-8")
 
-    result = asyncio.run(module.ChatGPTHistoryImporter().parse([path]))
+    result = module.ChatGPTHistoryImporter().parse([path])
 
     assert len(result.warnings) == 200
     assert result.warnings[-1] == "warnings_truncated"
@@ -162,7 +179,7 @@ def test_importer_applies_total_message_limit_across_selected_files(
     monkeypatch.setattr(module, "_MAX_TOTAL_RECORDS", 1)
 
     with pytest.raises(module.ChatGPTArchiveError, match="too many messages"):
-        asyncio.run(module.ChatGPTHistoryImporter().parse([first_path, second_path]))
+        module.ChatGPTHistoryImporter().parse([first_path, second_path])
 
 
 def test_importer_applies_total_content_limit_before_sdk_modeling(
@@ -188,7 +205,34 @@ def test_importer_applies_total_content_limit_before_sdk_modeling(
     monkeypatch.setattr(module, "_MAX_TOTAL_CONTENT_CHARS", 4)
 
     with pytest.raises(module.ChatGPTArchiveError, match="too much message text"):
-        asyncio.run(module.ChatGPTHistoryImporter().parse([selected]))
+        module.ChatGPTHistoryImporter().parse([selected])
+
+
+def test_importer_applies_sdk_source_limit_without_truncation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_plugin_module()
+    selected = tmp_path / "export.json"
+    selected.write_text("[]", encoding="utf-8")
+    assert module._MAX_TOTAL_SOURCES == 5_000
+    sessions = [
+        _single_message_session(
+            module,
+            session_id=f"session-{index}",
+            content="text",
+        )
+        for index in range(module._MAX_TOTAL_SOURCES + 1)
+    ]
+    result_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult
+    monkeypatch.setattr(
+        module,
+        "parse_chatgpt_export",
+        lambda path: result_type(source_name=path.name, sessions=sessions),
+    )
+
+    with pytest.raises(module.ChatGPTArchiveError, match="too many conversations"):
+        module.ChatGPTHistoryImporter().parse([selected])
 
 
 def test_importer_deduplicates_identical_session_across_selected_files(
@@ -212,9 +256,7 @@ def test_importer_deduplicates_identical_session_across_selected_files(
         lambda path: result_type(source_name=path.name, sessions=[session]),
     )
 
-    result = asyncio.run(
-        module.ChatGPTHistoryImporter().parse([first_path, second_path])
-    )
+    result = module.ChatGPTHistoryImporter().parse([first_path, second_path])
 
     assert [source.source_id for source in result.sources] == ["shared-session"]
     assert any("duplicate_session" in warning for warning in result.warnings)
@@ -253,7 +295,7 @@ def test_importer_rejects_conflicting_session_across_selected_files(
     monkeypatch.setattr(module, "parse_chatgpt_export", parse_selected)
 
     with pytest.raises(module.ChatGPTArchiveError, match="conflicting versions"):
-        asyncio.run(module.ChatGPTHistoryImporter().parse([first_path, second_path]))
+        module.ChatGPTHistoryImporter().parse([first_path, second_path])
 
 
 def _single_message_session(module, *, session_id: str, content: str):

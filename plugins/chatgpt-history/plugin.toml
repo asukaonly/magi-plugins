@@ -3,7 +3,7 @@ id = "chatgpt-history"
 name = "ChatGPT History"
 name_i18n = { "zh-CN" = "ChatGPT 历史" }
 icon = "lucide:message-square-text"
-version = "0.1.0"
+version = "0.1.1"
 description = "Imports conversations from an official ChatGPT data export without ongoing access to your account."
 description_i18n = { "zh-CN" = "从 ChatGPT 官方数据导出文件中一次性导入对话，不会持续访问你的账户。" }
 author = "Magi Team"

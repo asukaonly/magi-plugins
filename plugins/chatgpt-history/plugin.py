@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -13,6 +12,7 @@ from magi_plugin_sdk.history_imports import (
     HistoryImportParseResult,
     HistoryImportRecord,
     HistoryImportSource,
+    MAX_HISTORY_IMPORT_SOURCES,
 )
 
 from .parser import (
@@ -29,10 +29,12 @@ _FORMAT_VERSION = "chatgpt-export-v1"
 _MAX_RESULT_WARNINGS = 200
 _MAX_SOURCE_WARNINGS = 100
 _MAX_WARNING_TEXT_LENGTH = 512
+_MAX_SOURCE_NAME_LENGTH = 512
 _MAX_RECORDS_PER_SOURCE = 20_000
 _MAX_CONTENT_LENGTH = 1_000_000
 _MAX_TOTAL_RECORDS = 100_000
 _MAX_TOTAL_CONTENT_CHARS = 50_000_000
+_MAX_TOTAL_SOURCES = MAX_HISTORY_IMPORT_SOURCES
 _TRUNCATED_WARNING = "warnings_truncated"
 _EXPORT_HELP_URL = (
     "https://help.openai.com/en/articles/"
@@ -43,7 +45,7 @@ _EXPORT_HELP_URL = (
 class ChatGPTHistoryImporter(HistoryImporter):
     """Adapt official ChatGPT exports into normalized conversation sources."""
 
-    async def parse(self, paths: list[Path]) -> HistoryImportParseResult:
+    def parse(self, paths: list[Path]) -> HistoryImportParseResult:
         sources: list[HistoryImportSource] = []
         warnings = _StringWarningAccumulator(limit=_MAX_RESULT_WARNINGS)
         seen_sources: dict[str, ChatGPTSession] = {}
@@ -51,7 +53,7 @@ class ChatGPTHistoryImporter(HistoryImporter):
         total_content_chars = 0
 
         for selected_path in paths:
-            result = await asyncio.to_thread(parse_chatgpt_export, selected_path)
+            result = parse_chatgpt_export(selected_path)
             warnings.extend(_warning_text(item) for item in result.warnings)
             for session in result.sessions:
                 existing_session = seen_sources.get(session.source_key)
@@ -69,6 +71,10 @@ class ChatGPTHistoryImporter(HistoryImporter):
                         )
                     )
                     continue
+                if len(sources) >= _MAX_TOTAL_SOURCES:
+                    raise ChatGPTArchiveError(
+                        "Selected ChatGPT export contains too many conversations"
+                    )
                 if len(session.messages) > _MAX_RECORDS_PER_SOURCE:
                     raise ChatGPTArchiveError(
                         "ChatGPT conversation contains too many messages"
@@ -174,7 +180,7 @@ def _source_from_session(
     known_message_keys = {message.message_key for message in session.messages}
     return HistoryImportSource(
         source_id=session.source_key,
-        source_name=session.title or "ChatGPT conversation",
+        source_name=_bounded_source_name(session.title),
         session_key=session.session_id,
         detected_kind="chat",
         warnings=warnings,
@@ -199,6 +205,13 @@ def _source_from_session(
             for message in session.messages
         ],
     )
+
+
+def _bounded_source_name(title: str) -> str:
+    normalized = title.strip() or "ChatGPT conversation"
+    if len(normalized) <= _MAX_SOURCE_NAME_LENGTH:
+        return normalized
+    return normalized[: _MAX_SOURCE_NAME_LENGTH - 1].rstrip() + "…"
 
 
 def _normalized_role_hint(role_hint: str) -> str:
