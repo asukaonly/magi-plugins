@@ -19,8 +19,8 @@ from .parser import (
     ChatGPTArchiveError,
     ChatGPTImportWarning,
     ChatGPTSession,
-    parse_chatgpt_export,
-    sessions_have_same_messages,
+    iter_chatgpt_export,
+    session_message_digest,
 )
 
 
@@ -48,17 +48,20 @@ class ChatGPTHistoryImporter(HistoryImporter):
     def parse(self, paths: list[Path]) -> HistoryImportParseResult:
         sources: list[HistoryImportSource] = []
         warnings = _StringWarningAccumulator(limit=_MAX_RESULT_WARNINGS)
-        seen_sources: dict[str, ChatGPTSession] = {}
+        seen_source_digests: dict[str, str] = {}
         total_records = 0
         total_content_chars = 0
 
         for selected_path in paths:
-            result = parse_chatgpt_export(selected_path)
-            warnings.extend(_warning_text(item) for item in result.warnings)
-            for session in result.sessions:
-                existing_session = seen_sources.get(session.source_key)
-                if existing_session is not None:
-                    if not sessions_have_same_messages(existing_session, session):
+            for item in iter_chatgpt_export(selected_path):
+                warnings.extend(_warning_text(entry) for entry in item.warnings)
+                session = item.session
+                if session is None:
+                    continue
+                session_digest = session_message_digest(session)
+                existing_digest = seen_source_digests.get(session.source_key)
+                if existing_digest is not None:
+                    if existing_digest != session_digest:
                         raise ChatGPTArchiveError(
                             "Selected ChatGPT exports contain conflicting versions "
                             "of one conversation"
@@ -67,7 +70,7 @@ class ChatGPTHistoryImporter(HistoryImporter):
                         _bounded_warning_fields(
                             "duplicate_session",
                             session.source_key,
-                            result.source_name,
+                            selected_path.name,
                         )
                     )
                     continue
@@ -102,7 +105,7 @@ class ChatGPTHistoryImporter(HistoryImporter):
                     )
                 total_records += len(session.messages)
                 total_content_chars += session_content_chars
-                seen_sources[session.source_key] = session
+                seen_source_digests[session.source_key] = session_digest
                 session_warnings = _StringWarningAccumulator(limit=_MAX_SOURCE_WARNINGS)
                 session_warnings.extend(
                     _warning_text(item) for item in session.warnings

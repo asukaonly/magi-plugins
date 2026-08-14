@@ -287,7 +287,7 @@
         "zh-CN": "ChatGPT 历史"
       },
       "icon": "lucide:message-square-text",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "plugins/chatgpt-history",
       "description": "Imports conversations from an official ChatGPT data export without ongoing access to your account.",
       "description_i18n": {
@@ -331,7 +331,7 @@
         "linux"
       ],
       "data_locality": "local_only",
-      "package_sha256": "d5caeb3f8ffc252b41b61100d508dda0d3d880411a9d20418acfd0f97ee88dee"
+      "package_sha256": "63535bc608eb140d267d70692edeabf302ebad58aeb825f044b8b409d4b7f8d1"
     },
     {
       "plugin_id": "chrome-history",

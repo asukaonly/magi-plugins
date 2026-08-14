@@ -90,6 +90,14 @@ class ChatGPTArchiveResult:
 
 
 @dataclass(frozen=True, slots=True)
+class ChatGPTArchiveItem:
+    """One incrementally parsed session or set of non-fatal warnings."""
+
+    session: ChatGPTSession | None = None
+    warnings: tuple[ChatGPTImportWarning, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class _ConversationEntry:
     source_name: str
     source_index: int
@@ -150,7 +158,21 @@ def parse_chatgpt_export(path: str | Path) -> ChatGPTArchiveResult:
         limit=_MAX_RESULT_WARNINGS,
         source_name=selected_path.name,
     )
-    seen_sessions: dict[str, ChatGPTSession] = {}
+
+    for item in iter_chatgpt_export(selected_path):
+        result_warnings.extend(item.warnings)
+        if item.session is not None:
+            result.sessions.append(item.session)
+
+    result.warnings = result_warnings.items
+    return result
+
+
+def iter_chatgpt_export(path: str | Path) -> Iterable[ChatGPTArchiveItem]:
+    """Yield normalized conversations without retaining the complete export."""
+
+    selected_path = Path(path).expanduser()
+    seen_session_digests: dict[str, str] = {}
     conversation_count = 0
     message_count = 0
 
@@ -160,11 +182,13 @@ def parse_chatgpt_export(path: str | Path) -> ChatGPTArchiveResult:
             raise ChatGPTArchiveError("ChatGPT export contains too many conversations")
         raw_conversation = entry.payload
         if not isinstance(raw_conversation, dict):
-            result_warnings.add(
-                ChatGPTImportWarning(
-                    code="invalid_conversation",
-                    source_name=entry.source_name,
-                    detail=f"index={entry.source_index}",
+            yield ChatGPTArchiveItem(
+                warnings=(
+                    ChatGPTImportWarning(
+                        code="invalid_conversation",
+                        source_name=entry.source_name,
+                        detail=f"index={entry.source_index}",
+                    ),
                 )
             )
             continue
@@ -175,30 +199,30 @@ def parse_chatgpt_export(path: str | Path) -> ChatGPTArchiveResult:
             source_index=entry.source_index,
         )
         if session is None:
-            result_warnings.extend(warnings)
+            yield ChatGPTArchiveItem(warnings=tuple(warnings))
             continue
-        existing_session = seen_sessions.get(session.session_id)
-        if existing_session is not None:
-            if not sessions_have_same_messages(existing_session, session):
+        session_digest = session_message_digest(session)
+        existing_digest = seen_session_digests.get(session.session_id)
+        if existing_digest is not None:
+            if existing_digest != session_digest:
                 raise ChatGPTArchiveError(
                     "ChatGPT export contains conflicting versions of one conversation"
                 )
-            result_warnings.add(
-                ChatGPTImportWarning(
-                    code="duplicate_session",
-                    source_name=entry.source_name,
-                    session_id=session.session_id,
+            yield ChatGPTArchiveItem(
+                warnings=(
+                    ChatGPTImportWarning(
+                        code="duplicate_session",
+                        source_name=entry.source_name,
+                        session_id=session.session_id,
+                    ),
                 )
             )
             continue
         message_count += len(session.messages)
         if message_count > _MAX_MESSAGES_TOTAL:
             raise ChatGPTArchiveError("ChatGPT export contains too many messages")
-        seen_sessions[session.session_id] = session
-        result.sessions.append(session)
-
-    result.warnings = result_warnings.items
-    return result
+        seen_session_digests[session.session_id] = session_digest
+        yield ChatGPTArchiveItem(session=session)
 
 
 def _iter_conversations(path: Path) -> Iterable[_ConversationEntry]:
@@ -360,8 +384,7 @@ def _iter_json_array(handle: TextIO, *, source_name: str) -> Iterable[Any]:
                 )
             if buffer[position] != "[":
                 raise ChatGPTArchiveError(
-                    "ChatGPT conversations JSON must contain a list: "
-                    f"{source_name}"
+                    "ChatGPT conversations JSON must contain a list: " f"{source_name}"
                 )
             position += 1
             state = "value_or_end"
@@ -861,8 +884,15 @@ def sessions_have_same_messages(
 ) -> bool:
     """Compare normalized source-declared message identity and content."""
 
-    def signature(session: ChatGPTSession) -> tuple[tuple[Any, ...], ...]:
-        return tuple(
+    return session_message_digest(left) == session_message_digest(right)
+
+
+def session_message_digest(session: ChatGPTSession) -> str:
+    """Hash normalized message identity without retaining another session copy."""
+
+    digest = hashlib.sha256()
+    for message in session.messages:
+        signature = json.dumps(
             (
                 message.message_key,
                 message.parent_message_id,
@@ -872,19 +902,24 @@ def sessions_have_same_messages(
                 message.occurred_at,
                 message.content,
                 message.content_type,
-            )
-            for message in session.messages
-        )
-
-    return signature(left) == signature(right)
+            ),
+            ensure_ascii=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        digest.update(len(signature).to_bytes(8, "big"))
+        digest.update(signature)
+    return digest.hexdigest()
 
 
 __all__ = [
     "ChatGPTArchiveError",
+    "ChatGPTArchiveItem",
     "ChatGPTArchiveResult",
     "ChatGPTImportWarning",
     "ChatGPTMessage",
     "ChatGPTSession",
+    "iter_chatgpt_export",
     "parse_chatgpt_export",
+    "session_message_digest",
     "sessions_have_same_messages",
 ]

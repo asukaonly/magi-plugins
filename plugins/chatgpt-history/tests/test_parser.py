@@ -9,6 +9,7 @@ import pytest
 from chatgpt_history_under_test import parser as parser_module
 from chatgpt_history_under_test.parser import (
     ChatGPTArchiveError,
+    iter_chatgpt_export,
     parse_chatgpt_export,
 )
 
@@ -85,6 +86,34 @@ def test_json_input_is_streamed_without_reading_the_complete_file(
     assert [session.session_id for session in result.sessions] == [
         "conversation-stable-001"
     ]
+
+
+def test_incremental_export_stops_parsing_when_consumer_stops(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = _fixture_payload()
+    second = json.loads(json.dumps(payload[0]))
+    second["id"] = "conversation-stable-002"
+    path = tmp_path / "conversations.json"
+    path.write_text(json.dumps([payload[0], second]), encoding="utf-8")
+    original = parser_module._parse_conversation
+    calls = 0
+
+    def track_parse(*args: object, **kwargs: object):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(parser_module, "_parse_conversation", track_parse)
+    stream = iter_chatgpt_export(path)
+
+    first = next(iter(stream))
+
+    assert first.session is not None
+    assert first.session.session_id == "conversation-stable-001"
+    assert calls == 1
+    getattr(stream, "close")()
 
 
 def test_reads_numbered_conversation_json_members(tmp_path: Path) -> None:

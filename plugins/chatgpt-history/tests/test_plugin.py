@@ -166,16 +166,16 @@ def test_importer_applies_total_message_limit_across_selected_files(
         _single_message_session(module, session_id="session-1", content="one"),
         _single_message_session(module, session_id="session-2", content="two"),
     ]
+    item_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveItem
     calls = 0
 
     def parse_selected(path: Path):
         nonlocal calls
         session = sessions[calls]
         calls += 1
-        result_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult
-        return result_type(source_name=path.name, sessions=[session])
+        return iter((item_type(session=session),))
 
-    monkeypatch.setattr(module, "parse_chatgpt_export", parse_selected)
+    monkeypatch.setattr(module, "iter_chatgpt_export", parse_selected)
     monkeypatch.setattr(module, "_MAX_TOTAL_RECORDS", 1)
 
     with pytest.raises(module.ChatGPTArchiveError, match="too many messages"):
@@ -194,13 +194,11 @@ def test_importer_applies_total_content_limit_before_sdk_modeling(
         session_id="large-session",
         content="large",
     )
+    item_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveItem
     monkeypatch.setattr(
         module,
-        "parse_chatgpt_export",
-        lambda path: sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult(
-            source_name=path.name,
-            sessions=[session],
-        ),
+        "iter_chatgpt_export",
+        lambda path: iter((item_type(session=session),)),
     )
     monkeypatch.setattr(module, "_MAX_TOTAL_CONTENT_CHARS", 4)
 
@@ -216,23 +214,26 @@ def test_importer_applies_sdk_source_limit_without_truncation(
     selected = tmp_path / "export.json"
     selected.write_text("[]", encoding="utf-8")
     assert module._MAX_TOTAL_SOURCES == 5_000
-    sessions = [
-        _single_message_session(
-            module,
-            session_id=f"session-{index}",
-            content="text",
-        )
-        for index in range(module._MAX_TOTAL_SOURCES + 1)
-    ]
-    result_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult
-    monkeypatch.setattr(
-        module,
-        "parse_chatgpt_export",
-        lambda path: result_type(source_name=path.name, sessions=sessions),
-    )
+    item_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveItem
+    consumed = 0
+
+    def stream_sessions(path: Path):
+        nonlocal consumed
+        for index in range(module._MAX_TOTAL_SOURCES + 100):
+            consumed += 1
+            yield item_type(
+                session=_single_message_session(
+                    module,
+                    session_id=f"session-{index}",
+                    content="text",
+                )
+            )
+
+    monkeypatch.setattr(module, "iter_chatgpt_export", stream_sessions)
 
     with pytest.raises(module.ChatGPTArchiveError, match="too many conversations"):
         module.ChatGPTHistoryImporter().parse([selected])
+    assert consumed == module._MAX_TOTAL_SOURCES + 1
 
 
 def test_importer_deduplicates_identical_session_across_selected_files(
@@ -249,11 +250,11 @@ def test_importer_deduplicates_identical_session_across_selected_files(
         session_id="shared-session",
         content="same message",
     )
-    result_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult
+    item_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveItem
     monkeypatch.setattr(
         module,
-        "parse_chatgpt_export",
-        lambda path: result_type(source_name=path.name, sessions=[session]),
+        "iter_chatgpt_export",
+        lambda path: iter((item_type(session=session),)),
     )
 
     result = module.ChatGPTHistoryImporter().parse([first_path, second_path])
@@ -283,16 +284,16 @@ def test_importer_rejects_conflicting_session_across_selected_files(
             content="new message",
         ),
     ]
+    item_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveItem
     calls = 0
 
     def parse_selected(path: Path):
         nonlocal calls
-        result_type = sys.modules[f"{PACKAGE_NAME}.parser"].ChatGPTArchiveResult
-        result = result_type(source_name=path.name, sessions=[sessions[calls]])
+        result = iter((item_type(session=sessions[calls]),))
         calls += 1
         return result
 
-    monkeypatch.setattr(module, "parse_chatgpt_export", parse_selected)
+    monkeypatch.setattr(module, "iter_chatgpt_export", parse_selected)
 
     with pytest.raises(module.ChatGPTArchiveError, match="conflicting versions"):
         module.ChatGPTHistoryImporter().parse([first_path, second_path])
