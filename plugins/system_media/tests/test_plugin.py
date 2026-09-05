@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 
 PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
@@ -12,10 +15,12 @@ if PLUGINS_ROOT not in sys.path:
 from system_media.plugin import SystemMediaPlugin
 
 
-def test_system_media_registers_as_local_now_playing_entry() -> None:
+@pytest.mark.parametrize("runtime_platform", ["darwin", "win32"])
+def test_system_media_registers_as_local_now_playing_entry(runtime_platform: str) -> None:
     plugin = SystemMediaPlugin()
 
-    sources = plugin.get_sources()
+    with patch.object(sys, "platform", runtime_platform):
+        sources = plugin.get_sources()
 
     assert len(sources) == 1
     _, _, spec = sources[0]
@@ -25,6 +30,12 @@ def test_system_media_registers_as_local_now_playing_entry() -> None:
     assert spec.metadata["entry_id"] == "local_now_playing"
     assert spec.metadata["entry_display_name"] == "Local Now Playing"
     assert spec.metadata["entry_order"] == 20
+
+
+def test_system_media_does_not_register_on_linux() -> None:
+    plugin = SystemMediaPlugin()
+    with patch.object(sys, "platform", "linux"):
+        assert plugin.get_sources() == []
 
 
 def test_system_media_profile_declares_derived_music_rule() -> None:

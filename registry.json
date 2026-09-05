@@ -5263,7 +5263,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlN0ZWFtPC90aXRsZT48cGF0aCBmaWxsPSIjNjZDMEY0IiBkPSJNMTEuOTc5IDBDNS42NzggMCAuNTExIDQuODYuMDIyIDExLjAzN2w2LjQzMiAyLjY1OGMuNTQ1LS4zNzEgMS4yMDMtLjU5IDEuOTEyLS41OS4wNjMgMCAuMTI1LjAwNC4xODguMDA2bDIuODYxLTQuMTQyVjguOTFjMC0yLjQ5NSAyLjAyOC00LjUyNCA0LjUyNC00LjUyNCAyLjQ5NCAwIDQuNTI0IDIuMDMxIDQuNTI0IDQuNTI3cy0yLjAzIDQuNTI1LTQuNTI0IDQuNTI1aC0uMTA1bC00LjA3NiAyLjkxMWMwIC4wNTIuMDA0LjEwNS4wMDQuMTU5IDAgMS44NzUtMS41MTUgMy4zOTYtMy4zOSAzLjM5Ni0xLjYzNSAwLTMuMDE2LTEuMTczLTMuMzMxLTIuNzI3TC40MzYgMTUuMjdDMS44NjIgMjAuMzA3IDYuNDg2IDI0IDExLjk3OSAyNGM2LjYyNyAwIDExLjk5OS01LjM3MyAxMS45OTktMTJTMTguNjA1IDAgMTEuOTc5IDB6TTcuNTQgMTguMjFsLTEuNDczLS42MWMuMjYyLjU0My43MTQuOTk5IDEuMzE0IDEuMjUgMS4yOTcuNTM5IDIuNzkzLS4wNzYgMy4zMzItMS4zNzUuMjYzLS42My4yNjQtMS4zMTkuMDA1LTEuOTQ5cy0uNzUtMS4xMjEtMS4zNzctMS4zODNjLS42MjQtLjI2LTEuMjktLjI0OS0xLjg3OC0uMDNsMS41MjMuNjNjLjk1Ni40IDEuNDA5IDEuNSAxLjAwOSAyLjQ1NS0uMzk3Ljk1Ny0xLjQ5NyAxLjQxLTIuNDU0IDEuMDEySDcuNTR6bTExLjQxNS05LjMwM2MwLTEuNjYyLTEuMzUzLTMuMDE1LTMuMDE1LTMuMDE1LTEuNjY1IDAtMy4wMTUgMS4zNTMtMy4wMTUgMy4wMTUgMCAxLjY2NSAxLjM1IDMuMDE1IDMuMDE1IDMuMDE1IDEuNjYzIDAgMy4wMTUtMS4zNSAzLjAxNS0zLjAxNXptLTUuMjczLS4wMDVjMC0xLjI1MiAxLjAxMy0yLjI2NiAyLjI2NS0yLjI2NiAxLjI0OSAwIDIuMjY2IDEuMDE0IDIuMjY2IDIuMjY2IDAgMS4yNTEtMS4wMTcgMi4yNjUtMi4yNjYgMi4yNjUtMS4yNTMgMC0yLjI2NS0xLjAxNC0yLjI2NS0yLjI2NXoiLz48L3N2Zz4K",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5420,7 +5420,7 @@
           "type": "path",
           "label": "Steam Path",
           "description": "Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
-          "default": "/Users/asuka/Library/Application Support/Steam",
+          "default": "",
           "required": false,
           "section": "general",
           "surface": "timeline",
@@ -5612,7 +5612,7 @@
           }
         ]
       },
-      "package_sha256": "f20729e72f4e0a1810619989678f5cdad1967101d9ca6942a980816c5c275a5d"
+      "package_sha256": "405459758bdd990b1c982a1f8f5797338ce0e994094ffa299fb1f9895297e706"
     },
     {
       "plugin_id": "system-media",
@@ -5621,7 +5621,7 @@
         "zh-CN": "本机正在播放"
       },
       "icon": "lucide:music",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5768,7 +5768,7 @@
           "en": "Lets magi see music playing on this device"
         }
       },
-      "package_sha256": "aca07445a90cf9ceaef1fb447b07defb6b94099e6b712c72bd6b63163f3e8c0f"
+      "package_sha256": "02608f93482e8743a13806457dffde1d569de325c89b4d6bb8adb216d1faf8c6"
     },
     {
       "plugin_id": "telegram",

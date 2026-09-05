@@ -233,7 +233,17 @@ directory and records the installation.
 ## SDK-only verification
 
 CI installs `scripts/conformance-requirements.txt`, asserts that `magi` is absent,
-then constructs declarations for every plugin and runs the package tests:
+then constructs declarations for every plugin and runs the package tests.
+Declaration checks exercise each package's declared desktop platforms by
+simulating the platform identifier; they do not invoke native collectors.
+Unsupported platforms may omit runtime sources while the static manifest keeps
+the package's complete setup catalog. Package tests check those platform gates.
+
+Published field defaults must be independent of the developer's machine and
+local installations. For example, Steam keeps its path default empty and detects
+the local installation only when collecting data.
+
+Run the same suite locally:
 
 ```bash
 python -m pytest --import-mode=importlib scripts/test_sdk_conformance.py plugins -q

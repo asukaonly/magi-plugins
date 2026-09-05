@@ -129,12 +129,6 @@ def _resolve_steam_root(steam_path: str | None) -> Path | None:
     return None
 
 
-def detect_steam_root(steam_path: str | None = None) -> Path | None:
-    """Expose Steam root detection for settings/UI defaults."""
-
-    return _resolve_steam_root(steam_path)
-
-
 def _looks_like_steam_root(path: Path) -> bool:
     return (path / "config" / "loginusers.vdf").exists() or (path / "steamapps").exists()
 
@@ -428,5 +422,4 @@ def _float_or_none(value: Any) -> float | None:
 
 def _game_sort_key(game: SteamGameRecord) -> tuple[float, int, str]:
     return (-(game.last_played_ts or 0.0), -game.playtime_forever_minutes, game.name.lower())
-
 

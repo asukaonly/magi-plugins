@@ -377,6 +377,10 @@
       "package_sha256": "f20729e72f4e0a1810619989678f5cdad1967101d9ca6942a980816c5c275a5d",
       "executable_paths": []
     },
+    "steam-play-history@0.3.1": {
+      "package_sha256": "405459758bdd990b1c982a1f8f5797338ce0e994094ffa299fb1f9895297e706",
+      "executable_paths": []
+    },
     "system-media@0.1.2": {
       "package_sha256": "d289be73fdd3d8536e04f22e6e1afedc5eb3ef726a94d29eeeb3ecb1ae1b0967",
       "executable_paths": []
@@ -395,6 +399,10 @@
     },
     "system-media@0.3.0": {
       "package_sha256": "aca07445a90cf9ceaef1fb447b07defb6b94099e6b712c72bd6b63163f3e8c0f",
+      "executable_paths": []
+    },
+    "system-media@0.3.1": {
+      "package_sha256": "02608f93482e8743a13806457dffde1d569de325c89b4d6bb8adb216d1faf8c6",
       "executable_paths": []
     },
     "telegram@0.2.2": {

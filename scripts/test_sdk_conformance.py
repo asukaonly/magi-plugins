@@ -8,6 +8,7 @@ import math
 import sys
 import tomllib
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest, Source
@@ -16,8 +17,13 @@ from sdk_test_support import bind_test_plugin, load_plugin
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = sorted((ROOT / "plugins").glob("*/plugin.toml"))
-
-
+RUNTIME_PLATFORMS = {"macos": "darwin", "windows": "win32", "linux": "linux"}
+DECLARATION_CASES = [
+    pytest.param(path, runtime_platform, id=f"{path.parent.name}-{platform}")
+    for path in PACKAGES
+    for platform, runtime_platform in RUNTIME_PLATFORMS.items()
+    if platform in tomllib.loads(path.read_text())["plugin"].get("platforms", RUNTIME_PLATFORMS)
+]
 
 
 @pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
@@ -40,8 +46,8 @@ def test_package_uses_explicit_protocol_and_public_sdk(path: Path) -> None:
                 assert all(alias.name.split(".")[0] != "magi" for alias in node.names), source
 
 
-@pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
-def test_all_declarations_construct_without_backend(path: Path) -> None:
+@pytest.mark.parametrize("path,runtime_platform", DECLARATION_CASES)
+def test_all_declarations_construct_without_backend(path: Path, runtime_platform: str) -> None:
     before = {name for name in sys.modules if name == "magi" or name.startswith("magi.")}
     if tomllib.loads(path.read_text())["plugin"].get("kind") == "library":
         for source_file in path.parent.glob("*.py"):
@@ -58,7 +64,8 @@ def test_all_declarations_construct_without_backend(path: Path) -> None:
     for field in plugin.get_channel_fields():
         assert field.key in declared_fields
         assert field.type == declared_fields[field.key].type
-    declarations = plugin.get_sources()
+    with patch.object(sys, "platform", runtime_platform):
+        declarations = plugin.get_sources()
     assert len({source_id for source_id, _, _ in declarations}) == len(declarations)
     for source_id, source, spec in declarations:
         assert isinstance(source, Source)
@@ -240,17 +247,18 @@ def test_settings_defaults_match_host_declarations(path: Path) -> None:
             check_values(spec.metadata.get("default_settings", {}), prefix)
 
 
-def test_declarative_activation_matches_primary_source() -> None:
-    for path in PACKAGES:
-        meta = tomllib.loads(path.read_text())["plugin"]
-        if meta.get("kind") == "library":
-            continue
-        plugin = bind_test_plugin(load_plugin(path))
+@pytest.mark.parametrize("path,runtime_platform", DECLARATION_CASES)
+def test_declarative_activation_matches_primary_source(path: Path, runtime_platform: str) -> None:
+    meta = tomllib.loads(path.read_text())["plugin"]
+    if meta.get("kind") == "library":
+        return
+    plugin = bind_test_plugin(load_plugin(path))
+    with patch.object(sys, "platform", runtime_platform):
         flows = [spec.metadata["activation_flow"] for _, _, spec in plugin.get_sources() if spec.metadata.get("activation_flow")]
-        if flows:
-            assert plugin.manifest.activation_flow.model_dump() == flows[0]
-        else:
-            assert plugin.manifest.activation_flow is None
+    if flows:
+        assert plugin.manifest.activation_flow.model_dump() == flows[0]
+    else:
+        assert plugin.manifest.activation_flow is None
 
 
 @pytest.mark.parametrize("package_name", ["local-documents", "obsidian-vault"])

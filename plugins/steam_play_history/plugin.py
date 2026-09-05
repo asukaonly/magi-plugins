@@ -9,7 +9,6 @@ from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionF
 
 from .source import SteamPlayHistoryTimelineSource
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
-from .reader import detect_steam_root
 
 STEAM_L2_DERIVED_RULE = {
     "rule_id": "steam_play_history.viewed_interest",
@@ -160,7 +159,7 @@ def _activation_flow(prefix: str, t: Any) -> ActivationFlowSpec:
     )
 
 
-def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionFieldSpec]:
+def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
             key=f"{prefix}.enabled",
@@ -180,7 +179,7 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
                 "settings.steam_path.description",
                 fallback="Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
             ),
-            default=detected_steam_path,
+            default="",
             section="general",
             surface="timeline",
             order=20,
@@ -387,7 +386,6 @@ class SteamPlayHistoryPlugin(Plugin):
         idle_timeout_minutes = int(settings.get("idle_timeout_minutes", DEFAULT_SETTINGS["idle_timeout_minutes"]))
         sync_interval = int(settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
         configured_steam_path = str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"])
-        detected_steam_path = str(detect_steam_root(configured_steam_path) or "")
 
         source = SteamPlayHistoryTimelineSource(
             state_store=SteamPlayStateStore(
@@ -417,7 +415,6 @@ class SteamPlayHistoryPlugin(Plugin):
                     fields=_fields(
                         "sources.steam_play_history",
                         self.t,
-                        detected_steam_path=detected_steam_path,
                     ),
                     metadata={
                         "source_type": "steam_play_history",

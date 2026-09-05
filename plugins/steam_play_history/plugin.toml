@@ -10,7 +10,7 @@ id = "steam-play-history"
 name = "Steam"
 name_i18n = { "zh-CN" = "Steam" }
 icon = "asset:assets/icon.svg"
-version = "0.3.0"
+version = "0.3.1"
 description = "Infers Steam game records from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏记录" }
 author = "Magi Team"
@@ -207,7 +207,7 @@ key = "sources.steam_play_history.steam_path"
 type = "path"
 label = "Steam Path"
 description = "Optional Steam install path. Leave empty to auto-detect the local Steam folder."
-default = "/Users/asuka/Library/Application Support/Steam"
+default = ""
 required = false
 section = "general"
 surface = "timeline"
