@@ -264,7 +264,6 @@ class ChromeHistoryPlugin(Plugin):
                 allowed_assertion_families=["interest_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["interest.*"],
                 derived_assertion_specs=[
                     {

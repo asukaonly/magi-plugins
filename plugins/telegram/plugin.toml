@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["telegram"]
 id = "telegram"
 name = "Telegram"
 name_i18n = { "zh-CN" = "Telegram" }
 icon = "asset:assets/icon.svg"
-version = "0.2.3"
+version = "0.3.0"
 description = "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram."
 description_i18n = { "zh-CN" = "将 Magi 接入 Telegram，通过机器人与 Magi 对话并接收消息回复" }
 author = "Magi Team"
@@ -18,3 +25,105 @@ platforms = ["windows", "macos"]
 capability = "network"
 scope = ["api.telegram.org"]
 reason_i18n = { en = "Connect to the Telegram Bot API", "zh-CN" = "连接 Telegram Bot API" }
+
+[[plugin.settings_fields]]
+key = "allowed_user_ids"
+type = "tags"
+label = "Allowed User IDs"
+description = "Whitelist of Telegram user IDs. Empty means allow all users."
+required = false
+section = "general"
+surface = "extensions"
+order = 4
+
+[[plugin.settings_fields]]
+key = "bot_token"
+type = "secret"
+label = "Bot Token"
+description = "Telegram bot token from @BotFather."
+required = true
+section = "general"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "group_trigger_keyword"
+type = "input"
+label = "Group Trigger Keyword"
+description = "Keyword prefix that triggers the bot in group chats."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 5
+placeholder = "magi"
+
+[[plugin.settings_fields]]
+key = "magi_user_id"
+type = "input"
+label = "Magi User ID"
+description = "Magi user identity to associate with this channel."
+default = "default"
+required = false
+section = "general"
+surface = "extensions"
+order = 6
+
+[[plugin.settings_fields]]
+key = "max_message_length"
+type = "number"
+label = "Max Message Length"
+description = "Maximum characters per Telegram message (1–4096)."
+default = 4096
+required = false
+section = "general"
+surface = "extensions"
+order = 7
+
+[[plugin.settings_fields]]
+key = "mode"
+type = "select"
+label = "Connection Mode"
+description = "Polling checks for updates periodically; Webhook requires a public HTTPS URL."
+default = "polling"
+required = false
+options = [{ "label" = "Polling", "value" = "polling" }, { "label" = "Webhook", "value" = "webhook" }]
+section = "general"
+surface = "extensions"
+order = 1
+
+[[plugin.settings_fields]]
+key = "proxy"
+type = "input"
+label = "Proxy"
+description = "HTTP/SOCKS5 proxy URL. Leave empty to use the global network proxy."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 3
+placeholder = "http://127.0.0.1:7890"
+
+[[plugin.settings_fields]]
+key = "webhook_secret"
+type = "secret"
+label = "Webhook Secret"
+description = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "webhook_url"
+type = "input"
+label = "Webhook URL"
+description = "Public HTTPS URL for webhook mode. Required when mode is 'webhook'."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 2
+placeholder = "https://your-domain.com/webhook/telegram"
+depends_on_key = "mode"
+depends_on_values = ["webhook"]

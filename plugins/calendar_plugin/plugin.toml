@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = [{ "resource_name" = "calendar_lists", "resource_type" = "collection", "requires_enabled" = false, "description" = "Selectable calendars grouped by account/source.", "metadata" = {  } }]
+settings_ui_blocks = [{ "block_id" = "selected_calendars", "type" = "resource_picker", "title" = "Calendars", "description" = "Choose which calendars should be synced into the timeline.", "resource_name" = "calendar_lists", "value_key" = "sensors.calendar.selected_calendar_ids", "presentation" = "calendar_list", "depends_on_key" = "sensors.calendar.authorization_configured", "depends_on_values" = ["true"] }]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["calendar"]
 id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "lucide:calendar-days"
-version = "0.1.2"
+version = "0.2.0"
 description = "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
 description_i18n = { "zh-CN" = "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划" }
 author = "Magi Team"
@@ -75,3 +82,109 @@ reason_i18n = { en = "Read your calendar events and reminders", "zh-CN" = "读�
 capability = "filesystem_read"
 scope = ["~/Library/Calendars"]
 reason_i18n = { en = "Parse the local calendar store", "zh-CN" = "解析本地日历数据" }
+
+[plugin.activation_flow]
+title = "Connect Calendar"
+description = "Allow Magi to read your calendar events for timeline sync."
+confirm_label = "Allow calendar access"
+cancel_label = "Not now"
+authorize_on_confirm = true
+enabled_key = "sensors.calendar.enabled"
+configured_key = "sensors.calendar.authorization_configured"
+fields = []
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.authorization_configured"
+type = "switch"
+label = "Authorization Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.default_retention_mode"
+type = "input"
+label = "Default Retention Mode"
+description = ""
+default = "full"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.enabled"
+type = "switch"
+label = "Enable Calendar Sync"
+description = "Sync calendar events to timeline."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.lookback_days"
+type = "number"
+label = "Lookback Days"
+description = "How many days of history to sync on initial setup."
+default = 30
+required = false
+section = "sync"
+surface = "timeline"
+order = 40
+minimum = 1.0
+maximum = 365.0
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.recurring_expansion_days"
+type = "number"
+label = "Future Recurring Event Window"
+description = "How many future days of recurring events should be prefetched into the timeline."
+default = 30
+required = false
+section = "sync"
+surface = "timeline"
+order = 50
+minimum = 1.0
+maximum = 365.0
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.selected_calendar_ids"
+type = "tags"
+label = "Selected Calendar Ids"
+description = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.sync_interval_minutes"
+type = "select"
+label = "Sync Interval"
+description = "How often to sync calendar events when scheduled sync is enabled."
+default = "30"
+required = true
+options = [{ "label" = "15 minutes", "value" = "15" }, { "label" = "30 minutes", "value" = "30" }, { "label" = "1 hour", "value" = "60" }, { "label" = "6 hours", "value" = "360" }]
+section = "sync"
+surface = "timeline"
+order = 30
+depends_on_key = "sensors.calendar.sync_mode"
+depends_on_values = ["interval"]
+
+[[plugin.settings_fields]]
+key = "sensors.calendar.sync_mode"
+type = "select"
+label = "Sync Mode"
+description = "Choose whether calendar sync runs manually or on a schedule."
+default = "interval"
+required = true
+options = [{ "label" = "Manual", "value" = "manual" }, { "label" = "Scheduled", "value" = "interval" }]
+section = "sync"
+surface = "timeline"
+order = 20

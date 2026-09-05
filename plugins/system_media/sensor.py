@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
-import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,7 +16,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .reader import get_current_media
@@ -59,14 +59,6 @@ class SystemMediaTimelineSensor(SensorBase):
             f"media:{item.get('started_at', '')}:{item.get('app_id', '')}:{item.get('title', '')}"
         )
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        parts = [
-            str(item.get("started_at", "")),
-            str(item.get("app_id", "")),
-            str(item.get("title", "")),
-            str(item.get("duration_seconds", 0)),
-        ]
-        return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
 
     async def extract_metadata(self, item: dict[str, Any]) -> SensorOutputMetadata:
         title = str(item.get("title") or "").strip()
@@ -131,7 +123,7 @@ class SystemMediaTimelineSensor(SensorBase):
             relation_candidates=[],
         )
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         async with self._operation_lock:
             now = self._now()
 
@@ -149,8 +141,8 @@ class SystemMediaTimelineSensor(SensorBase):
             )
             items.sort(key=lambda i: i.get("started_at", ""), reverse=True)
 
-            return SensorSyncResult(
-                items=items,
+            return SourceChangeBatch(
+                changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
                 next_cursor=str(now.timestamp()),
                 watermark_ts=now.timestamp(),
                 stats={"count": len(items)},

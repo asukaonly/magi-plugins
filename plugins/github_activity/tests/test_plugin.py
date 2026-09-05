@@ -1,6 +1,8 @@
 """GitHub Activity plugin registration."""
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import asyncio
 import json
@@ -31,7 +33,7 @@ def _load_plugin_module():
 
 def test_plugin_exposes_timeline_sensor_with_github_connection_action() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.GitHubActivityPlugin()
+    plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
     plugin.settings = {
         "sensors": {
             "github_activity": {
@@ -80,7 +82,7 @@ def test_connect_action_uses_configured_client_id_without_user_field(monkeypatch
 
     monkeypatch.setenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", "packaged-client-id")
     monkeypatch.setattr(plugin_mod, "GitHubDeviceAuthClient", _FakeAuth)
-    plugin = plugin_mod.GitHubActivityPlugin()
+    plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
 
     result = asyncio.run(
         plugin.start_settings_action(
@@ -116,7 +118,7 @@ def test_connect_action_uses_packaged_client_id_without_environment_override(mon
 
     monkeypatch.delenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", raising=False)
     monkeypatch.setattr(plugin_mod, "GitHubDeviceAuthClient", _FakeAuth)
-    plugin = plugin_mod.GitHubActivityPlugin()
+    plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
 
     result = asyncio.run(
         plugin.start_settings_action(
@@ -134,7 +136,7 @@ def test_connect_action_reports_unconfigured_authorization_without_user_field(mo
     plugin_mod = _load_plugin_module()
     monkeypatch.delenv("MAGI_GITHUB_ACTIVITY_CLIENT_ID", raising=False)
     monkeypatch.setattr(plugin_mod, "DEFAULT_GITHUB_CLIENT_ID", "")
-    plugin = plugin_mod.GitHubActivityPlugin()
+    plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
 
     result = asyncio.run(
         plugin.start_settings_action(
@@ -150,7 +152,7 @@ def test_connect_action_reports_unconfigured_authorization_without_user_field(mo
 
 def test_extraction_profile_keeps_github_activity_structured_and_project_focused() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.GitHubActivityPlugin()
+    plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
 
     profile = plugin.get_extraction_profiles()[0]
 
@@ -159,7 +161,7 @@ def test_extraction_profile_keeps_github_activity_structured_and_project_focused
     assert set(profile.structured_allowed_predicates) == {"WORKS_WITH", "COMMITTED", "USES", "REFERENCES"}
     assert not ({"WORKED_ON", "REVIEWED", "OPENED", "CHECKED"} & set(profile.structured_allowed_predicates))
     assert profile.allow_assertion is True
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["project_profile"]
     assert profile.allowed_assertion_traits == ["project.*"]
     rule = profile.derived_assertion_specs[0]

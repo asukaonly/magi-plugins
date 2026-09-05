@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pytest
 
-pytest_plugins = ["pytest_asyncio"]
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

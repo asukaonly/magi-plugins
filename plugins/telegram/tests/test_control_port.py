@@ -21,7 +21,7 @@ from magi_plugin_sdk.channels import (  # noqa: E402
     ChannelSessionMapping,
 )
 
-from telegram.adapter import TelegramChannel, TelegramChannelConfig  # noqa: E402
+from magi_telegram_plugin_test.adapter import TelegramChannel, TelegramChannelConfig  # noqa: E402
 
 
 def _channel() -> TelegramChannel:

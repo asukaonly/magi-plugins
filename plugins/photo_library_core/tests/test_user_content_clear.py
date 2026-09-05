@@ -286,7 +286,7 @@ def test_clear_waits_for_scan_and_later_scan_rebuilds_index(tmp_path: Path) -> N
         assert all(not os.path.lexists(path) for path in index_paths)
 
         result = await sensor.collect_items(sync_context)
-        assert result.items == []
+        assert [change.payload for change in result.changes] == []
 
     asyncio.run(scenario())
 

@@ -99,9 +99,8 @@ def test_catalog_resolves_wuthering_waves_as_gaming() -> None:
     apps_mod = importlib.util.module_from_spec(apps_spec)
     sys.modules[apps_spec.name] = apps_mod
     apps_spec.loader.exec_module(apps_mod)
-    apps_mod.reset_catalog()
 
-    resolved = apps_mod.resolve_app(
+    resolved = apps_mod.AppResolver().resolve(
         platform="win32",
         raw_bundle_id=r"C:\\games\\WutheringWaves\\Client-Win64-Shipping.exe",
         raw_app_name="Wuthering Waves",

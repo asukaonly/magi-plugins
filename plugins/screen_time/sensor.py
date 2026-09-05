@@ -1,8 +1,9 @@
 """Timeline sensor for cross-platform foreground-app usage."""
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
-import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
@@ -14,7 +15,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from ._watcher import ForegroundAppWatcher
@@ -64,14 +64,6 @@ class ScreenTimeTimelineSensor(SensorBase):
         canonical_id = str(item.get("canonical_id") or item.get("bundle_id") or "")
         return f"app_usage:{item.get('bucket_start', '')}:{canonical_id}"
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        version_parts = [
-            str(item.get("bucket_start", "")),
-            str(item.get("canonical_id") or item.get("bundle_id", "")),
-            str(item.get("duration_seconds", 0)),
-            str(item.get("session_count", 0)),
-        ]
-        return hashlib.sha1("|".join(version_parts).encode("utf-8")).hexdigest()
 
     def _ensure_watcher(self, runtime_paths: Any) -> None:
         if self._watcher is None:
@@ -85,7 +77,7 @@ class ScreenTimeTimelineSensor(SensorBase):
         if self._watcher.is_supported and not self._watcher.is_running:
             self._watcher.start()
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         async with self._operation_lock:
             self._ensure_watcher(context.runtime_paths)
             now = self._now()
@@ -101,8 +93,8 @@ class ScreenTimeTimelineSensor(SensorBase):
                 reverse=True,
             )
             now_ts = now.timestamp()
-            return SensorSyncResult(
-                items=items,
+            return SourceChangeBatch(
+                changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
                 next_cursor=str(now_ts),
                 watermark_ts=now_ts,
                 stats={"count": len(items)},

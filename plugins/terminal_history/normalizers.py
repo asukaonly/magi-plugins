@@ -1,6 +1,8 @@
 """Normalization helpers for Terminal History timeline ingestion."""
 from __future__ import annotations
 
+import hashlib
+
 from datetime import datetime
 from typing import Any
 
@@ -23,7 +25,7 @@ def normalize_terminal_command(item: dict[str, Any] | TerminalCommand, sensor: A
     else:
         command = TerminalCommand(
             command=item.get("command", ""),
-            executed_at=item.get("executed_at", datetime.now()),
+            executed_at=datetime.fromtimestamp(float(item["executed_at"])),
             shell=item.get("shell", "unknown"),
             history_line=item.get("history_line", 0),
             raw_line=item.get("raw_line", ""),
@@ -64,7 +66,8 @@ def normalize_terminal_command(item: dict[str, Any] | TerminalCommand, sensor: A
     }
 
     # Create unique event ID
-    event_id = f"terminal_{int(command.executed_at.timestamp())}_{abs(hash(command.command) % 10000):04d}"
+    digest = hashlib.sha256(command.command.encode("utf-8")).hexdigest()[:16]
+    event_id = f"terminal_{int(command.executed_at.timestamp())}_{digest}"
 
     return {
         "event_id": event_id,

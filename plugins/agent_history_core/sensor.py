@@ -23,7 +23,8 @@ scrubs every user turn (``redact_secrets``) and pins the full joined text in
 """
 from __future__ import annotations
 
-import hashlib
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import time
 from typing import Any
 
@@ -33,7 +34,6 @@ from magi_plugin_sdk.sensors import (
     SensorMemoryPolicy,
     SensorOutput,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .adapters.base import select_adapter
@@ -106,15 +106,6 @@ class CodingAgentHistorySensor(SensorBase):
         """Stable id for supersession: ``agent:session_id`` (set at collect time)."""
         return str(item.get("source_item_id") or "")
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        """Fingerprint that changes when a session grows (new turns => re-ingest)."""
-        turns = item.get("user_turns") or []
-        parts = [
-            self.source_item_identity(item),
-            str(len(turns)),
-            str(item.get("occurred_at") or ""),
-        ]
-        return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
 
     def _resolve_settings(self, context: SensorSyncContext) -> dict[str, Any]:
         """Pull this sensor's settings out of the plugin settings tree."""
@@ -123,14 +114,14 @@ class CodingAgentHistorySensor(SensorBase):
         cfg = sensors.get(self.source_type, {}) if isinstance(sensors, dict) else {}
         return cfg if isinstance(cfg, dict) else {}
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         cfg = self._resolve_settings(context)
         configured_paths = cfg.get("source_paths")
         paths_payload = configured_paths if configured_paths else self.default_source_paths
         source_paths = [str(p) for p in (paths_payload or []) if str(p).strip()]
         if not source_paths:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 next_cursor=context.last_cursor,
                 watermark_ts=time.time(),
                 stats={"count": 0, "reason": "no_source_paths"},
@@ -172,7 +163,7 @@ class CodingAgentHistorySensor(SensorBase):
                         "source_item_id": f"{conv.agent}:{conv.session_id}",
                         "agent": conv.agent,
                         "occurred_at": conv.occurred_at,
-                        "user_turns": list(conv.user_turns),
+                        "user_turns": [redact_secrets(str(turn)) for turn in conv.user_turns],
                         "project_hint": conv.project_hint,
                         "native_path": conv.native_path,
                     }
@@ -191,10 +182,11 @@ class CodingAgentHistorySensor(SensorBase):
             if max_mtime > since_mtime
             else (context.last_cursor or str(time.time()))
         )
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=next_cursor,
             watermark_ts=max_mtime or time.time(),
+            complete=not (len(items) >= limit),
             stats={
                 "count": len(items),
                 "scanned_paths": scanned_paths,
@@ -204,8 +196,8 @@ class CodingAgentHistorySensor(SensorBase):
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         agent = str(item.get("agent") or "coding_assistant")
-        # Scrub every turn BEFORE it leaves the sensor: the memory pipeline does no
-        # redaction and uploads content to the configured LLM.
+        # Collection already scrubs source snapshots. Keep direct normalization
+        # calls safe before their text reaches host memory or a configured LLM.
         turns = [redact_secrets(str(t)) for t in (item.get("user_turns") or [])]
         full = "\n\n".join(turns)[:_MAX_CHARS]
         summary = _lean_summary(full)

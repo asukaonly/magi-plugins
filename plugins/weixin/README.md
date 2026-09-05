@@ -1,52 +1,34 @@
 # Weixin
 
-Weixin channel for Magi, based on Tencent's iLink bot gateway protocol used by `openclaw-weixin`.
+Weixin channel for Magi using Tencent's iLink bot gateway.
 
-## Scope
+## Connection and trust
 
-- QR login helper that stores bot credentials locally.
-- Direct-message text ingestion through `getupdates` long polling.
-- Text replies through `sendmessage`.
-- Inbound image, file, voice, and video attachments through Weixin CDN download/decryption.
-- Context token persistence for replies.
-- Optional typing indicator through `getconfig` and `sendtyping`.
-- Maintenance actions for connection validation, cursor reset, dedupe reset, and logout.
+This package requires plugin protocol 2 and SDK 0.2.0. Each configured connection
+owns its account, cursors, message mappings, and host-scoped credentials. Existing
+credential files are not imported. The plugin requires explicit trusted-process
+activation because it accesses the network and local attachment files.
 
-Inbound media is stored as Magi chat attachments. Images and files are available to Magi's normal attachment pipeline. Voice and video are preserved as attachments, but the plugin does not transcribe audio or analyze video frames by itself; when Weixin provides `voice_item.text`, that transcript is included in the message text.
+## Connect
 
-Outbound media upload is not implemented yet. Magi replies are sent as text and split into multiple Weixin messages when they exceed the configured maximum message length.
+Open the connection's settings and run **Weixin QR Login**. The host displays the
+QR code; the plugin handles iLink authorization and stores the returned account
+through `self.context.credentials`. Successful settings updates contain only
+`account_id` and `base_url`. Tokens and host storage paths are never returned as
+settings or action results.
 
-## Settings QR Login
+A manual `bot_token` may also be entered in the connection's secret field. The
+host stores it in that connection's credential port. Add another connection to
+use another account. There is no standalone credential-file login command.
 
-When the installed Magi host supports plugin settings actions, open Settings -> Channels, select Weixin, and run the Weixin QR Login action. The host renders the QR code generically; this plugin owns the iLink login protocol and stores credentials locally.
+## Messaging
 
-On success, the plugin saves credentials under the configured state directory and returns safe settings updates (`account_id`, `credentials_path`, `state_dir`, and `base_url`) for Magi to persist. The bot token remains in the credentials file and is not copied into the manual `bot_token` setting.
+The adapter supports direct-message text and inbound image, file, voice, and video
+attachments. Provider-supplied voice transcripts are included; the plugin does
+not transcribe audio itself. Outbound text and image upload are supported. Host
+attachments must include a resolved `storage_path`; the plugin never guesses
+host storage layout from a relative path.
 
-## CLI QR Login Helper
-
-Run the helper from this repository or from an installed plugin copy:
-
-```bash
-python plugins/weixin/login.py
-```
-
-The helper prints a Weixin QR-code link and stores credentials under:
-
-```text
-~/.magi/weixin/accounts/<account_id>.json
-```
-
-If exactly one account is saved in the state directory, the channel can load it automatically. If multiple accounts exist, set `account_id` in the extension settings.
-
-## Manual Credentials
-
-You can also configure the manual `bot_token` and `account_id` directly in the extension settings, or point `credentials_path` at a JSON file:
-
-```json
-{
-  "account_id": "example@im.bot",
-  "token": "...",
-  "base_url": "https://ilinkai.weixin.qq.com",
-  "user_id": "optional-user-id"
-}
-```
+Connection validation, cursor reset, dedupe reset, and logout run through the
+host's typed settings-operation boundary. Clearing conversation content preserves
+credentials and source progress. Logging out deletes this connection's credentials.

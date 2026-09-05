@@ -292,6 +292,11 @@ def test_asset_icon_rejects_unsafe_svg(tmp_path: Path) -> None:
     (plugin_dir / "plugin.toml").write_text(
         """
 [plugin]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = []
+settings_fields = []
 id = "unsafe-plugin"
 name = "Unsafe Plugin"
 version = "0.1.0"
@@ -333,6 +338,11 @@ def test_asset_icon_rejects_symlink(tmp_path: Path) -> None:
         (
             """
 [plugin]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = []
+settings_fields = []
 id = "Bad.ID"
 name = "Invalid"
 version = "1.0.0"
@@ -342,6 +352,11 @@ version = "1.0.0"
         (
             """
 [plugin]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = []
+settings_fields = []
 id = "invalid-kind"
 name = "Invalid"
 version = "1.0.0"
@@ -352,6 +367,11 @@ kind = "not-a-kind"
         (
             """
 [plugin]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = []
+settings_fields = []
 id = "invalid-dependency"
 name = "Invalid"
 version = "1.0.0"
@@ -373,3 +393,17 @@ def test_primary_generator_rejects_host_invalid_manifests(
 
     with pytest.raises(build_registry.RegistryContractError, match=message):
         build_registry.build_entry(plugin_dir, official_ids=set())
+
+
+def test_registry_copies_preexecution_connection_catalog() -> None:
+    build_registry = _load_build_registry_module()
+    fields = (
+        "protocol_version", "min_sdk_version", "execution_mode", "projection_sources",
+        "settings_fields", "settings_actions", "settings_resources", "settings_ui_blocks",
+    )
+    for path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
+        meta = tomllib.loads(path.read_text())["plugin"]
+        entry = build_registry.build_entry(path.parent, official_ids=set())
+        for field in fields:
+            assert entry[field] == meta[field], (path, field)
+        assert entry.get("activation_flow") == meta.get("activation_flow")

@@ -33,7 +33,7 @@ def test_system_media_profile_declares_derived_music_rule() -> None:
 
     assert profile.profile_id == "source.system_media"
     assert profile.source_types == ["system_media"]
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["interest_profile"]
     assert profile.allowed_assertion_traits == ["interest.*"]
     assert profile.allow_assertion is True

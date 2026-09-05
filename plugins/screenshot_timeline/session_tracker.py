@@ -8,7 +8,7 @@ session, then a daily aggregate of summaries).
 
 This module is intentionally self-contained:
 
-  - SQLite db lives at ``~/.magi/data/plugins/screenshot_timeline/sessions.db``,
+  - SQLite db lives at the host-allocated connection resources directory,
     NOT in the host's memory store. The host knows nothing about
     sessions — if/when we extract structured information from a
     session, that flows back to host KG via the existing

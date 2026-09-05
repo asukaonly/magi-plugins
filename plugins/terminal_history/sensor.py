@@ -1,6 +1,8 @@
 """Timeline sensor for Terminal History."""
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import hashlib
 import re
 import sys
@@ -16,7 +18,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .exceptions import ShellNotSupportedError
@@ -95,17 +96,11 @@ class TerminalHistorySensor(SensorBase):
         executed_at = item.get("executed_at", 0)
         if isinstance(executed_at, datetime):
             executed_at = executed_at.timestamp()
-        return f"terminal_{int(executed_at)}_{abs(hash(command) % 10000):04d}"
+        digest = hashlib.sha256(command.encode("utf-8")).hexdigest()[:16]
+        return f"terminal_{int(executed_at)}_{digest}"
 
-    def source_item_version_fingerprint(self, item: dict) -> str:
-        """Generate version fingerprint for change detection."""
-        version_parts = [
-            str(item.get("command", "")),
-            str(item.get("executed_at", "")),
-        ]
-        return hashlib.sha1("|".join(version_parts).encode("utf-8")).hexdigest()
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         """Collect terminal history data from history files."""
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
@@ -142,8 +137,8 @@ class TerminalHistorySensor(SensorBase):
                 limit=pull_limit,
             )
         except Exception as e:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 next_cursor=None,
                 watermark_ts=time.time(),
                 stats={
@@ -176,7 +171,7 @@ class TerminalHistorySensor(SensorBase):
             # Create item
             item = {
                 "command": processed,  # Use potentially redacted version
-                "executed_at": cmd.executed_at,
+                "executed_at": cmd.executed_at.timestamp(),
                 "shell": cmd.shell,
                 "history_line": cmd.history_line,
                 "raw_line": cmd.raw_line if processed == cmd.command else f"[REDACTED] {cmd.raw_line}",
@@ -189,15 +184,16 @@ class TerminalHistorySensor(SensorBase):
                 latest_timestamp = ts
 
         # Sort items by execution time (most recent first)
-        items.sort(key=lambda x: x.get("executed_at", datetime.min), reverse=True)
+        items.sort(key=lambda x: x.get("executed_at", 0), reverse=True)
 
         # Determine next cursor
         next_cursor = str(latest_timestamp) if latest_timestamp > 0 else None
 
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=next_cursor,
             watermark_ts=latest_timestamp or time.time(),
+            complete=not (len(commands) >= pull_limit),
             stats={
                 "count": len(items),
                 "shell": self.reader.shell,

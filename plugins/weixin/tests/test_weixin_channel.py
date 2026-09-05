@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import credentials_for_path
+
 import asyncio
 from pathlib import Path
 
@@ -124,11 +126,11 @@ def _channel(
     dispatch_success: bool,
     attachment_store: FakeAttachmentStore | None = None,
 ) -> WeixinChannel:
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.save_credentials(WeixinCredentials(account_id="bot@im.bot", token="token"))
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             account_id="bot@im.bot",
             enable_typing_indicator=False,
         )
@@ -145,35 +147,28 @@ def _channel(
 
 
 def _plugin(tmp_path: Path) -> WeixinPlugin:
-    plugin = WeixinPlugin()
-    plugin.configure(
-        manifest=PluginManifest(
-            plugin_id="weixin",
-            name="Weixin",
-            version="0.2.1",
-            description="test",
-            author="Magi Team",
-            entry_module="plugin",
-            entry_class="WeixinPlugin",
-            contribution_types=[ContributionType.CHANNEL],
-        ),
-        settings={"state_dir": str(tmp_path), "account_id": "bot@im.bot"},
-    )
+    from sdk_test_support import bind_test_plugin
+    from magi_plugin_sdk.context import PluginContext
+    plugin = bind_test_plugin(WeixinPlugin(), settings={"account_id": "bot@im.bot"})
+    plugin.configure(manifest=plugin.manifest, connection=plugin.connection, context=PluginContext(
+        connection=plugin.connection, state_dir=tmp_path, resources_dir=tmp_path / "resources",
+        credentials=credentials_for_path(tmp_path),
+    ))
     return plugin
 
 
 @pytest.mark.asyncio
 async def test_start_without_credentials_marks_channel_unconfigured(tmp_path: Path) -> None:
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             enable_typing_indicator=False,
         )
     )
 
     await channel.start()
 
-    status = WeixinStateStore(str(tmp_path)).load_channel_status()
+    status = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))).load_channel_status()
     assert status["state"] == "unconfigured"
     assert status["running"] is False
     assert status["configured"] is False
@@ -202,7 +197,7 @@ async def test_getupdates_cursor_waits_for_successful_dispatch(tmp_path: Path) -
 
     await failed_channel._poll_loop()
 
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     assert store.load_sync_buf("bot@im.bot") == ""
 
     succeeded_channel = _channel(tmp_path, response, dispatch_success=True)
@@ -214,9 +209,9 @@ async def test_getupdates_cursor_waits_for_successful_dispatch(tmp_path: Path) -
 
 @pytest.mark.asyncio
 async def test_send_message_splits_long_text(tmp_path: Path) -> None:
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             account_id="bot@im.bot",
             max_message_length=5,
         )
@@ -241,9 +236,9 @@ async def test_deliver_returns_receipt_with_weixin_client_id(tmp_path: Path) -> 
     """
     from magi_plugin_sdk.delivery import DeliveryContent
 
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             account_id="bot@im.bot",
             max_message_length=5,
         )
@@ -306,8 +301,8 @@ async def test_deliver_resolves_external_chat_id_via_session_mapper_when_target_
             raise AssertionError("deliver() must not create mappings; "
                                  "they are recorded on the inbound path only")
 
-    channel = WeixinChannel(config=WeixinChannelConfig(
-        state_dir=str(tmp_path), account_id="bot@im.bot",
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))), config=WeixinChannelConfig(
+         account_id="bot@im.bot",
     ))
     api = FakeSendApi()
     channel._api = api  # type: ignore[assignment]
@@ -352,8 +347,8 @@ async def test_deliver_raises_when_blank_target_and_no_session_mapping(
         async def resolve_or_create(self, **kwargs):
             raise AssertionError("not used")
 
-    channel = WeixinChannel(config=WeixinChannelConfig(
-        state_dir=str(tmp_path), account_id="bot@im.bot",
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))), config=WeixinChannelConfig(
+         account_id="bot@im.bot",
     ))
     api = FakeSendApi()
     channel._api = api  # type: ignore[assignment]
@@ -383,8 +378,8 @@ async def test_deliver_empty_text_returns_receipt_with_no_external_id(tmp_path: 
     a phantom client_id."""
     from magi_plugin_sdk.delivery import DeliveryContent
 
-    channel = WeixinChannel(
-        config=WeixinChannelConfig(state_dir=str(tmp_path), account_id="bot@im.bot"),
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
+        config=WeixinChannelConfig( account_id="bot@im.bot"),
     )
     api = FakeSendApi()
     channel._api = api  # type: ignore[assignment]
@@ -472,7 +467,7 @@ async def test_reply_reference_uses_saved_magi_message_id(tmp_path: Path) -> Non
 
 @pytest.mark.asyncio
 async def test_validate_credentials_action_uses_saved_credentials(tmp_path: Path, monkeypatch) -> None:
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.save_credentials(WeixinCredentials(account_id="bot@im.bot", token="token"))
 
     class FakeClient:
@@ -493,7 +488,7 @@ async def test_validate_credentials_action_uses_saved_credentials(tmp_path: Path
 
 
 def test_channel_status_resource_reads_state(tmp_path: Path) -> None:
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.update_channel_status(state="running", running=True, account_id="bot@im.bot")
     plugin = _plugin(tmp_path)
 
@@ -506,7 +501,7 @@ def test_channel_status_resource_reads_state(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_maintenance_actions_reset_state_and_logout(tmp_path: Path) -> None:
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.save_credentials(WeixinCredentials(account_id="bot@im.bot", token="token"))
     store.save_sync_buf("bot@im.bot", "cursor")
     store.save_processed_message_ids("bot@im.bot", {"msg-1"})

@@ -17,6 +17,8 @@ from magi_plugin_sdk.fs import (
     remove_managed_file,
 )
 
+from magi_plugin_sdk.context import PluginCredentials
+
 from .api import DEFAULT_BASE_URL
 
 
@@ -31,10 +33,6 @@ _INBOUND_DERIVED_SUFFIXES = (
     ("processed messages", ".processed-messages.json"),
     ("message map", ".message-map.json"),
 )
-
-
-class WeixinStatePathCollisionError(RuntimeError):
-    """Raised when one path has both credential and derived-state ownership."""
 
 
 @dataclass(slots=True)
@@ -62,8 +60,11 @@ def safe_key(raw: str) -> str:
 class WeixinStateStore:
     """File-backed state store under the configured Weixin state directory."""
 
-    def __init__(self, state_dir: str) -> None:
-        self.state_dir = Path(state_dir or "~/.magi/weixin").expanduser()
+    def __init__(self, state_dir: str | Path, *, credentials: PluginCredentials) -> None:
+        self.state_dir = Path(state_dir)
+        if not self.state_dir.is_absolute():
+            raise ValueError("Weixin state directory must be host-allocated and absolute")
+        self.credentials = credentials
 
     @property
     def accounts_dir(self) -> Path:
@@ -81,65 +82,39 @@ class WeixinStateStore:
     def inbound_clear_state_path(self) -> Path:
         return self.state_dir / "inbound_clear_state.json"
 
-    def load_credentials(
-        self,
-        *,
-        account_id: str = "",
-        credentials_path: str = "",
-    ) -> WeixinCredentials | None:
-        if credentials_path.strip():
-            return self._read_credentials_file(Path(credentials_path).expanduser())
+    def load_credentials(self, *, account_id: str = "") -> WeixinCredentials | None:
+        raw = self.credentials.get("account")
+        if raw is None:
+            return None
+        parsed = json.loads(raw)
+        credentials = WeixinCredentials(**parsed)
+        if account_id and credentials.account_id != account_id:
+            return None
+        return credentials
 
-        selected_account_id = account_id.strip()
-        if not selected_account_id:
-            account_ids = self.list_account_ids()
-            if len(account_ids) == 1:
-                selected_account_id = account_ids[0]
-            elif len(account_ids) > 1:
-                raise ValueError("Multiple Weixin accounts are available; set account_id")
-            else:
-                return None
-
-        return self._read_credentials_file(self.account_path(selected_account_id), selected_account_id)
-
-    def save_credentials(self, credentials: WeixinCredentials) -> Path:
-        self.accounts_dir.mkdir(parents=True, exist_ok=True)
-        path = self.account_path(credentials.account_id)
-        data = {
+    def save_credentials(self, credentials: WeixinCredentials) -> None:
+        self.credentials.set("account", json.dumps({
             "account_id": credentials.account_id,
             "token": credentials.token,
-            "base_url": credentials.base_url or DEFAULT_BASE_URL,
+            "base_url": credentials.base_url,
             "user_id": credentials.user_id,
-        }
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        try:
-            path.chmod(0o600)
-        except OSError:
-            pass
-        self.register_account_id(credentials.account_id)
-        return path
+        }))
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        atomic_write_managed_text(self.account_index_path, json.dumps([credentials.account_id]))
 
-    def delete_credentials(self, account_id: str, *, credentials_path: str = "") -> None:
-        selected_account_id = account_id.strip()
-        if credentials_path.strip():
-            try:
-                Path(credentials_path).expanduser().unlink()
-            except OSError:
-                pass
-        if not selected_account_id:
+    def delete_credentials(self, account_id: str) -> None:
+        current = self.load_credentials(account_id=account_id)
+        if current is None:
             return
+        self.credentials.delete("account")
         for path in (
-            self.account_path(selected_account_id),
-            self.sync_path(selected_account_id),
-            self.context_tokens_path(selected_account_id),
-            self.processed_messages_path(selected_account_id),
-            self.message_map_path(selected_account_id),
+            self.sync_path(account_id),
+            self.context_tokens_path(account_id),
+            self.processed_messages_path(account_id),
+            self.message_map_path(account_id),
         ):
-            try:
-                path.unlink()
-            except OSError:
-                pass
-        self.unregister_account_id(selected_account_id)
+            remove_managed_file(path)
+        self.unregister_account_id(account_id)
 
     def list_account_ids(self) -> list[str]:
         try:
@@ -173,9 +148,6 @@ class WeixinStateStore:
             json.dumps(remaining, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-
-    def account_path(self, account_id: str) -> Path:
-        return self.accounts_dir / f"{safe_key(account_id)}.json"
 
     def sync_path(self, account_id: str) -> Path:
         return self.accounts_dir / f"{safe_key(account_id)}.sync.json"
@@ -302,7 +274,6 @@ class WeixinStateStore:
         *,
         clear_generation: int,
         protected_account_ids: Iterable[str] = (),
-        protected_credentials_path: str = "",
     ) -> None:
         """Erase conversation-derived inbound state without touching account state."""
 
@@ -315,7 +286,6 @@ class WeixinStateStore:
 
         removable_paths = self._preflight_inbound_content_paths(
             protected_account_ids=protected_account_ids,
-            protected_credentials_path=protected_credentials_path,
         )
         for path in removable_paths:
             remove_managed_file(path)
@@ -331,62 +301,22 @@ class WeixinStateStore:
         )
 
     def _preflight_inbound_content_paths(
-        self,
-        *,
-        protected_account_ids: Iterable[str],
-        protected_credentials_path: str,
+        self, *, protected_account_ids: Iterable[str],
     ) -> list[Path]:
         account_ids = {
             account_id.strip()
             for account_id in (*self.list_account_ids(), *protected_account_ids)
             if isinstance(account_id, str) and account_id.strip()
         }
-        credential_owners = {
-            _absolute_path(self.account_path(account_id)): account_id
+        removable_paths = {
+            self.accounts_dir / f"{safe_key(account_id)}{suffix}"
             for account_id in account_ids
+            for _, suffix in _INBOUND_DERIVED_SUFFIXES
         }
-        configured_credentials = protected_credentials_path.strip()
-        if configured_credentials:
-            configured_path = _absolute_path(
-                Path(configured_credentials).expanduser()
-            )
-            if configured_path.parent == _absolute_path(self.accounts_dir):
-                credential_owners.setdefault(
-                    configured_path,
-                    "configured credentials file",
-                )
-
-        derived_owners: dict[Path, tuple[str, str]] = {}
-        for account_id in account_ids:
-            for state_kind, suffix in _INBOUND_DERIVED_SUFFIXES:
-                derived_owners[
-                    _absolute_path(
-                        self.accounts_dir / f"{safe_key(account_id)}{suffix}"
-                    )
-                ] = (account_id, state_kind)
-
-        collisions = sorted(
-            set(credential_owners).intersection(derived_owners),
-            key=os.fspath,
-        )
-        if collisions:
-            collision = collisions[0]
-            credential_owner = credential_owners[collision]
-            derived_account, state_kind = derived_owners[collision]
-            raise WeixinStatePathCollisionError(
-                "Weixin state path collision: credentials for account "
-                f"{json.dumps(credential_owner, ensure_ascii=True)} conflict with "
-                f"{state_kind} for account "
-                f"{json.dumps(derived_account, ensure_ascii=True)}. "
-                "Rename or remove one account before clearing conversation data."
-            )
-
-        protected_paths = set(credential_owners)
-        removable_paths = set(derived_owners)
         for name in list_managed_directory_names(self.accounts_dir):
             if any(name.endswith(suffix) for _, suffix in _INBOUND_DERIVED_SUFFIXES):
-                removable_paths.add(_absolute_path(self.accounts_dir / name))
-        return sorted(removable_paths - protected_paths, key=os.fspath)
+                removable_paths.add(self.accounts_dir / name)
+        return sorted(removable_paths, key=os.fspath)
 
     def _clear_conversation_status(self) -> None:
         try:
@@ -434,33 +364,3 @@ class WeixinStateStore:
             json.dumps(status, ensure_ascii=False, indent=2) + "\n",
         )
         return status
-
-    def _read_credentials_file(
-        self,
-        path: Path,
-        fallback_account_id: str = "",
-    ) -> WeixinCredentials | None:
-        try:
-            parsed: Any = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return None
-        if not isinstance(parsed, dict):
-            return None
-
-        token = str(parsed.get("token") or parsed.get("bot_token") or "").strip()
-        if not token:
-            return None
-        account_id = str(parsed.get("account_id") or parsed.get("ilink_bot_id") or fallback_account_id).strip()
-        if not account_id:
-            return None
-        return WeixinCredentials(
-            account_id=account_id,
-            token=token,
-            base_url=str(parsed.get("base_url") or parsed.get("baseurl") or DEFAULT_BASE_URL).strip()
-            or DEFAULT_BASE_URL,
-            user_id=str(parsed.get("user_id") or parsed.get("ilink_user_id") or "").strip(),
-        )
-
-
-def _absolute_path(path: Path) -> Path:
-    return Path(os.path.abspath(os.fspath(path)))

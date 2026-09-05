@@ -67,7 +67,7 @@ def _build_history_database(root: Path) -> None:
 def test_custom_date_range_is_inclusive_and_stays_bounded_on_continuation(tmp_path: Path) -> None:
     _build_history_database(tmp_path)
     reader_module = _load_plugin_module("chrome_reader")
-    reader = reader_module.ChromeHistoryReader()
+    reader = reader_module.ChromeHistoryReader(temp_root=tmp_path / "private-copies")
     start_at = datetime(2026, 6, 1).timestamp()
     end_at = datetime(2026, 7, 1).timestamp()
 

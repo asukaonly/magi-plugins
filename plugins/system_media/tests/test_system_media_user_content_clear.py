@@ -160,7 +160,7 @@ def test_clear_waits_for_active_collect_and_later_collect_recovers(
 
         monkeypatch.setattr(sensor_module, "get_current_media", resumed_media_read)
         result = await sensor.collect_items(sync_context)
-        assert result.items == []
+        assert [change.payload for change in result.changes] == []
 
     asyncio.run(scenario())
 

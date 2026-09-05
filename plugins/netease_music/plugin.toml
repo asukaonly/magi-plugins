@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["netease_music"]
 id = "netease-music"
 name = "NetEase Cloud Music"
 name_i18n = { "zh-CN" = "网易云音乐" }
 icon = "asset:assets/icon.svg"
-version = "0.1.4"
+version = "0.2.0"
 description = "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits."
 description_i18n = { "zh-CN" = "读取网易云音乐的收听记录，帮助 Magi 了解你的音乐喜好和收听习惯" }
 author = "Magi Team"
@@ -61,3 +68,157 @@ reason_i18n = { en = "Read the NetEase Music local play history", "zh-CN" = "读
 capability = "network"
 scope = ["ws.audioscrobbler.com"]
 reason_i18n = { en = "Fetch genre tags for played tracks from the Last.fm API (only when a Last.fm API key is configured).", "zh-CN" = "从 Last.fm API 获取所播曲目的风格标签(仅在配置了 Last.fm API key 时)。" }
+
+[plugin.activation_flow]
+title = "Enable NetEase Cloud Music"
+description = "NetEase Cloud Music history reveals your listening habits. Choose how the first sync should seed the timeline before this source starts running."
+confirm_label = "Enable source"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.netease_music.enabled"
+configured_key = "sensors.netease_music.initial_sync_configured"
+fields = [{ "key" = "sensors.netease_music.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much listening history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.netease_music.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.netease_music.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0 }]
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.db_path"
+type = "path"
+label = "Cache Database Path"
+description = "Defaults to the standard NetEase cache database path. If NetEase settings show a cache folder such as C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. Choose the database file under the sibling Library directory instead, usually C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat."
+default = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+required = false
+section = "general"
+surface = "timeline"
+order = 50
+placeholder = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.default_retention_mode"
+type = "input"
+label = "Default Retention Mode"
+description = ""
+default = "analyze_only"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether NetEase Music sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.initial_sync_lookback_days"
+type = "number"
+label = "Recent Days"
+description = "Used when the first-sync scope is set to recent days."
+default = 7
+required = false
+section = "activation"
+surface = "timeline"
+order = 20
+depends_on_key = "sensors.netease_music.initial_sync_policy"
+depends_on_values = ["lookback_days"]
+minimum = 1.0
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.initial_sync_policy"
+type = "select"
+label = "First Sync Scope"
+description = "Decide how much listening history should be imported when this source is enabled for the first time."
+default = "lookback_days"
+required = false
+options = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }]
+section = "activation"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.lastfm_api_key"
+type = "secret"
+label = "Last.fm API Key"
+description = "Required when Genre Tag Source is set to Last.fm. Apply for a free key at last.fm/api/account/create"
+default = ""
+required = false
+section = "analysis"
+surface = "timeline"
+order = 76
+depends_on_key = "sensors.netease_music.tag_strategy"
+depends_on_values = ["lastfm"]
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.min_play_duration"
+type = "number"
+label = "Minimum Play Duration (seconds)"
+description = "Minimum track play duration to include in timeline (seconds)."
+default = 20
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+minimum = 1.0
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.storage_mode"
+type = "input"
+label = "Storage Mode"
+description = ""
+default = "managed"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "Polling interval used for interval-based sync."
+default = 10
+required = false
+section = "general"
+surface = "timeline"
+order = 30
+depends_on_key = "sensors.netease_music.sync_mode"
+depends_on_values = ["interval"]
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.sync_mode"
+type = "select"
+label = "Sync Mode"
+description = "How NetEase Music history should be synchronized."
+default = "interval"
+required = false
+options = [{ "label" = "Manual", "value" = "manual" }, { "label" = "Interval", "value" = "interval" }]
+section = "general"
+surface = "timeline"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sensors.netease_music.tag_strategy"
+type = "select"
+label = "Genre Tag Source"
+description = "How to extract genre/style tags for listened tracks. 'Built-in' reads local alias data (limited coverage). 'Last.fm' queries the Last.fm API (requires an API key)."
+default = "off"
+required = false
+options = [{ "label" = "Off", "value" = "off" }, { "label" = "Built-in (local alias data)", "value" = "builtin" }, { "label" = "Last.fm", "value" = "lastfm" }]
+section = "analysis"
+surface = "timeline"
+order = 75

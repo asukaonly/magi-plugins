@@ -77,6 +77,7 @@ def test_browser_history_marks_has_more_when_limit_is_full() -> None:
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="browser_history",
                 manual=True,
                 last_cursor="0",

@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["edge_history"]
 id = "edge-history"
 name = "Edge History"
 name_i18n = { "zh-CN" = "Edge 浏览器历史" }
 icon = "asset:assets/icon.svg"
-version = "0.1.2"
+version = "0.2.0"
 description = "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Microsoft Edge 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
 author = "Magi Team"
@@ -72,3 +79,163 @@ win32 = "%LOCALAPPDATA%/Microsoft/Edge/User Data/Default/History"
 capability = "filesystem_read"
 scope = ["%LOCALAPPDATA%\\Microsoft\\Edge"]
 reason_i18n = { en = "Read the local Edge history database", "zh-CN" = "读取本地 Edge 历史数据库" }
+
+[plugin.activation_flow]
+title = "Enable Edge History"
+description = "Edge history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running."
+confirm_label = "Enable source"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.edge_history.enabled"
+configured_key = "sensors.edge_history.initial_sync_configured"
+fields = [{ "key" = "sensors.edge_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.edge_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.edge_history.initial_sync_policy", "depends_on_values" = ["lookback_days"] }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = { "sensors.edge_history.initial_sync_policy" = "lookback_days", "sensors.edge_history.initial_sync_lookback_days" = 7 } }
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.default_retention_mode"
+type = "input"
+label = "Default Retention Mode"
+description = ""
+default = "analyze_only"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether Edge history sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.filter_domains"
+type = "tags"
+label = "Filter Domains (Regex)"
+description = "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
+required = false
+section = "filters"
+surface = "timeline"
+order = 70
+placeholder = "e.g. ^mail\\.google\\.com$"
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.filter_keywords"
+type = "tags"
+label = "Filter Keywords"
+description = "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+required = false
+section = "filters"
+surface = "timeline"
+order = 80
+placeholder = "e.g. password reset"
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.initial_sync_lookback_days"
+type = "number"
+label = "Recent Days"
+description = "Used when the first-sync scope is set to recent days."
+default = 7
+required = false
+section = "activation"
+surface = "timeline"
+order = 20
+depends_on_key = "sensors.edge_history.initial_sync_policy"
+depends_on_values = ["lookback_days"]
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.initial_sync_policy"
+type = "select"
+label = "First Sync Scope"
+description = "Decide how much history should be imported when this source is enabled for the first time."
+default = "lookback_days"
+required = false
+options = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }]
+section = "activation"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.max_items_per_sync"
+type = "number"
+label = "Max Items Per Sync"
+description = "Maximum number of history records to ingest per run."
+default = 1000
+required = false
+section = "sync"
+surface = "timeline"
+order = 60
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.merge_window_minutes"
+type = "number"
+label = "Merge Window (minutes)"
+description = "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 50
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.profile"
+type = "input"
+label = "Profile"
+description = "Edge profile directory to read, such as Default or Profile 1."
+default = "Default"
+required = false
+section = "general"
+surface = "timeline"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.storage_mode"
+type = "input"
+label = "Storage Mode"
+description = ""
+default = "managed"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "Polling interval used for interval-based sync."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+depends_on_key = "sensors.edge_history.sync_mode"
+depends_on_values = ["interval"]
+
+[[plugin.settings_fields]]
+key = "sensors.edge_history.sync_mode"
+type = "select"
+label = "Sync Mode"
+description = "How Edge history should be synchronized."
+default = "interval"
+required = true
+options = [{ "label" = "Manual", "value" = "manual" }, { "label" = "Interval", "value" = "interval" }]
+section = "general"
+surface = "timeline"
+order = 30

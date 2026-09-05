@@ -118,6 +118,7 @@ class SafariHistoryPlugin(Plugin):
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name="permissions",
                 resource_type="channel_status",
                 description="Live macOS permission grant required by the Safari history plugin.",
@@ -163,49 +164,6 @@ class SafariHistoryPlugin(Plugin):
         return build_temporal_summary_features(
             source_type=source_type,
             feature_type="safari_history",
-            events=events,
-            budget=budget,
-        )
-
-    def build_condensed_summary_features(
-        self,
-        *,
-        source_type: str,
-        events: list[dict[str, Any]],
-        budget: object | None = None,
-    ) -> dict[str, object] | None:
-        """Backwards-compatible alias for hosts that call condensed feature API."""
-
-        if source_type != "safari_history":
-            return None
-        features = build_temporal_summary_features(
-            source_type=source_type,
-            feature_type="safari_history",
-            events=events,
-            budget=budget,
-        )
-        if not isinstance(features, dict):
-            return None
-        top_domains = features.get("top_domains")
-        if isinstance(top_domains, list):
-            features["top_entities"] = [
-                {"type": "site", "domain": item.get("domain"), "count": item.get("count")}
-                for item in top_domains
-                if isinstance(item, dict)
-            ]
-        return features
-
-    def build_compact_features(
-        self,
-        *,
-        source_type: str,
-        events: list[dict[str, Any]],
-        budget: object | None = None,
-    ) -> dict[str, object] | None:
-        """Legacy alias expected by some runtimes."""
-
-        return self.build_condensed_summary_features(
-            source_type=source_type,
             events=events,
             budget=budget,
         )

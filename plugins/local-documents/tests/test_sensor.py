@@ -32,6 +32,7 @@ def _ctx(root_paths: list[str], last_cursor: str | None = None, settings: dict |
             return Path(root_paths[0]) if root_paths else Path(".")
 
     return SensorSyncContext(
+        connection_id="test-connection",
         source_type="local_documents",
         manual=False,
         last_cursor=last_cursor,
@@ -98,7 +99,7 @@ def test_collect_items_knowledge_tier_scans_multiple_roots_and_filters(tmp_path:
 
     result = asyncio.run(sensor.collect_items(_ctx([str(notes), str(docs)])))
 
-    rels = {(item["root_path"], item["rel_path"]) for item in result.items}
+    rels = {(item["root_path"], item["rel_path"]) for item in [change.payload for change in result.changes]}
     assert rels == {
         (str(notes), "Projects/A.md"),
         (str(docs), "Specs/B.rst"),
@@ -125,7 +126,7 @@ def test_collect_items_search_tier_only_reads_search_folders(tmp_path: Path) -> 
 
     result = asyncio.run(sensor.collect_items(_ctx([str(tmp_path)])))
 
-    assert [item["rel_path"] for item in result.items] == ["References/Paper.txt"]
+    assert [item["rel_path"] for item in [change.payload for change in result.changes]] == ["References/Paper.txt"]
 
 
 def test_collect_items_incremental_via_cursor(tmp_path: Path) -> None:
@@ -143,13 +144,13 @@ def test_collect_items_incremental_via_cursor(tmp_path: Path) -> None:
         include_extensions=[".md"],
     )
 
-    result = asyncio.run(sensor.collect_items(_ctx([str(tmp_path)], last_cursor="2000.0")))
-    assert result.items == []
+    result = asyncio.run(sensor.collect_items(_ctx([str(tmp_path)], last_cursor='{"mtime":2000.0,"object_id":""}' )))
+    assert [change.payload for change in result.changes] == []
 
     new = tmp_path / "new.md"
     new.write_text("# New\n", encoding="utf-8")
-    result2 = asyncio.run(sensor.collect_items(_ctx([str(tmp_path)], last_cursor="2000.0")))
-    assert [item["rel_path"] for item in result2.items] == ["new.md"]
+    result2 = asyncio.run(sensor.collect_items(_ctx([str(tmp_path)], last_cursor='{"mtime":2000.0,"object_id":""}' )))
+    assert [item["rel_path"] for item in [change.payload for change in result2.changes]] == ["new.md"]
 
 
 def test_build_output_maps_document_to_l1_fields() -> None:

@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = [{ "action_id" = "request_permissions", "label" = "System permissions", "description" = "Check Screen Recording (required) and Accessibility (optional, for window titles and structured text) permissions. macOS will prompt if not yet granted.", "button_label" = "Check & request", "presentation" = "inline", "surface" = "extensions", "contribution_id" = "timeline", "order" = 10, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 2000, "timeout_ms" = 480000, "persist_settings_on_success" = false, "depends_on_values" = [] }]
+settings_resources = [{ "resource_name" = "permissions", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Live macOS permission grants required by the screenshot timeline plugin.", "metadata" = {  } }]
+settings_ui_blocks = [{ "block_id" = "macos_permissions", "type" = "resource_picker", "title" = "macOS Permissions", "description" = "Screen Recording is required for capture. Accessibility is optional, and provides window titles and structured on-screen text.", "resource_name" = "permissions", "value_key" = "_readonly", "presentation" = "permission_status", "depends_on_values" = [] }]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["screenshot_timeline"]
 id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
 icon = "lucide:scan"
-version = "0.5.3"
+version = "0.6.0"
 description = "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days."
 description_i18n = { "zh-CN" = "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。" }
 author = "Magi Team"
@@ -13,16 +20,9 @@ official = true
 data_locality = "local_only"
 contribution_types = ["sensor", "tool"]
 platforms = ["macos"]
-min_sdk_version = "0.1.0"
 dependencies = [
     "pyobjc-framework-Cocoa>=10.0",
 ]
-
-[plugin.helper]
-binary_relative_path = "bin/magi-vision-helper"
-
-[plugin.permissions]
-memory_access = ["write_l1"]
 
 [plugin.default_settings.sensors.screenshot_timeline]
 enabled = false
@@ -36,8 +36,6 @@ ax_wake = true
 ax_min_content_chars = 80
 ax_min_content_nodes = 5
 original_retention_days = 30
-keyboard_triggers_enabled = false
-keyboard_trigger_types = ["scroll", "arrow", "space", "delete"]
 app_blocklist = [
     "com.agilebits.onepassword*",
     "com.1password.1password*",
@@ -48,10 +46,6 @@ app_blocklist = [
     "com.apple.SecurityAgent",
 ]
 window_title_blocklist = []
-panic_hotkey = "Option+Shift+P"
-panic_pause_seconds = 60
-gap_minutes = 5
-max_minutes = 30
 thumbnail_max_width = 1024
 jpeg_quality_original = 80
 jpeg_quality_thumbnail = 70
@@ -93,3 +87,212 @@ reason_i18n = { en = "Save screenshots and thumbnails", "zh-CN" = "保存截图�
 capability = "subprocess"
 scope = ["magi-vision-helper"]
 reason_i18n = { en = "Run the bundled OCR/vision helper", "zh-CN" = "运行随附的 OCR/视觉助手" }
+
+[plugin.activation_flow]
+title = "Enable Screenshot Timeline"
+description = "This plugin continuously captures your screen and runs local OCR (via Apple Vision) to feed the recognised text into magi's memory. Captures and thumbnails stay on this Mac — they are not uploaded anywhere. Originals are deleted after 30 days by default; thumbnails are kept indefinitely.\n\nPassword managers, Keychain, and incognito browser windows are skipped by default. You can add more app or window-title rules in Settings after enabling.\n\nmacOS will ask for Screen Recording permission the first time captures start. Accessibility permission provides window titles and structured on-screen text."
+confirm_label = "I understand — enable"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.screenshot_timeline.enabled"
+configured_key = "sensors.screenshot_timeline.initial_sync_configured"
+fields = []
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.active_window_interval_sec"
+type = "number"
+label = "Active window interval (sec)"
+description = "How often to capture the active window. Recommended: 10s."
+default = 10
+required = false
+section = "capture"
+surface = "timeline"
+order = 30
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.app_blocklist"
+type = "tags"
+label = "App blocklist (bundle IDs)"
+description = "Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*). Defaults block known password managers and the macOS SecurityAgent; remove entries to allow them."
+default = ["com.agilebits.onepassword*", "com.1password.1password*", "com.bitwarden.desktop", "com.apple.keychainaccess", "com.lastpass.LastPassMacDesktop", "com.dashlane.*", "com.apple.SecurityAgent"]
+required = false
+section = "privacy"
+surface = "timeline"
+order = 100
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ax_enabled"
+type = "switch"
+label = "Ax Enabled"
+description = ""
+default = true
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ax_min_content_chars"
+type = "number"
+label = "Ax Min Content Chars"
+description = ""
+default = 80
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ax_min_content_nodes"
+type = "number"
+label = "Ax Min Content Nodes"
+description = ""
+default = 5
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ax_wake"
+type = "switch"
+label = "Ax Wake"
+description = ""
+default = true
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.capture_scope"
+type = "select"
+label = "Capture scope"
+description = "What part of the screen to capture each tick."
+default = "hybrid"
+required = false
+options = [{ "label" = "Active window only", "value" = "active_window" }, { "label" = "Primary display (full screen)", "value" = "full_screen" }, { "label" = "Active window + periodic full screen", "value" = "hybrid" }, { "label" = "All connected displays", "value" = "all_displays" }]
+section = "capture"
+surface = "timeline"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether the screenshot timeline sensor is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.full_screen_interval_min"
+type = "number"
+label = "Full-screen interval (min)"
+description = "Periodic full-screen capture interval (used in hybrid or full_screen modes)."
+default = 5
+required = false
+section = "capture"
+surface = "timeline"
+order = 40
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.jpeg_quality_original"
+type = "number"
+label = "Jpeg Quality Original"
+description = ""
+default = 80
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.jpeg_quality_thumbnail"
+type = "number"
+label = "Jpeg Quality Thumbnail"
+description = ""
+default = 70
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ocr_languages"
+type = "tags"
+label = "OCR languages"
+description = "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. Order matters: the first language is the primary character-set hypothesis. If your screen content is mostly Chinese with code/URLs mixed in, keep zh-Hans first; English-only users can put en-US first."
+default = ["zh-Hans", "en-US"]
+required = false
+section = "ocr"
+surface = "timeline"
+order = 50
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.ocr_level"
+type = "select"
+label = "OCR recognition level"
+description = "Apple Vision text-recognition precision tier. \"Accurate\" uses a neural network — handles small fonts, mixed-language text, and dense UI; ~0.5–2s per screenshot. \"Fast\" uses traditional character recognition — 5-10× faster but small fonts, CJK characters, and busy UI degrade quickly. Keep \"Accurate\" unless CPU is an issue."
+default = "accurate"
+required = false
+options = [{ "label" = "Accurate", "value" = "accurate" }, { "label" = "Fast", "value" = "fast" }]
+section = "ocr"
+surface = "timeline"
+order = 60
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.original_retention_days"
+type = "number"
+label = "Original retention (days)"
+description = "Originals older than this are deleted. Thumbnails are kept permanently."
+default = 30
+required = false
+section = "storage"
+surface = "timeline"
+order = 70
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.sync_mode"
+type = "input"
+label = "Sync Mode"
+description = ""
+default = "interval"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.thumbnail_max_width"
+type = "number"
+label = "Thumbnail Max Width"
+description = ""
+default = 1024
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.screenshot_timeline.window_title_blocklist"
+type = "tags"
+label = "Window title blocklist (substrings)"
+description = "Any window whose title contains any of these strings will be skipped."
+required = false
+section = "privacy"
+surface = "timeline"
+order = 110

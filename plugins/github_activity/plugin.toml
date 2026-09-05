@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = [{ "action_id" = "connect_github", "label" = "Connect GitHub", "description" = "Open the GitHub device authorization page, enter the code, and save the resulting token locally.", "button_label" = "Connect GitHub", "presentation" = "inline", "surface" = "timeline", "contribution_id" = "timeline.github_activity", "contribution_type" = "sensor", "order" = 0, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 5000, "timeout_ms" = 900000, "persist_settings_on_success" = true, "depends_on_values" = [] }]
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["github_activity"]
 id = "github-activity"
 name = "GitHub Activity"
 name_i18n = { "zh-CN" = "GitHub 活动" }
 icon = "asset:assets/icon.svg"
-version = "0.1.1"
+version = "0.2.0"
 description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
 description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
 author = "Magi Team"
@@ -56,3 +63,93 @@ en = "Recent activity from repositories you choose"
 capability = "network"
 scope = ["api.github.com", "github.com"]
 reason_i18n = { en = "Connect to GitHub from this device and pull selected repository activity", "zh-CN" = "从本机连接 GitHub，拉取你选择的仓库动态" }
+
+[plugin.activation_flow]
+title = "Connect GitHub"
+description = "Choose the repositories Magi should read from this device. No GitHub data is sent to a Magi cloud service."
+confirm_label = "Enable GitHub sync"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.github_activity.enabled"
+configured_key = "sensors.github_activity.initial_sync_configured"
+fields = [{ "key" = "sensors.github_activity.repositories", "type" = "tags", "label" = "Repositories", "description" = "Repositories to sync, for example owner/repo or a GitHub repository URL.", "default" = [], "required" = true, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }, { "key" = "sensors.github_activity.initial_sync_lookback_days", "type" = "number", "label" = "Initial Sync Days", "description" = "How many recent days to import on the first sync.", "default" = 30, "required" = false, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 30, "depends_on_values" = [], "minimum" = 1.0, "maximum" = 365.0 }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.access_token"
+type = "secret"
+label = "Access Token"
+description = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.client_id"
+type = "input"
+label = "Client Id"
+description = ""
+default = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether GitHub activity sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.initial_sync_lookback_days"
+type = "number"
+label = "Initial Sync Days"
+description = "How many recent days to import when no previous cursor exists."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+minimum = 1.0
+maximum = 365.0
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.repositories"
+type = "tags"
+label = "Repositories"
+description = "Repositories to sync, for example owner/repo."
+required = false
+section = "connection"
+surface = "timeline"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sensors.github_activity.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "How often to check GitHub for updates."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 30
+minimum = 5.0
+maximum = 1440.0

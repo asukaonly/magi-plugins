@@ -59,6 +59,7 @@ def _ctx(tmp_path: Path, paths, *, source_type="codex_agent_history", lookback=3
         sensor_cfg["source_paths"] = list(paths)
 
     return SensorSyncContext(
+        connection_id="test-connection",
         source_type=source_type,
         manual=True,
         last_cursor=last_cursor,
@@ -113,9 +114,11 @@ def test_collect_and_build_output_scrubs_and_uses_user_turns(tmp_path: Path) -> 
         display_name="Codex",
     )
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [str(root)])))
-    assert len(res.items) == 1
-    item = res.items[0]
+    assert len([change.payload for change in res.changes]) == 1
+    item = [change.payload for change in res.changes][0]
     assert item["source_item_id"] == "codex:c1"
+    assert "ghp_ABCDEFGHIJ" not in res.model_dump_json()
+    assert "[REDACTED" in " ".join(item["user_turns"])
 
     out = asyncio.run(sensor.build_output(item))
     # pinned_payload holds the FULL scrubbed user-turn text for L2.
@@ -147,7 +150,7 @@ def test_collect_uses_default_paths_when_settings_omit_paths(tmp_path: Path) -> 
 
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, None)))
 
-    assert [item["source_item_id"] for item in res.items] == ["codex:c1"]
+    assert [item["source_item_id"] for item in [change.payload for change in res.changes]] == ["codex:c1"]
 
 
 def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:
@@ -194,8 +197,8 @@ def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:
         )
     )
 
-    assert [item["source_item_id"] for item in codex_res.items] == ["codex:codex-1"]
-    assert [item["source_item_id"] for item in claude_res.items] == ["claude_code:claude-1"]
+    assert [item["source_item_id"] for item in [change.payload for change in codex_res.changes]] == ["codex:codex-1"]
+    assert [item["source_item_id"] for item in [change.payload for change in claude_res.changes]] == ["claude_code:claude-1"]
 
 
 def test_first_sync_windowed_excludes_old(tmp_path: Path) -> None:
@@ -217,7 +220,7 @@ def test_first_sync_windowed_excludes_old(tmp_path: Path) -> None:
         sensor.collect_items(_ctx(tmp_path, [str(root)], lookback=30, last_cursor=None))
     )
     # Older than the 30-day first-sync window => excluded on the first sync.
-    assert res.items == []
+    assert [change.payload for change in res.changes] == []
 
 
 def test_incremental_sync_ignores_lookback_window(tmp_path: Path) -> None:
@@ -242,7 +245,7 @@ def test_incremental_sync_ignores_lookback_window(tmp_path: Path) -> None:
     res = asyncio.run(
         sensor.collect_items(_ctx(tmp_path, [str(root)], lookback=30, last_cursor="1.0"))
     )
-    assert [it["source_item_id"] for it in res.items] == ["codex:old"]
+    assert [it["source_item_id"] for it in [change.payload for change in res.changes]] == ["codex:old"]
 
 
 def test_collect_marks_has_more_when_limit_is_full(tmp_path: Path) -> None:
@@ -267,7 +270,7 @@ def test_collect_marks_has_more_when_limit_is_full(tmp_path: Path) -> None:
 
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [str(root)], limit=1)))
 
-    assert len(res.items) == 1
+    assert len([change.payload for change in res.changes]) == 1
     assert res.stats["has_more"] is True
 
 
@@ -294,7 +297,7 @@ def test_no_source_paths_returns_empty(tmp_path: Path) -> None:
         display_name="Codex",
     )
     res = asyncio.run(sensor.collect_items(_ctx(tmp_path, [])))
-    assert res.items == []
+    assert [change.payload for change in res.changes] == []
 
 
 def test_build_output_activity_and_narration_shape(tmp_path: Path) -> None:

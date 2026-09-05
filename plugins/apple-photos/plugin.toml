@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = [{ "resource_name" = "apple_photos_permissions", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Live dependency and permission status for Apple Photos.", "metadata" = {  } }]
+settings_ui_blocks = [{ "block_id" = "apple_photos_permissions", "type" = "resource_picker", "title" = "Apple Photos Access", "description" = "Apple Photos needs the local reader dependency and macOS permission to read the Photos library.", "resource_name" = "apple_photos_permissions", "value_key" = "_readonly", "presentation" = "permission_status", "depends_on_values" = [] }]
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["photo_library_apple_photos"]
 id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
 icon = "asset:assets/icon.svg"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
 author = "Magi Team"
@@ -91,3 +98,216 @@ capability = "network"
 scope = ["download.geonames.org"]
 optional = true
 reason_i18n = { en = "Optionally download the offline GeoNames dataset for local geocoding", "zh-CN" = "可选下载 GeoNames 离线数据，用于在本地识别照片地点" }
+
+[plugin.activation_flow]
+title = "Enable Apple Photos"
+description = "Apple Photos is sensitive local data. Magi reads photo metadata (time, place, camera) to build your timeline."
+confirm_label = "Enable source"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.photo_library_apple_photos.enabled"
+configured_key = "sensors.photo_library_apple_photos.initial_sync_configured"
+fields = []
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
+
+[[plugin.settings_fields]]
+key = "locale"
+type = "input"
+label = "Locale"
+description = ""
+default = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.analysis_features"
+type = "tags"
+label = "Analysis Features"
+description = "Metadata extraction capabilities to apply."
+default = ["exif"]
+required = false
+options = [{ "label" = "EXIF Metadata", "value" = "exif" }, { "label" = "GPS Geocoding", "value" = "geocode" }]
+section = "general"
+surface = "timeline"
+order = 45
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.default_retention_mode"
+type = "input"
+label = "Default Retention Mode"
+description = ""
+default = "analyze_only"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.edge_whitelist"
+type = "tags"
+label = "Edge Whitelist"
+description = ""
+default = ["CAPTURED", "RELATED_TO", "INTERACTED_WITH", "CREATED"]
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.enabled"
+type = "switch"
+label = "Enable"
+description = "Whether this photo source is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.exclude_patterns"
+type = "tags"
+label = "Exclude Patterns"
+description = ""
+default = ["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"]
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.initial_sync_end_date"
+type = "input"
+label = "Initial Sync End Date"
+description = ""
+default = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.initial_sync_policy"
+type = "input"
+label = "Initial Sync Policy"
+description = ""
+default = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.initial_sync_start_date"
+type = "input"
+label = "Initial Sync Start Date"
+description = ""
+default = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.max_items_per_sync"
+type = "number"
+label = "Max Items Per Sync"
+description = "Maximum number of photos to process per sync run."
+default = 200
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.photos_library_path"
+type = "path"
+label = "Custom Apple Photos Library"
+description = "Optional .photoslibrary path. Leave empty to use the current system Photos library."
+default = ""
+required = false
+section = "general"
+surface = "timeline"
+order = 14
+placeholder = "~/Pictures/Photos Library.photoslibrary"
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.settle_window_hours"
+type = "number"
+label = "Session Settle Window (hours)"
+description = "A photo session is emitted only after no new photos arrive for this many hours."
+default = 4
+required = false
+section = "general"
+surface = "timeline"
+order = 50
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.source_mode"
+type = "input"
+label = "Source Mode"
+description = ""
+default = "apple_photos"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.source_paths"
+type = "tags"
+label = "Source Paths"
+description = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.storage_mode"
+type = "input"
+label = "Storage Mode"
+description = ""
+default = "external_reference"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "Polling interval used for interval-based sync."
+default = 60
+required = false
+section = "general"
+surface = "timeline"
+order = 30
+depends_on_key = "sensors.photo_library_apple_photos.sync_mode"
+depends_on_values = ["interval"]
+
+[[plugin.settings_fields]]
+key = "sensors.photo_library_apple_photos.sync_mode"
+type = "select"
+label = "Sync Mode"
+description = "How this photo source should be synchronized."
+default = "interval"
+required = true
+options = [{ "label" = "Manual", "value" = "manual" }, { "label" = "Automatic", "value" = "interval" }]
+section = "general"
+surface = "timeline"
+order = 20

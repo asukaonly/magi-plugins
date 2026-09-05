@@ -1,9 +1,17 @@
 [plugin]
+settings_fields = []
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = []
 id = "chatgpt-history"
 name = "ChatGPT History"
 name_i18n = { "zh-CN" = "ChatGPT 历史" }
 icon = "asset:assets/icon.svg"
-version = "0.1.3"
+version = "0.2.0"
 description = "Imports conversations from an official ChatGPT data export without ongoing access to your account."
 description_i18n = { "zh-CN" = "从 ChatGPT 官方数据导出文件中一次性导入对话，不会持续访问你的账户。" }
 author = "Magi Team"

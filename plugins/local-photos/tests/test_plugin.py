@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+from sdk_test_support import bind_test_plugin
+
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -27,7 +29,7 @@ def _load_plugin_module() -> ModuleType:
 
 
 def test_local_photos_registers_only_the_directory_source() -> None:
-    plugin = _load_plugin_module().LocalPhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     sensors = plugin.get_sensors()
 
     assert len(sensors) == 1
@@ -39,7 +41,7 @@ def test_local_photos_registers_only_the_directory_source() -> None:
 
 
 def test_local_photos_activation_requires_a_folder() -> None:
-    plugin = _load_plugin_module().LocalPhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     spec = plugin.get_sensors()[0][2]
     flow = spec.metadata["activation_flow"]
 
@@ -53,7 +55,7 @@ def test_local_photos_activation_requires_a_folder() -> None:
 
 
 def test_local_photos_registers_only_its_extraction_profile() -> None:
-    plugin = _load_plugin_module().LocalPhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     profiles = plugin.get_extraction_profiles()
 
     assert [profile.source_types for profile in profiles] == [["photo_library_directory"]]
@@ -63,7 +65,7 @@ def test_local_photos_registers_only_its_extraction_profile() -> None:
 
 
 def test_local_photos_tool_uses_only_directory_settings() -> None:
-    plugin = _load_plugin_module().LocalPhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     plugin.settings = {
         "sensors": {
             "photo_library_directory": {
@@ -101,7 +103,7 @@ def test_local_photos_manifest_has_no_apple_permission_or_dependency() -> None:
 
 
 def test_local_resolver_does_not_claim_apple_refs() -> None:
-    plugin = _load_plugin_module().LocalPhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     tool_class = plugin.get_tools()[0]
     tool_class._reader_factory = staticmethod(lambda: SimpleNamespace())
     tool = tool_class()

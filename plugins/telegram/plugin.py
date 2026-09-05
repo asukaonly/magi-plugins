@@ -109,10 +109,10 @@ class TelegramPlugin(Plugin):
 
     def get_channel(self) -> Channel:
         config = TelegramChannelConfig(
-            bot_token=self.settings.get("bot_token", ""),
+            bot_token=self.context.credentials.get("bot_token") or "",
             mode=self.settings.get("mode", "polling"),
             webhook_url=self.settings.get("webhook_url", ""),
-            webhook_secret=self.settings.get("webhook_secret", ""),
+            webhook_secret=self.context.credentials.get("webhook_secret") or "",
             proxy=self.settings.get("proxy", ""),
             allowed_user_ids=list(self.settings.get("allowed_user_ids") or []),
             group_trigger_keyword=self.settings.get("group_trigger_keyword", ""),

@@ -87,7 +87,7 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
                 label="Recent Days",
                 description="Used when the first-sync scope is set to recent days.",
                 default=7,
-                min=1,
+                minimum=1,
                 section="activation",
                 surface="timeline",
                 order=20,
@@ -142,7 +142,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Minimum Play Duration (seconds)",
             description="Minimum track play duration to include in timeline (seconds).",
             default=20,
-            min=1,
+            minimum=1,
             section="general",
             surface="timeline",
             order=40,
@@ -185,7 +185,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
         ),
         ExtensionFieldSpec(
             key=f"{prefix}.lastfm_api_key",
-            type="input",
+            type="secret",
             label="Last.fm API Key",
             description=(
                 "Required when Genre Tag Source is set to Last.fm. "
@@ -216,7 +216,6 @@ class NeteaseMusicPlugin(Plugin):
                 allowed_assertion_families=["interest_profile", "preference_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["interest.*", "preference.*"],
                 derived_assertion_specs=[
                     {
@@ -401,14 +400,14 @@ class NeteaseMusicPlugin(Plugin):
         if isinstance(sensors_settings, dict):
             settings = dict(sensors_settings.get("netease_music", {}))
         resolved_sync_mode = _normalize_sync_mode(settings.get("sync_mode"))
-        configured_db_path = str(settings.get("db_path") or settings.get("source_path") or DEFAULT_SETTINGS["db_path"])
+        configured_db_path = str(settings.get("db_path") or DEFAULT_SETTINGS["db_path"])
 
         sensor = NeteaseMusicTimelineSensor(
             min_play_duration=int(settings.get("min_play_duration") or DEFAULT_SETTINGS["min_play_duration"]),
             source_path=configured_db_path,
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             tag_strategy=str(settings.get("tag_strategy") or "off"),
-            lastfm_api_key=str(settings.get("lastfm_api_key") or ""),
+            lastfm_api_key=self.context.credentials.get("sensors.netease_music.lastfm_api_key") or "",
         )
 
         return [

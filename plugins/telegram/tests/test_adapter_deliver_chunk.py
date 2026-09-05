@@ -22,7 +22,7 @@ import pytest
 from magi_plugin_sdk.channels import ChannelTarget
 from magi_plugin_sdk.delivery import DeliveryChunk
 
-from telegram.adapter import TelegramChannel, TelegramChannelConfig
+from magi_telegram_plugin_test.adapter import TelegramChannel, TelegramChannelConfig
 
 
 def _make_channel() -> TelegramChannel:

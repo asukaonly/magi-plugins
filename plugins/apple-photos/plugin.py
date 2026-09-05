@@ -42,7 +42,7 @@ class ApplePhotosPlugin(Plugin):
             raw_settings = sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
             if isinstance(raw_settings, dict):
                 settings = dict(raw_settings)
-        return build_apple_photo_tool_classes(settings)
+        return build_apple_photo_tool_classes(settings, connection_id=self.connection.connection_id)
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         prefix = f"sensors.{APPLE_PHOTOS_SOURCE_TYPE}"
@@ -84,6 +84,7 @@ class ApplePhotosPlugin(Plugin):
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name="apple_photos_permissions",
                 resource_type="channel_status",
                 description="Live dependency and permission status for Apple Photos.",

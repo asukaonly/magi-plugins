@@ -16,6 +16,9 @@ The receipt's ``external_message_id`` tracks the image's client_id
 """
 from __future__ import annotations
 
+from sdk_test_support import credentials_for_path
+from weixin.state import WeixinStateStore
+
 import base64
 import io
 from pathlib import Path
@@ -40,8 +43,8 @@ def _png_bytes(w: int = 200, h: int = 100) -> bytes:
 
 
 def _make_channel(tmp_path: Path) -> WeixinChannel:
-    channel = WeixinChannel(config=WeixinChannelConfig(
-        state_dir=str(tmp_path), account_id="bot@im.bot",
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))), config=WeixinChannelConfig(
+         account_id="bot@im.bot",
     ))
     channel._credentials = WeixinCredentials(account_id="bot@im.bot", token="t")
 

@@ -38,7 +38,7 @@ def test_extraction_profile_derives_game_interest_from_repeated_play() -> None:
     assert profile.allowed_entity_types == ["media", "software"]
     assert profile.structured_allowed_predicates == ["VIEWED", "INTERESTED_IN"]
     assert profile.allowed_assertion_families == ["interest_profile"]
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_traits == ["interest.*"]
     rule = profile.derived_assertion_specs[0]
     assert rule.rule_id == "steam_play_history.viewed_interest"

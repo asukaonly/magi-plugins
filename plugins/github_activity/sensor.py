@@ -1,6 +1,8 @@
 """Timeline sensor for local GitHub activity pull sync."""
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import json
 import time
 from datetime import datetime, timedelta, timezone
@@ -14,7 +16,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .client import GitHubActivityClient, iso_to_timestamp, normalize_repository_slug, timestamp_to_iso
@@ -63,11 +64,11 @@ class GitHubActivitySensor(SensorBase):
         self.initial_sync_lookback_days = max(1, int(initial_sync_lookback_days or 30))
         self._client_factory = client_factory or (lambda token: GitHubActivityClient(access_token=token))
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         if not self.access_token:
-            return SensorSyncResult(items=[], next_cursor=context.last_cursor, stats={"error": "missing_access_token"})
+            return SourceChangeBatch(changes=[], next_cursor=context.last_cursor, stats={"error": "missing_access_token"})
         if not self.repositories:
-            return SensorSyncResult(items=[], next_cursor=context.last_cursor, stats={"error": "missing_repositories"})
+            return SourceChangeBatch(changes=[], next_cursor=context.last_cursor, stats={"error": "missing_repositories"})
 
         since_iso = self._since_iso(context)
         per_repo_limit = max(1, int(context.limit or 50) // max(1, len(self.repositories)))
@@ -92,10 +93,11 @@ class GitHubActivitySensor(SensorBase):
         items = items[: max(1, int(context.limit or 50))]
         max_seen = max([iso_to_timestamp(str(item.get("occurred_at") or "")) for item in items] or [time.time()])
         next_cursor = json.dumps({"version": 1, "since": timestamp_to_iso(max_seen)}, sort_keys=True)
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=next_cursor,
             watermark_ts=max_seen,
+            complete=not (source_has_more),
             stats={
                 "count": len(items),
                 "repositories_processed": len(self.repositories),

@@ -124,6 +124,7 @@ def test_chrome_history_custom_range_uses_local_day_bounds_and_continues() -> No
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="chrome_history",
                 manual=True,
                 last_cursor=None,

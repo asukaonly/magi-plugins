@@ -103,10 +103,10 @@ async def login_with_qr(
                 base_url=str(status.get("baseurl") or current_base_url or DEFAULT_BASE_URL),
                 user_id=str(status.get("ilink_user_id") or ""),
             )
-            saved_path = state_store.save_credentials(credentials)
+            state_store.save_credentials(credentials)
             return WeixinLoginResult(
                 True,
-                f"Weixin login succeeded. Credentials saved to {saved_path}.",
+                "Weixin login succeeded. Credentials saved to this connection.",
                 account_id=account_id,
                 token=token,
                 base_url=credentials.base_url,

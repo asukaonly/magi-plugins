@@ -55,8 +55,6 @@ class WeixinChannelConfig:
 
     bot_token: str = ""
     account_id: str = ""
-    credentials_path: str = ""
-    state_dir: str = "~/.magi/weixin"
     base_url: str = DEFAULT_BASE_URL
     cdn_base_url: str = DEFAULT_CDN_BASE_URL
     bot_type: str = DEFAULT_BOT_TYPE
@@ -94,6 +92,7 @@ class WeixinChannel(Channel):
         self,
         *,
         config: WeixinChannelConfig,
+        state_store: WeixinStateStore,
         session_mapper: ChannelSessionMapperProtocol | None = None,
         message_dispatcher: ChannelMessageDispatcherProtocol | None = None,
     ) -> None:
@@ -102,7 +101,7 @@ class WeixinChannel(Channel):
         self._message_dispatcher = message_dispatcher
         self._attachment_store: ChannelAttachmentStoreProtocol | None = None
         self._control_port: Any = None
-        self._state = WeixinStateStore(config.state_dir)
+        self._state = state_store
         self._credentials: WeixinCredentials | None = None
         self._api: WeixinApiClient | None = None
         self._poll_task: asyncio.Task[None] | None = None
@@ -164,7 +163,6 @@ class WeixinChannel(Channel):
                             self._config.account_id,
                             self._credentials.account_id if self._credentials else "",
                         ),
-                        protected_credentials_path=self._config.credentials_path,
                     )
                     self._context_tokens.clear()
                     self._typing_cache.clear()
@@ -215,7 +213,7 @@ class WeixinChannel(Channel):
                 configured=False,
                 last_error="",
             )
-            logger.info("Weixin channel is not configured; run QR login or set credentials_path/manual token")
+            logger.info("Weixin channel is not configured; run QR login or configure a token")
             return
         self._credentials = credentials
         self._api = WeixinApiClient(
@@ -256,8 +254,7 @@ class WeixinChannel(Channel):
         logger.info("Weixin channel stopped")
 
     async def send_message(self, target: ChannelTarget, content: OutboundContent) -> None:
-        """Legacy SDK path — fires and forgets. Phase G's ``deliver()`` is
-        the modern caller and returns a receipt for retract/revise lookups."""
+        """Send basic outbound text through the public channel contract."""
         await self._send_text(text=content.text or "", target=target)
 
     async def deliver(
@@ -435,38 +432,7 @@ class WeixinChannel(Channel):
 
         storage_path = str(attachment.get("storage_path") or "").strip()
         if not storage_path:
-            # Defensive fallback: derive absolute from storage_rel_path
-            # which the chat layer always sets. Some upstream paths
-            # only carry the relative form (chat_messages.payload_json
-            # is the canonical example), so use it when storage_path
-            # is missing. Both point to the same file.
-            rel_path = str(attachment.get("storage_rel_path") or "").strip()
-            if rel_path:
-                from pathlib import Path
-                from magi_plugin_sdk import PluginRuntimePaths  # noqa: F401  (typing only)
-                # Best-effort: assume the standard runtime layout
-                # (~/.magi/data/...). Real-world this lives in
-                # magi.utils.runtime.get_runtime_paths but plugins
-                # shouldn't pull host internals — fall back to
-                # XDG-style default.
-                import os
-                base = Path(os.environ.get("MAGI_DATA_DIR") or
-                            (Path.home() / ".magi"))
-                storage_path = str(base / rel_path)
-                logger.info(
-                    "Weixin storage_path derived from rel: %s",
-                    storage_path,
-                )
-            else:
-                logger.error(
-                    "Weixin attachment missing both storage_path and "
-                    "storage_rel_path attachment_id=%s keys=%s",
-                    attachment_id, sorted(attachment.keys()),
-                )
-                raise ValueError(
-                    "attachment is missing storage_path; "
-                    "host-side attachment_ingestion should always set it"
-                )
+            raise ValueError("Attachment requires a host-resolved storage_path")
         try:
             with open(storage_path, "rb") as fh:
                 plaintext = fh.read()
@@ -633,7 +599,7 @@ class WeixinChannel(Channel):
         ``sendmessage`` endpoint and gets back ``ret: -2`` (param error).
 
         Callers may still pre-fill ``target.external_chat_id`` — we
-        prefer it when present so the legacy ``send_message`` path
+        prefer it when present so the basic ``send_message`` path
         (which does fill it) keeps working unchanged.
         """
         external = (target.external_chat_id or "").strip()
@@ -651,7 +617,7 @@ class WeixinChannel(Channel):
     async def _send_text(
         self, *, text: str, target: ChannelTarget,
     ) -> list[str]:
-        """Core text-send used by both legacy send_message and Phase G deliver.
+        """Core text-send used by both send_message and receipt-backed deliver.
 
         Returns the list of Weixin client_ids assigned to each chunk
         (empty list when the input text is empty after stripping).
@@ -740,7 +706,6 @@ class WeixinChannel(Channel):
             )
         return self._state.load_credentials(
             account_id=self._config.account_id,
-            credentials_path=self._config.credentials_path,
         )
 
     async def _poll_loop(self) -> None:

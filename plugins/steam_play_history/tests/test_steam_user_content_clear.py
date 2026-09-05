@@ -144,6 +144,7 @@ def test_clear_waits_for_collection_and_collection_can_resume(tmp_path: Path) ->
             state_store=state_store,
         )
         sync_context = SensorSyncContext(
+        connection_id="test-connection",
             source_type="steam_play_history",
             manual=True,
             last_cursor="preserved-cursor",

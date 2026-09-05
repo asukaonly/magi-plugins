@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["codex_agent_history"]
 id = "codex"
 name = "Codex"
 name_i18n = { "zh-CN" = "Codex" }
 icon = "asset:assets/icon.svg"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reads only your own messages from local Codex transcripts so Magi can learn what you build."
 description_i18n = { "zh-CN" = "仅读取本地 Codex 会话中你自己发送的内容，让 Magi 了解你在做什么" }
 author = "Magi Team"
@@ -81,3 +88,74 @@ linux = "~/.codex"
 capability = "filesystem_read"
 scope = ["~/.codex", "%USERPROFILE%/.codex"]
 reason_i18n = { en = "Read your own turns from local Codex transcripts", "zh-CN" = "读取本地 Codex 会话中你自己发送的内容" }
+
+[plugin.activation_flow]
+title = "Connect Codex history"
+description = "Magi reads only your own messages from local Codex transcripts. Obvious secrets are scrubbed first."
+confirm_label = "Connect"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.codex_agent_history.enabled"
+configured_key = "sensors.codex_agent_history.initial_sync_configured"
+fields = [{ "key" = "sensors.codex_agent_history.source_paths", "type" = "path", "label" = "Transcript Folders", "description" = "Folders to scan for Codex transcripts.", "default" = ["~/.codex"], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "~/.codex", "depends_on_values" = [] }, { "key" = "sensors.codex_agent_history.initial_sync_lookback_days", "type" = "number", "label" = "First-sync window (days)", "description" = "First sync ingests sessions from the last N days.", "default" = 30, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [], "minimum" = 1.0, "maximum" = 3650.0 }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = { "sensors.codex_agent_history.initial_sync_lookback_days" = 30 } }
+
+[[plugin.settings_fields]]
+key = "sensors.codex_agent_history.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether Codex history sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.codex_agent_history.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.codex_agent_history.initial_sync_lookback_days"
+type = "number"
+label = "First-sync window (days)"
+description = "First sync ingests sessions from the last N days."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 30
+minimum = 1.0
+maximum = 3650.0
+
+[[plugin.settings_fields]]
+key = "sensors.codex_agent_history.source_paths"
+type = "path"
+label = "Transcript Folders"
+description = "Folders to scan for Codex transcripts."
+default = ["~/.codex"]
+required = true
+section = "general"
+surface = "timeline"
+order = 20
+placeholder = "~/.codex"
+
+[[plugin.settings_fields]]
+key = "sensors.codex_agent_history.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "How often to rescan transcript folders for new sessions."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+minimum = 5.0
+maximum = 1440.0

@@ -57,6 +57,7 @@ async def test_capture_tick_produces_one_l1_item_per_capture(tmp_path: Path) -> 
         # Verify build_output produces a SensorOutput per item.
         output = await sensor.build_output(items[0])
         assert output.source_type == "screenshot_timeline"
+        assert output.raw_payload_ref == items[0]["thumbnail_path"]
         assert output.source_item_id == items[0]["source_item_id"]
         assert output.narration.body == "hello world"
         assert output.activity.source.code == "screenshot_timeline"
@@ -176,10 +177,10 @@ async def test_collect_items_returns_per_capture_immediately(tmp_path: Path) -> 
         await sensor.trigger_once("timer")
 
         result = await sensor.collect_items(context=None)  # type: ignore[arg-type]
-        assert len(result.items) == 2  # both captures immediately visible
+        assert len([change.payload for change in result.changes]) == 2  # both captures immediately visible
         # Second collect_items finds nothing — items are drained on read.
         result2 = await sensor.collect_items(context=None)  # type: ignore[arg-type]
-        assert result2.items == []
+        assert [change.payload for change in result2.changes] == []
     finally:
         await sensor.stop()
 
@@ -202,6 +203,7 @@ async def test_start_is_skipped_when_screen_recording_denied(
         helper_argv=[sys.executable, str(_FIXTURE)],
         resources_root=tmp_path,
         retention_days=30,
+        session_db_path=tmp_path / "sessions.db",
     )
     await sensor.start()
     try:
@@ -237,7 +239,7 @@ def _ax_item(**overrides: object) -> dict:
 async def test_build_output_prefers_ax_text_when_rich(tmp_path: Path) -> None:
     """AX-rich capture (used_ocr_fallback=False) → content block is the exact AX text."""
     sensor_mod = _load("sensor")
-    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path, session_db_path=tmp_path / "sessions.db")
     output = await sensor.build_output(_ax_item())
     assert output.content_blocks[0].value == "[file] plugin.toml\n[diff] adapter.py (d500c61)"
     assert output.narration.body == output.content_blocks[0].value
@@ -249,7 +251,7 @@ async def test_build_output_prefers_ax_text_when_rich(tmp_path: Path) -> None:
 async def test_build_output_falls_back_to_ocr_when_ax_hollow(tmp_path: Path) -> None:
     """Hollow AX tree (WeChat/QQ-like, used_ocr_fallback=True) → OCR text wins."""
     sensor_mod = _load("sensor")
-    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path, session_db_path=tmp_path / "sessions.db")
     item = _ax_item(used_ocr_fallback=True, ax_text="alert\nAllow", ax_content_chars=6, ax_node_count=6)
     output = await sensor.build_output(item)
     assert output.content_blocks[0].value == "OCR FALLBACK TEXT"
@@ -260,7 +262,7 @@ async def test_build_output_falls_back_to_ocr_when_ax_hollow(tmp_path: Path) -> 
 async def test_build_output_marks_ocr_as_evidence_only_for_timeline(tmp_path: Path) -> None:
     """The main timeline should see a compact window title, not the OCR wall."""
     sensor_mod = _load("sensor")
-    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path, session_db_path=tmp_path / "sessions.db")
     item = _ax_item(
         used_ocr_fallback=True,
         ocr_text=(
@@ -295,7 +297,7 @@ async def test_captures_are_l1_only_and_never_reach_l2(tmp_path: Path) -> None:
     "what was on my screen" retrieval keeps working.
     """
     sensor_mod = _load("sensor")
-    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path)
+    sensor = sensor_mod.ScreenshotSensor(resources_root=tmp_path, session_db_path=tmp_path / "sessions.db")
 
     assert sensor.memory_policy.cognition_eligible is False
     assert sensor.memory_policy.to_dict()["cognition_eligible"] is False

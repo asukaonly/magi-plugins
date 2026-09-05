@@ -71,7 +71,6 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
         allowed_assertion_families=AGENT_HISTORY_ASSERTION_FAMILIES,
         allow_graph=True,
         allow_assertion=True,
-        assertion_mode="phase2_candidate",
         derived_assertion_specs=[],
         extraction_instructions=(
             "These events are the user's own turns from local coding-agent transcripts. "
@@ -80,11 +79,6 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
             "topics, skills, and work activities. Skip secrets, stack traces, pasted "
             "logs, file paths, one-off debugging details, quoted assistant text, and "
             "transient command instructions."
-        ),
-        phase2_instructions=(
-            "Assertion candidates from coding-agent history must describe stable user "
-            "profile signals from the user's own words. Do not promote temporary "
-            "requests, pasted errors, external docs, or assistant suggestions."
         ),
     )
 
@@ -124,8 +118,8 @@ def build_fields(
             label="First-sync window (days)",
             description="First sync ingests sessions from the last N days.",
             default=30,
-            min=1,
-            max=3650,
+            minimum=1,
+            maximum=3650,
             section="general",
             surface="timeline",
             order=30,
@@ -136,8 +130,8 @@ def build_fields(
             label="Sync Interval (minutes)",
             description="How often to rescan transcript folders for new sessions.",
             default=30,
-            min=5,
-            max=1440,
+            minimum=5,
+            maximum=1440,
             section="general",
             surface="timeline",
             order=40,
@@ -186,8 +180,8 @@ def build_activation_flow(
                 label="First-sync window (days)",
                 description="First sync ingests sessions from the last N days.",
                 default=30,
-                min=1,
-                max=3650,
+                minimum=1,
+                maximum=3650,
                 section="activation",
                 surface="timeline",
                 order=20,

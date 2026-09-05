@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["git_activity"]
 id = "git-activity"
 name = "Git Activity"
 name_i18n = { "zh-CN" = "Git 活动" }
 icon = "asset:assets/icon.svg"
-version = "0.1.2"
+version = "0.2.0"
 description = "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow."
 description_i18n = { "zh-CN" = "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流" }
 author = "Magi Team"
@@ -71,3 +78,141 @@ reason_i18n = { en = "Run git to read commit and checkout history", "zh-CN" = "�
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 reason_i18n = { en = "Discover and read local git repositories", "zh-CN" = "发现并读取本地 git 仓库" }
+
+[plugin.activation_flow]
+title = "Enable Git Activity"
+description = "Git activity can reveal repository names and local work patterns. Choose how the first sync should seed the timeline before this source starts running."
+confirm_label = "Enable source"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.git_activity.enabled"
+configured_key = "sensors.git_activity.initial_sync_configured"
+fields = [{ "key" = "sensors.git_activity.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much Git history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.git_activity.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 30, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.git_activity.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0, "maximum" = 365.0 }, { "key" = "sensors.git_activity.repos", "type" = "path", "label" = "Repository Folders", "description" = "Select one or more Git repository folders to monitor.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 30, "depends_on_values" = [] }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.default_retention_mode"
+type = "input"
+label = "Default Retention Mode"
+description = ""
+default = "analyze_only"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether git activity sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.initial_sync_lookback_days"
+type = "number"
+label = "Recent Days"
+description = "Used when the first-sync scope is set to recent days."
+default = 30
+required = false
+section = "activation"
+surface = "timeline"
+order = 20
+depends_on_key = "sensors.git_activity.initial_sync_policy"
+depends_on_values = ["lookback_days"]
+minimum = 1.0
+maximum = 365.0
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.initial_sync_policy"
+type = "select"
+label = "First Sync Scope"
+description = "Decide how much Git history should be imported when this source is enabled for the first time."
+default = "lookback_days"
+required = false
+options = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }]
+section = "activation"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.max_messages_per_session"
+type = "number"
+label = "Max Messages Per Session"
+description = ""
+default = 5
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.repos"
+type = "path"
+label = "Repositories"
+description = "Select one or more Git repository folders to monitor."
+required = false
+section = "general"
+surface = "timeline"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.sensitive_keywords"
+type = "tags"
+label = "Additional Sensitive Keywords"
+description = "Extra keywords to detect in commit messages (built-in: password, secret, token, etc.)"
+required = false
+section = "privacy"
+surface = "timeline"
+order = 70
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.sensitive_mode"
+type = "select"
+label = "Sensitive Message Mode"
+description = "How to handle commit messages with sensitive content."
+default = "redact"
+required = false
+options = [{ "label" = "Redact sensitive parts", "value" = "redact" }, { "label" = "Block entirely", "value" = "block" }]
+section = "privacy"
+surface = "timeline"
+order = 60
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.session_window_minutes"
+type = "number"
+label = "Session Window Minutes"
+description = ""
+default = 30
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.git_activity.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "How often to check for new git activity."
+default = 30
+required = false
+section = "general"
+surface = "timeline"
+order = 30
+minimum = 5.0
+maximum = 1440.0

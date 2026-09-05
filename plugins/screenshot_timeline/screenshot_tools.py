@@ -21,6 +21,7 @@ uses the same calling pattern across sensors.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,7 @@ from magi_plugin_sdk.tools import (
 
 def build_screenshot_timeline_tool_classes(
     resources_root: Path,
+    connection_id: str,
 ) -> list[type[Tool]]:
     """Build the configured resolver tool class for the current plugin."""
 
@@ -135,6 +137,7 @@ def build_screenshot_timeline_tool_classes(
                     {
                         "asset_ref_id": capture_id,
                         "source_type": "screenshot_timeline",
+                        "connection_id": connection_id,
                         "source_item_id": capture_id,
                         "kind": "image",
                         "resolver_tool": "screenshot_timeline_resolve_capture_refs",
@@ -174,7 +177,7 @@ def _date_subpath_from_capture_id(capture_id: str) -> str | None:
     Returns None on anything that doesn't match the format — we never
     want to invent a path and probe random parts of the filesystem.
     """
-    if not capture_id or len(capture_id) < 8:
+    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}_[0-9]{6}_[0-9A-HJKMNP-TV-Z]{4}", capture_id):
         return None
     yyyymmdd = capture_id[:8]
     if not yyyymmdd.isdigit():
@@ -217,11 +220,11 @@ def build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
     if source != "screenshot_timeline":
         return []
 
-    source_item_id = str(event.get("source_item_id") or "").strip()
-    if not source_item_id:
-        return []
-
     metadata = event.get("metadata_json") if isinstance(event.get("metadata_json"), dict) else {}
+    source_item_id = str(metadata.get("source_object_id") or "").strip()
+    connection_id = str(metadata.get("source_connection_id") or "").strip()
+    if not source_item_id or not connection_id:
+        return []
     activity_snapshot = (
         metadata.get("activity_snapshot")
         if isinstance(metadata.get("activity_snapshot"), dict)
@@ -245,10 +248,11 @@ def build_recall_asset_refs(event: dict[str, Any]) -> list[dict[str, Any]]:
         "event_id": str(event.get("event_id") or "").strip() or None,
         "source_type": "screenshot_timeline",
         "source_item_id": source_item_id,
+        "connection_id": connection_id,
+        "resource_refs": metadata.get("source_resource_refs", []),
         "display_name": display_name,
         "captured_at": (
             provenance.get("captured_at")
-            or timeline.get("captured_at")
             or event.get("timestamp")
         ),
         "occurred_at": event.get("timestamp") or event.get("created_at"),

@@ -1,6 +1,10 @@
 """Generic local documents timeline sensor."""
 from __future__ import annotations
 
+import json
+
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -12,7 +16,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .reader import (
@@ -160,21 +163,20 @@ class LocalDocumentsSensor(SensorBase):
             "max_body_chars": int(live.get("max_body_chars", self._max_body_chars) or self._max_body_chars),
         }
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         settings = self._resolve_settings(context)
         root_paths = list(settings["root_paths"])
         if not root_paths:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 next_cursor=context.last_cursor,
                 watermark_ts=time.time(),
                 stats={"count": 0, "error": "no root_paths"},
             )
 
-        try:
-            since = float(context.last_cursor) if context.last_cursor else 0.0
-        except (TypeError, ValueError):
-            since = 0.0
+        cursor = json.loads(context.last_cursor) if context.last_cursor else {"mtime": 0.0, "object_id": ""}
+        since = float(cursor["mtime"])
+        after = (since, str(cursor["object_id"]))
 
         include_extensions = list(settings["include_extensions"])
         exclude_folders = list(settings["exclude_folders"])
@@ -205,18 +207,21 @@ class LocalDocumentsSensor(SensorBase):
                     if stat.st_size > max_file_bytes:
                         skipped_oversized += 1
                         continue
-                    if stat.st_mtime <= since:
+                    if stat.st_mtime < since:
                         continue
-                    candidates.append(parse_document(path, root, max_body_chars=max_body_chars))
+                    item = parse_document(path, root, max_body_chars=max_body_chars)
+                    if (float(item["mtime"]), self.source_item_identity(item)) > after:
+                        candidates.append(item)
                 except (OSError, UnicodeError, ValueError):
                     skipped_errors += 1
 
-        candidates.sort(key=lambda item: float(item.get("mtime") or 0.0))
+        candidates.sort(key=lambda item: (float(item.get("mtime") or 0.0), self.source_item_identity(item)))
         items = candidates[:limit]
         max_mtime = max([float(item.get("mtime") or 0.0) for item in items] + [since])
-        return SensorSyncResult(
-            items=items,
-            next_cursor=str(max_mtime) if max_mtime > 0 else context.last_cursor,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
+            next_cursor=json.dumps({"mtime": max_mtime, "object_id": self.source_item_identity(items[-1])}) if items else context.last_cursor,
+            complete=len(candidates) <= limit,
             watermark_ts=max_mtime or time.time(),
             stats={
                 "count": len(items),
@@ -284,4 +289,3 @@ class LocalDocumentsSensor(SensorBase):
         )
         output.pinned_payload = body or None
         return output
-

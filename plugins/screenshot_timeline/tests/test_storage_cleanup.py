@@ -19,16 +19,14 @@ from screenshot_timeline.storage_cleanup import (
 )
 
 
-def test_erase_managed_resources_covers_new_legacy_and_internal_symlinks(
+def test_erase_managed_resources_covers_private_trees_and_internal_symlinks(
     tmp_path: Path,
 ) -> None:
     root = tmp_path / "screenshots"
     original = root / "originals" / "2026" / "08" / "01" / "capture.jpg"
     thumbnail = root / "thumbnails" / "2026" / "08" / "01" / "capture.jpg"
-    legacy_original = root / "2026" / "07" / "31" / "cap_ABC123_orig.jpg"
-    legacy_thumbnail = root / "2026" / "07" / "31" / "cap_ABC123_thumb.jpg"
     unrelated = root / "keep.txt"
-    for path in (original, thumbnail, legacy_original, legacy_thumbnail, unrelated):
+    for path in (original, thumbnail, unrelated):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(path.name.encode())
 
@@ -43,12 +41,10 @@ def test_erase_managed_resources_covers_new_legacy_and_internal_symlinks(
 
     stats = erase_managed_screenshot_resources(root)
 
-    assert stats["deleted_files"] == 4
+    assert stats["deleted_files"] == 2
     assert stats["deleted_symlinks"] == 1
     assert not (root / "originals").exists()
     assert not (root / "thumbnails").exists()
-    assert not legacy_original.exists()
-    assert not legacy_thumbnail.exists()
     assert unrelated.read_bytes() == b"keep.txt"
     assert external_capture.read_bytes() == b"outside"
 
@@ -120,36 +116,6 @@ def test_erase_managed_resources_unlinks_socket_entries() -> None:
 
         assert not originals.exists()
         assert stats["deleted_special_entries"] == 1
-
-
-@pytest.mark.skipif(
-    os.name != "posix" or not hasattr(os, "mkfifo"),
-    reason="POSIX FIFOs are unavailable",
-)
-def test_legacy_cleanup_only_unlinks_matching_entries(tmp_path: Path) -> None:
-    root = tmp_path / "screenshots"
-    legacy_dir = root / "2026" / "07" / "31"
-    legacy_dir.mkdir(parents=True)
-    external = tmp_path / "outside.jpg"
-    external.write_bytes(b"outside")
-    matching_link = legacy_dir / "cap_MATCH_orig.jpg"
-    unrelated_link = legacy_dir / "keep-link.jpg"
-    matching_fifo = legacy_dir / "cap_MATCH_thumb.jpg"
-    unrelated_fifo = legacy_dir / "keep.fifo"
-    matching_link.symlink_to(external)
-    unrelated_link.symlink_to(external)
-    os.mkfifo(matching_fifo)
-    os.mkfifo(unrelated_fifo)
-
-    stats = erase_managed_screenshot_resources(root)
-
-    assert not os.path.lexists(matching_link)
-    assert os.path.lexists(unrelated_link)
-    assert not os.path.lexists(matching_fifo)
-    assert os.path.lexists(unrelated_fifo)
-    assert external.read_bytes() == b"outside"
-    assert stats["deleted_symlinks"] == 1
-    assert stats["deleted_special_entries"] == 1
 
 
 def test_erase_session_database_removes_database_and_sidecars(tmp_path: Path) -> None:

@@ -33,15 +33,7 @@ class GeoResult:
     country_code: str
     latitude: float
     longitude: float
-
-
-# ---------------------------------------------------------------------------
-# Singleton state
-# ---------------------------------------------------------------------------
-
-_grid: dict[tuple[int, int], list[tuple[float, float, int]]] | None = None
-_cities: list[GeoResult] | None = None
-_admin1_names: dict[str, str] | None = None
+    admin1_name: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -174,22 +166,19 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 # Lookup
 # ---------------------------------------------------------------------------
 
-def _load(cache_dir: Path) -> None:
-    """Load and index the dataset (idempotent)."""
-    global _grid, _cities, _admin1_names  # noqa: PLW0603
-    if _grid is not None and _admin1_names is not None:
-        return
+def _load(cache_dir: Path) -> tuple[list[GeoResult], dict]:
+    """Load one connection's dataset for the current lookup batch."""
     csv_path = _ensure_csv(cache_dir)
     admin1_path = _ensure_admin1_codes(cache_dir)
-    _cities, _grid = _parse_csv(csv_path)
-    _admin1_names = _parse_admin1_codes(admin1_path)
-    logger.info("GeoNames index loaded: %d cities", len(_cities))
+    cities, grid = _parse_csv(csv_path)
+    admin1_names = _parse_admin1_codes(admin1_path)
+    for city in cities:
+        city.admin1_name = admin1_names.get(f"{city.country_code}:{city.admin1}", "")
+    return cities, grid
 
 
-def _nearest(lat: float, lon: float) -> GeoResult | None:
+def _nearest(lat: float, lon: float, cities: list[GeoResult], grid: dict) -> GeoResult | None:
     """Find the nearest city to (lat, lon) using the grid index."""
-    if _grid is None or _cities is None:
-        return None
     cell_lat = int(math.floor(lat / _GRID_RES))
     cell_lon = int(math.floor(lon / _GRID_RES))
 
@@ -198,7 +187,7 @@ def _nearest(lat: float, lon: float) -> GeoResult | None:
     # Search the cell and its 8 neighbors
     for dlat in (-1, 0, 1):
         for dlon in (-1, 0, 1):
-            bucket = _grid.get((cell_lat + dlat, cell_lon + dlon))
+            bucket = grid.get((cell_lat + dlat, cell_lon + dlon))
             if bucket is None:
                 continue
             for clat, clon, idx in bucket:
@@ -209,7 +198,7 @@ def _nearest(lat: float, lon: float) -> GeoResult | None:
 
     if best_idx < 0:
         return None
-    return _cities[best_idx]
+    return cities[best_idx]
 
 
 def lookup(
@@ -222,11 +211,11 @@ def lookup(
     Returns the nearest city or ``None`` if data is unavailable.
     """
     try:
-        _load(cache_dir)
+        cities, grid = _load(cache_dir)
     except Exception:
         logger.warning("Geocoder data unavailable, skipping lookup", exc_info=True)
         return None
-    return _nearest(lat, lon)
+    return _nearest(lat, lon, cities, grid)
 
 
 def batch_lookup(
@@ -241,11 +230,11 @@ def batch_lookup(
     if not coords:
         return []
     try:
-        _load(cache_dir)
+        cities, grid = _load(cache_dir)
     except Exception:
         logger.warning("Geocoder data unavailable, skipping batch lookup", exc_info=True)
         return [None] * len(coords)
-    return [_nearest(lat, lon) for lat, lon in coords]
+    return [_nearest(lat, lon, cities, grid) for lat, lon in coords]
 
 
 def format_location(result: GeoResult | None, locale_map: dict[str, str] | None = None) -> str:
@@ -267,8 +256,7 @@ def format_location(result: GeoResult | None, locale_map: dict[str, str] | None 
     # Fall back to GeoNames English admin1 names before exposing raw codes.
     parts = [result.name]
     if result.admin1:
-        admin1_key = f"{result.country_code}:{result.admin1}"
-        english_admin1 = (_admin1_names or {}).get(admin1_key)
+        english_admin1 = result.admin1_name
         parts.append(english_admin1 or result.admin1)
     parts.append(result.country_code)
     return ", ".join(parts)
@@ -281,11 +269,3 @@ def format_location(result: GeoResult | None, locale_map: dict[str, str] | None 
 def is_data_available(cache_dir: Path) -> bool:
     """Check whether the GeoNames CSV has been downloaded."""
     return (cache_dir / _CSV_FILENAME).exists()
-
-
-def reset() -> None:
-    """Reset the in-memory index (for testing)."""
-    global _grid, _cities, _admin1_names  # noqa: PLW0603
-    _grid = None
-    _cities = None
-    _admin1_names = None

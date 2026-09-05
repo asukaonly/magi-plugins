@@ -66,28 +66,51 @@ def _run(tool, ids):
 
 
 def test_apple_and_local_resolvers_have_distinct_names() -> None:
-    apple = build_apple_photo_tool_classes({})[0]()
-    local = build_local_photo_tool_classes({"source_paths": ["/photos"]})[0]()
+    apple = build_apple_photo_tool_classes({}, connection_id="photos")[0]()
+    local = build_local_photo_tool_classes({"source_paths": ["/photos"]}, connection_id="photos")[0]()
 
     assert apple.schema.name == "apple_photos_resolve_photo_refs"
     assert local.schema.name == "local_photos_resolve_photo_refs"
 
 
 def test_apple_resolver_does_not_resolve_directory_refs() -> None:
-    tool_class = build_apple_photo_tool_classes({})[0]
+    tool_class = build_apple_photo_tool_classes({}, connection_id="photos")[0]
     tool_class._apple_reader_factory = _AppleReader
     result = _run(tool_class(), ["apple-photos:A", "dir-1"])
 
     assert result.success is True
     assert result.data["resolved_count"] == 1
+    assert result.data["asset_refs"][0]["connection_id"] == "photos"
     assert result.data["missing_asset_ref_ids"] == ["dir-1"]
 
 
 def test_local_resolver_does_not_resolve_apple_refs() -> None:
-    tool_class = build_local_photo_tool_classes({"source_paths": ["/photos"]})[0]
+    tool_class = build_local_photo_tool_classes({"source_paths": ["/photos"]}, connection_id="photos")[0]
     tool_class._reader_factory = _DirectoryReader
     result = _run(tool_class(), ["dir-1", "apple-photos:A"])
 
     assert result.success is True
     assert result.data["resolved_count"] == 1
+    assert result.data["asset_refs"][0]["connection_id"] == "photos"
     assert result.data["missing_asset_ref_ids"] == ["apple-photos:A"]
+
+
+def test_recall_refs_preserve_host_connection_and_native_session_id() -> None:
+    from photo_library_core.plugin_support import build_recall_artifacts
+
+    result = build_recall_artifacts(
+        source_type="photo_library_directory", expected_source_type="photo_library_directory",
+        resolver_tool="local_photos_resolve_photo_refs",
+        events=[{
+            "source_item_id": "source:host-namespaced-object", "timestamp": 1710000000.0,
+            "metadata_json": {
+                "source_connection_id": "photos-a", "source_object_id": "native-session",
+                "activity_snapshot": {"source_type": "photo_library_directory", "source_item_id": "source:host-namespaced-object"},
+                "representative_photos": [{"asset_local_id": "native-photo", "capture_ts": 1710000000.0}],
+            },
+        }],
+    )
+    ref = result["asset_refs"][0]
+    assert ref["connection_id"] == "photos-a"
+    assert ref["source_item_id"] == "native-photo"
+    assert ref["attributes"]["session_source_item_id"] == "native-session"

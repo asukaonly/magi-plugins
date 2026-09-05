@@ -139,6 +139,7 @@ def mod_sync_context(mod, vault: Path, last_cursor, settings):
         def plugin_cache_dir(self, plugin_id: str) -> Path:
             return vault
     return SensorSyncContext(
+        connection_id="test-connection",
         source_type="obsidian_vault",
         manual=False,
         last_cursor=last_cursor,
@@ -164,7 +165,7 @@ def test_collect_items_knowledge_tier_skips_search_and_excluded(tmp_path: Path) 
         exclude_folders=[".obsidian"], cognition_exclude_folders=["Clippings"],
     )
     result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, None, {})))
-    rels = {it["rel_path"] for it in result.items}
+    rels = {it["rel_path"] for it in [change.payload for change in result.changes]}
     assert rels == {"Projects/A.md"}              # only knowledge-tier note
     assert result.next_cursor is not None
 
@@ -182,14 +183,14 @@ def test_collect_items_incremental_via_cursor(tmp_path: Path) -> None:
         vault_path=str(tmp_path), exclude_folders=[], cognition_exclude_folders=[],
     )
     # Cursor newer than the old file -> nothing ingested.
-    result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, "2000.0", {})))
-    assert result.items == []
+    result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, '{"mtime":2000.0,"object_id":""}' , {})))
+    assert [change.payload for change in result.changes] == []
 
     # A fresh file (current mtime) is picked up.
     new = tmp_path / "Projects" / "New.md"
     new.write_text("# New\nnew\n", encoding="utf-8")
-    result2 = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, "2000.0", {})))
-    assert {it["rel_path"] for it in result2.items} == {"Projects/New.md"}
+    result2 = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, '{"mtime":2000.0,"object_id":""}' , {})))
+    assert {it["rel_path"] for it in [change.payload for change in result2.changes]} == {"Projects/New.md"}
 
 
 def test_collect_items_skips_unreadable_note(tmp_path: Path, monkeypatch) -> None:
@@ -212,5 +213,5 @@ def test_collect_items_skips_unreadable_note(tmp_path: Path, monkeypatch) -> Non
         vault_path=str(tmp_path), exclude_folders=[], cognition_exclude_folders=[],
     )
     result = asyncio.run(sensor.collect_items(mod_sync_context(mod, tmp_path, None, {})))
-    assert {it["rel_path"] for it in result.items} == {"Projects/Good.md"}
+    assert {it["rel_path"] for it in [change.payload for change in result.changes]} == {"Projects/Good.md"}
     assert result.stats["skipped_errors"] == 1

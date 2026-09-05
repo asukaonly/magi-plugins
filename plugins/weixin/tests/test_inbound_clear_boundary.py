@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from sdk_test_support import credentials_for_path
+
 import asyncio
 import json
 import os
@@ -26,7 +28,6 @@ from magi_plugin_sdk.fs import UnsafeManagedPathError
 from weixin.adapter import WeixinChannel, WeixinChannelConfig
 from weixin.api import MESSAGE_ITEM_IMAGE, MESSAGE_ITEM_TEXT, MESSAGE_TYPE_USER
 from weixin.state import WeixinCredentials, WeixinStateStore
-from weixin.state import WeixinStatePathCollisionError
 
 
 PROVIDER_TIME_MS = 1_754_017_445_000
@@ -91,11 +92,11 @@ def _wired_channel(
     tmp_path: Path,
 ) -> tuple[WeixinChannel, MagicMock, MagicMock, MagicMock]:
     credentials = WeixinCredentials(account_id="bot@im.bot", token="token")
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.save_credentials(credentials)
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             account_id=credentials.account_id,
             enable_typing_indicator=False,
         )
@@ -249,7 +250,7 @@ async def test_invalid_provider_time_is_terminal_and_advances_local_cursor(
 
     await channel._poll_loop()
 
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     assert store.load_sync_buf("bot@im.bot") == "next-cursor"
     assert "message-1" in store.load_processed_message_ids("bot@im.bot")
     dispatcher.capture_inbound_context.assert_not_awaited()
@@ -283,7 +284,7 @@ async def test_old_provider_message_rejected_by_host_is_terminal(
     assert evidence == ChannelProviderTimeEvidence(
         provider_occurred_at_ms=old_time_ms
     )
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     assert store.load_sync_buf("bot@im.bot") == "after-old-message"
     assert "message-1" in store.load_processed_message_ids("bot@im.bot")
     mapper.resolve_or_create.assert_not_awaited()
@@ -311,7 +312,7 @@ async def test_late_host_rejection_is_terminal_and_advances_local_cursor(
 
     await channel._poll_loop()
 
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     assert store.load_sync_buf("bot@im.bot") == "after-late-rejection"
     assert "message-1" in store.load_processed_message_ids("bot@im.bot")
     dispatcher.capture_inbound_context.assert_awaited_once()
@@ -369,7 +370,7 @@ async def test_attachment_store_receives_captured_context(
 async def test_clear_erases_inbound_content_but_preserves_account_and_cursor(
     tmp_path: Path,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     credentials = WeixinCredentials(account_id="bot@im.bot", token="secret-token")
     store.save_credentials(credentials)
     store.save_sync_buf(credentials.account_id, "provider-cursor")
@@ -404,9 +405,9 @@ async def test_clear_erases_inbound_content_but_preserves_account_and_cursor(
     preserved_settings = tmp_path / "operator-settings.json"
     preserved_settings.write_text('{"enabled":true}', encoding="utf-8")
 
-    channel = WeixinChannel(
+    channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
         config=WeixinChannelConfig(
-            state_dir=str(tmp_path),
+
             account_id=credentials.account_id,
         )
     )
@@ -468,7 +469,7 @@ def test_clear_removes_indirect_account_content_without_touching_external_data(
     tmp_path: Path,
     entry_kind: str,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path / "state"))
+    store = WeixinStateStore(str(tmp_path / "state"), credentials=credentials_for_path(str(tmp_path / "state")))
     credentials = WeixinCredentials(account_id="bot@im.bot", token="secret-token")
     store.save_credentials(credentials)
     store.save_sync_buf(credentials.account_id, "provider-cursor")
@@ -499,7 +500,7 @@ def test_clear_replaces_indirect_status_without_reading_external_data(
     tmp_path: Path,
     entry_kind: str,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path / "state"))
+    store = WeixinStateStore(str(tmp_path / "state"), credentials=credentials_for_path(str(tmp_path / "state")))
     store.state_dir.mkdir(parents=True)
     external = tmp_path / f"external-status-{entry_kind}.json"
     external.write_text(
@@ -529,7 +530,7 @@ def test_clear_replaces_indirect_generation_without_reading_external_data(
     tmp_path: Path,
     entry_kind: str,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path / "state"))
+    store = WeixinStateStore(str(tmp_path / "state"), credentials=credentials_for_path(str(tmp_path / "state")))
     store.state_dir.mkdir(parents=True)
     external = tmp_path / f"external-generation-{entry_kind}.json"
     external.write_text('{"clear_generation":999}', encoding="utf-8")
@@ -561,7 +562,7 @@ def test_clear_rejects_linked_accounts_directory_without_touching_external_data(
     )
 
     with pytest.raises(UnsafeManagedPathError):
-        WeixinStateStore(str(state_dir)).clear_inbound_content(clear_generation=7)
+        WeixinStateStore(str(state_dir), credentials=credentials_for_path(str(state_dir))).clear_inbound_content(clear_generation=7)
 
     assert external_content.read_bytes() == original
     assert not (state_dir / "inbound_clear_state.json").exists()
@@ -583,7 +584,7 @@ def test_clear_rejects_linked_state_root_without_touching_external_data(
     linked_state.symlink_to(external_state, target_is_directory=True)
 
     with pytest.raises(UnsafeManagedPathError):
-        WeixinStateStore(str(linked_state)).clear_inbound_content(clear_generation=8)
+        WeixinStateStore(str(linked_state), credentials=credentials_for_path(str(linked_state))).clear_inbound_content(clear_generation=8)
 
     assert external_content.read_bytes() == content_before
     assert external_status.read_bytes() == status_before
@@ -598,20 +599,20 @@ def test_clear_preserves_single_suffix_named_account_credentials(
     tmp_path: Path,
     account_suffix: str,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path / "state"))
+    store = WeixinStateStore(str(tmp_path / "state"), credentials=credentials_for_path(str(tmp_path / "state")))
     account_id = f"foo.{account_suffix}"
     credentials = WeixinCredentials(account_id=account_id, token="secret-token")
-    credential_path = store.save_credentials(credentials)
+    store.save_credentials(credentials)
     store.save_sync_buf(account_id, "provider-cursor")
     store.save_context_tokens(account_id, {"user": "private-context"})
     store.save_processed_message_ids(account_id, {"private-message"})
     store.save_message_id_mapping(account_id, "external", "internal")
-    credential_before = credential_path.read_bytes()
+    credential_before = store.credentials.get("account")
     cursor_before = store.sync_path(account_id).read_bytes()
 
     store.clear_inbound_content(clear_generation=9)
 
-    assert credential_path.read_bytes() == credential_before
+    assert store.credentials.get("account") == credential_before
     assert store.sync_path(account_id).read_bytes() == cursor_before
     assert not store.context_tokens_path(account_id).exists()
     assert not store.processed_messages_path(account_id).exists()
@@ -627,56 +628,17 @@ def test_clear_preserves_single_suffix_named_account_credentials(
         ("message-map", "message map"),
     ],
 )
-def test_clear_rejects_cross_account_credential_state_collision_before_changes(
-    tmp_path: Path,
-    account_suffix: str,
-    state_kind: str,
+def test_credentials_do_not_share_content_file_namespace(
+    tmp_path: Path, account_suffix: str, state_kind: str,
 ) -> None:
-    store = WeixinStateStore(str(tmp_path / "state"))
-    suffixed_account = f"foo.{account_suffix}"
-    plain_account = "foo"
-    store.save_credentials(
-        WeixinCredentials(account_id=suffixed_account, token="suffix-secret")
-    )
-    store.save_credentials(
-        WeixinCredentials(account_id=plain_account, token="plain-secret")
-    )
-    store.save_sync_buf(suffixed_account, "suffix-cursor")
-    store.save_sync_buf(plain_account, "plain-cursor")
-    store.save_context_tokens(suffixed_account, {"user": "context"})
-    store.save_processed_message_ids(suffixed_account, {"message"})
-    store.save_message_id_mapping(suffixed_account, "external", "internal")
-    store.update_channel_status(
-        state="running",
-        running=True,
-        configured=True,
-        account_id=suffixed_account,
-        last_error="private error",
-    )
-    store.inbound_clear_state_path.write_text(
-        '{"clear_generation":2}',
-        encoding="utf-8",
-    )
-    before = {
-        path.relative_to(store.state_dir): path.read_bytes()
-        for path in store.state_dir.rglob("*")
-        if path.is_file()
-    }
-
-    with pytest.raises(WeixinStatePathCollisionError) as exc_info:
-        store.clear_inbound_content(clear_generation=10)
-
-    message = str(exc_info.value)
-    assert suffixed_account in message
-    assert plain_account in message
-    assert state_kind in message
-    after = {
-        path.relative_to(store.state_dir): path.read_bytes()
-        for path in store.state_dir.rglob("*")
-        if path.is_file()
-    }
-    assert after == before
-    assert store.load_applied_inbound_clear_generation() == 2
+    store = WeixinStateStore(tmp_path / "state", credentials=credentials_for_path(tmp_path))
+    credentials = WeixinCredentials(account_id=f"foo.{account_suffix}", token="vault-secret")
+    store.save_credentials(credentials)
+    store.save_context_tokens(credentials.account_id, {"user": "private-context"})
+    store.clear_inbound_content(clear_generation=10)
+    assert store.load_credentials() == credentials
+    assert not list(store.state_dir.rglob(f"{credentials.account_id}.json"))
+    assert not store.context_tokens_path(credentials.account_id).exists()
 
 
 @pytest.mark.asyncio
@@ -842,7 +804,7 @@ async def test_clear_during_poll_processing_cannot_restore_processed_state(
     await asyncio.wait_for(clear_task, timeout=1)
     await asyncio.wait_for(poll_task, timeout=1)
 
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     assert store.load_sync_buf("bot@im.bot") == ""
     assert store.load_processed_message_ids("bot@im.bot") == set()
 
@@ -852,7 +814,7 @@ async def test_clear_does_not_wait_for_network_poll_or_persist_stale_response(
     tmp_path: Path,
 ) -> None:
     channel, dispatcher, _, _ = _wired_channel(tmp_path)
-    store = WeixinStateStore(str(tmp_path))
+    store = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path)))
     store.save_processed_message_ids("bot@im.bot", {"pre-clear-message"})
     dispatcher.capture_inbound_context.side_effect = ChannelInboundRejectedError(
         ChannelInboundRejectionReason.CLEARED_MESSAGE,
@@ -897,7 +859,7 @@ async def test_clear_does_not_wait_for_network_poll_or_persist_stale_response(
     await asyncio.sleep(0)
     await asyncio.sleep(0)
     dispatcher.capture_inbound_context.assert_not_awaited()
-    assert WeixinStateStore(str(tmp_path)).load_sync_buf("bot@im.bot") == ""
+    assert WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))).load_sync_buf("bot@im.bot") == ""
 
     release_clear.set()
     await asyncio.wait_for(clear_task, timeout=1)
@@ -945,6 +907,6 @@ async def test_api_error_from_pre_clear_poll_cannot_restore_last_error(
     await asyncio.wait_for(poll_task, timeout=1)
 
     handle_api_error.assert_not_called()
-    status = WeixinStateStore(str(tmp_path)).load_channel_status()
+    status = WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))).load_channel_status()
     assert "last_error" not in status
     assert "last_error_at_ms" not in status

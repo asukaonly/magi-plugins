@@ -31,7 +31,6 @@ L2_PREDICATES = ["WORKS_WITH", "COMMITTED", "USES", "REFERENCES"]
 DEFAULT_SETTINGS = {
     "enabled": False,
     "client_id": "",
-    "access_token": "",
     "repositories": [],
     "sync_interval_minutes": 30,
     "initial_sync_lookback_days": 30,
@@ -104,8 +103,8 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
                 label="Initial Sync Days",
                 description="How many recent days to import on the first sync.",
                 default=30,
-                min=1,
-                max=365,
+                minimum=1,
+                maximum=365,
                 section="connection",
                 surface="timeline",
                 order=30,
@@ -142,8 +141,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Sync Interval (minutes)",
             description="How often to check GitHub for updates.",
             default=30,
-            min=5,
-            max=1440,
+            minimum=5,
+            maximum=1440,
             section="general",
             surface="timeline",
             order=30,
@@ -154,8 +153,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Initial Sync Days",
             description="How many recent days to import when no previous cursor exists.",
             default=30,
-            min=1,
-            max=365,
+            minimum=1,
+            maximum=365,
             section="general",
             surface="timeline",
             order=40,
@@ -258,11 +257,11 @@ class GitHubActivityPlugin(Plugin):
             return PluginSettingsActionResult(status="failed", message=str(exc))
 
         self._device_sessions.pop(session_id, None)
+        self.context.credentials.set("sensors.github_activity.access_token", token.access_token)
         return PluginSettingsActionResult(
             status="succeeded",
             message="GitHub connected. Sync will run locally for the selected repositories.",
             settings_updates={
-                "sensors.github_activity.access_token": token.access_token,
                 "sensors.github_activity.initial_sync_configured": True,
             },
         )
@@ -285,7 +284,6 @@ class GitHubActivityPlugin(Plugin):
                 allowed_assertion_families=["project_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["project.*"],
                 derived_assertion_specs=[
                     {
@@ -322,7 +320,7 @@ class GitHubActivityPlugin(Plugin):
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         settings = self._sensor_settings()
         source_enabled = bool(settings.get("enabled", DEFAULT_SETTINGS["enabled"]))
-        token = str(settings.get("access_token") or "").strip() if source_enabled else ""
+        token = (self.context.credentials.get("sensors.github_activity.access_token") or "") if source_enabled else ""
         repositories = list(settings.get("repositories") or []) if source_enabled else []
         sensor = GitHubActivitySensor(
             access_token=token,

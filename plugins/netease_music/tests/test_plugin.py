@@ -16,7 +16,7 @@ def test_netease_profile_declares_derived_music_rule() -> None:
     profile = plugin.get_extraction_profiles()[0]
 
     assert profile.profile_id == "source.netease_music"
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["interest_profile", "preference_profile"]
     assert profile.allowed_assertion_traits == ["interest.*", "preference.*"]
     assert profile.allow_assertion is True

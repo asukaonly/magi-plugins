@@ -76,6 +76,7 @@ def test_netease_marks_has_more_when_limit_is_full() -> None:
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="netease_music",
                 manual=True,
                 last_cursor="1710000000",
@@ -100,6 +101,7 @@ def test_netease_initial_sync_advances_cursor_when_items_are_read() -> None:
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="netease_music",
                 manual=True,
                 last_cursor=None,
@@ -124,6 +126,7 @@ def test_netease_prepares_plugin_owned_temp_storage_before_collection() -> None:
     asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="netease_music",
                 manual=True,
                 last_cursor="1710000000",

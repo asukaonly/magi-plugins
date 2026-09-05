@@ -7,6 +7,8 @@ through to normal dispatch.
 """
 from __future__ import annotations
 
+from sdk_test_support import credentials_for_path
+
 import asyncio
 from pathlib import Path
 
@@ -111,11 +113,11 @@ def _msg(text: str) -> dict:
 
 
 def _channel(tmp_path: Path, api: _Api, *, result) -> WeixinChannel:
-    WeixinStateStore(str(tmp_path)).save_credentials(
+    WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))).save_credentials(
         WeixinCredentials(account_id="bot@im.bot", token="t")
     )
-    ch = WeixinChannel(config=WeixinChannelConfig(
-        state_dir=str(tmp_path), account_id="bot@im.bot", enable_typing_indicator=False,
+    ch = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))), config=WeixinChannelConfig(
+         account_id="bot@im.bot", enable_typing_indicator=False,
     ))
     ch._credentials = WeixinCredentials(account_id="bot@im.bot", token="t")
     ch._api = api  # type: ignore[assignment]

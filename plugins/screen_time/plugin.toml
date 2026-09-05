@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["screen_time"]
 id = "screen-time"
 name = "App Usage"
 name_i18n = { "zh-CN" = "屏幕使用" }
 icon = "lucide:chart-no-axes-column"
-version = "0.2.8"
+version = "0.3.0"
 description = "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends."
 description_i18n = { "zh-CN" = "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯。数据按整点小时聚合，第一条记录会在当前所在的整点小时结束后才出现在时间线上。" }
 author = "Magi Team"
@@ -41,3 +48,26 @@ en = "Lets magi see your screen-time usage"
 capability = "filesystem_read"
 scope = ["~/Library/Application Support/Knowledge"]
 reason_i18n = { en = "Read the local app-usage data source", "zh-CN" = "读取本地应用用量数据源" }
+
+[[plugin.settings_fields]]
+key = "sensors.screen_time.enabled"
+type = "switch"
+label = "Enable App Usage Sync"
+description = "Tracks the foreground app every second and writes one summary per app for each clock hour (10:00-11:00, 11:00-12:00, ...). A bucket is only written to your timeline after the hour it belongs to has fully ended, so the first entry typically appears 0-59 minutes after you enable this."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.screen_time.sync_interval_minutes"
+type = "select"
+label = "Check Interval"
+description = "How often the plugin checks for hourly buckets that have just ended and flushes them to the timeline. This does NOT change how often new entries appear (always one per app per clock hour); a smaller value only reduces the delay between an hour ending and its records becoming visible."
+default = 5
+required = false
+options = [{ "label" = "Every minute", "value" = "1" }, { "label" = "Every 5 minutes", "value" = "5" }, { "label" = "Every 15 minutes", "value" = "15" }, { "label" = "Every 60 minutes", "value" = "60" }]
+section = "sync"
+surface = "timeline"
+order = 20

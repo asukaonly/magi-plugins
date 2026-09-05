@@ -9,7 +9,15 @@
         "zh-CN": "Agent 历史核心库"
       },
       "icon": "lucide:bot",
-      "version": "0.1.1",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/agent_history_core",
       "description": "Shared transcript parsing and redaction used by the Codex and Claude Code plugins. Installed automatically as a dependency.",
       "description_i18n": {
@@ -24,7 +32,7 @@
         "windows",
         "linux"
       ],
-      "package_sha256": "6cd6e4633d54733d6dcffe786ab2ee252aaffa4add79a9f007c835529281418e"
+      "package_sha256": "e3bd8887e6e4bd0809860a092ffba60e07cbc71b6b22cb516a56f664069d0dda"
     },
     {
       "plugin_id": "apple-photos",
@@ -34,7 +42,285 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkFwcGxlIFBob3RvczwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOS4yIiBmaWxsPSIjZmZmIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iI0VGNDQ0NCIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNGOTczMTYiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNFQUIzMDgiIHRyYW5zZm9ybT0icm90YXRlKDkwIDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiMyMkM1NUUiIHRyYW5zZm9ybT0icm90YXRlKDEzNSAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjMzhCREY4IiB0cmFuc2Zvcm09InJvdGF0ZSgxODAgMTIgMTIpIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iIzYzNjZGMSIgdHJhbnNmb3JtPSJyb3RhdGUoMjI1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNBODU1RjciIHRyYW5zZm9ybT0icm90YXRlKDI3MCAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjRUM0ODk5IiB0cmFuc2Zvcm09InJvdGF0ZSgzMTUgMTIgMTIpIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMi4yNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEuMTUiIGZpbGw9IiM5Q0EzQUYiLz48L3N2Zz4K",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "photo_library_apple_photos"
+      ],
+      "settings_fields": [
+        {
+          "key": "locale",
+          "type": "input",
+          "label": "Locale",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.analysis_features",
+          "type": "tags",
+          "label": "Analysis Features",
+          "description": "Metadata extraction capabilities to apply.",
+          "default": [
+            "exif"
+          ],
+          "required": false,
+          "options": [
+            {
+              "label": "EXIF Metadata",
+              "value": "exif"
+            },
+            {
+              "label": "GPS Geocoding",
+              "value": "geocode"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 45
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.edge_whitelist",
+          "type": "tags",
+          "label": "Edge Whitelist",
+          "description": "",
+          "default": [
+            "CAPTURED",
+            "RELATED_TO",
+            "INTERACTED_WITH",
+            "CREATED"
+          ],
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.enabled",
+          "type": "switch",
+          "label": "Enable",
+          "description": "Whether this photo source is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.exclude_patterns",
+          "type": "tags",
+          "label": "Exclude Patterns",
+          "description": "",
+          "default": [
+            "**/thumbnails",
+            "**/.cache",
+            "**/Thumbs.db",
+            "**/@eaDir"
+          ],
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.initial_sync_end_date",
+          "type": "input",
+          "label": "Initial Sync End Date",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.initial_sync_policy",
+          "type": "input",
+          "label": "Initial Sync Policy",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.initial_sync_start_date",
+          "type": "input",
+          "label": "Initial Sync Start Date",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of photos to process per sync run.",
+          "default": 200,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.photos_library_path",
+          "type": "path",
+          "label": "Custom Apple Photos Library",
+          "description": "Optional .photoslibrary path. Leave empty to use the current system Photos library.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 14,
+          "placeholder": "~/Pictures/Photos Library.photoslibrary"
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.settle_window_hours",
+          "type": "number",
+          "label": "Session Settle Window (hours)",
+          "description": "A photo session is emitted only after no new photos arrive for this many hours.",
+          "default": 4,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.source_mode",
+          "type": "input",
+          "label": "Source Mode",
+          "description": "",
+          "default": "apple_photos",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.source_paths",
+          "type": "tags",
+          "label": "Source Paths",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "external_reference",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 60,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "depends_on_key": "sensors.photo_library_apple_photos.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.photo_library_apple_photos.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How this photo source should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Automatic",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [
+        {
+          "resource_name": "apple_photos_permissions",
+          "resource_type": "channel_status",
+          "requires_enabled": false,
+          "description": "Live dependency and permission status for Apple Photos.",
+          "metadata": {}
+        }
+      ],
+      "settings_ui_blocks": [
+        {
+          "block_id": "apple_photos_permissions",
+          "type": "resource_picker",
+          "title": "Apple Photos Access",
+          "description": "Apple Photos needs the local reader dependency and macOS permission to read the Photos library.",
+          "resource_name": "apple_photos_permissions",
+          "value_key": "_readonly",
+          "presentation": "permission_status",
+          "depends_on_values": []
+        }
+      ],
+      "activation_flow": {
+        "title": "Enable Apple Photos",
+        "description": "Apple Photos is sensitive local data. Magi reads photo metadata (time, place, camera) to build your timeline.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.photo_library_apple_photos.enabled",
+        "configured_key": "sensors.photo_library_apple_photos.initial_sync_configured",
+        "fields": [],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/apple-photos",
       "description": "Reads your macOS Photos library and extracts capture time, location, and camera metadata.",
       "description_i18n": {
@@ -149,7 +435,7 @@
           }
         ]
       },
-      "package_sha256": "09827a11070c27e49baf12319590beaa18182fa679f2272ef7c9828026e02f29"
+      "package_sha256": "58ba3acd0c218272e50a1ce9426a8075672fcd76607d34a0dda2b7c9596309c9"
     },
     {
       "plugin_id": "browser_history_core",
@@ -158,7 +444,15 @@
         "zh-CN": "浏览器历史核心库"
       },
       "icon": "lucide:globe",
-      "version": "0.1.3",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/browser_history_core",
       "description": "Shared ingestion primitives consumed by Chrome/Firefox/Edge history plugins. Installed automatically as a dependency; not user-toggleable.",
       "description_i18n": {
@@ -172,7 +466,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "3e2dfe772467a60cc4253427e044e4771955c7ac6d3e868305a5c5289e39ce20"
+      "package_sha256": "434a7b335d75b995c29d9096217f3ebe0f64683b6e963db420ae62bb8b493431"
     },
     {
       "plugin_id": "calendar",
@@ -181,7 +475,177 @@
         "zh-CN": "日历"
       },
       "icon": "lucide:calendar-days",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "calendar"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.calendar.authorization_configured",
+          "type": "switch",
+          "label": "Authorization Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.calendar.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "full",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.calendar.enabled",
+          "type": "switch",
+          "label": "Enable Calendar Sync",
+          "description": "Sync calendar events to timeline.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.calendar.lookback_days",
+          "type": "number",
+          "label": "Lookback Days",
+          "description": "How many days of history to sync on initial setup.",
+          "default": 30,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 1.0,
+          "maximum": 365.0
+        },
+        {
+          "key": "sensors.calendar.recurring_expansion_days",
+          "type": "number",
+          "label": "Future Recurring Event Window",
+          "description": "How many future days of recurring events should be prefetched into the timeline.",
+          "default": 30,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 50,
+          "minimum": 1.0,
+          "maximum": 365.0
+        },
+        {
+          "key": "sensors.calendar.selected_calendar_ids",
+          "type": "tags",
+          "label": "Selected Calendar Ids",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.calendar.sync_interval_minutes",
+          "type": "select",
+          "label": "Sync Interval",
+          "description": "How often to sync calendar events when scheduled sync is enabled.",
+          "default": "30",
+          "required": true,
+          "options": [
+            {
+              "label": "15 minutes",
+              "value": "15"
+            },
+            {
+              "label": "30 minutes",
+              "value": "30"
+            },
+            {
+              "label": "1 hour",
+              "value": "60"
+            },
+            {
+              "label": "6 hours",
+              "value": "360"
+            }
+          ],
+          "section": "sync",
+          "surface": "timeline",
+          "order": 30,
+          "depends_on_key": "sensors.calendar.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.calendar.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "Choose whether calendar sync runs manually or on a schedule.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Scheduled",
+              "value": "interval"
+            }
+          ],
+          "section": "sync",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [
+        {
+          "resource_name": "calendar_lists",
+          "resource_type": "collection",
+          "requires_enabled": false,
+          "description": "Selectable calendars grouped by account/source.",
+          "metadata": {}
+        }
+      ],
+      "settings_ui_blocks": [
+        {
+          "block_id": "selected_calendars",
+          "type": "resource_picker",
+          "title": "Calendars",
+          "description": "Choose which calendars should be synced into the timeline.",
+          "resource_name": "calendar_lists",
+          "value_key": "sensors.calendar.selected_calendar_ids",
+          "presentation": "calendar_list",
+          "depends_on_key": "sensors.calendar.authorization_configured",
+          "depends_on_values": [
+            "true"
+          ]
+        }
+      ],
+      "activation_flow": {
+        "title": "Connect Calendar",
+        "description": "Allow Magi to read your calendar events for timeline sync.",
+        "confirm_label": "Allow calendar access",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": true,
+        "enabled_key": "sensors.calendar.enabled",
+        "configured_key": "sensors.calendar.authorization_configured",
+        "fields": [],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/calendar_plugin",
       "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
       "description_i18n": {
@@ -278,7 +742,7 @@
           }
         ]
       },
-      "package_sha256": "9590ce4d9fbafd1de6e4b948148b058477c6b39794bc03e22b1969df017d9138"
+      "package_sha256": "5150446681d07a1f97e09d2262be0e09c91de9fb6f8c436d4d170cf34a6e7b79"
     },
     {
       "plugin_id": "chatgpt-history",
@@ -288,7 +752,15 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbC1ydWxlPSJldmVub2RkIj48dGl0bGU+Q2hhdEdQVDwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjMTExODI3IiBkPSJNOS4yMDUgOC42NTh2LTIuMjZjMC0uMTkuMDcyLS4zMzMuMjM4LS40MjhsNC41NDMtMi42MTZjLjYxOS0uMzU3IDEuMzU2LS41MjMgMi4xMTctLjUyMyAyLjg1NCAwIDQuNjYyIDIuMjEyIDQuNjYyIDQuNTY2IDAgLjE2NyAwIC4zNTctLjAyNC41NDdsLTQuNzEtMi43NTlhLjc5Ny43OTcgMCAwIDAtLjg1NiAwbC01Ljk3IDMuNDczWm0xMC42MDkgOC44VjEyLjA2YzAtLjMzMy0uMTQzLS41Ny0uNDI5LS43MzdsLTUuOTctMy40NzMgMS45NS0xLjExOGEuNDMzLjQzMyAwIDAgMSAuNDc2IDBsNC41NDMgMi42MTdjMS4zMDkuNzYgMi4xODkgMi4zNzggMi4xODkgMy45NDggMCAxLjgwOC0xLjA3IDMuNDczLTIuNzYgNC4xNjNaTTcuODAyIDEyLjcwM2wtMS45NS0xLjE0MmMtLjE2Ny0uMDk1LS4yMzktLjIzOC0uMjM5LS40MjhWNS44OTljMC0yLjU0NSAxLjk1LTQuNDcyIDQuNTkxLTQuNDcyIDEgMCAxLjkyNy4zMzMgMi43MTIuOTI4TDguMjMgNS4wNjdjLS4yODUuMTY2LS40MjguNDA0LS40MjguNzM3djYuODk4Wk0xMiAxNS4xMjhsLTIuNzk1LTEuNTd2LTMuMzNMMTIgOC42NThsMi43OTUgMS41N3YzLjMzTDEyIDE1LjEyOFptMS43OTYgNy4yM2MtMSAwLTEuOTI3LS4zMzItMi43MTItLjkyN2w0LjY4Ni0yLjcxMmMuMjg1LS4xNjYuNDI4LS40MDQuNDI4LS43Mzd2LTYuODk4bDEuOTc0IDEuMTQyYy4xNjcuMDk1LjIzOC4yMzguMjM4LjQyOHY1LjIzM2MwIDIuNTQ1LTEuOTc0IDQuNDcyLTQuNjE0IDQuNDcyWm0tNS42MzctNS4zMDMtNC41NDQtMi42MTdjLTEuMzA4LS43NjEtMi4xODgtMi4zNzgtMi4xODgtMy45NDhBNC40ODIgNC40ODIgMCAwIDEgNC4yMSA2LjMyN3Y1LjQyM2MwIC4zMzMuMTQzLjU3MS40MjguNzM4bDUuOTQ3IDMuNDQ5LTEuOTUgMS4xMThhLjQzMi40MzIgMCAwIDEtLjQ3NiAwWm0tLjI2MiAzLjljLTIuNjg4IDAtNC42NjItMi4wMjEtNC42NjItNC41MTkgMC0uMTkuMDI0LS4zOC4wNDctLjU3bDQuNjg2IDIuNzFjLjI4Ni4xNjcuNTcxLjE2Ny44NTYgMGw1Ljk3LTMuNDQ4djIuMjZjMCAuMTktLjA3LjMzMy0uMjM3LjQyOGwtNC41NDMgMi42MTZjLS42MTkuMzU3LTEuMzU2LjUyMy0yLjExNy41MjNabTUuODk5IDIuODNhNS45NDcgNS45NDcgMCAwIDAgNS44MjctNC43NTZDMjIuMjg3IDE4LjMzOSAyNCAxNS44NCAyNCAxMy4yOTZjMC0xLjY2NS0uNzEzLTMuMjgyLTEuOTk4LTQuNDQ4LjExOS0uNS4xOS0uOTk5LjE5LTEuNDk4IDAtMy40MDEtMi43NTktNS45NDctNS45NDYtNS45NDctLjY0MiAwLTEuMjYuMDk1LTEuODguMzFBNS45NjIgNS45NjIgMCAwIDAgMTAuMjA1IDBhNS45NDcgNS45NDcgMCAwIDAtNS44MjcgNC43NTdDMS43MTMgNS40NDcgMCA3Ljk0NSAwIDEwLjQ5YzAgMS42NjYuNzEzIDMuMjgzIDEuOTk4IDQuNDQ4LS4xMTkuNS0uMTkgMS0uMTkgMS40OTkgMCAzLjQwMSAyLjc1OSA1Ljk0NiA1Ljk0NiA1Ljk0Ni42NDIgMCAxLjI2LS4wOTUgMS44OC0uMzA5YTUuOTYgNS45NiAwIDAgMCA0LjE2MiAxLjcxM1oiLz48L3N2Zz4K",
-      "version": "0.1.3",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/chatgpt-history",
       "description": "Imports conversations from an official ChatGPT data export without ongoing access to your account.",
       "description_i18n": {
@@ -332,7 +804,7 @@
         "linux"
       ],
       "data_locality": "local_only",
-      "package_sha256": "403d154c54e83498fd89f6d6cbad842899e226e53968753c841e135896c4efbb"
+      "package_sha256": "7748492d7bd0b701876e706aac9f6baaaf6038ecac1209612fbae81ebf54c147"
     },
     {
       "plugin_id": "chrome-history",
@@ -342,7 +814,278 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdvb2dsZSBDaHJvbWU8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTEyIDJhMTAgMTAgMCAwIDEgOC42NiA1SDEyYTUgNSAwIDAgMC00LjMzIDIuNUw1LjE3IDUuMTdBOS45NiA5Ljk2IDAgMCAxIDEyIDJaIi8+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTIwLjY2IDdBMTAgMTAgMCAwIDEgMTIgMjJsNC4zMy03LjVBNSA1IDAgMCAwIDEyIDdoOC42NloiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMTIgMjJBMTAgMTAgMCAwIDEgNS4xNyA1LjE3bDQuMzMgNy41QTUgNSAwIDAgMCAxNi4zMyAxNC41TDEyIDIyWiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjUuMTUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzLjg1IiBmaWxsPSIjNDI4NUY0Ii8+PC9zdmc+Cg==",
-      "version": "0.1.4",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "chrome_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.chrome_history.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.chrome_history.edge_whitelist",
+          "type": "tags",
+          "label": "Edge Whitelist",
+          "description": "",
+          "default": [
+            "VISITED",
+            "VIEWED"
+          ],
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.chrome_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Chrome history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.chrome_history.filter_domains",
+          "type": "tags",
+          "label": "Filter Domains (Regex)",
+          "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 70,
+          "placeholder": "e.g. ^mail\\.google\\.com$"
+        },
+        {
+          "key": "sensors.chrome_history.filter_keywords",
+          "type": "tags",
+          "label": "Filter Keywords",
+          "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 80,
+          "placeholder": "e.g. password reset"
+        },
+        {
+          "key": "sensors.chrome_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.chrome_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.chrome_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ]
+        },
+        {
+          "key": "sensors.chrome_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.chrome_history.lookback_hours",
+          "type": "number",
+          "label": "Lookback Hours",
+          "description": "",
+          "default": 24,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.chrome_history.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of history records to ingest per run.",
+          "default": 1000,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.chrome_history.merge_window_minutes",
+          "type": "number",
+          "label": "Merge Window (minutes)",
+          "description": "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.chrome_history.profile",
+          "type": "input",
+          "label": "Profile",
+          "description": "Chrome profile directory to read, such as Default or Profile 1.",
+          "default": "Default",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.chrome_history.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "managed",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.chrome_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.chrome_history.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.chrome_history.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How Chrome history should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Chrome History",
+        "description": "Chrome history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.chrome_history.enabled",
+        "configured_key": "sensors.chrome_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.chrome_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.chrome_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.chrome_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ]
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.chrome_history.initial_sync_policy": "lookback_days",
+            "sensors.chrome_history.initial_sync_lookback_days": 7
+          }
+        }
+      },
       "path": "plugins/chrome-history",
       "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -458,7 +1201,7 @@
           }
         ]
       },
-      "package_sha256": "60480f688e8631857656064916b630d9404ecbb508b81c9c790cc4610f317dbe"
+      "package_sha256": "b20a2fa1efc919fbbecbcd4a5c7b517370b7dde61374f09c613fe3a02c139798"
     },
     {
       "plugin_id": "claude-code",
@@ -468,7 +1211,128 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkNsYXVkZSBDb2RlPC90aXRsZT48cGF0aCBmaWxsPSIjRDk3NzU3IiBkPSJNMjEgMTAuNWgzdjNoLTN2M2gtMS41djNIMTh2LTNoLTEuNXYzSDE1di0zSDl2M0g3LjV2LTNINnYzSDQuNXYtM0gzdi0zSDB2LTNoM3YtNmgxOFptLTE1IDBoMS41di0zSDZabTEwLjUgMEgxOHYtM2gtMS41eiIvPjwvc3ZnPgo=",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "claude_code_agent_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.claude_code_agent_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Claude Code history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.claude_code_agent_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.claude_code_agent_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "First-sync window (days)",
+          "description": "First sync ingests sessions from the last N days.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "minimum": 1.0,
+          "maximum": 3650.0
+        },
+        {
+          "key": "sensors.claude_code_agent_history.source_paths",
+          "type": "path",
+          "label": "Transcript Folders",
+          "description": "Folders to scan for Claude Code transcripts.",
+          "default": [
+            "~/.claude/projects"
+          ],
+          "required": true,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20,
+          "placeholder": "~/.claude/projects"
+        },
+        {
+          "key": "sensors.claude_code_agent_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to rescan transcript folders for new sessions.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 5.0,
+          "maximum": 1440.0
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Connect Claude Code history",
+        "description": "Magi reads only your own messages from local Claude Code transcripts. Obvious secrets are scrubbed first.",
+        "confirm_label": "Connect",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.claude_code_agent_history.enabled",
+        "configured_key": "sensors.claude_code_agent_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.claude_code_agent_history.source_paths",
+            "type": "path",
+            "label": "Transcript Folders",
+            "description": "Folders to scan for Claude Code transcripts.",
+            "default": [
+              "~/.claude/projects"
+            ],
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "placeholder": "~/.claude/projects",
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.claude_code_agent_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "First-sync window (days)",
+            "description": "First sync ingests sessions from the last N days.",
+            "default": 30,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_values": [],
+            "minimum": 1.0,
+            "maximum": 3650.0
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.claude_code_agent_history.initial_sync_lookback_days": 30
+          }
+        }
+      },
       "path": "plugins/claude-code",
       "description": "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build.",
       "description_i18n": {
@@ -583,7 +1447,7 @@
           }
         ]
       },
-      "package_sha256": "39cdefcfba338b4eeb64a2f50ee25bb80064641891c6d31f3e938d2077c29111"
+      "package_sha256": "17829c2551ff0767d96a7ad40c5bde6ede94b57bb824d3611503cc9466ddbc92"
     },
     {
       "plugin_id": "codex",
@@ -593,7 +1457,128 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbC1ydWxlPSJldmVub2RkIj48dGl0bGU+Q29kZXg8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iIzExMTgyNyIgZD0iTTkuMjA1IDguNjU4di0yLjI2YzAtLjE5LjA3Mi0uMzMzLjIzOC0uNDI4bDQuNTQzLTIuNjE2Yy42MTktLjM1NyAxLjM1Ni0uNTIzIDIuMTE3LS41MjMgMi44NTQgMCA0LjY2MiAyLjIxMiA0LjY2MiA0LjU2NiAwIC4xNjcgMCAuMzU3LS4wMjQuNTQ3bC00LjcxLTIuNzU5YS43OTcuNzk3IDAgMCAwLS44NTYgMGwtNS45NyAzLjQ3M1ptMTAuNjA5IDguOFYxMi4wNmMwLS4zMzMtLjE0My0uNTctLjQyOS0uNzM3bC01Ljk3LTMuNDczIDEuOTUtMS4xMThhLjQzMy40MzMgMCAwIDEgLjQ3NiAwbDQuNTQzIDIuNjE3YzEuMzA5Ljc2IDIuMTg5IDIuMzc4IDIuMTg5IDMuOTQ4IDAgMS44MDgtMS4wNyAzLjQ3My0yLjc2IDQuMTYzWk03LjgwMiAxMi43MDNsLTEuOTUtMS4xNDJjLS4xNjctLjA5NS0uMjM5LS4yMzgtLjIzOS0uNDI4VjUuODk5YzAtMi41NDUgMS45NS00LjQ3MiA0LjU5MS00LjQ3MiAxIDAgMS45MjcuMzMzIDIuNzEyLjkyOEw4LjIzIDUuMDY3Yy0uMjg1LjE2Ni0uNDI4LjQwNC0uNDI4LjczN3Y2Ljg5OFpNMTIgMTUuMTI4bC0yLjc5NS0xLjU3di0zLjMzTDEyIDguNjU4bDIuNzk1IDEuNTd2My4zM0wxMiAxNS4xMjhabTEuNzk2IDcuMjNjLTEgMC0xLjkyNy0uMzMyLTIuNzEyLS45MjdsNC42ODYtMi43MTJjLjI4NS0uMTY2LjQyOC0uNDA0LjQyOC0uNzM3di02Ljg5OGwxLjk3NCAxLjE0MmMuMTY3LjA5NS4yMzguMjM4LjIzOC40Mjh2NS4yMzNjMCAyLjU0NS0xLjk3NCA0LjQ3Mi00LjYxNCA0LjQ3MlptLTUuNjM3LTUuMzAzLTQuNTQ0LTIuNjE3Yy0xLjMwOC0uNzYxLTIuMTg4LTIuMzc4LTIuMTg4LTMuOTQ4QTQuNDgyIDQuNDgyIDAgMCAxIDQuMjEgNi4zMjd2NS40MjNjMCAuMzMzLjE0My41NzEuNDI4LjczOGw1Ljk0NyAzLjQ0OS0xLjk1IDEuMTE4YS40MzIuNDMyIDAgMCAxLS40NzYgMFptLS4yNjIgMy45Yy0yLjY4OCAwLTQuNjYyLTIuMDIxLTQuNjYyLTQuNTE5IDAtLjE5LjAyNC0uMzguMDQ3LS41N2w0LjY4NiAyLjcxYy4yODYuMTY3LjU3MS4xNjcuODU2IDBsNS45Ny0zLjQ0OHYyLjI2YzAgLjE5LS4wNy4zMzMtLjIzNy40MjhsLTQuNTQzIDIuNjE2Yy0uNjE5LjM1Ny0xLjM1Ni41MjMtMi4xMTcuNTIzWm01Ljg5OSAyLjgzYTUuOTQ3IDUuOTQ3IDAgMCAwIDUuODI3LTQuNzU2QzIyLjI4NyAxOC4zMzkgMjQgMTUuODQgMjQgMTMuMjk2YzAtMS42NjUtLjcxMy0zLjI4Mi0xLjk5OC00LjQ0OC4xMTktLjUuMTktLjk5OS4xOS0xLjQ5OCAwLTMuNDAxLTIuNzU5LTUuOTQ3LTUuOTQ2LTUuOTQ3LS42NDIgMC0xLjI2LjA5NS0xLjg4LjMxQTUuOTYyIDUuOTYyIDAgMCAwIDEwLjIwNSAwYTUuOTQ3IDUuOTQ3IDAgMCAwLTUuODI3IDQuNzU3QzEuNzEzIDUuNDQ3IDAgNy45NDUgMCAxMC40OWMwIDEuNjY2LjcxMyAzLjI4MyAxLjk5OCA0LjQ0OC0uMTE5LjUtLjE5IDEtLjE5IDEuNDk5IDAgMy40MDEgMi43NTkgNS45NDYgNS45NDYgNS45NDYuNjQyIDAgMS4yNi0uMDk1IDEuODgtLjMwOWE1Ljk2IDUuOTYgMCAwIDAgNC4xNjIgMS43MTNaIi8+PC9zdmc+Cg==",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "codex_agent_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.codex_agent_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Codex history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.codex_agent_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.codex_agent_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "First-sync window (days)",
+          "description": "First sync ingests sessions from the last N days.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "minimum": 1.0,
+          "maximum": 3650.0
+        },
+        {
+          "key": "sensors.codex_agent_history.source_paths",
+          "type": "path",
+          "label": "Transcript Folders",
+          "description": "Folders to scan for Codex transcripts.",
+          "default": [
+            "~/.codex"
+          ],
+          "required": true,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20,
+          "placeholder": "~/.codex"
+        },
+        {
+          "key": "sensors.codex_agent_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to rescan transcript folders for new sessions.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 5.0,
+          "maximum": 1440.0
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Connect Codex history",
+        "description": "Magi reads only your own messages from local Codex transcripts. Obvious secrets are scrubbed first.",
+        "confirm_label": "Connect",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.codex_agent_history.enabled",
+        "configured_key": "sensors.codex_agent_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.codex_agent_history.source_paths",
+            "type": "path",
+            "label": "Transcript Folders",
+            "description": "Folders to scan for Codex transcripts.",
+            "default": [
+              "~/.codex"
+            ],
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "placeholder": "~/.codex",
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.codex_agent_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "First-sync window (days)",
+            "description": "First sync ingests sessions from the last N days.",
+            "default": 30,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_values": [],
+            "minimum": 1.0,
+            "maximum": 3650.0
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.codex_agent_history.initial_sync_lookback_days": 30
+          }
+        }
+      },
       "path": "plugins/codex",
       "description": "Reads only your own messages from local Codex transcripts so Magi can learn what you build.",
       "description_i18n": {
@@ -708,7 +1693,7 @@
           }
         ]
       },
-      "package_sha256": "10e7d1ef1838c30ef36cbea1d03c363461fe74b33c1c876cff045e447bd8c73a"
+      "package_sha256": "70bdfb807496b1454a53532ef9d3b7ad82b7ba1211bff00f5b6943b29f581f93"
     },
     {
       "plugin_id": "edge-history",
@@ -718,7 +1703,253 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk1pY3Jvc29mdCBFZGdlPC90aXRsZT48cGF0aCBmaWxsPSIjMEM1OUE0IiBkPSJNMjEuNCAxNS4zQTkuOCA5LjggMCAwIDAgMy4zIDcuOGMxLjgtMiA0LjYtMy4yIDcuNy0yLjggMy40LjQgNS44IDIuNiA2LjUgNS4zSDguMWMuNS0xLjYgMi0yLjcgMy44LTIuNyAxLjIgMCAyLjMuNSAzIDEuM2gyLjRDMTYuMiA2LjYgMTQgNS4yIDExLjQgNS4yYy00LjIgMC03LjYgMy4zLTcuNiA3LjQgMCAuMyAwIC42LjEuOS44LTEuMiAyLTIuMSAzLjQtMi43YTYgNiAwIDAgMCA1LjQgOC42YzMuNyAwIDYuOC0yIDguMS01WiIvPjxwYXRoIGZpbGw9IiMwQUE3QjUiIGQ9Ik0zLjggMTIuNmMwLTQuMSAzLjQtNy40IDcuNi03LjQgMi42IDAgNC44IDEuNCA1LjkgMy43aC0yLjRhNCA0IDAgMCAwLTMtMS4zYy0yLjIgMC00IDEuNy00IDMuOSAwIDIuOCAyLjQgNSA1LjYgNSAyIDAgMy44LS42IDUuMS0xLjctLjggMy4zLTMuOCA1LjgtNy40IDUuOGE3LjUgNy41IDAgMCAxLTcuNC04WiIvPjxwYXRoIGZpbGw9IiMxNkM3OUEiIGQ9Ik04LjEgMTAuM2g5LjRjLS43LTIuNy0zLjEtNC45LTYuNS01LjMtMy4xLS40LTUuOS44LTcuNyAyLjhBOS44IDkuOCAwIDAgMSAyMS40IDE1LjNjLTEuNS44LTMuMyAxLjItNS4yIDEuMi0zLjMgMC02LjItMS40LTcuNS0zLjZhMy44IDMuOCAwIDAgMS0uNi0yLjZaIi8+PC9zdmc+Cg==",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "edge_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.edge_history.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.edge_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Edge history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.edge_history.filter_domains",
+          "type": "tags",
+          "label": "Filter Domains (Regex)",
+          "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 70,
+          "placeholder": "e.g. ^mail\\.google\\.com$"
+        },
+        {
+          "key": "sensors.edge_history.filter_keywords",
+          "type": "tags",
+          "label": "Filter Keywords",
+          "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 80,
+          "placeholder": "e.g. password reset"
+        },
+        {
+          "key": "sensors.edge_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.edge_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.edge_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ]
+        },
+        {
+          "key": "sensors.edge_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.edge_history.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of history records to ingest per run.",
+          "default": 1000,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.edge_history.merge_window_minutes",
+          "type": "number",
+          "label": "Merge Window (minutes)",
+          "description": "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.edge_history.profile",
+          "type": "input",
+          "label": "Profile",
+          "description": "Edge profile directory to read, such as Default or Profile 1.",
+          "default": "Default",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.edge_history.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "managed",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.edge_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.edge_history.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.edge_history.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How Edge history should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Edge History",
+        "description": "Edge history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.edge_history.enabled",
+        "configured_key": "sensors.edge_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.edge_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.edge_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.edge_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ]
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.edge_history.initial_sync_policy": "lookback_days",
+            "sensors.edge_history.initial_sync_lookback_days": 7
+          }
+        }
+      },
       "path": "plugins/edge-history",
       "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -828,7 +2059,7 @@
           }
         ]
       },
-      "package_sha256": "1d29953fbcfddb26487b407c57ff0552ec5c9398beb2538bef6c7b7164b8431c"
+      "package_sha256": "a4ad0dad288e0b9927210e0ab1d71241dff87e661d5766e8512443d50c581182"
     },
     {
       "plugin_id": "firefox-history",
@@ -838,7 +2069,253 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkZpcmVmb3ggQnJvd3NlcjwvdGl0bGU+PHBhdGggZmlsbD0iI0ZGNzEzOSIgZD0iTTguODI0IDcuMjg3Yy4wMDggMCAuMDA0IDAgMCAwem0tMi44LTEuNGMuMDA2IDAgLjAwMyAwIDAgMHptMTYuNzU0IDIuMTYxYy0uNTA1LTEuMjE1LTEuNTMtMi41MjgtMi4zMzMtMi45NDMuNjU0IDEuMjgzIDEuMDMzIDIuNTcgMS4xNzcgMy41M2wuMDAyLjAyYy0xLjMxNC0zLjI3OC0zLjU0NC00LjYtNS4zNjYtNy40NzctLjA5MS0uMTQ3LS4xODQtLjI5Mi0uMjczLS40NDZhMy41NDUgMy41NDUgMCAwMS0uMTMtLjI0IDIuMTE4IDIuMTE4IDAgMDEtLjE3Mi0uNDYuMDMuMDMgMCAwMC0uMDI3LS4wMy4wMzguMDM4IDAgMDAtLjAyMSAwbC0uMDA2LjAwMWEuMDM3LjAzNyAwIDAwLS4wMS4wMDVMMTUuNjI0IDBjLTIuNTg1IDEuNTE1LTMuNjU3IDQuMTY4LTMuOTMyIDUuODU2YTYuMTk3IDYuMTk3IDAgMDAtMi4zMDUuNTg3LjI5Ny4yOTcgMCAwMC0uMTQ3LjM3Yy4wNTcuMTYyLjI0LjI0LjM5Ni4xN2E1LjYyMiA1LjYyMiAwIDAxMi4wMDgtLjUyM2wuMDY3LS4wMDVhNS44NDcgNS44NDcgMCAwMTEuOTU3LjIyMmwuMDk1LjAzYTUuODE2IDUuODE2IDAgMDEuNjE2LjIyOGMuMDguMDM2LjE2LjA3My4yMzguMTEybC4xMDcuMDU1YTUuODM1IDUuODM1IDAgMDEuMzY4LjIxMSA1Ljk1MyA1Ljk1MyAwIDAxMi4wMzQgMi4xMDRjLS42Mi0uNDM3LTEuNzMzLS44NjgtMi44MDMtLjY4MSA0LjE4MyAyLjA5IDMuMDYgOS4yOTItMi43MzcgOS4wMmE1LjE2NCA1LjE2NCAwIDAxLTEuNTEzLS4yOTIgNC40MiA0LjQyIDAgMDEtLjUzOC0uMjMyYy0xLjQyLS43MzUtMi41OTMtMi4xMjEtMi43NC0zLjgwNiAwIDAgLjUzNy0yIDMuODQ1LTIgLjM1NyAwIDEuMzgtLjk5OCAxLjM5OC0xLjI4Ny0uMDA1LS4wOTUtMi4wMjktLjktMi44MTctMS42NzctLjQyMi0uNDE2LS42MjItLjYxNi0uOC0uNzY3YTMuNDcgMy40NyAwIDAwLS4zMDEtLjIyNyA1LjM4OCA1LjM4OCAwIDAxLS4wMzItMi44NDJjLTEuMTk1LjU0NC0yLjEyNCAxLjQwMy0yLjggMi4xNjNoLS4wMDZjLS40Ni0uNTg0LS40MjgtMi41MS0uNDAyLTIuOTEzLS4wMDYtLjAyNS0uMzQzLjE3Ni0uMzg5LjIwNi0uNDA2LjI5LS43ODcuNjE2LTEuMTM2Ljk3NC0uMzk3LjQwMy0uNzYuODM5LTEuMDg1IDEuMzAzYTkuODE2IDkuODE2IDAgMDAtMS41NjIgMy41MmMtLjAwMy4wMTMtLjExLjQ4Ny0uMTkgMS4wNzMtLjAxMy4wOS0uMDI2LjE4MS0uMDM3LjI3MmE3LjggNy44IDAgMDAtLjA2OS42NjdsLS4wMDIuMDM0LS4wMjMuMzg3LS4wMDEuMDZDLjM4NiAxOC43OTUgNS41OTMgMjQgMTIuMDE2IDI0YzUuNzUyIDAgMTAuNTI3LTQuMTc2IDExLjQ2My05LjY2MS4wMi0uMTQ5LjAzNS0uMjk4LjA1Mi0uNDQ4LjIzMi0xLjk5NC0uMDI1LTQuMDktLjc1My01Ljg0NHoiLz48L3N2Zz4K",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "firefox_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.firefox_history.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.firefox_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Firefox history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.firefox_history.filter_domains",
+          "type": "tags",
+          "label": "Filter Domains (Regex)",
+          "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 70,
+          "placeholder": "e.g. ^mail\\.google\\.com$"
+        },
+        {
+          "key": "sensors.firefox_history.filter_keywords",
+          "type": "tags",
+          "label": "Filter Keywords",
+          "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 80,
+          "placeholder": "e.g. password reset"
+        },
+        {
+          "key": "sensors.firefox_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.firefox_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.firefox_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ]
+        },
+        {
+          "key": "sensors.firefox_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.firefox_history.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of history records to ingest per run.",
+          "default": 1000,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.firefox_history.merge_window_minutes",
+          "type": "number",
+          "label": "Merge Window (minutes)",
+          "description": "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.firefox_history.profile",
+          "type": "input",
+          "label": "Profile",
+          "description": "Firefox profile path segment (optional). Leave empty to auto-detect the default profile.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.firefox_history.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "managed",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.firefox_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.firefox_history.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.firefox_history.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How Firefox history should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Firefox History",
+        "description": "Firefox history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.firefox_history.enabled",
+        "configured_key": "sensors.firefox_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.firefox_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.firefox_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.firefox_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ]
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.firefox_history.initial_sync_policy": "lookback_days",
+            "sensors.firefox_history.initial_sync_lookback_days": 7
+          }
+        }
+      },
       "path": "plugins/firefox-history",
       "description": "Reads your local Firefox browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -951,7 +2428,7 @@
           }
         ]
       },
-      "package_sha256": "1da11248de10c892a9009f16204f65cd52a22e2b3028488af4589bf829ddbb6f"
+      "package_sha256": "69cc956d24de9dc40548a81dfdc16204205e27315a0dc1a9895b8b77ec87b2d8"
     },
     {
       "plugin_id": "git-activity",
@@ -961,7 +2438,241 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdDwvdGl0bGU+PHBhdGggZmlsbD0iI0YwM0MyRSIgZD0iTTEzLjA5IDIzLjU0OWExLjU0IDEuNTQgMCAwIDEtMi4xOCAwTC40NTEgMTMuMDg5YTEuNTQgMS41NCAwIDAgMSAwLTIuMTc5bDcuMTkxLTcuMTkgMi43MzMgMi43MzNhMS44NSAxLjg1IDAgMCAwIC45NjQgMi4zMjZ2Ni42NmExLjg0OSAxLjg0OSAwIDEgMCAxLjU0IDBWOC45NTdsMi41MDggMi41MDhhMS44NSAxLjg1IDAgMSAwIDEuMDktMS4wOWwtMi42MzQtMi42MzRhMS44NSAxLjg1IDAgMCAwLTIuMzc4LTIuMzc3TDguNzMgMi42MyAxMC45MS40NTFhMS41NCAxLjU0IDAgMCAxIDIuMTc5IDBsMTAuNDU5IDEwLjQ2YTEuNTQgMS41NCAwIDAgMSAwIDIuMTc5eiIvPjwvc3ZnPgo=",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "git_activity"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.git_activity.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.git_activity.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether git activity sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.git_activity.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.git_activity.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 30,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.git_activity.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ],
+          "minimum": 1.0,
+          "maximum": 365.0
+        },
+        {
+          "key": "sensors.git_activity.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much Git history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.git_activity.max_messages_per_session",
+          "type": "number",
+          "label": "Max Messages Per Session",
+          "description": "",
+          "default": 5,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.git_activity.repos",
+          "type": "path",
+          "label": "Repositories",
+          "description": "Select one or more Git repository folders to monitor.",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.git_activity.sensitive_keywords",
+          "type": "tags",
+          "label": "Additional Sensitive Keywords",
+          "description": "Extra keywords to detect in commit messages (built-in: password, secret, token, etc.)",
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 70
+        },
+        {
+          "key": "sensors.git_activity.sensitive_mode",
+          "type": "select",
+          "label": "Sensitive Message Mode",
+          "description": "How to handle commit messages with sensitive content.",
+          "default": "redact",
+          "required": false,
+          "options": [
+            {
+              "label": "Redact sensitive parts",
+              "value": "redact"
+            },
+            {
+              "label": "Block entirely",
+              "value": "block"
+            }
+          ],
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.git_activity.session_window_minutes",
+          "type": "number",
+          "label": "Session Window Minutes",
+          "description": "",
+          "default": 30,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.git_activity.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to check for new git activity.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "minimum": 5.0,
+          "maximum": 1440.0
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Git Activity",
+        "description": "Git activity can reveal repository names and local work patterns. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.git_activity.enabled",
+        "configured_key": "sensors.git_activity.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.git_activity.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much Git history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.git_activity.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 30,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.git_activity.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ],
+            "minimum": 1.0,
+            "maximum": 365.0
+          },
+          {
+            "key": "sensors.git_activity.repos",
+            "type": "path",
+            "label": "Repository Folders",
+            "description": "Select one or more Git repository folders to monitor.",
+            "default": [],
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 30,
+            "depends_on_values": []
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/git_activity",
       "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
       "description_i18n": {
@@ -1065,7 +2776,7 @@
           }
         ]
       },
-      "package_sha256": "de6cd91397579b415210f2889bcdb0ecf4b015edbcf65d58869e192c3e6739f8"
+      "package_sha256": "3c4e1b8399eb6400bf52045c57ad94f0c68c0d8b3d5ad8c0ca024e79325e50da"
     },
     {
       "plugin_id": "github-activity",
@@ -1075,7 +2786,158 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdEh1YjwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjMTgxNzE3IiBkPSJNMTIgLjI5N2MtNi42MyAwLTEyIDUuMzczLTEyIDEyIDAgNS4zMDMgMy40MzggOS44IDguMjA1IDExLjM4NS42LjExMy44Mi0uMjU4LjgyLS41NzcgMC0uMjg1LS4wMS0xLjA0LS4wMTUtMi4wNC0zLjMzOC43MjQtNC4wNDItMS42MS00LjA0Mi0xLjYxQzQuNDIyIDE4LjA3IDMuNjMzIDE3LjcgMy42MzMgMTcuN2MtMS4wODctLjc0NC4wODQtLjcyOS4wODQtLjcyOSAxLjIwNS4wODQgMS44MzggMS4yMzYgMS44MzggMS4yMzYgMS4wNyAxLjgzNSAyLjgwOSAxLjMwNSAzLjQ5NS45OTguMTA4LS43NzYuNDE3LTEuMzA1Ljc2LTEuNjA1LTIuNjY1LS4zLTUuNDY2LTEuMzMyLTUuNDY2LTUuOTMgMC0xLjMxLjQ2NS0yLjM4IDEuMjM1LTMuMjItLjEzNS0uMzAzLS41NC0xLjUyMy4xMDUtMy4xNzYgMCAwIDEuMDA1LS4zMjIgMy4zIDEuMjMuOTYtLjI2NyAxLjk4LS4zOTkgMy0uNDA1IDEuMDIuMDA2IDIuMDQuMTM4IDMgLjQwNSAyLjI4LTEuNTUyIDMuMjg1LTEuMjMgMy4yODUtMS4yMy42NDUgMS42NTMuMjQgMi44NzMuMTIgMy4xNzYuNzY1Ljg0IDEuMjMgMS45MSAxLjIzIDMuMjIgMCA0LjYxLTIuODA1IDUuNjI1LTUuNDc1IDUuOTIuNDIuMzYuODEgMS4wOTYuODEgMi4yMiAwIDEuNjA2LS4wMTUgMi44OTYtLjAxNSAzLjI4NiAwIC4zMTUuMjEuNjkuODI1LjU3QzIwLjU2NSAyMi4wOTIgMjQgMTcuNTkyIDI0IDEyLjI5N2MwLTYuNjI3LTUuMzczLTEyLTEyLTEyIi8+PC9zdmc+Cg==",
-      "version": "0.1.1",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "github_activity"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.github_activity.access_token",
+          "type": "secret",
+          "label": "Access Token",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.github_activity.client_id",
+          "type": "input",
+          "label": "Client Id",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.github_activity.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether GitHub activity sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.github_activity.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.github_activity.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Initial Sync Days",
+          "description": "How many recent days to import when no previous cursor exists.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 1.0,
+          "maximum": 365.0
+        },
+        {
+          "key": "sensors.github_activity.repositories",
+          "type": "tags",
+          "label": "Repositories",
+          "description": "Repositories to sync, for example owner/repo.",
+          "required": false,
+          "section": "connection",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.github_activity.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to check GitHub for updates.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "minimum": 5.0,
+          "maximum": 1440.0
+        }
+      ],
+      "settings_actions": [
+        {
+          "action_id": "connect_github",
+          "label": "Connect GitHub",
+          "description": "Open the GitHub device authorization page, enter the code, and save the resulting token locally.",
+          "button_label": "Connect GitHub",
+          "presentation": "inline",
+          "surface": "timeline",
+          "contribution_id": "timeline.github_activity",
+          "contribution_type": "sensor",
+          "order": 0,
+          "destructive": false,
+          "requires_enabled": false,
+          "poll_interval_ms": 5000,
+          "timeout_ms": 900000,
+          "persist_settings_on_success": true,
+          "depends_on_values": []
+        }
+      ],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Connect GitHub",
+        "description": "Choose the repositories Magi should read from this device. No GitHub data is sent to a Magi cloud service.",
+        "confirm_label": "Enable GitHub sync",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.github_activity.enabled",
+        "configured_key": "sensors.github_activity.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.github_activity.repositories",
+            "type": "tags",
+            "label": "Repositories",
+            "description": "Repositories to sync, for example owner/repo or a GitHub repository URL.",
+            "default": [],
+            "required": true,
+            "options": [],
+            "section": "connection",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.github_activity.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Initial Sync Days",
+            "description": "How many recent days to import on the first sync.",
+            "default": 30,
+            "required": false,
+            "options": [],
+            "section": "connection",
+            "surface": "timeline",
+            "order": 30,
+            "depends_on_values": [],
+            "minimum": 1.0,
+            "maximum": 365.0
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/github_activity",
       "description": "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status.",
       "description_i18n": {
@@ -1160,7 +3022,7 @@
           }
         }
       },
-      "package_sha256": "e7a3e64ee2129962ddfea5f227819916eec6b3116dfbcae333a78719d948f6c2"
+      "package_sha256": "5b5f9eaaa09796432ba3712da35e84e8b18feac1d056f1246e41b456adb7e09d"
     },
     {
       "plugin_id": "local-documents",
@@ -1169,7 +3031,219 @@
         "zh-CN": "本地文档"
       },
       "icon": "lucide:file-text",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "local_documents",
+        "local_documents_search"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.local_documents.cognition_exclude_folders",
+          "type": "tags",
+          "label": "Search-only Folders",
+          "description": "Folders read for search and timeline but kept out of knowledge extraction.",
+          "default": [
+            "References",
+            "Archive",
+            "Clippings"
+          ],
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 70
+        },
+        {
+          "key": "sensors.local_documents.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether local document sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.local_documents.exclude_folders",
+          "type": "tags",
+          "label": "Excluded Folders",
+          "description": "Folders never read at all.",
+          "default": [
+            ".git",
+            ".hg",
+            ".svn",
+            ".DS_Store",
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache",
+            "node_modules",
+            ".venv",
+            "venv"
+          ],
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.local_documents.include_extensions",
+          "type": "tags",
+          "label": "Included Extensions",
+          "description": "Text file extensions to ingest.",
+          "default": [
+            ".md",
+            ".markdown",
+            ".txt",
+            ".text",
+            ".rst",
+            ".org",
+            ".log"
+          ],
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 50,
+          "placeholder": ".md, .txt"
+        },
+        {
+          "key": "sensors.local_documents.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.local_documents.max_body_chars",
+          "type": "number",
+          "label": "Max Text Characters",
+          "description": "Maximum characters stored from each document body.",
+          "default": 50000,
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 90,
+          "minimum": 1000.0,
+          "maximum": 500000.0
+        },
+        {
+          "key": "sensors.local_documents.max_file_bytes",
+          "type": "number",
+          "label": "Max File Size (bytes)",
+          "description": "Files larger than this are skipped.",
+          "default": 1000000,
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 80,
+          "minimum": 1024.0,
+          "maximum": 20000000.0
+        },
+        {
+          "key": "sensors.local_documents.root_paths",
+          "type": "tags",
+          "label": "Document Folders",
+          "description": "Local folders to scan for notes and text documents.",
+          "required": true,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20,
+          "placeholder": "~/Documents/Notes"
+        },
+        {
+          "key": "sensors.local_documents.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to rescan the folders for changed documents.",
+          "default": 10,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.local_documents.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ],
+          "minimum": 1.0,
+          "maximum": 1440.0
+        },
+        {
+          "key": "sensors.local_documents.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How local documents should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Local Documents",
+        "description": "Local documents can contain private notes. Choose the folders Magi may read before enabling this source.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.local_documents.enabled",
+        "configured_key": "sensors.local_documents.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.local_documents.root_paths",
+            "type": "tags",
+            "label": "Document Folders",
+            "description": "Local folders to scan for notes and text documents.",
+            "default": [],
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "placeholder": "~/Documents/Notes",
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.local_documents.cognition_exclude_folders",
+            "type": "tags",
+            "label": "Search-only Folders",
+            "description": "Folders read for search and timeline but kept out of knowledge extraction.",
+            "default": [
+              "References",
+              "Archive",
+              "Clippings"
+            ],
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_values": []
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/local-documents",
       "description": "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory.",
       "description_i18n": {
@@ -1246,7 +3320,7 @@
           }
         }
       },
-      "package_sha256": "7178ec6f85ffbc85dd3f845b8bde240b2e0d6596d5f5983851fb16fbac118ee8"
+      "package_sha256": "6e0c620ae522b7a26ec80709a0430c7d37de42f57a7f99db1583947ca7ec834c"
     },
     {
       "plugin_id": "local-photos",
@@ -1255,7 +3329,282 @@
         "zh-CN": "本地照片"
       },
       "icon": "lucide:images",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "photo_library_directory"
+      ],
+      "settings_fields": [
+        {
+          "key": "locale",
+          "type": "input",
+          "label": "Locale",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.analysis_features",
+          "type": "tags",
+          "label": "Analysis Features",
+          "description": "Metadata extraction capabilities to apply.",
+          "default": [
+            "exif"
+          ],
+          "required": false,
+          "options": [
+            {
+              "label": "EXIF Metadata",
+              "value": "exif"
+            },
+            {
+              "label": "GPS Geocoding",
+              "value": "geocode"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 45
+        },
+        {
+          "key": "sensors.photo_library_directory.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.edge_whitelist",
+          "type": "tags",
+          "label": "Edge Whitelist",
+          "description": "",
+          "default": [
+            "CAPTURED",
+            "RELATED_TO",
+            "INTERACTED_WITH",
+            "CREATED"
+          ],
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.enabled",
+          "type": "switch",
+          "label": "Enable",
+          "description": "Whether this photo source is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.photo_library_directory.exclude_patterns",
+          "type": "tags",
+          "label": "Exclude Patterns",
+          "description": "Glob patterns for directories or files to skip.",
+          "default": [
+            "**/thumbnails",
+            "**/.cache",
+            "**/Thumbs.db",
+            "**/@eaDir"
+          ],
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 16,
+          "placeholder": "**/thumbnails"
+        },
+        {
+          "key": "sensors.photo_library_directory.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.initial_sync_end_date",
+          "type": "input",
+          "label": "Initial Sync End Date",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.initial_sync_policy",
+          "type": "input",
+          "label": "Initial Sync Policy",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.initial_sync_start_date",
+          "type": "input",
+          "label": "Initial Sync Start Date",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of photos to process per sync run.",
+          "default": 200,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40
+        },
+        {
+          "key": "sensors.photo_library_directory.photos_library_path",
+          "type": "input",
+          "label": "Photos Library Path",
+          "description": "",
+          "default": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.settle_window_hours",
+          "type": "number",
+          "label": "Session Settle Window (hours)",
+          "description": "A photo session is emitted only after no new photos arrive for this many hours.",
+          "default": 4,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.photo_library_directory.source_mode",
+          "type": "input",
+          "label": "Source Mode",
+          "description": "",
+          "default": "directory",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.source_paths",
+          "type": "path",
+          "label": "Photo Directories",
+          "description": "Local directories containing photos to scan. Add one or more paths.",
+          "required": true,
+          "section": "general",
+          "surface": "timeline",
+          "order": 15,
+          "placeholder": "/path/to/photos"
+        },
+        {
+          "key": "sensors.photo_library_directory.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "external_reference",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.photo_library_directory.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 60,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "depends_on_key": "sensors.photo_library_directory.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.photo_library_directory.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How this photo source should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Automatic",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Local Photos",
+        "description": "Local Photos is sensitive local data. Magi reads photo metadata (time, place, camera) to build your timeline.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.photo_library_directory.enabled",
+        "configured_key": "sensors.photo_library_directory.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.photo_library_directory.source_paths",
+            "type": "path",
+            "label": "Photo Directories",
+            "description": "Local folders containing photos to scan. Add one or more.",
+            "default": [],
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "placeholder": "/path/to/photos",
+            "depends_on_values": []
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/local-photos",
       "description": "Scans photo folders you choose and reads capture time, location, and camera metadata.",
       "description_i18n": {
@@ -1376,7 +3725,7 @@
           }
         ]
       },
-      "package_sha256": "f9fcd8f2af7473091632d98f489600986f8b6f26aeac4c7c58d8c51ae4f19b54"
+      "package_sha256": "cade3bd3cd7d534852bf5f4badd84a3bc0bb4ad3103eebbb324f9ea462e90613"
     },
     {
       "plugin_id": "netease-music",
@@ -1386,7 +3735,257 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk5ldEVhc2UgQ2xvdWQgTXVzaWM8L3RpdGxlPjxwYXRoIGZpbGw9IiNENDNDMzMiIGQ9Ik0xMy4wNDYgOS4zODhhMy45MTkgMy45MTkgMCAwIDAtLjY2LjE5Yy0uODA5LjMxMi0xLjQ0Ny45OTEtMS42NjYgMS43NzVhMi4yNjkgMi4yNjkgMCAwIDAtLjA3NC44MWMuMDQ4LjU0Ni4zMzMgMS4wNS43NjQgMS4zNWExLjQ4MyAxLjQ4MyAwIDAgMCAyLjAxLS4yODZjLjQwNi0uNTMxLjM1NS0xLjE4My4yNC0xLjYzNi0uMDk4LS4zODctLjIyLS44MTYtLjM0NS0xLjI0OWE2NC43NiA2NC43NiAwIDAgMS0uMjY5LS45NTR6bS0uODIgMTAuMDdjLTMuOTg0IDAtNy4yMjQtMy4yNC03LjIyNC03LjIyMyAwLS45OC4yMjYtMy4wMiAxLjg4NC00LjgyMkE3LjE4OCA3LjE4OCAwIDAgMSA5LjUwMiA1LjZhLjc5Mi43OTIgMCAxIDEgLjU4NyAxLjQ3MiA1LjYxOSA1LjYxOSAwIDAgMC0yLjc5NSAyLjQ2MiA1LjUzOCA1LjUzOCAwIDAgMC0uNzA3IDIuNyA1LjY0NSA1LjY0NSAwIDAgMCA1LjYzOCA1LjYzOGMxLjg0NCAwIDMuNjI3LS45NTMgNC41NDItMi40MjggMS4wNDItMS42OC43NzItMy45MzEtLjYyNy01LjIzOGEzLjI5OSAzLjI5OSAwIDAgMC0xLjQzNy0uNzc3Yy4xNzIuNTg5LjMzNCAxLjE4LjQ5NCAxLjc3Mi4yODQgMS4xMi4xIDIuMTgxLS41MTkgMi45ODktLjM5LjUxLS45NTYuODg4LTEuNTkyIDEuMDY0YTMuMDM4IDMuMDM4IDAgMCAxLTIuNTgtLjQ0IDMuNDUgMy40NSAwIDAgMS0xLjQ0LTIuNTE0Yy0uMDQtLjQ2Ny4wMDItLjkzLjEyOC0xLjM3Ni4zNS0xLjI1NiAxLjM1Ni0yLjMzOSAyLjYyMi0yLjgyNmE1LjUgNS41IDAgMCAxIC44MjMtLjI0NmwtLjEzNC0uNTA1Yy0uMzctMS4zNzEuMjUtMi41NzkgMS41NDctMy4wMDcuMzI5LS4xMDkuNjgtLjE0NSAxLjAyNS0uMTA1Ljc5Mi4wOSAxLjQ3Ni41OTIgMS43MDkgMS4wMjMuMjU4LjUwNy0uMDk2IDEuMTUzLS43MDYgMS4xNTNhLjc4OC43ODggMCAwIDEtLjU0LS4yMTNjLS4wODgtLjA4LS4xNjMtLjE3NC0uMjU5LS4yNDdhLjgyNS44MjUgMCAwIDAtLjYzMi0uMTY2LjgwNy44MDcgMCAwIDAtLjYzNC41NTFjLS4wNTYuMTkxLS4wMzEuNDA2LjAyLjU5NS4wNy4yNTYuMTU5LjU5Ny4yMTcuODIgMS4xMS4wOTggMi4xNjIuNTQgMi45NyAxLjI5NiAxLjk3NCAxLjg0NCAyLjM1IDQuODg2Ljg5MiA3LjIzMy0xLjE5NyAxLjkzLTMuNTA5IDMuMTc3LTUuODg5IDMuMTc3ek0wIDEyYzAgNi42MjcgNS4zNzMgMTIgMTIgMTJzMTItNS4zNzMgMTItMTJTMTguNjI3IDAgMTIgMCAwIDUuMzczIDAgMTJaIi8+PC9zdmc+Cg==",
-      "version": "0.1.4",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "netease_music"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.netease_music.db_path",
+          "type": "path",
+          "label": "Cache Database Path",
+          "description": "Defaults to the standard NetEase cache database path. If NetEase settings show a cache folder such as C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. Choose the database file under the sibling Library directory instead, usually C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat.",
+          "default": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50,
+          "placeholder": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+        },
+        {
+          "key": "sensors.netease_music.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.netease_music.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether NetEase Music sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.netease_music.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.netease_music.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.netease_music.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ],
+          "minimum": 1.0
+        },
+        {
+          "key": "sensors.netease_music.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much listening history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.netease_music.lastfm_api_key",
+          "type": "secret",
+          "label": "Last.fm API Key",
+          "description": "Required when Genre Tag Source is set to Last.fm. Apply for a free key at last.fm/api/account/create",
+          "default": "",
+          "required": false,
+          "section": "analysis",
+          "surface": "timeline",
+          "order": 76,
+          "depends_on_key": "sensors.netease_music.tag_strategy",
+          "depends_on_values": [
+            "lastfm"
+          ]
+        },
+        {
+          "key": "sensors.netease_music.min_play_duration",
+          "type": "number",
+          "label": "Minimum Play Duration (seconds)",
+          "description": "Minimum track play duration to include in timeline (seconds).",
+          "default": 20,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 1.0
+        },
+        {
+          "key": "sensors.netease_music.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "managed",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.netease_music.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 10,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 30,
+          "depends_on_key": "sensors.netease_music.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.netease_music.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How NetEase Music history should be synchronized.",
+          "default": "interval",
+          "required": false,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.netease_music.tag_strategy",
+          "type": "select",
+          "label": "Genre Tag Source",
+          "description": "How to extract genre/style tags for listened tracks. 'Built-in' reads local alias data (limited coverage). 'Last.fm' queries the Last.fm API (requires an API key).",
+          "default": "off",
+          "required": false,
+          "options": [
+            {
+              "label": "Off",
+              "value": "off"
+            },
+            {
+              "label": "Built-in (local alias data)",
+              "value": "builtin"
+            },
+            {
+              "label": "Last.fm",
+              "value": "lastfm"
+            }
+          ],
+          "section": "analysis",
+          "surface": "timeline",
+          "order": 75
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable NetEase Cloud Music",
+        "description": "NetEase Cloud Music history reveals your listening habits. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.netease_music.enabled",
+        "configured_key": "sensors.netease_music.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.netease_music.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much listening history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.netease_music.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.netease_music.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ],
+            "minimum": 1.0
+          }
+        ]
+      },
       "path": "plugins/netease_music",
       "description": "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits.",
       "description_i18n": {
@@ -1485,7 +4084,7 @@
           }
         ]
       },
-      "package_sha256": "795c1c55381e5299d851cf825b4e71f0a7a55e5c38c7ed0db61cde5dbd07e2ba"
+      "package_sha256": "819db13a41e7a301e3b04f379f5b08fa486714d69cc5c6236302e80c8ba0d1df"
     },
     {
       "plugin_id": "obsidian-vault",
@@ -1495,7 +4094,140 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk9ic2lkaWFuPC90aXRsZT48cGF0aCBmaWxsPSIjN0MzQUVEIiBkPSJNMTkuMzU1IDE4LjUzOGE2OC45NjcgNjguOTU5IDAgMCAwIDEuODU4LTIuOTU0LjgxLjgxIDAgMCAwLS4wNjItLjljLS41MTYtLjY4NS0xLjUwNC0yLjA3NS0yLjA0Mi0zLjM2Mi0uNTUzLTEuMzIxLS42MzYtMy4zNzUtLjY0LTQuMzc3YTEuNzA3IDEuNzA3IDAgMCAwLS4zNTgtMS4wNWwtMy4xOTgtNC4wNjRhMy43NDQgMy43NDQgMCAwIDEtLjA3Ni41NDNjLS4xMDYuNTAzLS4zMDcgMS4wMDQtLjUzNiAxLjUtLjEzNC4yOS0uMjkuNi0uNDQ2LjkxNGwtLjMxLjYyNmMtLjUxNiAxLjA2OC0uOTk3IDIuMjI3LTEuMTMyIDMuNTktLjEyNCAxLjI2LjA0NiAyLjczLjgxNSA0LjQ4MS4xMjguMDExLjI1Ny4wMjUuMzg2LjA0NGE2LjM2MyA2LjM2MyAwIDAgMSAzLjMyNiAxLjUwNWMuOTE2Ljc5IDEuNzQ0IDEuOTIyIDIuNDE1IDMuNXpNOC4xOTkgMjIuNTY5Yy4wNzMuMDEyLjE0Ni4wMi4yMi4wMi43OC4wMjQgMi4wOTUuMDkyIDMuMTYuMjkuODcuMTYgMi41OTMuNjQgNC4wMSAxLjA1NSAxLjA4My4zMTYgMi4xOTgtLjU0OCAyLjM1NS0xLjY2NC4xMTQtLjgxNC4zMy0xLjczNS43MjUtMi41OGwtLjAxLjAwNWMtLjY3LTEuODctMS41MjItMy4wNzgtMi40MTYtMy44NDlhNS4yOTUgNS4yOTUgMCAwIDAtMi43NzgtMS4yNTdjLTEuNTQtLjIxNi0yLjk1Mi4xOS0zLjg0LjQ1LjUzMiAyLjIxOC4zNjggNC44MjktMS40MjUgNy41MzF6TTUuNTMzIDkuOTM4Yy0uMDIzLjEtLjA1Ni4xOTctLjA5OC4yOUwyLjgyIDE2LjA1OWExLjYwMiAxLjYwMiAwIDAgMCAuMzEzIDEuNzcybDQuMTE2IDQuMjRjMi4xMDMtMy4xMDEgMS43OTYtNi4wMi44MzYtOC4zLS43MjgtMS43My0xLjgzMi0zLjA4MS0yLjU1LTMuODMxek05LjMyIDE0LjAxYy42MTUtLjE4MyAxLjYwNi0uNDY1IDIuNzQ1LS41MzQtLjY4My0xLjcyNS0uODQ4LTMuMjMzLS43MTYtNC41NzcuMTU0LTEuNTUyLjctMi44NDcgMS4yMzUtMy45NS4xMTMtLjIzNS4yMjMtLjQ1NC4zMjgtLjY2NC4xNDktLjI5Ny4yODgtLjU3Ny40MTktLjg2LjIxNy0uNDcuMzc5LS44ODUuNDYtMS4yNy4wOC0uMzguMDgtLjcyLS4wMTQtMS4wNDMtLjA5NS0uMzI1LS4yOTctLjY3NS0uNjgtMS4wNmExLjYgMS42IDAgMCAwLTEuNDc1LjM2bC00Ljk1IDQuNDUyYTEuNjAyIDEuNjAyIDAgMCAwLS41MTMuOTUybC0uNDI3IDIuODNjLjY3Mi41OSAyLjMyOCAyLjMxNiAzLjMzNSA0LjcxMS4wOS4yMS4xNzUuNDMuMjUzLjY1M3oiLz48L3N2Zz4K",
-      "version": "0.1.3",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "obsidian_vault",
+        "obsidian_vault_search"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.obsidian_vault.cognition_exclude_folders",
+          "type": "tags",
+          "label": "Search-only Folders",
+          "description": "Folders read for search but kept out of the knowledge graph (e.g. clippings, references).",
+          "default": [
+            "Clippings",
+            "References"
+          ],
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 40
+        },
+        {
+          "key": "sensors.obsidian_vault.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether the Obsidian vault sensor is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.obsidian_vault.exclude_folders",
+          "type": "tags",
+          "label": "Excluded Folders",
+          "description": "Folders never read at all (privacy). Defaults skip Obsidian internals.",
+          "default": [
+            ".obsidian",
+            ".trash",
+            "Templates"
+          ],
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 30
+        },
+        {
+          "key": "sensors.obsidian_vault.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.obsidian_vault.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to rescan the vault for changes.",
+          "default": 10,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50,
+          "minimum": 1.0,
+          "maximum": 1440.0
+        },
+        {
+          "key": "sensors.obsidian_vault.vault_path",
+          "type": "path",
+          "path_kind": "directory",
+          "label": "Obsidian Vault Folder",
+          "description": "Choose the vault root folder that contains the .obsidian directory.",
+          "default": "",
+          "required": true,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Obsidian Vault",
+        "description": "Choose the Obsidian vault Magi may read before enabling this source.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.obsidian_vault.enabled",
+        "configured_key": "sensors.obsidian_vault.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.obsidian_vault.vault_path",
+            "type": "path",
+            "path_kind": "directory",
+            "label": "Obsidian Vault Folder",
+            "description": "Choose the vault root folder that contains the .obsidian directory.",
+            "default": "",
+            "required": true,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.obsidian_vault.cognition_exclude_folders",
+            "type": "tags",
+            "label": "Search-only Folders",
+            "description": "Folders read for search but kept out of knowledge extraction.",
+            "default": [
+              "Clippings",
+              "References"
+            ],
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_values": []
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {}
+        }
+      },
       "path": "plugins/obsidian-vault",
       "description": "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder.",
       "description_i18n": {
@@ -1568,7 +4300,7 @@
           }
         }
       },
-      "package_sha256": "3e724f92b01e33b10bcbf6809ec193c08e4820009b6c6b8a3ca56ce7e0f7c5ba"
+      "package_sha256": "26736eed97cdd3ddc639e3bd1c4880c098bfd22c98888d1c16c8f34f99338551"
     },
     {
       "plugin_id": "photo_library_core",
@@ -1577,7 +4309,15 @@
         "zh-CN": "照片来源核心库"
       },
       "icon": "lucide:images",
-      "version": "0.1.1",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/photo_library_core",
       "description": "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency.",
       "description_i18n": {
@@ -1591,7 +4331,7 @@
         "macos",
         "windows"
       ],
-      "package_sha256": "8a98678845a9bfd4bf922b6d44f89fd6da3f6ddf5d0438184abb4f22dbc273a8"
+      "package_sha256": "0260ee37e1ddfc5f161c4147e0a224a3538c2d93bb65329327511b748731a9b7"
     },
     {
       "plugin_id": "safari-history",
@@ -1601,7 +4341,283 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlNhZmFyaTwvdGl0bGU+PHBhdGggZmlsbD0iIzAwNkNGRiIgZD0iTTEyIDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwem0tLjAwNC45NTNoLjAwNmMuMDYzIDAgLjExMy4wNS4xMTMuMTEzdjEuODQyYzAgLjA2My0uMDUuMTEzLS4xMTMuMTEzaC0uMDA2YS4xMTIuMTEyIDAgMCAxLS4xMTMtLjExM1YxLjA2NmMwLS4wNjMuMDUtLjExMy4xMTMtLjExM3ptLS45NDEuMDQxYy4wNTYuMDAxLjEwNC4wNDYuMTEuMTA0bC4wNzcuOTE4YS4xMTIuMTEyIDAgMCAxLS4xMDEuMTJoLS4wMWEuMTEuMTEgMCAwIDEtLjEyLS4xbC0uMDgtLjkxOWEuMTEyLjExMiAwIDAgMSAuMTAyLS4xMmguMDFsLjAxMi0uMDAzem0xLjg5MiAwSDEyLjk2NWEuMTEzLjExMyAwIDAgMSAuMTAzLjEyMWwtLjA4LjkyYS4xMTEuMTExIDAgMCAxLS4xMi4xMDJoLS4wMDlhLjExMS4xMTEgMCAwIDEtLjEwMS0uMTIxbC4wNzgtLjkyYS4xMTIuMTEyIDAgMCAxIC4xMTEtLjEwMnptLTIuODM4LjEyM2EuMTEuMTEgMCAwIDEgLjEwNi4wOTJsLjMyIDEuODE4Yy4wMS4wNi0uMDMuMTE5LS4wOS4xM2wtLjAxLjAwMWEuMTExLjExMSAwIDAgMS0uMTI4LS4wOWwtLjMyLTEuODE4YS4xMTEuMTExIDAgMCAxIC4wOS0uMTI5bC4wMS0uMDAyYS4xMDMuMTAzIDAgMCAxIC4wMjItLjAwMnptMy43ODQuMDAyaC4wMjFsLjAwOC4wMDJjLjA2MS4wMS4xMDIuMDcuMDkyLjEzMWwtLjMyIDEuODE0Yy0uMDExLjA2Mi0uMDcuMTAxLS4xMzIuMDloLS4wMDVhLjExMy4xMTMgMCAwIDEtLjA5Mi0uMTNsLjMyLTEuODE1YS4xMTEuMTExIDAgMCAxIC4xMDgtLjA5MnptLTQuNzE1LjIwM2MuMDQ4LjAwMi4wOS4wMzUuMTAzLjA4NGwuMjM5Ljg5M2EuMTEyLjExMiAwIDAgMS0uMDc5LjEzOWwtLjAwNS4wMDFhLjExNC4xMTQgMCAwIDEtLjE0LS4wOGwtLjIzNy0uODk0YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzdsLjAwNi0uMDAyYS4xMjMuMTIzIDAgMCAxIC4wMzUtLjAwNHptNS42NDQgMGEuMTEuMTEgMCAwIDEgLjAzMy4wMDRsLjAwNi4wMDJjLjA2LjAxNi4wOTcuMDc5LjA4LjEzOWwtLjI0Ljg5MmEuMTEyLjExMiAwIDAgMS0uMTM3LjA4bC0uMDA1LS4wMDJhLjExNC4xMTQgMCAwIDEtLjA4LS4xMzhsLjI0LS44OTNhLjExMi4xMTIgMCAwIDEgLjEwMy0uMDg0em0tNi41NjIuMjg1YS4xMS4xMSAwIDAgMSAuMTA3LjA3M0w5IDMuNDJhLjEwNy4xMDcgMCAwIDEtLjA2NC4xMzlsLS4wMTIuMDA1YS4xMS4xMSAwIDAgMS0uMTQtLjA2Nkw4LjE1IDEuNzZhLjExLjExIDAgMCAxIC4wNjUtLjE0bC4wMTQtLjAwNWEuMTA2LjEwNiAwIDAgMSAuMDMtLjAwOHptNy40NjkuMDAyYy4wMTQgMCAuMDI4LjAwMS4wNDIuMDA2bC4wMTIuMDA2Yy4wNTcuMDIuMDg3LjA4Mi4wNjcuMTM5bC0uNjMzIDEuNzM4YS4xMS4xMSAwIDAgMS0uMTQuMDY2bC0uMDEzLS4wMDNBLjExLjExIDAgMCAxIDE1IDMuNDJsLjYzMy0xLjczOGEuMTA4LjEwOCAwIDAgMSAuMDk2LS4wNzN6bS04LjM1Mi4zNjZhLjExMi4xMTIgMCAwIDEgLjEwNS4wNjRsLjM5My44MzhhLjExMi4xMTIgMCAwIDEtLjA1NS4xNDhsLS4wMDguMDA0YS4xMS4xMSAwIDAgMS0uMTQ2LS4wNTRsLS4zOTUtLjgzOGEuMTEyLjExMiAwIDAgMSAuMDU1LS4xNDlsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQzLS4wMXptOS4yNDYgMGEuMTEuMTEgMCAwIDEgLjA0My4wMWwuMDA2LjAwM2EuMTEuMTEgMCAwIDEgLjA1My4xNDlsLS4zOTEuODM4YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU0bC0uMDA2LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ4bC4zOTMtLjg0YS4xMTIuMTEyIDAgMCAxIC4xMDUtLjA2NHptLTEwLjA5Mi40NGMuMDQtLjAwMi4wOC4wMTguMTAyLjA1NmwuOTIyIDEuNTk3YS4xMTMuMTEzIDAgMCAxLS4wNDEuMTU1bC0uMDA2LjAwMmEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNDFsLS45MjItMS41OThhLjExMy4xMTMgMCAwIDEgLjA0LS4xNTRsLjAwNy0uMDAyYS4xMS4xMSAwIDAgMSAuMDUyLS4wMTZ6bTEwLjk0LjAwMWMuMDE4IDAgLjAzNS4wMDQuMDUyLjAxNGwuMDA0LjAwMmEuMTE0LjExNCAwIDAgMSAuMDQxLjE1NmwtLjkyMyAxLjU5NmEuMTE0LjExNCAwIDAgMS0uMTU3LjA0bC0uMDA0LS4wMDFhLjExMi4xMTIgMCAwIDEtLjA0LS4xNTVsLjkyNS0xLjU5NWEuMTEzLjExMyAwIDAgMSAuMTAyLS4wNTd6TTUuNzI5IDIuOTNhLjExLjExIDAgMCAxIC4wOTMuMDQ3bC41MzIuNzUzYS4xMTQuMTE0IDAgMCAxLS4wMjguMTU5bC0uMDA0LjAwMmEuMTE0LjExNCAwIDAgMS0uMTU4LS4wMjhsLS41MzEtLjc1MmEuMTE0LjExNCAwIDAgMSAuMDI3LS4xNThsLjAwNi0uMDAyYS4xMTMuMTEzIDAgMCAxIC4wNjMtLjAyMXptMTIuNTQyIDBhLjExLjExIDAgMCAxIC4wNjMuMDJsLjAwNi4wMDNhLjExMi4xMTIgMCAwIDEgLjAyNy4xNTZsLS41MzEuNzU2YS4xMTIuMTEyIDAgMCAxLS4xNTYuMDI4bC0uMDA2LS4wMDRhLjExMi4xMTIgMCAwIDEtLjAyOC0uMTU3bC41MzItLjc1NWEuMTEuMTEgMCAwIDEgLjA5My0uMDQ3em0uNzQ3LjU3OGEuMTEuMTEgMCAwIDEgLjA4LjAyN2wuMDA2LjAwNGMuMDQ3LjA0LjA1My4xMTEuMDEzLjE1OEwxNy45MzIgNS4xMWEuMTEuMTEgMCAwIDEtLjE1Ny4wMTZsLS4wMDUtLjAwNmEuMTEuMTEgMCAwIDEtLjAxNC0uMTU2bDEuMTg1LTEuNDE0YS4xMTQuMTE0IDAgMCAxIC4wNzctLjA0MXpNNC45ODQgMy41MWEuMTEuMTEgMCAwIDEgLjA3Ny4wMzlMNi4yNDQgNC45NmEuMTEyLjExMiAwIDAgMS0uMDE0LjE1OGwtLjAwMy4wMDRhLjExMi4xMTIgMCAwIDEtLjE1OS0uMDE0TDQuODgzIDMuNjk3YS4xMTIuMTEyIDAgMCAxIC4wMTMtLjE1OGwuMDA2LS4wMDRhLjExMS4xMTEgMCAwIDEgLjA4Mi0uMDI1em0tLjcxNC42NGMuMDI3IDAgLjA1NS4wMS4wNzYuMDMybC42NTguNjZhLjEwNy4xMDcgMCAwIDEgMCAuMTUybC0uMDEuMDFhLjEwNy4xMDcgMCAwIDEtLjE1MiAwbC0uNjYtLjY1OGEuMTEuMTEgMCAwIDEgMC0uMTU1bC4wMS0uMDFhLjExMS4xMTEgMCAwIDEgLjA3OC0uMDN6bTE1LjQ2MiAwYy4wMjggMCAuMDU1LjAxLjA3Ny4wMzJsLjAwNy4wMDdhLjEwOS4xMDkgMCAwIDEgMCAuMTU1bC0uNjU4LjY2YS4xMDkuMTA5IDAgMCAxLS4xNTQgMGwtLjAwOC0uMDA4YS4xMDkuMTA5IDAgMCAxIDAtLjE1NGwuNjU4LS42NmEuMTEuMTEgMCAwIDEgLjA3OC0uMDMyem0uNzA3LjY2Yy4wMzggMCAuMDcxLjAyLjA5Mi4wNzVhLjExMi4xMTIgMCAwIDEtLjAyMy4xMTdsLTcuNjA2IDguMDhjLTMuMDg0IDIuMDI0LTYuMTQ5IDQuMDQtOS4yMjIgNi4wNS0uMDc4LjA1MS0uMTcuMDgyLS4yMTEtLjAyOGEuMTEyLjExMiAwIDAgMSAuMDIzLS4xMThsNy41OTQtOC4wOGMzLjA4NC0yLjAyMyA2LjE2MS00LjAzOSA5LjIzNC02LjA0OWEuMjQ3LjI0NyAwIDAgMSAuMTItLjA0NnptLTE2LjgyNC4wNDVhLjEwOS4xMDkgMCAwIDEgLjA4LjAyNmwxLjQxNiAxLjE4N2EuMTEuMTEgMCAwIDEgLjAxNC4xNTdsLS4wMDYuMDA1YS4xMS4xMSAwIDAgMS0uMTU2LjAxNEwzLjU0OSA1LjA1N2EuMTA5LjEwOSAwIDAgMS0uMDE0LS4xNTVsLjAwNi0uMDA3YS4xMDguMTA4IDAgMCAxIC4wNzQtLjA0em0xNy4zMzYuNzU2Yy4wMzYgMCAuMDcyLjAxNy4wOTQuMDVsLjAwNC4wMDNhLjExNC4xMTQgMCAwIDEtLjAyOC4xNThsLS43NTMuNTNhLjExMi4xMTIgMCAwIDEtLjE1Ny0uMDI4bC0uMDA0LS4wMDRhLjExNC4xMTQgMCAwIDEgLjAyOC0uMTU4bC43NTQtLjUzYS4xMTMuMTEzIDAgMCAxIC4wNjItLjAyem0tMTcuOTA0LjAwMmMuMDIgMCAuMDQyLjAwNy4wNi4wMmwuNzYuNTMxYy4wNS4wMzUuMDYuMTAzLjAyNi4xNTJsLS4wMDYuMDFhLjEwOS4xMDkgMCAwIDEtLjE1My4wMjZsLS43Ni0uNTMyYS4xMDkuMTA5IDAgMCAxLS4wMjUtLjE1MmwuMDA2LS4wMWEuMTA4LjEwOCAwIDAgMSAuMDkyLS4wNDV6bS0uNTEyLjgwM2MuMDE4IDAgLjAzNi4wMDYuMDUzLjAxNmwxLjU5Ni45MjNhLjExMS4xMTEgMCAwIDEgLjA0LjE1M2wtLjAwMy4wMDZhLjExMS4xMTEgMCAwIDEtLjE1My4wNEwyLjQ3MyA2LjYzYS4xMTEuMTExIDAgMCAxLS4wNDEtLjE1MmwuMDA0LS4wMDZhLjExLjExIDAgMCAxIC4xLS4wNTV6bTE4LjkzMiAwYS4xMS4xMSAwIDAgMSAuMS4wNTVsLjAwMS4wMDRhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGwtMS41OTYuOTI2YS4xMTMuMTEzIDAgMCAxLS4xNTUtLjA0MWwtLjAwMi0uMDA0YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwxLjU5Ni0uOTI1YS4xMTUuMTE1IDAgMCAxIC4wNTUtLjAxNHptLTE5LjM3My44NDZjLjAxNCAwIC4wMjkuMDAzLjA0My4wMWwuODM4LjM5MmEuMTEuMTEgMCAwIDEgLjA1Mi4xNDdsLS4wMDQuMDFhLjExLjExIDAgMCAxLS4xNDYuMDUybC0uODM4LS4zOTNhLjExLjExIDAgMCAxLS4wNTMtLjE0NmwuMDA0LS4wMWEuMTA5LjEwOSAwIDAgMSAuMTA0LS4wNjJ6bTE5LjgxLjAwMmEuMTEuMTEgMCAwIDEgLjEwNi4wNjJsLjAwMi4wMDhhLjExLjExIDAgMCAxLS4wNTMuMTQ2bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ni0uMDUzbC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTItLjE0NmwuODM4LS4zOTNhLjExLjExIDAgMCAxIC4wNDMtLjAxem0tMjAuMTgzLjg4Yy4wMTQgMCAuMDI4LjAwMS4wNDMuMDA2bDEuNzMyLjYzMWEuMTEyLjExMiAwIDAgMSAuMDY3LjE0NWwtLjAwMi4wMDZhLjExLjExIDAgMCAxLS4xNDMuMDY2bC0xLjczMi0uNjNhLjExMy4xMTMgMCAwIDEtLjA2OS0uMTQ1bC4wMDItLjAwNGEuMTE1LjExNSAwIDAgMSAuMTAyLS4wNzR6bTIwLjU0OSAwYS4xMTMuMTEzIDAgMCAxIC4xMS4wNzVsLjAwMy4wMDRhLjExNS4xMTUgMCAwIDEtLjA2OS4xNDZsLTEuNzMyLjYyOWEuMTEyLjExMiAwIDAgMS0uMTQ1LS4wNjZsLS4wMDEtLjAwNmEuMTEzLjExMyAwIDAgMSAuMDY4LS4xNDVsMS43MzItLjYzYS4xMS4xMSAwIDAgMSAuMDM0LS4wMDZ6bS0yMC44MzYuOTA5YS4xMS4xMSAwIDAgMSAuMDMzLjAwNGwuODkyLjI0Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzdsLS4wMDIuMDA3YS4xMS4xMSAwIDAgMS0uMTM2LjA3OWwtLjg5NS0uMjM5YS4xMTMuMTEzIDAgMCAxLS4wNzgtLjEzOGwuMDAyLS4wMDZhLjExMy4xMTMgMCAwIDEgLjEwNC0uMDg0em0yMS4xMy4wMDJhLjExNS4xMTUgMCAwIDEgLjEwNi4wODR2LjAwNGEuMTEyLjExMiAwIDAgMS0uMDc4LjEzOGwtLjg5My4yMzlhLjExMi4xMTIgMCAwIDEtLjEzOC0uMDc5di0uMDA1YS4xMTIuMTEyIDAgMCAxIC4wNzgtLjE0bC44OTItLjIzN2EuMTEuMTEgMCAwIDEgLjAzMy0uMDA0em0tMjEuMzM1LjkzLjAyMy4wMDEgMS44MTQuMzIzYy4wNjIuMDEuMTAxLjA2OS4wOS4xM3YuMDA2YS4xMTEuMTExIDAgMCAxLS4xMy4wOWwtMS44MTUtLjMyMmEuMTEzLjExMyAwIDAgMS0uMDkyLS4xMzFsLjAwMi0uMDA2YS4xMS4xMSAwIDAgMSAuMTA4LS4wOTJ6bTIxLjUxOS4wMDFoLjAyMmMuMDUyLjAwMi4xLjAzOC4xMDkuMDkydi4wMDZjLjAxLjA2Mi0uMDMuMTItLjA5Mi4xM2wtMS44MTQuMzIxYS4xMTMuMTEzIDAgMCAxLS4xMzEtLjA5MnYtLjAwNWEuMTEzLjExMyAwIDAgMSAuMDkyLS4xMzFsMS44MTQtLjMyem0tMjEuNjQ0Ljk0NGguMDExbC45MjIuMDg0YS4xMS4xMSAwIDAgMSAuMTAyLjExOWwtLjAwMi4wMWEuMTEuMTEgMCAwIDEtLjEyMS4xbC0uOTIyLS4wODNhLjExLjExIDAgMCAxLS4xLS4xMnYtLjAwOWEuMTExLjExMSAwIDAgMSAuMTEtLjEwMXptMjEuNzc5LjAwMmguMDEyYy4wNTYgMCAuMTA2LjA0My4xMS4xMDF2LjAwOGEuMTExLjExMSAwIDAgMS0uMS4xMjFsLS45MjMuMDhhLjExMS4xMTEgMCAwIDEtLjEyLS4xMDF2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjEtLjEyMWwuOTItLjA4em0tMTEuODIuNzNMNi4wOTEgMTYuOTVjMi4wMi0xLjMyNCA0LjAzOS0yLjY0NiA2LjA2Ni0zLjk3NmwtMS4wOTUtMS4zMXptMTEuODcuMjE5Yy4wNjMgMCAuMTE0LjA1LjExNC4xMTN2LjAwNGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2wtMS44NDQuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMTMtLjExM3YtLjAwNGMwLS4wNjMuMDUtLjExMy4xMTMtLjExM2wxLjg0NC0uMDA0em0tMjEuODY5LjAwMmgxLjg0NGMuMDYyIDAgLjExMi4wNS4xMTIuMTExdi4wMDhjMCAuMDYyLS4wNS4xMTEtLjExMi4xMTFIMS4wNjRhLjExMS4xMTEgMCAwIDEtLjExLS4xMTF2LS4wMDhjMC0uMDYxLjA0OS0uMTExLjExLS4xMTF6bS45NTIuODc1aC4wMTFhLjExLjExIDAgMCAxIC4xMS4xMDF2LjAwNmEuMTExLjExMSAwIDAgMS0uMTAyLjEyMWwtLjkyMi4wOGEuMTEuMTEgMCAwIDEtLjExOS0uMTAxbC0uMDAyLS4wMDZhLjExMS4xMTEgMCAwIDEgLjEwMi0uMTIxbC45MjItLjA4em0xOS45NTUgMGguMDExbC45MjIuMDhhLjExLjExIDAgMCAxIC4xMDIuMTE5di4wMDhhLjExMi4xMTIgMCAwIDEtLjEyMS4xMDFsLS45MjItLjA4YS4xMS4xMSAwIDAgMS0uMTAyLS4xMTl2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjExLS4xMDF6bS0xOC45MjQuNzA1Yy4wNTMuMDAxLjA5OC4wNC4xMDcuMDk0bC4wMDIuMDA0Yy4wMTEuMDYxLS4wMy4xMi0uMDkyLjEzbC0xLjgxMi4zMmEuMTEzLjExMyAwIDAgMS0uMTMtLjA5MXYtLjAwNGEuMTE1LjExNSAwIDAgMSAuMDktLjEzM2wxLjgxMS0uMzE4YS4xMTcuMTE3IDAgMCAxIC4wMjQtLjAwMnptMTcuOTAyIDBjLjAwOCAwIC4wMTYgMCAuMDI0LjAwMmwxLjgxNi4zMmMuMDYxLjAxMS4xLjA3LjA5LjEzMXYuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMzEuMDkybC0xLjgxNi0uMzJhLjExMi4xMTIgMCAwIDEtLjA5LS4xMzF2LS4wMDRhLjExMy4xMTMgMCAwIDEgLjEwNy0uMDk0ek0yLjMzMiAxNC40NzdhLjExLjExIDAgMCAxIC4xMDQuMDgybC4wMDIuMDA1Yy4wMTYuMDYtLjAyLjEyMS0uMDguMTM3bC0uODkxLjI0YS4xMTIuMTEyIDAgMCAxLS4xMzctLjA4bC0uMDAyLS4wMDZhLjExMi4xMTIgMCAwIDEgLjA4LS4xMzZsLjg5LS4yMzlhLjExMi4xMTIgMCAwIDEgLjAzNC0uMDAzem0xOS4zMzIgMGMuMDExIDAgLjAyNCAwIC4wMzUuMDAzbC44OTMuMjM5Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzZsLS4wMDIuMDA2YS4xMTEuMTExIDAgMCAxLS4xMzcuMDc4bC0uODk0LS4yMzhhLjExMS4xMTEgMCAwIDEtLjA3OC0uMTM3bC4wMDItLjAwNWEuMTA5LjEwOSAwIDAgMSAuMTAxLS4wODJ6bS0xOC4yMTMuNTE3YS4xMS4xMSAwIDAgMSAuMTEuMDc0bC4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4wNjcuMTQ1bC0xLjczMi42M2EuMTEzLjExMyAwIDAgMS0uMTQ1LS4wNjhsLS4wMDItLjAwNGEuMTEzLjExMyAwIDAgMSAuMDY5LS4xNDRMMy40MTggMTVhLjExLjExIDAgMCAxIC4wMzMtLjAwNnptMTcuMDg2IDBjLjAxNSAwIC4wMjkgMCAuMDQzLjAwNmwxLjczNC42M2EuMTExLjExMSAwIDAgMSAuMDY3LjE0M2wtLjAwMi4wMDhhLjExMS4xMTEgMCAwIDEtLjE0My4wNjdsLTEuNzM0LS42MzFhLjExMS4xMTEgMCAwIDEtLjA2Ni0uMTQzbC4wMDItLjAwOGEuMTExLjExMSAwIDAgMSAuMS0uMDcyek0yLjkyIDE2LjExN2EuMTA5LjEwOSAwIDAgMSAuMTAzLjA2M2wuMDA0LjAxYS4xMDguMTA4IDAgMCAxLS4wNTIuMTQ0bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ny0uMDU1bC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTMtLjE0NmwuODM4LS4zOTFhLjExMi4xMTIgMCAwIDEgLjA0My0uMDF6bTE4LjE1OCAwYS4xMS4xMSAwIDAgMSAuMDQzLjAxbC44MzguMzljLjA1Ni4wMjcuMDguMDkzLjA1NS4xNDlsLS4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4xNDkuMDU1bC0uODM4LS4zOTFhLjExMi4xMTIgMCAwIDEtLjA1NC0uMTQ4bC4wMDItLjAwNGEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjV6bS0xNi45NTcuMzE1Yy4wNC0uMDAxLjA3OC4wMi4xLjA1NmwuMDA0LjAwNGEuMTEuMTEgMCAwIDEtLjA0MS4xNTNsLTEuNTk2LjkyMWEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNGwtLjAwMi0uMDA1YS4xMTMuMTEzIDAgMCAxIC4wNC0uMTU0bDEuNTk2LS45MjJhLjEwOS4xMDkgMCAwIDEgLjA1My0uMDEzem0xNS43NTYgMGMuMDE4IDAgLjAzNi4wMDQuMDUzLjAxM2wxLjU5Ny45MjRhLjExLjExIDAgMCAxIC4wNDEuMTUybC0uMDAyLjAwNGEuMTEuMTEgMCAwIDEtLjE1Mi4wNDFsLTEuNTk4LS45MjFhLjExMy4xMTMgMCAwIDEtLjA0LS4xNTVsLjAwMS0uMDAyYS4xMTEuMTExIDAgMCAxIC4xLS4wNTZ6bS4zMjggMS4xOTNhLjExLjExIDAgMCAxIC4wNi4wMjFsLjc1OC41MzRjLjA1LjAzNS4wNjEuMTAyLjAyNi4xNTJsLS4wMDQuMDA4YS4xMTEuMTExIDAgMCAxLS4xNTQuMDI3bC0uNzU2LS41MzVhLjEwOS4xMDkgMCAwIDEtLjAyOC0uMTUybC4wMDYtLjAwOGEuMTEuMTEgMCAwIDEgLjA5Mi0uMDQ3em0tMTYuNDEyLjAwMmMuMDM1IDAgLjA3Mi4wMTYuMDk0LjA0N2wuMDA0LjAwOGEuMTA5LjEwOSAwIDAgMS0uMDI4LjE1MmwtLjc1Ni41MzFhLjEwOC4xMDggMCAwIDEtLjE1Mi0uMDI1bC0uMDA2LS4wMDhhLjEwOS4xMDkgMCAwIDEgLjAyOC0uMTUybC43NTUtLjUzNGEuMTA3LjEwNyAwIDAgMSAuMDYxLS4wMTl6bTE1LjE2Mi4xMDJhLjExMi4xMTIgMCAwIDEgLjA4Mi4wMjVsMS40MTQgMS4xODdhLjExLjExIDAgMCAxIC4wMTQuMTU3bC0uMDA0LjAwNGEuMTEzLjExMyAwIDAgMS0uMTU4LjAxM0wxOC44OSAxNy45M2EuMTEuMTEgMCAwIDEtLjAxNC0uMTU3bC4wMDQtLjAwNWEuMTA4LjEwOCAwIDAgMSAuMDc0LS4wNHptLTEyLjgxMiAxLjEyYS4xMS4xMSAwIDAgMSAuMDguMDI2bC4wMDcuMDA4YS4xMS4xMSAwIDAgMSAuMDE0LjE1NEw1LjA2IDIwLjQ1MWEuMTEuMTEgMCAwIDEtLjE1NS4wMTJsLS4wMDgtLjAwNmEuMTEuMTEgMCAwIDEtLjAxMy0uMTU0bDEuMTg1LTEuNDE0YS4xMS4xMSAwIDAgMSAuMDc1LS4wNHptMTEuNzAzIDBjLjAzMiAwIC4wNjUuMDE1LjA4OC4wNDJsMS4xODEgMS40MWMuMDQuMDQ4LjAzNS4xMi0uMDEzLjE2bC0uMDAyLjAwMmEuMTE0LjExNCAwIDAgMS0uMTYtLjAxNGwtMS4xODItMS40MWEuMTE0LjExNCAwIDAgMSAuMDEzLS4xNmwuMDAyLS4wMDJhLjExNS4xMTUgMCAwIDEgLjA3My0uMDI3em0tMTIuOTI4LjExNGMuMDI3IDAgLjA1NC4wMS4wNzQuMDMxbC4wMTQuMDEyYS4xMDcuMTA3IDAgMCAxIDAgLjE1bC0uNjYyLjY2YS4xMDUuMTA1IDAgMCAxLS4xNDkgMGwtLjAxMS0uMDExYS4xMDUuMTA1IDAgMCAxIDAtLjE0OWwuNjYtLjY2MmEuMTA1LjEwNSAwIDAgMSAuMDc0LS4wMzF6bTE0LjE2NCAwYy4wMjcgMCAuMDUzLjAxLjA3NC4wMzFsLjY2LjY2MmEuMTA2LjEwNiAwIDAgMSAwIC4xNWwtLjAxMS4wMTJhLjEwNi4xMDYgMCAwIDEtLjE1LS4wMDJsLS42Ni0uNjZhLjEwNi4xMDYgMCAwIDEgLjAwMS0uMTVsLjAxLS4wMTJhLjEwOC4xMDggMCAwIDEgLjA3Ni0uMDMxem0tMTEuNjI3Ljc5N2MuMDE4IDAgLjAzNC4wMDYuMDUuMDE1bC4wMDcuMDA0YS4xMS4xMSAwIDAgMSAuMDQuMTVsLS45MjEgMS41OThhLjExLjExIDAgMCAxLS4xNS4wNDFsLS4wMDgtLjAwNGEuMTExLjExMSAwIDAgMS0uMDQtLjE1MmwuOTIyLTEuNTk2YS4xMTMuMTEzIDAgMCAxIC4xLS4wNTZ6bTkuMDg4LjAwMmEuMTEuMTEgMCAwIDEgLjEuMDU0bC45MjUgMS41OTZhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGgtLjAwNWEuMTEuMTEgMCAwIDEtLjE1Mi0uMDM5bC0uOTI2LTEuNTk1YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwuMDA0LS4wMDJhLjEwOC4xMDggMCAwIDEgLjA1My0uMDEzem0tMTAuMjg1LjMyNGMuMDIxIDAgLjA0My4wMDguMDYyLjAyMWwuMDA0LjAwMmMuMDUxLjAzNi4wNjMuMTA2LjAyOC4xNTdsLS41My43NTVhLjExMi4xMTIgMCAwIDEtLjE1Ni4wMjhsLS4wMDQtLjAwMmEuMTEyLjExMiAwIDAgMS0uMDI3LS4xNTZsLjUzLS43NTZhLjExMy4xMTMgMCAwIDEgLjA5My0uMDV6bTExLjQ4NC4wMDJjLjAzNiAwIC4wNzIuMDE1LjA5NC4wNDdsLjUzLjc1NmMuMDM1LjA1LjAyMy4xMi0uMDI4LjE1NmwtLjAwNC4wMDJhLjExMi4xMTIgMCAwIDEtLjE1Ni0uMDI4bC0uNTMtLjc1NWEuMTEyLjExMiAwIDAgMSAuMDI4LS4xNTdsLjAwNC0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wNjItLjAyem0tOC44NjMuMzQyYS4xMS4xMSAwIDAgMSAuMDQzLjAwNmwuMDEyLjAwNWMuMDU2LjAyLjA4NC4wODEuMDY0LjEzN2wtLjYzMyAxLjc0YS4xMDUuMTA1IDAgMCAxLS4xMzYuMDYzbC0uMDE0LS4wMDRhLjEwNi4xMDYgMCAwIDEtLjA2NS0uMTM3bC42MzMtMS43NGEuMTA3LjEwNyAwIDAgMSAuMDk2LS4wN3ptNi4yMzIgMGEuMTA3LjEwNyAwIDAgMSAuMTA2LjA3bC42MzMgMS43MzhhLjEwNy4xMDcgMCAwIDEtLjA2NS4xMzdsLS4wMTUuMDA2YS4xMDcuMTA3IDAgMCAxLS4xMzctLjA2NUwxNSAyMC41NzhhLjEwNy4xMDcgMCAwIDEgLjA2NC0uMTM3bC4wMTQtLjAwNWEuMTE3LjExNyAwIDAgMSAuMDMzLS4wMDZ6bS00LjY5NS40MWMuMDA4IDAgLjAxNCAwIC4wMjEuMDAybC4wMDYuMDAyYy4wNjIuMDEuMTAxLjA2Ny4wOS4xMjlsLS4zMTggMS44MTJhLjExMy4xMTMgMCAwIDEtLjEzMS4wOTJsLS4wMDQtLjAwMmEuMTExLjExMSAwIDAgMS0uMDkyLS4xMjlsLjMyLTEuODEyYS4xMTMuMTEzIDAgMCAxIC4xMDgtLjA5NHptMy4xNDYuMDAyYy4wMDgtLjAwMi4wMTUgMCAuMDIyIDBhLjExMS4xMTEgMCAwIDEgLjEwNy4wOTJsLjMyIDEuODEyYy4wMTIuMDYxLS4wMy4xMi0uMDkxLjEzMWwtLjAwNC4wMDJhLjExMy4xMTMgMCAwIDEtLjEzLS4wOTJsLS4zMjEtMS44MTJhLjExMy4xMTMgMCAwIDEgLjA5Mi0uMTMxbC4wMDUtLjAwMnptLTUuNzkuMTE5YS4xMS4xMSAwIDAgMSAuMDQyLjAxbC4wMDQuMDAyYS4xMTQuMTE0IDAgMCAxIC4wNTUuMTVsLS4zOTMuODM0YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU1bC0uMDA0LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ5bC4zOTMtLjgzNmEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjR6bTguNDU4IDBhLjEwOC4xMDggMCAwIDEgLjEwNC4wNjJsLjM5Ljg0YS4xMS4xMSAwIDAgMS0uMDUyLjE0N2wtLjAwOC4wMDRhLjExLjExIDAgMCAxLS4xNDYtLjA1NWwtLjM5MS0uODM4YS4xMS4xMSAwIDAgMSAuMDUzLS4xNDZsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQyLS4wMXptLTQuMjM2LjAxOEgxMmMuMDYzIDAgLjExNS4wNS4xMTUuMTEzbC4wMDIgMS44NGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2gtLjAwNmEuMTEzLjExMyAwIDAgMS0uMTEzLS4xMTNsLS4wMDQtMS44MzhjMC0uMDYzLjA1LS4xMTUuMTEzLS4xMTV6bS0yLjU5Mi41NzhjLjAxMSAwIC4wMjIgMCAuMDM0LjAwNGwuMDA1LjAwMmMuMDYuMDE2LjA5NS4wNzcuMDc5LjEzNmwtLjI0Ljg5M2EuMTExLjExMSAwIDAgMS0uMTM3LjA3OGwtLjAwNi0uMDAyYS4xMTEuMTExIDAgMCAxLS4wNzgtLjEzN2wuMjQtLjg5YS4xMTMuMTEzIDAgMCAxIC4xMDMtLjA4NHptNS4xOTYuMDAyYS4xMS4xMSAwIDAgMSAuMTAzLjA4MmwuMjQuODlhLjExLjExIDAgMCAxLS4wNzguMTM3bC0uMDA2LjAwMmEuMTEuMTEgMCAwIDEtLjEzNi0uMDc4bC0uMjQtLjg5YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzhsLjAwNS0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wMzQtLjAwM3ptLTMuNDc1LjMwMmguMDFsLjAwOC4wMDJjLjA2MS4wMDYuMTA3LjA2LjEwMS4xMjFsLS4wOC45MmEuMTEyLjExMiAwIDAgMS0uMTIxLjEwMmgtLjAwOGEuMTEuMTEgMCAwIDEtLjEtLjEyMWwuMDgtLjkyMmEuMTExLjExMSAwIDAgMSAuMTEtLjEwMnptMS43MzYgMGguMDJhLjExLjExIDAgMCAxIC4xMDcuMTAybC4wOC45MjRhLjExLjExIDAgMCAxLS4xMDEuMTE5bC0uMDA4LjAwMmEuMTEuMTEgMCAwIDEtLjEyLS4xMDJsLS4wOC0uOTI0YS4xMTIuMTEyIDAgMCAxIC4xMDItLjEyeiIvPjwvc3ZnPgo=",
-      "version": "0.1.3",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "safari_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.safari_history.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.safari_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Safari history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.safari_history.filter_domains",
+          "type": "tags",
+          "label": "Filter Domains (Regex)",
+          "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 70,
+          "placeholder": "e.g. ^mail\\.google\\.com$"
+        },
+        {
+          "key": "sensors.safari_history.filter_keywords",
+          "type": "tags",
+          "label": "Filter Keywords",
+          "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "required": false,
+          "section": "filters",
+          "surface": "timeline",
+          "order": 80,
+          "placeholder": "e.g. password reset"
+        },
+        {
+          "key": "sensors.safari_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.safari_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.safari_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ]
+        },
+        {
+          "key": "sensors.safari_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much history should be imported when this source is enabled for the first time.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new records from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.safari_history.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of history records to ingest per run.",
+          "default": 1000,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.safari_history.merge_window_minutes",
+          "type": "number",
+          "label": "Merge Window (minutes)",
+          "description": "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.safari_history.profile",
+          "type": "input",
+          "label": "Profile",
+          "description": "Safari stores history in one History.db file; leave this empty.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.safari_history.source_path",
+          "type": "input",
+          "label": "Source Path",
+          "description": "",
+          "default": "~/Library/Safari",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.safari_history.storage_mode",
+          "type": "input",
+          "label": "Storage Mode",
+          "description": "",
+          "default": "managed",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.safari_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "Polling interval used for interval-based sync.",
+          "default": 30,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.safari_history.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ]
+        },
+        {
+          "key": "sensors.safari_history.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How Safari history should be synchronized.",
+          "default": "interval",
+          "required": true,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "general",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [
+        {
+          "resource_name": "permissions",
+          "resource_type": "channel_status",
+          "requires_enabled": false,
+          "description": "Live macOS permission grant required by the Safari history plugin.",
+          "metadata": {}
+        }
+      ],
+      "settings_ui_blocks": [
+        {
+          "block_id": "macos_permissions",
+          "type": "resource_picker",
+          "title": "macOS Permissions",
+          "description": "Full Disk Access is required to read Safari History.db.",
+          "resource_name": "permissions",
+          "value_key": "_readonly",
+          "presentation": "permission_status",
+          "depends_on_values": []
+        }
+      ],
+      "activation_flow": {
+        "title": "Enable Safari History",
+        "description": "Safari history is sensitive local data. Choose how the first sync should seed the timeline before this source starts running.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.safari_history.enabled",
+        "configured_key": "sensors.safari_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.safari_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much history should be imported when this source is enabled for the first time.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new records from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.safari_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.safari_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ]
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 200,
+          "settings_overrides": {
+            "sensors.safari_history.initial_sync_policy": "lookback_days",
+            "sensors.safari_history.initial_sync_lookback_days": 7
+          }
+        }
+      },
       "path": "plugins/safari-history",
       "description": "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
       "description_i18n": {
@@ -1715,7 +4731,7 @@
           }
         ]
       },
-      "package_sha256": "6b9ce7fb0f4076adbaf61cc6ed34330378a52e83edba9e21319dc10e57f57704"
+      "package_sha256": "04e0b88f57c5539f76938218096b61ff2b6f1fc102823c9fd432c0e9434b7fa0"
     },
     {
       "plugin_id": "screen-time",
@@ -1724,7 +4740,58 @@
         "zh-CN": "屏幕使用"
       },
       "icon": "lucide:chart-no-axes-column",
-      "version": "0.2.8",
+      "version": "0.3.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "screen_time"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.screen_time.enabled",
+          "type": "switch",
+          "label": "Enable App Usage Sync",
+          "description": "Tracks the foreground app every second and writes one summary per app for each clock hour (10:00-11:00, 11:00-12:00, ...). A bucket is only written to your timeline after the hour it belongs to has fully ended, so the first entry typically appears 0-59 minutes after you enable this.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.screen_time.sync_interval_minutes",
+          "type": "select",
+          "label": "Check Interval",
+          "description": "How often the plugin checks for hourly buckets that have just ended and flushes them to the timeline. This does NOT change how often new entries appear (always one per app per clock hour); a smaller value only reduces the delay between an hour ending and its records becoming visible.",
+          "default": 5,
+          "required": false,
+          "options": [
+            {
+              "label": "Every minute",
+              "value": "1"
+            },
+            {
+              "label": "Every 5 minutes",
+              "value": "5"
+            },
+            {
+              "label": "Every 15 minutes",
+              "value": "15"
+            },
+            {
+              "label": "Every 60 minutes",
+              "value": "60"
+            }
+          ],
+          "section": "sync",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/screen_time",
       "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
       "description_i18n": {
@@ -1784,7 +4851,7 @@
           "en": "Lets magi see your screen-time usage"
         }
       },
-      "package_sha256": "bab3cb1bb8c04013e9ba3341401e5eba635b2b9aa6ebc73c1a7ee86085c58b0a"
+      "package_sha256": "bbdf847f8ddff7692eb4aed56235ae9781e9bf550a51295026d1ef422621c0f0"
     },
     {
       "plugin_id": "screenshot_timeline",
@@ -1793,7 +4860,300 @@
         "zh-CN": "屏幕快照时间线"
       },
       "icon": "lucide:scan",
-      "version": "0.5.3",
+      "version": "0.6.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "screenshot_timeline"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.screenshot_timeline.active_window_interval_sec",
+          "type": "number",
+          "label": "Active window interval (sec)",
+          "description": "How often to capture the active window. Recommended: 10s.",
+          "default": 10,
+          "required": false,
+          "section": "capture",
+          "surface": "timeline",
+          "order": 30
+        },
+        {
+          "key": "sensors.screenshot_timeline.app_blocklist",
+          "type": "tags",
+          "label": "App blocklist (bundle IDs)",
+          "description": "Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*). Defaults block known password managers and the macOS SecurityAgent; remove entries to allow them.",
+          "default": [
+            "com.agilebits.onepassword*",
+            "com.1password.1password*",
+            "com.bitwarden.desktop",
+            "com.apple.keychainaccess",
+            "com.lastpass.LastPassMacDesktop",
+            "com.dashlane.*",
+            "com.apple.SecurityAgent"
+          ],
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 100
+        },
+        {
+          "key": "sensors.screenshot_timeline.ax_enabled",
+          "type": "switch",
+          "label": "Ax Enabled",
+          "description": "",
+          "default": true,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.ax_min_content_chars",
+          "type": "number",
+          "label": "Ax Min Content Chars",
+          "description": "",
+          "default": 80,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.ax_min_content_nodes",
+          "type": "number",
+          "label": "Ax Min Content Nodes",
+          "description": "",
+          "default": 5,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.ax_wake",
+          "type": "switch",
+          "label": "Ax Wake",
+          "description": "",
+          "default": true,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.capture_scope",
+          "type": "select",
+          "label": "Capture scope",
+          "description": "What part of the screen to capture each tick.",
+          "default": "hybrid",
+          "required": false,
+          "options": [
+            {
+              "label": "Active window only",
+              "value": "active_window"
+            },
+            {
+              "label": "Primary display (full screen)",
+              "value": "full_screen"
+            },
+            {
+              "label": "Active window + periodic full screen",
+              "value": "hybrid"
+            },
+            {
+              "label": "All connected displays",
+              "value": "all_displays"
+            }
+          ],
+          "section": "capture",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.screenshot_timeline.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether the screenshot timeline sensor is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.screenshot_timeline.full_screen_interval_min",
+          "type": "number",
+          "label": "Full-screen interval (min)",
+          "description": "Periodic full-screen capture interval (used in hybrid or full_screen modes).",
+          "default": 5,
+          "required": false,
+          "section": "capture",
+          "surface": "timeline",
+          "order": 40
+        },
+        {
+          "key": "sensors.screenshot_timeline.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.jpeg_quality_original",
+          "type": "number",
+          "label": "Jpeg Quality Original",
+          "description": "",
+          "default": 80,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.jpeg_quality_thumbnail",
+          "type": "number",
+          "label": "Jpeg Quality Thumbnail",
+          "description": "",
+          "default": 70,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.ocr_languages",
+          "type": "tags",
+          "label": "OCR languages",
+          "description": "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. Order matters: the first language is the primary character-set hypothesis. If your screen content is mostly Chinese with code/URLs mixed in, keep zh-Hans first; English-only users can put en-US first.",
+          "default": [
+            "zh-Hans",
+            "en-US"
+          ],
+          "required": false,
+          "section": "ocr",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.screenshot_timeline.ocr_level",
+          "type": "select",
+          "label": "OCR recognition level",
+          "description": "Apple Vision text-recognition precision tier. \"Accurate\" uses a neural network — handles small fonts, mixed-language text, and dense UI; ~0.5–2s per screenshot. \"Fast\" uses traditional character recognition — 5-10× faster but small fonts, CJK characters, and busy UI degrade quickly. Keep \"Accurate\" unless CPU is an issue.",
+          "default": "accurate",
+          "required": false,
+          "options": [
+            {
+              "label": "Accurate",
+              "value": "accurate"
+            },
+            {
+              "label": "Fast",
+              "value": "fast"
+            }
+          ],
+          "section": "ocr",
+          "surface": "timeline",
+          "order": 60
+        },
+        {
+          "key": "sensors.screenshot_timeline.original_retention_days",
+          "type": "number",
+          "label": "Original retention (days)",
+          "description": "Originals older than this are deleted. Thumbnails are kept permanently.",
+          "default": 30,
+          "required": false,
+          "section": "storage",
+          "surface": "timeline",
+          "order": 70
+        },
+        {
+          "key": "sensors.screenshot_timeline.sync_mode",
+          "type": "input",
+          "label": "Sync Mode",
+          "description": "",
+          "default": "interval",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.thumbnail_max_width",
+          "type": "number",
+          "label": "Thumbnail Max Width",
+          "description": "",
+          "default": 1024,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.screenshot_timeline.window_title_blocklist",
+          "type": "tags",
+          "label": "Window title blocklist (substrings)",
+          "description": "Any window whose title contains any of these strings will be skipped.",
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 110
+        }
+      ],
+      "settings_actions": [
+        {
+          "action_id": "request_permissions",
+          "label": "System permissions",
+          "description": "Check Screen Recording (required) and Accessibility (optional, for window titles and structured text) permissions. macOS will prompt if not yet granted.",
+          "button_label": "Check & request",
+          "presentation": "inline",
+          "surface": "extensions",
+          "contribution_id": "timeline",
+          "order": 10,
+          "destructive": false,
+          "requires_enabled": false,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 480000,
+          "persist_settings_on_success": false,
+          "depends_on_values": []
+        }
+      ],
+      "settings_resources": [
+        {
+          "resource_name": "permissions",
+          "resource_type": "channel_status",
+          "requires_enabled": false,
+          "description": "Live macOS permission grants required by the screenshot timeline plugin.",
+          "metadata": {}
+        }
+      ],
+      "settings_ui_blocks": [
+        {
+          "block_id": "macos_permissions",
+          "type": "resource_picker",
+          "title": "macOS Permissions",
+          "description": "Screen Recording is required for capture. Accessibility is optional, and provides window titles and structured on-screen text.",
+          "resource_name": "permissions",
+          "value_key": "_readonly",
+          "presentation": "permission_status",
+          "depends_on_values": []
+        }
+      ],
+      "activation_flow": {
+        "title": "Enable Screenshot Timeline",
+        "description": "This plugin continuously captures your screen and runs local OCR (via Apple Vision) to feed the recognised text into magi's memory. Captures and thumbnails stay on this Mac — they are not uploaded anywhere. Originals are deleted after 30 days by default; thumbnails are kept indefinitely.\n\nPassword managers, Keychain, and incognito browser windows are skipped by default. You can add more app or window-title rules in Settings after enabling.\n\nmacOS will ask for Screen Recording permission the first time captures start. Accessibility permission provides window titles and structured on-screen text.",
+        "confirm_label": "I understand — enable",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.screenshot_timeline.enabled",
+        "configured_key": "sensors.screenshot_timeline.initial_sync_configured",
+        "fields": []
+      },
       "path": "plugins/screenshot_timeline",
       "description": "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days.",
       "description_i18n": {
@@ -1877,7 +5237,7 @@
           "en": "Lets magi see what's on your screen"
         }
       },
-      "package_sha256": "3340f8902051f3b834533b31a9a772107a75e09727d9159ec1891ed02447a28d"
+      "package_sha256": "f18c9fddd5806c11133a50034024f59951479fa49cb2a3ef5baabe4a82471ad9"
     },
     {
       "plugin_id": "steam-play-history",
@@ -1887,7 +5247,262 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlN0ZWFtPC90aXRsZT48cGF0aCBmaWxsPSIjNjZDMEY0IiBkPSJNMTEuOTc5IDBDNS42NzggMCAuNTExIDQuODYuMDIyIDExLjAzN2w2LjQzMiAyLjY1OGMuNTQ1LS4zNzEgMS4yMDMtLjU5IDEuOTEyLS41OS4wNjMgMCAuMTI1LjAwNC4xODguMDA2bDIuODYxLTQuMTQyVjguOTFjMC0yLjQ5NSAyLjAyOC00LjUyNCA0LjUyNC00LjUyNCAyLjQ5NCAwIDQuNTI0IDIuMDMxIDQuNTI0IDQuNTI3cy0yLjAzIDQuNTI1LTQuNTI0IDQuNTI1aC0uMTA1bC00LjA3NiAyLjkxMWMwIC4wNTIuMDA0LjEwNS4wMDQuMTU5IDAgMS44NzUtMS41MTUgMy4zOTYtMy4zOSAzLjM5Ni0xLjYzNSAwLTMuMDE2LTEuMTczLTMuMzMxLTIuNzI3TC40MzYgMTUuMjdDMS44NjIgMjAuMzA3IDYuNDg2IDI0IDExLjk3OSAyNGM2LjYyNyAwIDExLjk5OS01LjM3MyAxMS45OTktMTJTMTguNjA1IDAgMTEuOTc5IDB6TTcuNTQgMTguMjFsLTEuNDczLS42MWMuMjYyLjU0My43MTQuOTk5IDEuMzE0IDEuMjUgMS4yOTcuNTM5IDIuNzkzLS4wNzYgMy4zMzItMS4zNzUuMjYzLS42My4yNjQtMS4zMTkuMDA1LTEuOTQ5cy0uNzUtMS4xMjEtMS4zNzctMS4zODNjLS42MjQtLjI2LTEuMjktLjI0OS0xLjg3OC0uMDNsMS41MjMuNjNjLjk1Ni40IDEuNDA5IDEuNSAxLjAwOSAyLjQ1NS0uMzk3Ljk1Ny0xLjQ5NyAxLjQxLTIuNDU0IDEuMDEySDcuNTR6bTExLjQxNS05LjMwM2MwLTEuNjYyLTEuMzUzLTMuMDE1LTMuMDE1LTMuMDE1LTEuNjY1IDAtMy4wMTUgMS4zNTMtMy4wMTUgMy4wMTUgMCAxLjY2NSAxLjM1IDMuMDE1IDMuMDE1IDMuMDE1IDEuNjYzIDAgMy4wMTUtMS4zNSAzLjAxNS0zLjAxNXptLTUuMjczLS4wMDVjMC0xLjI1MiAxLjAxMy0yLjI2NiAyLjI2NS0yLjI2NiAxLjI0OSAwIDIuMjY2IDEuMDE0IDIuMjY2IDIuMjY2IDAgMS4yNTEtMS4wMTcgMi4yNjUtMi4yNjYgMi4yNjUtMS4yNTMgMC0yLjI2NS0xLjAxNC0yLjI2NS0yLjI2NXoiLz48L3N2Zz4K",
-      "version": "0.1.2",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "steam_play_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.steam_play_history.account_id",
+          "type": "input",
+          "label": "Account Id",
+          "description": "",
+          "default": "auto",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.steam_play_history.default_retention_mode",
+          "type": "input",
+          "label": "Default Retention Mode",
+          "description": "",
+          "default": "analyze_only",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.steam_play_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether Steam game record sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.steam_play_history.excluded_appids",
+          "type": "tags",
+          "label": "Excluded Appids",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.steam_play_history.excluded_keywords",
+          "type": "tags",
+          "label": "Excluded Game Keywords",
+          "description": "Game names containing these case-insensitive keywords are skipped before AI analysis.",
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 80,
+          "placeholder": "e.g. private"
+        },
+        {
+          "key": "sensors.steam_play_history.idle_timeout_minutes",
+          "type": "number",
+          "label": "Idle Timeout (minutes)",
+          "description": "A session is closed after this many minutes without additional Steam playtime.",
+          "default": 15,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 60,
+          "minimum": 2.0
+        },
+        {
+          "key": "sensors.steam_play_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.steam_play_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent summaries.",
+          "default": 14,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.steam_play_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ],
+          "minimum": 1.0
+        },
+        {
+          "key": "sensors.steam_play_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much previous Steam activity should be imported.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Import all last-played summaries",
+              "value": "full"
+            },
+            {
+              "label": "Import recent last-played summaries",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only record play from now on",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.steam_play_history.max_items_per_sync",
+          "type": "number",
+          "label": "Max Items Per Sync",
+          "description": "Maximum number of Steam records to emit per sync.",
+          "default": 500,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 70,
+          "minimum": 1.0
+        },
+        {
+          "key": "sensors.steam_play_history.min_session_seconds",
+          "type": "number",
+          "label": "Minimum Session Duration (seconds)",
+          "description": "Inferred play sessions shorter than this are ignored.",
+          "default": 180,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 50,
+          "minimum": 60.0
+        },
+        {
+          "key": "sensors.steam_play_history.steam_path",
+          "type": "path",
+          "label": "Steam Path",
+          "description": "Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
+          "default": "/Users/asuka/Library/Application Support/Steam",
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20
+        },
+        {
+          "key": "sensors.steam_play_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to poll Steam playtime changes.",
+          "default": 10,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 40,
+          "depends_on_key": "sensors.steam_play_history.sync_mode",
+          "depends_on_values": [
+            "interval"
+          ],
+          "minimum": 1.0
+        },
+        {
+          "key": "sensors.steam_play_history.sync_mode",
+          "type": "select",
+          "label": "Sync Mode",
+          "description": "How Steam game records should be synchronized.",
+          "default": "interval",
+          "required": false,
+          "options": [
+            {
+              "label": "Manual",
+              "value": "manual"
+            },
+            {
+              "label": "Interval",
+              "value": "interval"
+            }
+          ],
+          "section": "sync",
+          "surface": "timeline",
+          "order": 30
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Steam",
+        "description": "Steam game records reveal gaming habits. Choose how the first sync should seed the timeline before this source starts running. Exact sessions are inferred only after the source is enabled.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.steam_play_history.enabled",
+        "configured_key": "sensors.steam_play_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.steam_play_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much previous Steam activity should be imported.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Import all last-played summaries",
+                "value": "full"
+              },
+              {
+                "label": "Import recent last-played summaries",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only record play from now on",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.steam_play_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent summaries.",
+            "default": 14,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.steam_play_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ],
+            "minimum": 1.0
+          }
+        ]
+      },
       "path": "plugins/steam_play_history",
       "description": "Infers Steam game records from local Steam files and playtime changes.",
       "description_i18n": {
@@ -1979,7 +5594,7 @@
           }
         ]
       },
-      "package_sha256": "03ec4cc9a2a24a826b727448d0b4929467304e07dbbba74036873c6123c3007c"
+      "package_sha256": "5a517c2b817c8a18357d9e4e3522594f58e7d9ba3b48381aec5dfb06c601c79b"
     },
     {
       "plugin_id": "system-media",
@@ -1988,7 +5603,78 @@
         "zh-CN": "本机正在播放"
       },
       "icon": "lucide:music",
-      "version": "0.1.3",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "system_media"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.system_media.enabled",
+          "type": "switch",
+          "label": "Enable Media Recording",
+          "description": "Automatically detect and record playback from apps that expose OS media controls. Some players may not be supported.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.system_media.min_session_seconds",
+          "type": "number",
+          "label": "Minimum Play Duration (seconds)",
+          "description": "Tracks played shorter than this are ignored (skipped songs won't be recorded).",
+          "default": 30,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 30,
+          "minimum": 5.0
+        },
+        {
+          "key": "sensors.system_media.pause_timeout_seconds",
+          "type": "number",
+          "label": "Pause Before Ending Record (seconds)",
+          "description": "When paused for longer than this, the current record is saved. 300 = 5 minutes.",
+          "default": 300,
+          "required": false,
+          "section": "sync",
+          "surface": "timeline",
+          "order": 40,
+          "minimum": 30.0
+        },
+        {
+          "key": "sensors.system_media.sync_interval_minutes",
+          "type": "select",
+          "label": "Recording Frequency",
+          "description": "How often completed playback records are saved to memory.",
+          "default": 1,
+          "required": false,
+          "options": [
+            {
+              "label": "Every 1 minute",
+              "value": "1"
+            },
+            {
+              "label": "Every 5 minutes",
+              "value": "5"
+            },
+            {
+              "label": "Every 15 minutes",
+              "value": "15"
+            }
+          ],
+          "section": "sync",
+          "surface": "timeline",
+          "order": 20
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/system_media",
       "description": "Records music currently playing on this device through system media controls.",
       "description_i18n": {
@@ -2064,7 +5750,7 @@
           "en": "Lets magi see music playing on this device"
         }
       },
-      "package_sha256": "92f83e3258010b84fdf09ee78b2f3d27485f7dd05a173afe24ac5b9544236afe"
+      "package_sha256": "1aecc29aa741b5b95de7bb794bc85d978f9636207d67fd07a8ad719c5675c07e"
     },
     {
       "plugin_id": "telegram",
@@ -2074,7 +5760,131 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlRlbGVncmFtPC90aXRsZT48cGF0aCBmaWxsPSIjMjZBNUU0IiBkPSJNMTEuOTQ0IDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwYTEyIDEyIDAgMCAwLS4wNTYgMHptNC45NjIgNy4yMjRjLjEtLjAwMi4zMjEuMDIzLjQ2NS4xNGEuNTA2LjUwNiAwIDAgMSAuMTcxLjMyNWMuMDE2LjA5My4wMzYuMzA2LjAyLjQ3Mi0uMTggMS44OTgtLjk2MiA2LjUwMi0xLjM2IDguNjI3LS4xNjguOS0uNDk5IDEuMjAxLS44MiAxLjIzLS42OTYuMDY1LTEuMjI1LS40Ni0xLjktLjkwMi0xLjA1Ni0uNjkzLTEuNjUzLTEuMTI0LTIuNjc4LTEuOC0xLjE4NS0uNzgtLjQxNy0xLjIxLjI1OC0xLjkxLjE3Ny0uMTg0IDMuMjQ3LTIuOTc3IDMuMzA3LTMuMjMuMDA3LS4wMzIuMDE0LS4xNS0uMDU2LS4yMTJzLS4xNzQtLjA0MS0uMjQ5LS4wMjRjLS4xMDYuMDI0LTEuNzkzIDEuMTQtNS4wNjEgMy4zNDUtLjQ4LjMzLS45MTMuNDktMS4zMDIuNDgtLjQyOC0uMDA4LTEuMjUyLS4yNDEtMS44NjUtLjQ0LS43NTItLjI0NS0xLjM0OS0uMzc0LTEuMjk3LS43ODkuMDI3LS4yMTYuMzI1LS40MzcuODkzLS42NjMgMy40OTgtMS41MjQgNS44My0yLjUyOSA2Ljk5OC0zLjAxNCAzLjMzMi0xLjM4NiA0LjAyNS0xLjYyNyA0LjQ3Ni0xLjYzNXoiLz48L3N2Zz4K",
-      "version": "0.2.3",
+      "version": "0.3.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "telegram"
+      ],
+      "settings_fields": [
+        {
+          "key": "allowed_user_ids",
+          "type": "tags",
+          "label": "Allowed User IDs",
+          "description": "Whitelist of Telegram user IDs. Empty means allow all users.",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 4
+        },
+        {
+          "key": "bot_token",
+          "type": "secret",
+          "label": "Bot Token",
+          "description": "Telegram bot token from @BotFather.",
+          "required": true,
+          "section": "general",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "group_trigger_keyword",
+          "type": "input",
+          "label": "Group Trigger Keyword",
+          "description": "Keyword prefix that triggers the bot in group chats.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 5,
+          "placeholder": "magi"
+        },
+        {
+          "key": "magi_user_id",
+          "type": "input",
+          "label": "Magi User ID",
+          "description": "Magi user identity to associate with this channel.",
+          "default": "default",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 6
+        },
+        {
+          "key": "max_message_length",
+          "type": "number",
+          "label": "Max Message Length",
+          "description": "Maximum characters per Telegram message (1–4096).",
+          "default": 4096,
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 7
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "label": "Connection Mode",
+          "description": "Polling checks for updates periodically; Webhook requires a public HTTPS URL.",
+          "default": "polling",
+          "required": false,
+          "options": [
+            {
+              "label": "Polling",
+              "value": "polling"
+            },
+            {
+              "label": "Webhook",
+              "value": "webhook"
+            }
+          ],
+          "section": "general",
+          "surface": "extensions",
+          "order": 1
+        },
+        {
+          "key": "proxy",
+          "type": "input",
+          "label": "Proxy",
+          "description": "HTTP/SOCKS5 proxy URL. Leave empty to use the global network proxy.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 3,
+          "placeholder": "http://127.0.0.1:7890"
+        },
+        {
+          "key": "webhook_secret",
+          "type": "secret",
+          "label": "Webhook Secret",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "webhook_url",
+          "type": "input",
+          "label": "Webhook URL",
+          "description": "Public HTTPS URL for webhook mode. Required when mode is 'webhook'.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 2,
+          "placeholder": "https://your-domain.com/webhook/telegram",
+          "depends_on_key": "mode",
+          "depends_on_values": [
+            "webhook"
+          ]
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "path": "plugins/telegram",
       "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
       "description_i18n": {
@@ -2101,7 +5911,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "df1b2f23e5daa4ad257be4daee053cca70bfe37e783590cd31c09c76f96b5724"
+      "package_sha256": "1546576f8b77842bf87819a3e55fa4b72e92da3669aec4235c3b3e935d51111c"
     },
     {
       "plugin_id": "terminal-history",
@@ -2110,7 +5920,211 @@
         "zh-CN": "终端历史"
       },
       "icon": "lucide:terminal",
-      "version": "0.1.1",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "terminal_history"
+      ],
+      "settings_fields": [
+        {
+          "key": "sensors.terminal_history.dedup_window_seconds",
+          "type": "number",
+          "label": "Dedup Window (seconds)",
+          "description": "Time window for session-based command deduplication.",
+          "default": 60,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 60,
+          "minimum": 0.0,
+          "maximum": 3600.0
+        },
+        {
+          "key": "sensors.terminal_history.default_retention_mode",
+          "type": "select",
+          "label": "Retention Mode",
+          "description": "How terminal history data should be retained.",
+          "default": "analyze_only",
+          "required": false,
+          "options": [
+            {
+              "label": "Analyze Only",
+              "value": "analyze_only"
+            },
+            {
+              "label": "Full Retention",
+              "value": "full"
+            }
+          ],
+          "section": "retention",
+          "surface": "timeline",
+          "order": 30
+        },
+        {
+          "key": "sensors.terminal_history.enabled",
+          "type": "switch",
+          "label": "Enabled",
+          "description": "Whether terminal history sync is active.",
+          "default": false,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.terminal_history.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial Sync Configured",
+          "description": "",
+          "default": false,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "sensors.terminal_history.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Recent Days",
+          "description": "Used when the first-sync scope is set to recent days.",
+          "default": 7,
+          "required": false,
+          "section": "activation",
+          "surface": "timeline",
+          "order": 20,
+          "depends_on_key": "sensors.terminal_history.initial_sync_policy",
+          "depends_on_values": [
+            "lookback_days"
+          ]
+        },
+        {
+          "key": "sensors.terminal_history.initial_sync_policy",
+          "type": "select",
+          "label": "First Sync Scope",
+          "description": "Decide how much command history should be imported.",
+          "default": "lookback_days",
+          "required": false,
+          "options": [
+            {
+              "label": "Sync full history",
+              "value": "full"
+            },
+            {
+              "label": "Sync recent days",
+              "value": "lookback_days"
+            },
+            {
+              "label": "Only new commands from now",
+              "value": "from_now"
+            }
+          ],
+          "section": "activation",
+          "surface": "timeline",
+          "order": 10
+        },
+        {
+          "key": "sensors.terminal_history.sensitive_keywords",
+          "type": "tags",
+          "label": "Additional Sensitive Keywords",
+          "description": "Extra keywords to detect sensitive commands (built-in: password, token, api_key, etc.)",
+          "required": false,
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 50
+        },
+        {
+          "key": "sensors.terminal_history.sensitive_mode",
+          "type": "select",
+          "label": "Sensitive Command Mode",
+          "description": "How to handle commands containing sensitive information.",
+          "default": "redact",
+          "required": false,
+          "options": [
+            {
+              "label": "Redact sensitive parts",
+              "value": "redact"
+            },
+            {
+              "label": "Block entire command",
+              "value": "block"
+            }
+          ],
+          "section": "privacy",
+          "surface": "timeline",
+          "order": 40
+        },
+        {
+          "key": "sensors.terminal_history.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync Interval (minutes)",
+          "description": "How often to check for new terminal commands.",
+          "default": 15,
+          "required": false,
+          "section": "general",
+          "surface": "timeline",
+          "order": 20,
+          "minimum": 1.0,
+          "maximum": 1440.0
+        }
+      ],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Enable Terminal History",
+        "description": "Terminal history contains commands you've executed. Choose how much history should be imported when this source is enabled for the first time.",
+        "confirm_label": "Enable source",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sensors.terminal_history.enabled",
+        "configured_key": "sensors.terminal_history.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sensors.terminal_history.initial_sync_policy",
+            "type": "select",
+            "label": "First Sync Scope",
+            "description": "Decide how much command history should be imported.",
+            "default": "lookback_days",
+            "required": false,
+            "options": [
+              {
+                "label": "Sync full history",
+                "value": "full"
+              },
+              {
+                "label": "Sync recent days",
+                "value": "lookback_days"
+              },
+              {
+                "label": "Only new commands from now",
+                "value": "from_now"
+              }
+            ],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 10,
+            "depends_on_values": []
+          },
+          {
+            "key": "sensors.terminal_history.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Recent Days",
+            "description": "Used when the first-sync scope is set to recent days.",
+            "default": 7,
+            "required": false,
+            "options": [],
+            "section": "activation",
+            "surface": "timeline",
+            "order": 20,
+            "depends_on_key": "sensors.terminal_history.initial_sync_policy",
+            "depends_on_values": [
+              "lookback_days"
+            ]
+          }
+        ]
+      },
       "path": "plugins/terminal_history",
       "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
       "description_i18n": {
@@ -2179,7 +6193,7 @@
           }
         ]
       },
-      "package_sha256": "891ce3aa4fac9f305c1adfad16d0d2dbd292856f2d2d886520b37b7e96da8885"
+      "package_sha256": "c1a7783d6a5ca16695289b6aed8c7876811c9ddedd69bd0e709635a901416bfb"
     },
     {
       "plugin_id": "weixin",
@@ -2189,7 +6203,261 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPldlQ2hhdDwvdGl0bGU+PHBhdGggZmlsbD0iIzA3QzE2MCIgZD0iTTguNjkxIDIuMTg4QzMuODkxIDIuMTg4IDAgNS40NzYgMCA5LjUzYzAgMi4yMTIgMS4xNyA0LjIwMyAzLjAwMiA1LjU1YS41OS41OSAwIDAgMSAuMjEzLjY2NWwtLjM5IDEuNDhjLS4wMTkuMDctLjA0OC4xNDEtLjA0OC4yMTMgMCAuMTYzLjEzLjI5NS4yOS4yOTVhLjMyNi4zMjYgMCAwIDAgLjE2Ny0uMDU0bDEuOTAzLTEuMTE0YS44NjQuODY0IDAgMCAxIC43MTctLjA5OCAxMC4xNiAxMC4xNiAwIDAgMCAyLjgzNy40MDNjLjI3NiAwIC41NDMtLjAyNy44MTEtLjA1LS44NTctMi41NzguMTU3LTQuOTcyIDEuOTMyLTYuNDQ2IDEuNzAzLTEuNDE1IDMuODgyLTEuOTggNS44NTMtMS44MzgtLjU3Ni0zLjU4My00LjE5Ni02LjM0OC04LjU5Ni02LjM0OHpNNS43ODUgNS45OTFjLjY0MiAwIDEuMTYyLjUyOSAxLjE2MiAxLjE4YTEuMTcgMS4xNyAwIDAgMS0xLjE2MiAxLjE3OEExLjE3IDEuMTcgMCAwIDEgNC42MjMgNy4xN2MwLS42NTEuNTItMS4xOCAxLjE2Mi0xLjE4em01LjgxMyAwYy42NDIgMCAxLjE2Mi41MjkgMS4xNjIgMS4xOGExLjE3IDEuMTcgMCAwIDEtMS4xNjIgMS4xNzggMS4xNyAxLjE3IDAgMCAxLTEuMTYyLTEuMTc4YzAtLjY1MS41Mi0xLjE4IDEuMTYyLTEuMTh6bTUuMzQgMi44NjdjLTEuNzk3LS4wNTItMy43NDYuNTEyLTUuMjggMS43ODYtMS43MiAxLjQyOC0yLjY4NyAzLjcyLTEuNzggNi4yMi45NDIgMi40NTMgMy42NjYgNC4yMjkgNi44ODQgNC4yMjkuODI2IDAgMS42MjItLjEyIDIuMzYxLS4zMzZhLjcyMi43MjIgMCAwIDEgLjU5OC4wODJsMS41ODQuOTI2YS4yNzIuMjcyIDAgMCAwIC4xNC4wNDdjLjEzNCAwIC4yNC0uMTExLjI0LS4yNDcgMC0uMDYtLjAyMy0uMTItLjAzOC0uMTc3bC0uMzI3LTEuMjMzYS41ODIuNTgyIDAgMCAxLS4wMjMtLjE1Ni40OS40OSAwIDAgMSAuMjAxLS4zOThDMjMuMDI0IDE4LjQ4IDI0IDE2LjgyIDI0IDE0Ljk4YzAtMy4yMS0yLjkzMS01LjgzNy02LjY1Ni02LjA4OFY4Ljg5Yy0uMTM1LS4wMS0uMjctLjAyNy0uNDA3LS4wM3ptLTIuNTMgMy4yNzRjLjUzNSAwIC45NjkuNDQuOTY5Ljk4MmEuOTc2Ljk3NiAwIDAgMS0uOTY5Ljk4My45NzYuOTc2IDAgMCAxLS45NjktLjk4M2MwLS41NDIuNDM0LS45ODIuOTctLjk4MnptNC44NDQgMGMuNTM1IDAgLjk2OS40NC45NjkuOTgyYS45NzYuOTc2IDAgMCAxLS45NjkuOTgzLjk3Ni45NzYgMCAwIDEtLjk2OS0uOTgzYzAtLjU0Mi40MzQtLjk4Mi45NjktLjk4MnoiLz48L3N2Zz4K",
-      "version": "0.2.8",
+      "version": "0.3.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "weixin"
+      ],
+      "settings_fields": [
+        {
+          "key": "account",
+          "type": "secret",
+          "label": "Account",
+          "description": "",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "account_id",
+          "type": "input",
+          "label": "Account ID",
+          "description": "iLink bot account ID. Leave empty only when the state directory contains exactly one logged-in account.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 1,
+          "placeholder": "example@im.bot"
+        },
+        {
+          "key": "allowed_user_ids",
+          "type": "tags",
+          "label": "Allowed Weixin User IDs",
+          "description": "Whitelist of Weixin user IDs. Empty means allow all users who can message this bot.",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 4
+        },
+        {
+          "key": "base_url",
+          "type": "input",
+          "label": "API Base URL",
+          "description": "Weixin iLink API base URL.",
+          "default": "https://ilinkai.weixin.qq.com",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 6
+        },
+        {
+          "key": "bot_token",
+          "type": "secret",
+          "label": "Bot Token",
+          "description": "iLink bot token returned by the Weixin QR login flow. Leave empty when using QR login.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "bot_type",
+          "type": "input",
+          "label": "Bot Type",
+          "description": "iLink bot_type used by the QR login helper.",
+          "default": "3",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 7
+        },
+        {
+          "key": "cdn_base_url",
+          "type": "input",
+          "label": "Cdn Base Url",
+          "description": "",
+          "default": "https://novac2c.cdn.weixin.qq.com/c2c",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "enable_typing_indicator",
+          "type": "switch",
+          "label": "Typing Indicator",
+          "description": "Send Weixin typing status while Magi is processing a message.",
+          "default": true,
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 5
+        },
+        {
+          "key": "ilink_app_id",
+          "type": "input",
+          "label": "Ilink App Id",
+          "description": "",
+          "default": "bot",
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "max_message_length",
+          "type": "number",
+          "label": "Max Message Length",
+          "description": "Maximum characters per Weixin outbound text message.",
+          "default": 4000,
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 9
+        },
+        {
+          "key": "poll_timeout_ms",
+          "type": "number",
+          "label": "Poll Timeout",
+          "description": "Long-poll timeout in milliseconds for getUpdates.",
+          "default": 35000,
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 10
+        },
+        {
+          "key": "request_timeout_ms",
+          "type": "number",
+          "label": "Request Timeout Ms",
+          "description": "",
+          "default": 15000,
+          "required": false,
+          "section": "advanced",
+          "surface": "extensions",
+          "order": 0
+        },
+        {
+          "key": "route_tag",
+          "type": "input",
+          "label": "Route Tag",
+          "description": "Optional SKRouteTag header for internal routing.",
+          "default": "",
+          "required": false,
+          "section": "general",
+          "surface": "extensions",
+          "order": 8
+        }
+      ],
+      "settings_actions": [
+        {
+          "action_id": "qr_login",
+          "label": "Weixin QR Login",
+          "description": "Scan with Weixin to authorize this channel without pasting a bot token manually.",
+          "button_label": "Start QR Login",
+          "presentation": "qr_code",
+          "surface": "extensions",
+          "contribution_id": "",
+          "contribution_type": "channel",
+          "order": 0,
+          "destructive": false,
+          "requires_enabled": false,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 480000,
+          "persist_settings_on_success": true,
+          "depends_on_values": []
+        },
+        {
+          "action_id": "validate_credentials",
+          "label": "Validate Credentials",
+          "description": "Check the saved Weixin credentials and gateway connection.",
+          "button_label": "Test Connection",
+          "presentation": "inline",
+          "surface": "extensions",
+          "contribution_id": "",
+          "contribution_type": "channel",
+          "order": 1,
+          "destructive": false,
+          "requires_enabled": false,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 30000,
+          "persist_settings_on_success": false,
+          "depends_on_values": []
+        },
+        {
+          "action_id": "reset_cursor",
+          "label": "Reset Cursor",
+          "description": "Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
+          "button_label": "Reset Cursor",
+          "presentation": "inline",
+          "surface": "extensions",
+          "contribution_id": "",
+          "contribution_type": "channel",
+          "order": 2,
+          "destructive": false,
+          "requires_enabled": true,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 30000,
+          "persist_settings_on_success": false,
+          "depends_on_values": []
+        },
+        {
+          "action_id": "clear_processed_messages",
+          "label": "Clear Message Dedupe",
+          "description": "Clear the local processed-message cache used for Weixin retry safety.",
+          "button_label": "Clear Dedupe",
+          "presentation": "inline",
+          "surface": "extensions",
+          "contribution_id": "",
+          "contribution_type": "channel",
+          "order": 3,
+          "destructive": false,
+          "requires_enabled": true,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 30000,
+          "persist_settings_on_success": false,
+          "depends_on_values": []
+        },
+        {
+          "action_id": "logout",
+          "label": "Logout Weixin",
+          "description": "Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
+          "button_label": "Logout",
+          "presentation": "inline",
+          "surface": "extensions",
+          "contribution_id": "",
+          "contribution_type": "channel",
+          "order": 4,
+          "destructive": true,
+          "requires_enabled": true,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 30000,
+          "persist_settings_on_success": true,
+          "depends_on_values": []
+        }
+      ],
+      "settings_resources": [
+        {
+          "resource_name": "channel_status",
+          "resource_type": "channel_status",
+          "requires_enabled": false,
+          "description": "Latest Weixin channel runtime status.",
+          "metadata": {}
+        },
+        {
+          "resource_name": "accounts",
+          "resource_type": "collection",
+          "requires_enabled": false,
+          "description": "The account bound to this connection.",
+          "metadata": {}
+        }
+      ],
+      "settings_ui_blocks": [],
       "path": "plugins/weixin",
       "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
       "description_i18n": {
@@ -2213,7 +6481,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "45f36de4b73b89671d64ae06f4115117d66058af2fe0bfe7bb0e8859e92a8928"
+      "package_sha256": "ef2c82894eb451ecc7deba94f7c55f86b559a1b998879e37caca529d45db20ca"
     }
   ]
 }

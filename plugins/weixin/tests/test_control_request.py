@@ -15,6 +15,9 @@ Pins:
 """
 from __future__ import annotations
 
+from sdk_test_support import credentials_for_path
+from weixin.state import WeixinStateStore
+
 from pathlib import Path
 from unittest.mock import AsyncMock
 
@@ -45,11 +48,10 @@ class _FakeApi:
 
 def _make_channel(tmp_path: Path) -> WeixinChannel:
     config = WeixinChannelConfig(
-        state_dir=str(tmp_path),
         account_id="bot@im.bot",
         max_message_length=2000,
     )
-    channel = WeixinChannel(config=config)
+    channel = WeixinChannel(config=config, state_store=WeixinStateStore(tmp_path, credentials=credentials_for_path(tmp_path)))
     channel._api = _FakeApi()  # type: ignore[assignment]
     channel._credentials = WeixinCredentials(
         account_id="bot@im.bot", token="token",

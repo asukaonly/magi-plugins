@@ -40,7 +40,7 @@ def test_git_activity_profile_derives_recurring_projects() -> None:
     assert profile.source_types == ["git_activity"]
     assert profile.allow_graph is True
     assert profile.allow_assertion is True
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["project_profile"]
     assert profile.allowed_assertion_traits == ["project.*"]
     rule = profile.derived_assertion_specs[0]

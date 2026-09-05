@@ -135,6 +135,7 @@ def test_apple_photos_mode_does_not_require_source_paths() -> None:
     result = asyncio.run(
         sensor.collect_items(
             mod.SensorSyncContext(
+        connection_id="test-connection",
                 source_type="photo_library_apple_photos",
                 manual=True,
                 last_cursor=None,
@@ -178,6 +179,7 @@ def test_apple_photos_place_name_wins_over_geocode(monkeypatch) -> None:
     result = asyncio.run(
         sensor.collect_items(
             mod.SensorSyncContext(
+        connection_id="test-connection",
                 source_type="photo_library_apple_photos",
                 manual=True,
                 last_cursor=None,
@@ -197,12 +199,12 @@ def test_apple_photos_place_name_wins_over_geocode(monkeypatch) -> None:
         )
     )
 
-    item = result.items[0]
+    item = [change.payload for change in result.changes][0]
     assert item["location_name"] == "Shanghai Disneyland"
     assert item["location_source"] == "apple_photos"
     assert item["apple_photos_place_name"] == "Shanghai Disneyland"
-    assert len(result.items) == 1
-    assert result.items[0]["representative_photos"][0]["asset_local_id"] == "apple-photos:UUID-1"
+    assert len([change.payload for change in result.changes]) == 1
+    assert [change.payload for change in result.changes][0]["representative_photos"][0]["asset_local_id"] == "apple-photos:UUID-1"
 
 
 def test_apple_photos_mode_auto_locates_library_when_path_is_unset() -> None:
@@ -219,6 +221,7 @@ def test_apple_photos_mode_auto_locates_library_when_path_is_unset() -> None:
     result = asyncio.run(
         sensor.collect_items(
             mod.SensorSyncContext(
+        connection_id="test-connection",
                 source_type="photo_library_apple_photos",
                 manual=True,
                 last_cursor=None,
@@ -256,6 +259,7 @@ def test_apple_photos_initial_backfill_pages_by_capture_time() -> None:
     result = asyncio.run(
         sensor.collect_items(
             mod.SensorSyncContext(
+        connection_id="test-connection",
                 source_type="photo_library_apple_photos",
                 manual=True,
                 last_cursor=None,
@@ -298,6 +302,7 @@ def test_apple_photos_custom_range_backfill_uses_capture_bounds() -> None:
     result = asyncio.run(
         sensor.collect_items(
             mod.SensorSyncContext(
+        connection_id="test-connection",
                 source_type="photo_library_apple_photos",
                 manual=True,
                 last_cursor=None,
@@ -326,3 +331,10 @@ def test_apple_photos_custom_range_backfill_uses_capture_bounds() -> None:
         float(apple_reader.calls[0]["capture_before"])
         - float(apple_reader.calls[0]["capture_after"])
     ) == 86400.0
+
+
+def test_apple_photos_rejects_old_timestamp_cursor() -> None:
+    import pytest
+    from photo_library_core.sensor import _decode_apple_photos_cursor
+    with pytest.raises(ValueError, match="Unsupported Apple Photos"):
+        _decode_apple_photos_cursor("1710000000")

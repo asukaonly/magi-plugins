@@ -9,6 +9,7 @@ from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionF
 
 from .sensor import SteamPlayHistoryTimelineSensor
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
+from .reader import detect_steam_root
 
 STEAM_L2_DERIVED_RULE = {
     "rule_id": "steam_play_history.viewed_interest",
@@ -52,31 +53,6 @@ GAME_RECORDS_CAPABILITY_METADATA = {
     "entry_description": "Local Steam game activity and play sessions.",
     "entry_order": 10,
 }
-
-
-def _detect_steam_root_compat(steam_path: str) -> str:
-    """Resolve the default Steam path without breaking updates from older plugin versions."""
-
-    try:
-        from . import reader as reader_module
-    except Exception:
-        return steam_path
-
-    detect = getattr(reader_module, "detect_steam_root", None)
-    if callable(detect):
-        try:
-            return str(detect(steam_path) or steam_path or "")
-        except Exception:
-            return steam_path
-
-    legacy_resolve = getattr(reader_module, "_resolve_steam_root", None)
-    if callable(legacy_resolve):
-        try:
-            return str(legacy_resolve(steam_path) or steam_path or "")
-        except Exception:
-            return steam_path
-
-    return steam_path
 
 
 def _budget_int(budget: object | None, key: str, default: int) -> int:
@@ -173,7 +149,7 @@ def _activation_flow(prefix: str, t: Any) -> ActivationFlowSpec:
                     fallback="Used when the first-sync scope is set to recent summaries.",
                 ),
                 default=14,
-                min=1,
+                minimum=1,
                 section="activation",
                 surface="timeline",
                 order=20,
@@ -229,7 +205,7 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
             label=t("settings.sync_interval_minutes.label", fallback="Sync Interval (minutes)"),
             description=t("settings.sync_interval_minutes.description", fallback="How often to poll Steam playtime changes."),
             default=10,
-            min=1,
+            minimum=1,
             section="sync",
             surface="timeline",
             order=40,
@@ -242,7 +218,7 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
             label=t("settings.min_session_seconds.label", fallback="Minimum Session Duration (seconds)"),
             description=t("settings.min_session_seconds.description", fallback="Inferred play sessions shorter than this are ignored."),
             default=DEFAULT_MIN_SESSION_S,
-            min=60,
+            minimum=60,
             section="sync",
             surface="timeline",
             order=50,
@@ -256,7 +232,7 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
                 fallback="A session is closed after this many minutes without additional Steam playtime.",
             ),
             default=15,
-            min=2,
+            minimum=2,
             section="sync",
             surface="timeline",
             order=60,
@@ -267,7 +243,7 @@ def _fields(prefix: str, t: Any, *, detected_steam_path: str) -> list[ExtensionF
             label=t("settings.max_items_per_sync.label", fallback="Max Items Per Sync"),
             description=t("settings.max_items_per_sync.description", fallback="Maximum number of Steam records to emit per sync."),
             default=500,
-            min=1,
+            minimum=1,
             section="sync",
             surface="timeline",
             order=70,
@@ -304,7 +280,6 @@ class SteamPlayHistoryPlugin(Plugin):
                 allowed_assertion_families=["interest_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["interest.*"],
                 derived_assertion_specs=[dict(STEAM_L2_DERIVED_RULE)],
                 extraction_instructions=(
@@ -412,7 +387,7 @@ class SteamPlayHistoryPlugin(Plugin):
         idle_timeout_minutes = int(settings.get("idle_timeout_minutes", DEFAULT_SETTINGS["idle_timeout_minutes"]))
         sync_interval = int(settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
         configured_steam_path = str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"])
-        detected_steam_path = _detect_steam_root_compat(configured_steam_path)
+        detected_steam_path = str(detect_steam_root(configured_steam_path) or "")
 
         sensor = SteamPlayHistoryTimelineSensor(
             state_store=SteamPlayStateStore(

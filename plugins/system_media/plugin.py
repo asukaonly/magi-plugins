@@ -108,7 +108,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Minimum Play Duration (seconds)",
             description="Tracks played shorter than this are ignored (skipped songs won't be recorded).",
             default=30,
-            min=5,
+            minimum=5,
             section="sync",
             surface="timeline",
             order=30,
@@ -119,7 +119,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Pause Before Ending Record (seconds)",
             description="When paused for longer than this, the current record is saved. 300 = 5 minutes.",
             default=300,
-            min=30,
+            minimum=30,
             section="sync",
             surface="timeline",
             order=40,
@@ -142,7 +142,6 @@ class SystemMediaPlugin(Plugin):
                 allowed_assertion_families=["interest_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["interest.*"],
                 derived_assertion_specs=[
                     {

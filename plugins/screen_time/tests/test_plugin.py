@@ -38,7 +38,7 @@ def test_screen_time_profile_derives_recurring_app_usage() -> None:
     assert profile.source_types == ["screen_time"]
     assert profile.allow_graph is True
     assert profile.allow_assertion is True
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["routine_profile"]
     assert profile.allowed_assertion_traits == ["routine.app.*"]
     rule = profile.derived_assertion_specs[0]

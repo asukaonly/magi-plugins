@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import logging
 from pathlib import Path
 import re
@@ -17,7 +19,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .normalizers import (
@@ -95,14 +96,6 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
     def source_item_identity(self, item: dict[str, Any]) -> str:
         return str(item.get("source_item_id") or item.get("visit_id") or "")
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        return "|".join(
-            [
-                str(item.get("visit_id") or ""),
-                str(item.get("title") or ""),
-                str(item.get("visit_count") or 0),
-            ]
-        )
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
         profile = str(output.provenance.get("profile") or self.profile or "").strip()
@@ -120,7 +113,7 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
             max_wait_seconds=300,
         )
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         prepare_temp_storage = getattr(self._reader, "prepare_temp_storage", None)
         if callable(prepare_temp_storage):
             temp_root = (
@@ -152,8 +145,8 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                 latest_visit_id = self._reader.get_latest_visit_id(
                     source_path=source_path, profile=profile
                 )
-                return SensorSyncResult(
-                    items=[],
+                return SourceChangeBatch(
+                    changes=[],
                     next_cursor=str(latest_visit_id) if latest_visit_id > 0 else None,
                     watermark_ts=context.last_success_at or time.time(),
                     stats={
@@ -195,10 +188,16 @@ class BaseBrowserHistoryTimelineSensor(SensorBase):
                     continue
                 kept.append(item)
             items = kept
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=str(next_cursor) if next_cursor else None,
             watermark_ts=watermark_ts,
+            complete=not (sum(
+                    int(item.get("merged_visit_count") or 1)
+                    for item in raw_items
+                    if item.get("_has_new_visit", True)
+                )
+                >= pull_limit),
             stats={
                 "count": len(items),
                 "profile": profile,

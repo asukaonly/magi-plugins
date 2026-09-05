@@ -6,10 +6,10 @@ Text extraction is **accessibility-first**: the helper reads the focused window'
 
 ## What it does
 
-- Smart-triggered screenshots (active-window timer + window-switch + optional keyboard triggers)
+- Smart-triggered screenshots (active-window timer + window-switch)
 - AX-first content: exact text + semantic roles from the accessibility tree; auto-wakes Chromium/Electron apps (`AXManualAccessibility`) so VS Code / Chrome / Slack-style apps expose their content
 - Local OCR via `VNRecognizeTextRequest` as the fallback path — no network, no LLM calls
-- Burst aggregation: consecutive captures of the same window cluster into one L1 event
+- One source change per capture; local session records group related captures for navigation
 - Privacy guards: ships with a default blocklist for password managers and incognito windows; user-extendable
 - Storage: full-resolution originals retained for 30 days (configurable), thumbnails permanent
 
@@ -18,15 +18,15 @@ Text extraction is **accessibility-first**: the helper reads the focused window'
 | Permission | Required for | Prompted when |
 |---|---|---|
 | Screen Recording | All capture | First capture attempt |
-| Accessibility | Active-window title; **AX-tree content extraction**; keyboard triggers; panic hotkey | First probe / when user enables keyboard triggers |
+| Accessibility | Active-window title; **AX-tree content extraction** | First probe |
 
-If you only grant Screen Recording, capture works but window titles fall back to empty strings, AX-tree content extraction is unavailable (every frame uses OCR), and keyboard triggers are unavailable.
+If you only grant Screen Recording, capture works but window titles fall back to empty strings, AX-tree content extraction is unavailable (every frame uses OCR).
 
 ## Architecture (overview)
 
-Python sensor inside the plugin spawns a long-lived Swift child process (`bin/magi-vision-helper`) that owns ScreenCaptureKit and Vision Framework. The sensor handles triggers, burst aggregation, privacy guards, and emits standard `SensorOutput` payloads via the magi ingestion gateway.
+Python sensor inside the plugin spawns a long-lived Swift child process (`bin/magi-vision-helper`) that owns ScreenCaptureKit and Vision Framework. The sensor handles triggers, session grouping, privacy guards, and returns typed `SourceChangeBatch` records to the connection-bound host. Screenshots and session data live in `PluginContext.resources_dir`; the host imports thumbnails into its resource store.
 
-See `docs/superpowers/specs/2026-05-21-screenshot-timeline-design.md` in the main magi repo for the full design.
+See the plugin development guide in the main Magi repository for the public SDK contract.
 
 ## Settings
 
@@ -39,10 +39,8 @@ Open Settings → Extensions → Screenshot Timeline. Key fields:
 | Full-screen interval | Default 5min (used in hybrid/full_screen) |
 | OCR languages | BCP-47 tags. Default `en-US, zh-Hans` |
 | Original retention (days) | Default 30. Thumbnails are always permanent |
-| Keyboard triggers | Off by default. Requires Accessibility |
 | App blocklist | Bundle IDs (glob supported). Defaults include password managers + Keychain |
 | Window title blocklist | Substrings. Default empty |
-| Panic hotkey | Default `Option+Shift+P` |
 
 ## Manual E2E checklist
 
@@ -59,31 +57,29 @@ Use after a fresh install to verify end-to-end behavior:
 - [ ] In the Memory Workbench, filter by source = `screenshot_timeline`
 - [ ] Verify L1 events appear with sensible window titles and OCR text
 
-### 3. Burst behavior
-- [ ] Stay on one window for 5+ minutes — confirm a single burst with multiple captures
-- [ ] Switch to a different window — confirm the previous burst closed and a new one started
+### 3. Capture and session behavior
+- [ ] Stay on one window for several captures — confirm one memory event per capture
+- [ ] Switch to a different window — confirm the local session changes
 
 ### 4. Privacy
 - [ ] Open 1Password; verify no events are produced while it is frontmost
 - [ ] Open a Chrome incognito window; verify no events are produced while it is frontmost
-- [ ] Press the panic hotkey (default Option+Shift+P); verify no events for 60 seconds
 
 ### 5. Storage
-- [ ] Check `~/.magi/data/resources/screenshots/<today>/` — both `_orig.jpg` and `_thumb.jpg` files exist
+- [ ] Check the connection’s host-allocated `resources_dir/<today>/` — both `_orig.jpg` and `_thumb.jpg` files exist
 - [ ] Open Settings → Extensions → Screenshot Timeline → Storage; verify storage indicator shows non-zero usage
 
 ### 6. Retention (test by clock skew)
 - [ ] Reduce `original_retention_days` to 0 and trigger a maintenance run
-- [ ] Verify all `_orig.jpg` files in the date dir are deleted; thumbnails remain
+- [ ] Verify all JPEGs under `originals/` in the date dir are deleted; thumbnails remain
 
 ## Known limitations (v1)
 
 - macOS only (Windows version is a separate plugin, not in this release)
-- Browser URL extraction is intentionally conservative — only window titles
+- Browser URL extraction depends on the focused app exposing its address via accessibility
 - AX coverage varies by app: native + Chromium/Electron (once woken) are rich; custom-rendered apps (WeChat, QQ, many games) expose no content tree and always use OCR. The first frame after focusing a freshly-woken Electron app may still be hollow (tree building) and use OCR; the next frame gets AX. Each L1 row's `provenance.content_source` (`ax`/`ocr`) records which path produced it.
 - AX entity extraction (people/links from the structured `ax_blocks`) and Pass-2 vision-LLM enrichment are reserved but not yet exposed
 - Helper binary is committed unsigned in the dev tree; release builds will use a signed/notarized binary distributed via `magi-plugins` GitHub Releases (separate workflow)
-- Keyboard triggers UI is declared but the `CGEventTap` listener isn't wired yet — toggle is harmless but has no effect (follow-up work)
 - Retention deletes expired originals via filesystem-walk; L1 metadata still references the (now-missing) `original_path` and readers must handle gracefully. Proper L1 metadata patching needs an SDK hook that doesn't exist yet
 - Lockscreen pause uses `CGSessionCopyCurrentDictionary` inside the Swift helper; if the probe fails (no helper, timeout) the sensor degrades to "assume unlocked"
 

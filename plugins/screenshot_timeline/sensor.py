@@ -19,6 +19,8 @@ hash is within hamming distance 5 of the previous same-window capture.
 """
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
 import logging
 import time
@@ -34,7 +36,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
     TimelinePresentation,
 )
 
@@ -127,7 +128,7 @@ class ScreenshotSensor(SensorBase):
         self,
         *,
         helper_argv: list[str] | None = None,
-        resources_root: Path | None = None,
+        resources_root: Path,
         retention_days: int = 30,
         capture_scope: str = "hybrid",
         ocr_languages: tuple[str, ...] = ("en-US", "zh-Hans"),
@@ -145,15 +146,11 @@ class ScreenshotSensor(SensorBase):
         full_screen_interval_min: float = 5.0,
         phash_dedup_threshold: int = 5,
         session_idle_threshold_seconds: float | None = None,
-        session_db_path: Path | None = None,
+        session_db_path: Path,
     ) -> None:
         super().__init__()
         self.helper_argv = list(helper_argv or [])
-        self.resources_root = (
-            Path(resources_root)
-            if resources_root is not None
-            else Path.home() / ".magi" / "data" / "resources" / "screenshots"
-        )
+        self.resources_root = Path(resources_root)
         self.retention_days = retention_days
         self.capture_scope = capture_scope
         self.ocr_languages = tuple(ocr_languages)
@@ -188,15 +185,8 @@ class ScreenshotSensor(SensorBase):
         # Per-capture L1 items ready for the next collect_items() pull.
         self._pending_items: list[dict[str, Any]] = []
 
-        # Plugin-private session tracker. Stays in a SQLite db under
-        # ~/.magi/data/plugins/screenshot_timeline/ — NOT in host memory.
-        # We open it lazily in start() so tests can override the path
-        # via __init__ before any disk I/O happens.
-        self._session_db_path = (
-            Path(session_db_path)
-            if session_db_path is not None
-            else Path.home() / ".magi" / "data" / "plugins" / "screenshot_timeline" / "sessions.db"
-        )
+        # The host allocates this database under the connection state directory.
+        self._session_db_path = Path(session_db_path)
         self.session_idle_threshold_seconds = (
             float(session_idle_threshold_seconds)
             if session_idle_threshold_seconds is not None
@@ -548,8 +538,6 @@ class ScreenshotSensor(SensorBase):
     def source_item_identity(self, item: dict[str, Any]) -> str:
         return str(item.get("source_item_id") or "")
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        return str(item.get("source_item_id") or "")
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
         # None -> these captures are never staged for L2 cognition. See
@@ -557,7 +545,7 @@ class ScreenshotSensor(SensorBase):
         # attribution, and large OCR/AX dumps would balloon L2 prompt cost).
         return None
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         """Hand off all captures queued since the last poll.
 
         Also handles lazy start: SensorBase has no host-driven start hook,
@@ -573,7 +561,7 @@ class ScreenshotSensor(SensorBase):
         )
         collect_generation = self._capture_generation
         if self._clearing:
-            return SensorSyncResult(items=[])
+            return SourceChangeBatch(changes=[])
         if not self._started:
             try:
                 started = await self._start_if_current(
@@ -581,14 +569,14 @@ class ScreenshotSensor(SensorBase):
                 )
             except Exception as exc:  # noqa: BLE001
                 logger.exception("sensor.lazy_start_failed err=%r", exc)
-                return SensorSyncResult(items=[])
+                return SourceChangeBatch(changes=[])
             if not started:
-                return SensorSyncResult(items=[])
+                return SourceChangeBatch(changes=[])
         if self._clearing or collect_generation != self._capture_generation:
-            return SensorSyncResult(items=[])
+            return SourceChangeBatch(changes=[])
         items = list(self._pending_items)
         self._pending_items.clear()
-        return SensorSyncResult(items=items)
+        return SourceChangeBatch(changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items])
 
     async def build_output(self, item: dict[str, Any]) -> SensorOutput:
         """Render one captured screenshot into a SensorOutput.
@@ -680,6 +668,7 @@ class ScreenshotSensor(SensorBase):
             narration=narration,
             occurred_at=float(item.get("captured_at") or 0.0),
             content_blocks=content_blocks,
+            raw_payload_ref=str(item.get("thumbnail_path") or "") or None,
             tags=tags,
             provenance=provenance,
             domain_payload={

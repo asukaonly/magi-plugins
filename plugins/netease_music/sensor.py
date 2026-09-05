@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
-import hashlib
 import logging
 import time
 from typing import Any
@@ -16,7 +17,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 from .normalizers import build_music_source_facets, build_netease_url
 from .reader import DEFAULT_DB_PATH, NeteaseMusicReader
@@ -65,18 +65,8 @@ class NeteaseMusicTimelineSensor(SensorBase):
     def source_item_identity(self, item: dict) -> str:
         return f"netease_{item.get('track_id')}_{item.get('update_time')}"
 
-    def source_item_version_fingerprint(self, item: dict) -> str:
-        return hashlib.sha1(
-            "|".join(
-                [
-                    str(item.get("track_id", "")),
-                    str(item.get("update_time", "")),
-                    str(item.get("play_duration_sec", 0)),
-                ]
-            ).encode("utf-8")
-        ).hexdigest()
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         prepare_temp_storage = getattr(self._reader, "prepare_temp_storage", None)
         if callable(prepare_temp_storage):
             temp_root = (
@@ -92,7 +82,6 @@ class NeteaseMusicTimelineSensor(SensorBase):
         )
         source_path = str(
             sensor_settings.get("db_path")
-            or sensor_settings.get("source_path")
             or self.source_path
             or DEFAULT_DB_PATH
         )
@@ -106,8 +95,8 @@ class NeteaseMusicTimelineSensor(SensorBase):
         if context.last_cursor is None:
             if initial_sync_policy == "from_now":
                 latest_update_time = self._reader.get_latest_update_time(source_path=source_path)
-                return SensorSyncResult(
-                    items=[],
+                return SourceChangeBatch(
+                    changes=[],
                     next_cursor=str(latest_update_time) if latest_update_time > 0 else None,
                     watermark_ts=context.last_success_at or time.time(),
                     stats={
@@ -140,10 +129,11 @@ class NeteaseMusicTimelineSensor(SensorBase):
             next_cursor = str(max_update_time) if max_update_time > 0 else context.last_cursor
             watermark_ts = max(float(item.get("update_time", 0.0)) for item in items)
 
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=next_cursor if next_cursor != context.last_cursor else None,
             watermark_ts=watermark_ts,
+            complete=not (len(items) >= pull_limit),
             stats={
                 "count": len(items),
                 "source_path": source_path,

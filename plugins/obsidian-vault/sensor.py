@@ -2,6 +2,10 @@
 """Obsidian vault timeline sensor."""
 from __future__ import annotations
 
+import json
+
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -13,7 +17,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .reader import classify_folder, parse_note, walk_markdown
@@ -159,24 +162,23 @@ class ObsidianVaultSensor(SensorBase):
             ) or [],
         }
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         settings = self._resolve_settings(context)
         vault_path = str(settings["vault_path"]).strip()
         if not vault_path:
-            return SensorSyncResult(items=[], next_cursor=context.last_cursor,
+            return SourceChangeBatch(changes=[], next_cursor=context.last_cursor,
                                     watermark_ts=time.time(),
                                     stats={"count": 0, "error": "no vault_path"})
 
         vault_root = Path(vault_path).expanduser()
         if not vault_root.is_dir():
-            return SensorSyncResult(items=[], next_cursor=context.last_cursor,
+            return SourceChangeBatch(changes=[], next_cursor=context.last_cursor,
                                     watermark_ts=time.time(),
                                     stats={"count": 0, "error": "vault_path not a directory"})
 
-        try:
-            since = float(context.last_cursor) if context.last_cursor else 0.0
-        except (TypeError, ValueError):
-            since = 0.0
+        cursor = json.loads(context.last_cursor) if context.last_cursor else {"mtime": 0.0, "object_id": ""}
+        since = float(cursor["mtime"])
+        after = (since, str(cursor["object_id"]))
 
         exclude = list(settings["exclude_folders"])
         search_only = list(settings["cognition_exclude_folders"])
@@ -195,7 +197,7 @@ class ObsidianVaultSensor(SensorBase):
                 continue  # this instance only handles its own tier
             try:
                 mtime = path.stat().st_mtime
-                if mtime <= since:
+                if mtime < since:
                     continue
                 note = parse_note(path, vault_root)
             except Exception:
@@ -204,16 +206,16 @@ class ObsidianVaultSensor(SensorBase):
                 skipped_errors += 1
                 continue
             note["source_item_id"] = self.source_item_identity(note)
-            items.append(note)
-            if mtime > max_mtime:
-                max_mtime = mtime
-            if len(items) >= int(context.limit or 1000):
-                break
-
-        items.sort(key=lambda it: float(it.get("mtime") or 0.0), reverse=True)
-        return SensorSyncResult(
-            items=items,
-            next_cursor=str(max_mtime) if max_mtime > 0 else context.last_cursor,
+            if (mtime, self.source_item_identity(note)) > after:
+                items.append(note)
+        candidates = sorted(items, key=lambda item: (float(item["mtime"]), self.source_item_identity(item)))
+        limit = max(1, int(context.limit or 1000))
+        items = candidates[:limit]
+        max_mtime = float(items[-1]["mtime"]) if items else since
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
+            next_cursor=json.dumps({"mtime": max_mtime, "object_id": self.source_item_identity(items[-1])}) if items else context.last_cursor,
+            complete=len(candidates) <= limit,
             watermark_ts=max_mtime or time.time(),
             stats={
                 "count": len(items),

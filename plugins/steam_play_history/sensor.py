@@ -1,6 +1,8 @@
 """Timeline sensor for Steam play history."""
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
 from datetime import datetime, timedelta, timezone
 import time
@@ -15,7 +17,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .reader import SteamGameRecord, SteamReader
@@ -75,13 +76,6 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
         ended_ts = _timestamp_from_item(item, "ended_at")
         return f"steam:{account_hash}:{appid}:session:{int(started_ts)}-{int(ended_ts)}"
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        return "|".join([
-            str(item.get("event_kind") or ""),
-            str(item.get("appid") or ""),
-            str(item.get("duration_seconds") or 0),
-            str(item.get("playtime_forever_minutes_after") or item.get("playtime_forever_minutes") or 0),
-        ])
 
     def l2_batch_policy(self, output: SensorOutput) -> L2BatchPolicy | None:
         ts = output.occurred_at or output.captured_at or time.time()
@@ -98,11 +92,11 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
             max_wait_seconds=300,
         )
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         async with self._user_content_lock:
             return await self._collect_items(context)
 
-    async def _collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def _collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         settings = _sensor_settings(context.plugin_settings)
         now = datetime.now(timezone.utc)
         steam_path = str(settings.get("steam_path") or self.steam_path or "")
@@ -142,8 +136,8 @@ class SteamPlayHistoryTimelineSensor(SensorBase):
             excluded_keywords=settings.get("excluded_keywords"),
         )[:max_items]
 
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=str(now.timestamp()),
             watermark_ts=now.timestamp(),
             stats={

@@ -1,0 +1,254 @@
+"""Contract conformance using only public SDK classes and declared libraries."""
+from __future__ import annotations
+
+import ast
+import importlib.util
+import inspect
+import sys
+import tomllib
+from pathlib import Path
+
+import pytest
+from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest
+from sdk_test_support import bind_test_plugin, load_plugin
+
+ROOT = Path(__file__).resolve().parents[1]
+PACKAGES = sorted((ROOT / "plugins").glob("*/plugin.toml"))
+
+
+
+
+@pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
+def test_package_uses_explicit_protocol_and_public_sdk(path: Path) -> None:
+    meta = tomllib.loads(path.read_text())["plugin"]
+    assert meta["protocol_version"] == 2
+    assert meta["min_sdk_version"] == "0.2.0"
+    assert meta["execution_mode"] == "trusted_process"
+    assert isinstance(meta["projection_sources"], list)
+    assert isinstance(meta["settings_fields"], list)
+    keys = [field["key"] for field in meta["settings_fields"]]
+    assert len(keys) == len(set(keys)), "Settings keys must be unique"
+    PluginManifest.model_validate(meta)
+    for source in path.parent.rglob("*.py"):
+        tree = ast.parse(source.read_text(encoding="utf-8-sig"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                assert not (node.module or "").split(".")[0] == "magi", source
+            elif isinstance(node, ast.Import):
+                assert all(alias.name.split(".")[0] != "magi" for alias in node.names), source
+
+
+@pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
+def test_all_declarations_construct_without_backend(path: Path) -> None:
+    before = {name for name in sys.modules if name == "magi" or name.startswith("magi.")}
+    if tomllib.loads(path.read_text())["plugin"].get("kind") == "library":
+        for source in path.parent.glob("*.py"):
+            if source.name == "__init__.py":
+                continue
+            __import__(f"{path.parent.name}.{source.stem}")
+        return
+    plugin = bind_test_plugin(load_plugin(path))
+    for method_name in ("get_extraction_profiles", "get_summary_profiles", "get_settings_resources", "get_settings_actions", "get_channel_fields", "get_operations"):
+        method = getattr(plugin, method_name, None)
+        if method is not None:
+            method()
+    declared_fields = {field.key: field for field in plugin.manifest.settings_fields}
+    for field in plugin.get_channel_fields():
+        assert field.key in declared_fields
+        assert field.type == declared_fields[field.key].type
+    declarations = plugin.get_sensors()
+    for sensor_id, sensor, spec in declarations:
+        assert sensor_id == spec.sensor_id
+        assert sensor.source_type in plugin.manifest.projection_sources
+        for field in spec.fields:
+            assert isinstance(field, ExtensionFieldSpec)
+            assert field.key in declared_fields
+            assert field.type == declared_fields[field.key].type
+            assert field.minimum == declared_fields[field.key].minimum
+            assert field.maximum == declared_fields[field.key].maximum
+        original = {"source_item_id": "same-native-id", "body": "original"}
+        revised = {**original, "body": "edited", "description": "new metadata"}
+        assert sensor.source_item_version_fingerprint(original) != sensor.source_item_version_fingerprint(revised)
+        if sensor.supports_pull_sync:
+            assert inspect.signature(sensor.collect_items).return_annotation in {"SourceChangeBatch"}
+    for tool_class in plugin.get_tools():
+        assert tool_class().schema.name
+    for _, importer, _ in plugin.get_history_importers():
+        assert callable(importer.parse)
+    after = {name for name in sys.modules if name == "magi" or name.startswith("magi.")}
+    assert after == before
+
+
+def test_connections_isolate_channel_credentials_and_storage() -> None:
+    for package_name in ("telegram", "weixin"):
+        path = ROOT / "plugins" / package_name / "plugin.toml"
+        first = bind_test_plugin(load_plugin(path), connection_id="account-one", settings={"bot_token": "ignored-settings-token"})
+        second = bind_test_plugin(load_plugin(path), connection_id="account-two")
+        first.context.credentials.set("bot_token", "first-token")
+        second.context.credentials.set("bot_token", "second-token")
+        assert first.get_channel()._config.bot_token == "first-token"
+        assert second.get_channel()._config.bot_token == "second-token"
+        first.context.credentials.delete("bot_token")
+        assert second.context.credentials.get("bot_token") == "second-token"
+        assert first.context.state_dir != second.context.state_dir
+
+
+def test_weixin_content_clear_cannot_erase_other_account_or_credentials() -> None:
+    path = ROOT / "plugins" / "weixin" / "plugin.toml"
+    first = bind_test_plugin(load_plugin(path), connection_id="first")
+    second = bind_test_plugin(load_plugin(path), connection_id="second")
+    state_module = sys.modules[first.__class__.__module__.rsplit(".", 1)[0] + ".state"]
+    stores = [first._state_store(), second._state_store()]
+    for index, store in enumerate(stores):
+        store.save_credentials(state_module.WeixinCredentials(account_id="same-provider-id", token=f"private-token-{index}"))
+        store.save_context_tokens("same-provider-id", {"chat": "private conversation"})
+    stores[0].clear_inbound_content(clear_generation=1)
+    assert stores[0].load_credentials().token == "private-token-0"
+    assert stores[1].load_credentials().token == "private-token-1"
+    assert stores[1].load_context_tokens("same-provider-id") == {"chat": "private conversation"}
+    assert stores[0].load_context_tokens("same-provider-id") == {}
+    for store in stores:
+        assert all("private-token" not in file.read_text() for file in store.state_dir.rglob("*") if file.is_file())
+
+
+def test_screenshot_collector_and_resolver_use_connection_resources() -> None:
+    path = ROOT / "plugins" / "screenshot_timeline" / "plugin.toml"
+    first = bind_test_plugin(load_plugin(path), connection_id="first")
+    second = bind_test_plugin(load_plugin(path), connection_id="second")
+    first_sensor = first.get_sensors()[0][1]
+    second_sensor = second.get_sensors()[0][1]
+    assert first_sensor.resources_root == first.context.resources_dir
+    assert first_sensor._session_db_path.parent == first.context.resources_dir
+    assert first_sensor.resources_root != second_sensor.resources_root
+
+
+def test_local_documents_preserve_category_but_isolate_data_and_versions(tmp_path: Path) -> None:
+    import asyncio
+    from magi_plugin_sdk.runtime import SourceChangeBatch
+    from magi_plugin_sdk.sensors import SensorSyncContext
+
+    path = ROOT / "plugins" / "local-documents" / "plugin.toml"
+    results = []
+    sensors = []
+    for connection_id in ("first", "second"):
+        root = tmp_path / connection_id
+        root.mkdir()
+        (root / "notes.md").write_text(f"# {connection_id}\nPrivate notes")
+        plugin = bind_test_plugin(load_plugin(path), connection_id=connection_id, settings={
+            "sensors": {"local_documents": {"root_paths": [str(root)]}},
+        })
+        sensor = plugin.get_sensors()[0][1]
+        context = SensorSyncContext(
+            connection_id=plugin.connection.connection_id, source_type=sensor.source_type,
+            manual=True, last_cursor=None, last_success_at=None, limit=50,
+            runtime_paths=None, plugin_settings=plugin.settings,
+        )
+        batch = asyncio.run(sensor.collect_items(context))
+        batch = SourceChangeBatch.model_validate_json(batch.model_dump_json())
+        assert len(batch.changes) == 1
+        assert connection_id in batch.changes[0].payload["body"]
+        results.append(batch)
+        sensors.append(sensor)
+    assert sensors[0].source_type == sensors[1].source_type == "local_documents"
+    first = results[0].changes[0]
+    edited = {**first.payload, "body": "Edited notes"}
+    assert sensors[0].source_item_identity(edited) == first.object_id
+    assert sensors[0].source_item_version_fingerprint(edited) != first.version
+
+
+@pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
+def test_declared_schema_covers_defaults_and_credential_ports(path: Path) -> None:
+    meta = tomllib.loads(path.read_text())["plugin"]
+    fields = {field["key"]: field for field in meta["settings_fields"]}
+
+    def flatten(value, prefix=""):
+        for key, item in value.items():
+            name = f"{prefix}.{key}" if prefix else key
+            if isinstance(item, dict):
+                yield from flatten(item, name)
+            else:
+                yield name
+
+    assert set(flatten(meta.get("default_settings", {}))) <= fields.keys()
+    for source in path.parent.glob("*.py"):
+        for node in ast.walk(ast.parse(source.read_text(encoding="utf-8-sig"))):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            if node.func.attr not in {"get", "set", "delete"}:
+                continue
+            receiver = ast.unparse(node.func.value)
+            if not receiver.endswith(".credentials") or not node.args:
+                continue
+            key = node.args[0]
+            if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                assert fields[key.value]["type"] == "secret", (source, key.value)
+
+
+def test_declarative_activation_matches_primary_source() -> None:
+    for path in PACKAGES:
+        meta = tomllib.loads(path.read_text())["plugin"]
+        if meta.get("kind") == "library":
+            continue
+        plugin = bind_test_plugin(load_plugin(path))
+        flows = [spec.metadata["activation_flow"] for _, _, spec in plugin.get_sensors() if spec.metadata.get("activation_flow")]
+        if flows:
+            assert plugin.manifest.activation_flow.model_dump() == flows[0]
+        else:
+            assert plugin.manifest.activation_flow is None
+
+
+@pytest.mark.parametrize("package_name", ["local-documents", "obsidian-vault"])
+def test_bounded_document_batches_do_not_skip_equal_timestamps(package_name: str, tmp_path: Path) -> None:
+    import asyncio
+    import os
+    from magi_plugin_sdk.sensors import SensorSyncContext
+
+    for name in ("a.md", "b.md", "c.md"):
+        file = tmp_path / name
+        file.write_text(f"# {name}")
+        os.utime(file, (1700000000, 1700000000))
+    source = "local_documents" if package_name == "local-documents" else "obsidian_vault"
+    settings = {"root_paths": [str(tmp_path)]} if package_name == "local-documents" else {"vault_path": str(tmp_path)}
+    plugin = bind_test_plugin(load_plugin(ROOT / "plugins" / package_name / "plugin.toml"), settings={"sensors": {source: settings}})
+    sensor = plugin.get_sensors()[0][1]
+    context = SensorSyncContext(connection_id=plugin.connection.connection_id, source_type=source, manual=True, last_cursor=None, last_success_at=None, limit=1, runtime_paths=None, plugin_settings=plugin.settings)
+    seen = []
+    for _ in range(3):
+        result = asyncio.run(sensor.collect_items(context))
+        assert len(result.changes) == 1
+        seen.append(result.changes[0].object_id)
+        context.last_cursor = result.next_cursor
+    assert len(set(seen)) == 3
+    assert result.complete is True
+    assert asyncio.run(sensor.collect_items(context)).changes == []
+
+
+def test_declarative_setup_catalog_matches_public_schemas() -> None:
+    for path in PACKAGES:
+        meta = tomllib.loads(path.read_text())["plugin"]
+        for key in ("settings_actions", "settings_resources", "settings_ui_blocks"):
+            assert isinstance(meta[key], list)
+        if meta.get("kind") == "library":
+            continue
+        plugin = bind_test_plugin(load_plugin(path))
+        assert [entry.model_dump() for entry in plugin.manifest.settings_actions] == [entry.model_dump() for entry in plugin.get_settings_actions()]
+        assert [entry.model_dump() for entry in plugin.manifest.settings_resources] == [entry.model_dump() for entry in plugin.get_settings_resources()]
+        assert all(not resource.requires_enabled for resource in plugin.manifest.settings_resources)
+        blocks = {entry.block_id: entry.model_dump() for entry in plugin.manifest.settings_ui_blocks}
+        for _, _, spec in plugin.get_sensors():
+            for block in spec.metadata.get("settings_ui_blocks", []):
+                assert blocks[block["block_id"]] == block
+        if meta["id"] in {"weixin", "github-activity"}:
+            assert any(not action.requires_enabled for action in plugin.manifest.settings_actions)
+
+
+@pytest.mark.parametrize("directory,keys", [
+    ("github_activity", {"client_id", "access_token"}),
+    ("steam_play_history", {"account_id", "excluded_appids", "excluded_keywords"}),
+    ("git_activity", {"session_window_minutes", "max_messages_per_session"}),
+    ("terminal_history", {"dedup_window_seconds"}),
+])
+def test_internal_source_controls_are_declared(directory: str, keys: set[str]) -> None:
+    meta = tomllib.loads((ROOT / "plugins" / directory / "plugin.toml").read_text())["plugin"]
+    declared = {entry["key"] for entry in meta["settings_fields"]}
+    assert {f"sensors.{directory}.{key}" for key in keys} <= declared

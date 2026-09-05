@@ -1,4 +1,4 @@
-﻿"""Timeline sensor shared by local and Apple photo plugins.
+"""Timeline sensor shared by local and Apple photo plugins.
 
 Emits one L1 event per *photo session* 鈥?a coherent shooting activity
 defined by (local date, device, geo cell) with cross-midnight merging.
@@ -9,8 +9,9 @@ and that is the unit the memory layer should index.
 
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import asyncio
-import hashlib
 import json
 import time as _time
 from pathlib import Path
@@ -25,7 +26,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .geocoder import batch_lookup as _geo_batch_lookup, format_location
@@ -48,7 +48,7 @@ from .sessions import aggregate_sessions
 
 # Sessions with no new captures within this window are emitted to L1.
 # Younger sessions are deferred so each session is written exactly once
-# with its full content (L1 store is INSERT OR IGNORE on idempotency_key).
+# with its full content; the host owns versioned ingestion receipts.
 _DEFAULT_SETTLE_WINDOW_SECONDS = 4 * 3600
 _APPLE_PHOTOS_CURSOR_VERSION = 1
 
@@ -68,28 +68,12 @@ def _decode_apple_photos_cursor(raw_cursor: str | None) -> dict[str, Any]:
             "capture_before": None,
             "modified_since": 0.0,
         }
-    try:
-        data = json.loads(raw_cursor)
-    except (TypeError, ValueError, json.JSONDecodeError):
-        # Legacy Apple Photos cursors were modified_at timestamps. They could
-        # leave older capture-time history behind, so restart the backfill and
-        # rely on existing idempotency keys to avoid duplicate L1 events.
-        return {
-            "version": _APPLE_PHOTOS_CURSOR_VERSION,
-            "mode": "backfill",
-            "capture_before": None,
-            "modified_since": 0.0,
-        }
-    if not isinstance(data, dict):
-        return {
-            "version": _APPLE_PHOTOS_CURSOR_VERSION,
-            "mode": "backfill",
-            "capture_before": None,
-            "modified_since": 0.0,
-        }
-    mode = str(data.get("mode") or "backfill")
+    data = json.loads(raw_cursor)
+    if not isinstance(data, dict) or data.get("version") != _APPLE_PHOTOS_CURSOR_VERSION:
+        raise ValueError("Unsupported Apple Photos source cursor")
+    mode = data.get("mode")
     if mode not in {"backfill", "incremental"}:
-        mode = "backfill"
+        raise ValueError("Invalid Apple Photos source cursor mode")
     capture_before = data.get("capture_before")
     return {
         "version": _APPLE_PHOTOS_CURSOR_VERSION,
@@ -207,10 +191,6 @@ class PhotoLibraryTimelineSensor(SensorBase):
     def source_item_identity(self, item: dict[str, Any]) -> str:
         return str(item.get("session_key") or "session:unknown")
 
-    def source_item_version_fingerprint(self, item: dict[str, Any]) -> str:
-        # Sessions are emitted exactly once when settled, so the fingerprint
-        # only needs to capture identity (not content version).
-        return hashlib.sha1(self.source_item_identity(item).encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------------
     # L2 batching
@@ -236,11 +216,11 @@ class PhotoLibraryTimelineSensor(SensorBase):
     # Pull-sync
     # ------------------------------------------------------------------
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         async with self._operation_lock:
             return await self._collect_items(context)
 
-    async def _collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def _collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
             if isinstance(context.plugin_settings.get("sensors", {}), dict)
@@ -261,8 +241,8 @@ class PhotoLibraryTimelineSensor(SensorBase):
             source_paths = list(self.source_paths)
 
         if source_mode == "directory" and not source_paths:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 stats={"count": 0, "error": "source_paths not configured"},
             )
 
@@ -375,8 +355,8 @@ class PhotoLibraryTimelineSensor(SensorBase):
                         all_photos.append(item)
 
         if source_error:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 stats={
                     "count": 0,
                     "photos_seen": 0,
@@ -500,10 +480,11 @@ class PhotoLibraryTimelineSensor(SensorBase):
             stats["cursor_kind"] = "opaque"
             stats["sync_phase"] = "backfill" if apple_backfill else "incremental"
 
-        return SensorSyncResult(
-            items=sessions,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in sessions],
             next_cursor=next_cursor,
             watermark_ts=watermark_ts,
+            complete=not has_more,
             stats=stats,
         )
 

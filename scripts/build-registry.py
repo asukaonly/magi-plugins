@@ -251,6 +251,10 @@ def build_entry(
         if icon_data is not None:
             entry["icon_data"] = icon_data
     entry["version"] = version
+    for field in ("protocol_version", "min_sdk_version", "execution_mode", "projection_sources", "settings_fields", "settings_actions", "settings_resources", "settings_ui_blocks"):
+        entry[field] = meta.get(field, []) if field.startswith("settings_") else meta[field]
+    if meta.get("activation_flow") is not None:
+        entry["activation_flow"] = meta["activation_flow"]
     entry["path"] = f"plugins/{plugin_dir.name}"
     entry["description"] = meta.get("description", "")
     if "description_i18n" in meta:

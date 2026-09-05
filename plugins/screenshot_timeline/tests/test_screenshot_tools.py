@@ -46,7 +46,7 @@ def test_date_subpath_rejects_malformed_id() -> None:
 
 def _make_tool(tmp_path: Path):
     mod = _load("screenshot_tools")
-    classes = mod.build_screenshot_timeline_tool_classes(resources_root=tmp_path)
+    classes = mod.build_screenshot_timeline_tool_classes(resources_root=tmp_path, connection_id="screens")
     return classes[0]()
 
 
@@ -80,6 +80,7 @@ async def test_resolve_returns_file_paths_for_existing_capture(tmp_path: Path) -
     ref = data["asset_refs"][0]
     assert ref["asset_ref_id"] == "20260528T150647_328216_54AQ"
     assert ref["source_type"] == "screenshot_timeline"
+    assert ref["connection_id"] == "screens"
     assert ref["resolver_tool"] == "screenshot_timeline_resolve_capture_refs"
     assert ref["resolution_state"] == "resolved"
     assert "original_path" in ref
@@ -155,9 +156,12 @@ def test_recall_asset_refs_returns_resolver_pointer() -> None:
     event = {
         "event_id": "01HXYZ",
         "source": "screenshot_timeline",
-        "source_item_id": "20260528T150647_328216_54AQ",
+        "source_item_id": "source:host-namespaced-object",
         "timestamp": 1779944807.0,
         "metadata_json": {
+            "source_object_id": "20260528T150647_328216_54AQ",
+            "source_connection_id": "screens",
+            "source_resource_refs": [{"resource_id": "resource:thumbnail"}],
             "activity": {
                 "qualifiers": {
                     "app_name": "Claude",
@@ -172,8 +176,10 @@ def test_recall_asset_refs_returns_resolver_pointer() -> None:
     ref = refs[0]
     assert ref["asset_ref_id"] == "20260528T150647_328216_54AQ"
     assert ref["source_type"] == "screenshot_timeline"
+    assert ref["connection_id"] == "screens"
     assert ref["resolver_tool"] == "screenshot_timeline_resolve_capture_refs"
     # Display name should combine app + window so the LLM can disambiguate.
+    assert ref["resource_refs"] == [{"resource_id": "resource:thumbnail"}]
     assert "Claude" in ref["display_name"]
     assert "magi" in ref["display_name"]
 
@@ -192,3 +198,8 @@ def test_recall_asset_refs_skips_event_without_source_item_id() -> None:
     mod = _load("screenshot_tools")
     event = {"source": "screenshot_timeline", "source_item_id": ""}
     assert mod.build_recall_asset_refs(event) == []
+
+
+def test_capture_id_cannot_traverse_resource_directory() -> None:
+    mod = _load("screenshot_tools")
+    assert mod._date_subpath_from_capture_id("20260528/../../../../private") is None

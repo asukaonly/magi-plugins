@@ -25,26 +25,20 @@ class ManagedDatabaseCopyStore:
         ).strip("-")
         if not normalized:
             raise ValueError("Temporary database namespace must not be empty")
-        self._default_root = (
-            _absolute(temp_root)
-            if temp_root is not None
-            else _absolute(
-                Path(os.path.realpath(tempfile.gettempdir()))
-                / "magi-plugin-temp"
-                / "database-copies"
-                / normalized
-            )
-        )
+        self._default_root = _absolute(temp_root) if temp_root is not None else None
         self._prepared_root: Path | None = None
 
     @property
     def root(self) -> Path:
-        return self._prepared_root or self._default_root
+        root = self._prepared_root or self._default_root
+        if root is None:
+            raise ValueError("Temporary storage requires a host-bound connection directory")
+        return root
 
     def prepare(self, temp_root: Path | None = None) -> Path:
         """Sweep crash leftovers once, then create a trusted real directory."""
 
-        root = _absolute(temp_root) if temp_root is not None else self._default_root
+        root = _absolute(temp_root) if temp_root is not None else self.root
         if self._prepared_root != root:
             _clear_directory_contents_no_follow(root)
             _create_directory_without_symlinks(root)

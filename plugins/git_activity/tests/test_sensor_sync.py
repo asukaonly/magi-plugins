@@ -68,6 +68,7 @@ def test_git_activity_marks_has_more_when_repo_limit_is_full() -> None:
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="git_activity",
                 manual=True,
                 last_cursor=None,

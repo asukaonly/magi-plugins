@@ -81,7 +81,6 @@ class _QrLoginSession:
     base_url: str
     current_base_url: str
     bot_type: str
-    state_dir: str
     channel_version: str
     ilink_app_id: str
     route_tag: str
@@ -180,13 +179,14 @@ class WeixinPlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
+    def _state_store(self) -> WeixinStateStore:
+        return WeixinStateStore(self.context.state_dir, credentials=self.context.credentials)
+
     def get_channel(self) -> Channel:
         manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
         config = WeixinChannelConfig(
-            bot_token=self.settings.get("bot_token", ""),
+            bot_token=self.context.credentials.get("bot_token") or "",
             account_id=self.settings.get("account_id", ""),
-            credentials_path=self.settings.get("credentials_path", ""),
-            state_dir=self.settings.get("state_dir", "~/.magi/weixin"),
             base_url=self.settings.get("base_url", DEFAULT_BASE_URL),
             cdn_base_url=self.settings.get("cdn_base_url", DEFAULT_CDN_BASE_URL),
             bot_type=self.settings.get("bot_type", DEFAULT_BOT_TYPE),
@@ -199,12 +199,13 @@ class WeixinPlugin(Plugin):
             enable_typing_indicator=bool(self.settings.get("enable_typing_indicator", True)),
             channel_version=manifest_version,
         )
-        return WeixinChannel(config=config)
+        return WeixinChannel(config=config, state_store=self._state_store())
 
     def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
         return [
             PluginSettingsActionSpec(
                 action_id=QR_LOGIN_ACTION_ID,
+                requires_enabled=False,
                 label="Weixin QR Login",
                 description="Scan with Weixin to authorize this channel without pasting a bot token manually.",
                 button_label="Start QR Login",
@@ -218,6 +219,7 @@ class WeixinPlugin(Plugin):
             ),
             PluginSettingsActionSpec(
                 action_id=VALIDATE_CREDENTIALS_ACTION_ID,
+                requires_enabled=False,
                 label="Validate Credentials",
                 description="Check the saved Weixin credentials and gateway connection.",
                 button_label="Test Connection",
@@ -274,20 +276,21 @@ class WeixinPlugin(Plugin):
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name=CHANNEL_STATUS_RESOURCE_NAME,
                 resource_type="channel_status",
                 description="Latest Weixin channel runtime status.",
             ),
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name=ACCOUNTS_RESOURCE_NAME,
                 resource_type="collection",
-                description="Saved Weixin accounts in the configured state directory.",
+                description="The account bound to this connection.",
             )
         ]
 
     def read_settings_resource(self, resource_name: str) -> Any:
-        state_dir = str(self.settings.get("state_dir") or "~/.magi/weixin")
-        store = WeixinStateStore(state_dir)
+        store = self._state_store()
         if resource_name == ACCOUNTS_RESOURCE_NAME:
             return {
                 "groups": [
@@ -306,7 +309,7 @@ class WeixinPlugin(Plugin):
         status = store.load_channel_status()
         status.setdefault("state", "stopped")
         status.setdefault("running", False)
-        status.setdefault("configured", bool(self.settings.get("account_id") or self.settings.get("credentials_path")))
+        status.setdefault("configured", bool(self.settings.get("account_id")))
         return status
 
     async def start_settings_action(
@@ -385,7 +388,6 @@ class WeixinPlugin(Plugin):
         manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
         base_url = _settings_str(field_values, self.settings, "base_url", DEFAULT_BASE_URL)
         bot_type = _settings_str(field_values, self.settings, "bot_type", DEFAULT_BOT_TYPE)
-        state_dir = _settings_str(field_values, self.settings, "state_dir", "~/.magi/weixin")
         ilink_app_id = _settings_str(field_values, self.settings, "ilink_app_id", "bot")
         route_tag = _settings_str(field_values, self.settings, "route_tag", "")
         client = WeixinApiClient(
@@ -407,7 +409,6 @@ class WeixinPlugin(Plugin):
             base_url=base_url,
             current_base_url=base_url,
             bot_type=bot_type,
-            state_dir=state_dir,
             channel_version=manifest_version,
             ilink_app_id=ilink_app_id,
             route_tag=route_tag,
@@ -416,18 +417,16 @@ class WeixinPlugin(Plugin):
     async def _validate_credentials(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
         manifest_version = self.manifest.version if self.manifest is not None else "0.1.0"
         base_url = _settings_str(field_values, self.settings, "base_url", DEFAULT_BASE_URL)
-        state_dir = _settings_str(field_values, self.settings, "state_dir", "~/.magi/weixin")
         account_id = _settings_str(field_values, self.settings, "account_id", "")
-        bot_token = _settings_str(field_values, self.settings, "bot_token", "")
-        credentials_path = _settings_str(field_values, self.settings, "credentials_path", "")
+        bot_token = self.context.credentials.get("bot_token") or ""
         ilink_app_id = _settings_str(field_values, self.settings, "ilink_app_id", "bot")
         route_tag = _settings_str(field_values, self.settings, "route_tag", "")
-        store = WeixinStateStore(state_dir)
+        store = self._state_store()
 
         if bot_token.strip() and account_id.strip():
             credentials = WeixinCredentials(account_id=account_id.strip(), token=bot_token.strip(), base_url=base_url)
         else:
-            credentials = store.load_credentials(account_id=account_id, credentials_path=credentials_path)
+            credentials = store.load_credentials(account_id=account_id)
 
         if credentials is None:
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
@@ -468,15 +467,13 @@ class WeixinPlugin(Plugin):
     def _resolve_action_credentials(
         self,
         field_values: dict[str, Any] | None,
-    ) -> tuple[WeixinStateStore, WeixinCredentials | None, str]:
-        state_dir = _settings_str(field_values, self.settings, "state_dir", "~/.magi/weixin")
+    ) -> tuple[WeixinStateStore, WeixinCredentials | None]:
         account_id = _settings_str(field_values, self.settings, "account_id", "")
-        credentials_path = _settings_str(field_values, self.settings, "credentials_path", "")
-        store = WeixinStateStore(state_dir)
-        return store, store.load_credentials(account_id=account_id, credentials_path=credentials_path), credentials_path
+        store = self._state_store()
+        return store, store.load_credentials(account_id=account_id)
 
     def _reset_cursor(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
-        store, credentials, _ = self._resolve_action_credentials(field_values)
+        store, credentials = self._resolve_action_credentials(field_values)
         if credentials is None:
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
         store.clear_sync_buf(credentials.account_id)
@@ -487,7 +484,7 @@ class WeixinPlugin(Plugin):
         )
 
     def _clear_processed_messages(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
-        store, credentials, _ = self._resolve_action_credentials(field_values)
+        store, credentials = self._resolve_action_credentials(field_values)
         if credentials is None:
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
         store.clear_processed_message_ids(credentials.account_id)
@@ -498,16 +495,17 @@ class WeixinPlugin(Plugin):
         )
 
     def _logout(self, field_values: dict[str, Any] | None) -> PluginSettingsActionResult:
-        store, credentials, credentials_path = self._resolve_action_credentials(field_values)
+        store, credentials = self._resolve_action_credentials(field_values)
         if credentials is None:
             return PluginSettingsActionResult(status="failed", message=self.t("action_messages.validate_missing_credentials"))
-        store.delete_credentials(credentials.account_id, credentials_path=credentials_path)
+        store.delete_credentials(credentials.account_id)
+        self.context.credentials.delete("bot_token")
         store.update_channel_status(state="unconfigured", running=False, configured=False, account_id="", last_error="")
         return PluginSettingsActionResult(
             status="succeeded",
             message=self.t("action_messages.logout_succeeded"),
             data={"account_id": credentials.account_id, "refresh_channels": True},
-            settings_updates={"account_id": "", "credentials_path": "", "bot_token": ""},
+            settings_updates={"account_id": ""},
         )
 
     async def _refresh_qr_login_session(self, session: _QrLoginSession) -> PluginSettingsActionResult:
@@ -540,18 +538,15 @@ class WeixinPlugin(Plugin):
             base_url=str(status.get("baseurl") or session.current_base_url or DEFAULT_BASE_URL),
             user_id=str(status.get("ilink_user_id") or ""),
         )
-        saved_path = WeixinStateStore(session.state_dir).save_credentials(credentials)
+        self._state_store().save_credentials(credentials)
         self._qr_login_sessions.pop(session_id, None)
         return PluginSettingsActionResult(
             status="succeeded",
             message=self.t("action_messages.succeeded"),
-            data={"account_id": account_id, "credentials_path": str(saved_path)},
+            data={"account_id": account_id},
             settings_updates={
                 "account_id": account_id,
-                "credentials_path": str(saved_path),
-                "state_dir": session.state_dir,
                 "base_url": credentials.base_url,
-                "bot_token": "",
             },
         )
 
@@ -570,7 +565,7 @@ class WeixinPlugin(Plugin):
                 key="bot_token",
                 type="secret",
                 label="Bot Token",
-                description="iLink bot token returned by the Weixin QR login flow. Leave empty when using a credentials file.",
+                description="iLink bot token returned by the Weixin QR login flow. Leave empty when using QR login.",
                 default="",
                 surface="extensions",
                 order=0,
@@ -584,25 +579,6 @@ class WeixinPlugin(Plugin):
                 placeholder="example@im.bot",
                 surface="extensions",
                 order=1,
-            ),
-            ExtensionFieldSpec(
-                key="credentials_path",
-                type="path",
-                label="Credentials File",
-                description="Optional JSON credentials file with token, account_id, base_url, and user_id fields.",
-                default="",
-                placeholder="~/.magi/weixin/accounts/example@im.bot.json",
-                surface="extensions",
-                order=2,
-            ),
-            ExtensionFieldSpec(
-                key="state_dir",
-                type="path",
-                label="State Directory",
-                description="Directory used for QR-login credentials, getUpdates cursor, and context tokens.",
-                default="~/.magi/weixin",
-                surface="extensions",
-                order=3,
             ),
             ExtensionFieldSpec(
                 key="allowed_user_ids",

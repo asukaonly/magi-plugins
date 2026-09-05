@@ -25,6 +25,11 @@ PACKAGE_SHA256 = "a" * 64
 
 def _manifest(**overrides):
     manifest = {
+        "protocol_version": 2,
+        "min_sdk_version": "0.2.0",
+        "execution_mode": "trusted_process",
+        "projection_sources": [],
+        "settings_fields": [],
         "id": "example",
         "name": "Example",
         "version": "1.0.0",

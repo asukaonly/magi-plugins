@@ -40,7 +40,7 @@ def test_terminal_history_profile_derives_recurring_tools() -> None:
     assert profile.source_types == ["terminal_history"]
     assert profile.allow_graph is True
     assert profile.allow_assertion is True
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["routine_profile"]
     assert profile.allowed_assertion_traits == ["routine.tool.*"]
     rule = profile.derived_assertion_specs[0]

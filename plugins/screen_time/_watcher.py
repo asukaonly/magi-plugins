@@ -14,7 +14,7 @@ import sys
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Optional
 
-from .apps import PLATFORM_DARWIN, PLATFORM_WIN32, resolve_app, local_override_path
+from .apps import PLATFORM_DARWIN, PLATFORM_WIN32, AppResolver, local_override_path
 from .state import ScreenTimeStateStore
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ class ForegroundAppWatcher:
         sleep: Callable[[float], Awaitable[None]] | None = None,
     ) -> None:
         self._runtime_paths = runtime_paths
+        self._app_resolver = AppResolver(local_override_path(runtime_paths))
         self._state_store = state_store
         self._reader = reader if reader is not None else _default_reader_for_platform()
         self._poll_interval = max(0.05, float(poll_interval_seconds))
@@ -120,12 +121,10 @@ class ForegroundAppWatcher:
         if not raw_bundle_id:
             return False
 
-        override_path = local_override_path(self._runtime_paths)
-        resolved = resolve_app(
+        resolved = self._app_resolver.resolve(
             platform=self._platform,
             raw_bundle_id=raw_bundle_id,
             raw_app_name=raw_app_name,
-            override_path=override_path,
         )
         await self._state_store.apply_activation(
             runtime_paths=self._runtime_paths,

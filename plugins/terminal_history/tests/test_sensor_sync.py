@@ -65,6 +65,7 @@ def test_terminal_history_marks_has_more_when_limit_is_full() -> None:
     result = asyncio.run(
         sensor.collect_items(
             SensorSyncContext(
+        connection_id="test-connection",
                 source_type="terminal_history",
                 manual=True,
                 last_cursor="1710000000",
@@ -76,5 +77,5 @@ def test_terminal_history_marks_has_more_when_limit_is_full() -> None:
         )
     )
 
-    assert len(result.items) == 2
+    assert len([change.payload for change in result.changes]) == 2
     assert result.stats["has_more"] is True

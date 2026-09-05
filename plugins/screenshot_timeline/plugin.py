@@ -48,14 +48,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "ax_min_content_chars": 80,
     "ax_min_content_nodes": 5,
     "original_retention_days": 30,
-    "keyboard_triggers_enabled": False,
-    "keyboard_trigger_types": ["scroll", "arrow", "space", "delete"],
     "app_blocklist": list(DEFAULT_APP_BLOCKLIST),
     "window_title_blocklist": [],
-    "panic_hotkey": "Option+Shift+P",
-    "panic_pause_seconds": 60,
-    "gap_minutes": 5,
-    "max_minutes": 30,
     "thumbnail_max_width": 1024,
     "jpeg_quality_original": 80,
     "jpeg_quality_thumbnail": 70,
@@ -73,11 +67,9 @@ def _activation_flow(prefix: str) -> ActivationFlowSpec:
             "this Mac — they are not uploaded anywhere. Originals are deleted after 30 days "
             "by default; thumbnails are kept indefinitely.\n\n"
             "Password managers, Keychain, and incognito browser windows are skipped by default. "
-            "You can add more app or window-title rules in Settings after enabling, and the "
-            "panic hotkey (⌥⇧P) immediately pauses capture for 60 seconds.\n\n"
+            "You can add more app or window-title rules in Settings after enabling.\n\n"
             "macOS will ask for Screen Recording permission the first time captures start. "
-            "Accessibility permission is optional (only needed for keyboard triggers and the "
-            "panic hotkey)."
+            "Accessibility permission provides window titles and structured on-screen text."
         ),
         confirm_label="I understand — enable",
         cancel_label="Not now",
@@ -96,7 +88,7 @@ def _settings_ui_blocks(prefix: str) -> list[SettingsUIBlockSpec]:
             title="macOS Permissions",
             description=(
                 "Screen Recording is required for capture. Accessibility is optional, "
-                "needed only for keyboard triggers and the panic hotkey."
+                "and provides window titles and structured on-screen text."
             ),
             resource_name="permissions",
             value_key="_readonly",
@@ -278,28 +270,6 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=70,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.keyboard_triggers_enabled",
-            type="switch",
-            label="Enable keyboard triggers",
-            description="Capture on scroll, arrow keys, space, or delete. Requires Accessibility permission.",
-            default=False,
-            section="triggers",
-            surface="timeline",
-            order=80,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.keyboard_trigger_types",
-            type="tags",
-            label="Keyboard trigger keys",
-            description="Which keys trigger a capture. Has no effect unless keyboard triggers are enabled.",
-            default=["scroll", "arrow", "space", "delete"],
-            section="triggers",
-            surface="timeline",
-            order=90,
-            depends_on_key=f"{prefix}.keyboard_triggers_enabled",
-            depends_on_values=["true"],
-        ),
-        ExtensionFieldSpec(
             key=f"{prefix}.app_blocklist",
             type="tags",
             label="App blocklist (bundle IDs)",
@@ -320,31 +290,10 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             order=110,
         ),
         ExtensionFieldSpec(
-            key=f"{prefix}.panic_hotkey",
-            type="input",
-            label="Panic hotkey",
-            description="Press to immediately pause capture. Format: Modifier+Modifier+Key.",
-            default="Option+Shift+P",
-            placeholder="Option+Shift+P",
-            section="privacy",
-            surface="timeline",
-            order=120,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.panic_pause_seconds",
-            type="number",
-            label="Panic pause duration (sec)",
-            description="How long to pause capture after the panic hotkey is pressed.",
-            default=60,
-            section="privacy",
-            surface="timeline",
-            order=130,
-        ),
-        ExtensionFieldSpec(
             key=f"{prefix}.sync_mode",
             type="select",
             label="Sync mode",
-            description="How the host should pull harvested bursts.",
+            description="How the host should pull collected captures.",
             default="interval",
             options=[
                 ExtensionFieldOption(label="Manual", value="manual"),
@@ -391,11 +340,8 @@ class ScreenshotTimelinePlugin(Plugin):
 
         sensor = ScreenshotSensor(
             helper_argv=helper_argv,
-            # gap_minutes/max_minutes were burst-aggregator knobs; the
-            # sensor now emits one L1 event per capture so they're no
-            # longer wired in. We keep the field defs in DEFAULT_SETTINGS
-            # so any existing user YAML doesn't fail validation, but they
-            # currently have no effect.
+            resources_root=self.context.resources_dir,
+            session_db_path=self.context.resources_dir / "sessions.db",
             retention_days=int(settings.get("original_retention_days", DEFAULT_SETTINGS["original_retention_days"])),
             capture_scope=str(settings.get("capture_scope", DEFAULT_SETTINGS["capture_scope"])),
             ocr_languages=_tuple(settings.get("ocr_languages"), DEFAULT_SETTINGS["ocr_languages"]),
@@ -448,10 +394,8 @@ class ScreenshotTimelinePlugin(Plugin):
         Without this tool registered the LLM would mis-route those
         refs to photo_library's resolver (which doesn't know our IDs).
         """
-        resources_root = (
-            Path.home() / ".magi" / "data" / "resources" / "screenshots"
-        )
-        return build_screenshot_timeline_tool_classes(resources_root=resources_root)
+        resources_root = self.context.resources_dir
+        return build_screenshot_timeline_tool_classes(resources_root=resources_root, connection_id=self.connection.connection_id)
 
     def build_recall_artifacts(
         self,
@@ -483,6 +427,7 @@ class ScreenshotTimelinePlugin(Plugin):
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name="permissions",
                 resource_type="channel_status",
                 description="Live macOS permission grants required by the screenshot timeline plugin.",
@@ -511,7 +456,7 @@ class ScreenshotTimelinePlugin(Plugin):
                     "id": "accessibility",
                     "label": "Accessibility",
                     "label_i18n_key": "screenshot_timeline.permissions.accessibility.label",
-                    "description": "Required for keyboard triggers and the panic hotkey (optional).",
+                    "description": "Provides window titles and structured on-screen text (optional).",
                     "description_i18n_key": "screenshot_timeline.permissions.accessibility.description",
                     "status": statuses["accessibility"],
                     "required": False,
@@ -527,7 +472,7 @@ class ScreenshotTimelinePlugin(Plugin):
                 label="System permissions",
                 description=(
                     "Check Screen Recording (required) and Accessibility (optional, for "
-                    "keyboard triggers and panic hotkey) permissions. macOS will prompt "
+                    "window titles and structured text) permissions. macOS will prompt "
                     "if not yet granted."
                 ),
                 button_label="Check & request",

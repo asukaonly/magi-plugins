@@ -85,6 +85,7 @@ def test_collect_items_uses_selected_repositories_and_returns_cursor() -> None:
         client_factory=lambda token: fake_client,
     )
     context = SensorSyncContext(
+        connection_id="test-connection",
         source_type="github_activity",
         manual=True,
         last_cursor=None,
@@ -97,7 +98,7 @@ def test_collect_items_uses_selected_repositories_and_returns_cursor() -> None:
     result = asyncio.run(sensor.collect_items(context))
 
     assert [call[0] for call in fake_client.calls] == ["acme/app", "acme/lib"]
-    assert len(result.items) == 2
+    assert len([change.payload for change in result.changes]) == 2
     assert result.next_cursor is not None
     assert result.stats["repositories_processed"] == 2
 
@@ -110,6 +111,7 @@ def test_collect_items_marks_has_more_when_limit_is_full() -> None:
         client_factory=lambda token: _FullClient(),
     )
     context = SensorSyncContext(
+        connection_id="test-connection",
         source_type="github_activity",
         manual=True,
         last_cursor=None,
@@ -121,7 +123,7 @@ def test_collect_items_marks_has_more_when_limit_is_full() -> None:
 
     result = asyncio.run(sensor.collect_items(context))
 
-    assert len(result.items) == 3
+    assert len([change.payload for change in result.changes]) == 3
     assert result.stats["has_more"] is True
 
 

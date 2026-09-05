@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+from sdk_test_support import bind_test_plugin
+
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -27,7 +29,7 @@ def _load_plugin_module() -> ModuleType:
 
 
 def test_apple_photos_registers_only_the_apple_source() -> None:
-    plugin = _load_plugin_module().ApplePhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     sensors = plugin.get_sensors()
 
     assert len(sensors) == 1
@@ -39,7 +41,7 @@ def test_apple_photos_registers_only_the_apple_source() -> None:
 
 
 def test_apple_photos_activation_does_not_request_a_folder() -> None:
-    plugin = _load_plugin_module().ApplePhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     spec = plugin.get_sensors()[0][2]
     flow = spec.metadata["activation_flow"]
 
@@ -52,7 +54,7 @@ def test_apple_photos_activation_does_not_request_a_folder() -> None:
 
 
 def test_apple_photos_has_its_own_permission_status() -> None:
-    plugin = _load_plugin_module().ApplePhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     spec = plugin.get_sensors()[0][2]
     blocks = spec.metadata["settings_ui_blocks"]
     payload = plugin.read_settings_resource("apple_photos_permissions")
@@ -65,7 +67,7 @@ def test_apple_photos_has_its_own_permission_status() -> None:
 
 
 def test_apple_photos_registers_only_its_extraction_profile() -> None:
-    plugin = _load_plugin_module().ApplePhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     profiles = plugin.get_extraction_profiles()
 
     assert [profile.source_types for profile in profiles] == [
@@ -75,7 +77,7 @@ def test_apple_photos_registers_only_its_extraction_profile() -> None:
 
 
 def test_apple_photos_tool_uses_only_apple_settings() -> None:
-    plugin = _load_plugin_module().ApplePhotosPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     plugin.settings = {
         "sensors": {
             "photo_library_apple_photos": {

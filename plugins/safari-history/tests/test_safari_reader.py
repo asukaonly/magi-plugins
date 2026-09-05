@@ -68,7 +68,7 @@ def _write_history_db(path: Path) -> None:
 
 def test_safari_reader_reads_history_db_and_filters_non_get(tmp_path: Path) -> None:
     reader_module = _load_safari_reader()
-    reader = reader_module.SafariHistoryReader()
+    reader = reader_module.SafariHistoryReader(temp_root=tmp_path / "private-copies")
     root = tmp_path / "Safari"
     root.mkdir()
     _write_history_db(root / "History.db")
@@ -91,7 +91,7 @@ def test_safari_reader_reads_history_db_and_filters_non_get(tmp_path: Path) -> N
 
 def test_safari_reader_cursor_returns_only_new_visits(tmp_path: Path) -> None:
     reader_module = _load_safari_reader()
-    reader = reader_module.SafariHistoryReader()
+    reader = reader_module.SafariHistoryReader(temp_root=tmp_path / "private-copies")
     root = tmp_path / "Safari"
     root.mkdir()
     _write_history_db(root / "History.db")
@@ -113,7 +113,7 @@ def test_safari_reader_permission_error_explains_full_disk_access(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     reader_module = _load_safari_reader()
-    reader = reader_module.SafariHistoryReader()
+    reader = reader_module.SafariHistoryReader(temp_root=tmp_path / "private-copies")
     root = tmp_path / "Safari"
     root.mkdir()
     history_db = root / "History.db"

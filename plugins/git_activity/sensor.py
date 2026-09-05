@@ -1,6 +1,8 @@
 """Timeline sensor for Git Activity."""
 from __future__ import annotations
 
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import json
 import hashlib
 import time
@@ -16,7 +18,6 @@ from magi_plugin_sdk.sensors import (
     SensorOutput,
     SensorOutputMetadata,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .filters import SensitiveMessageFilter
@@ -139,17 +140,6 @@ class GitActivitySensor(SensorBase):
         timestamp = self._coerce_timestamp(item.get("timestamp") or provenance.get("timestamp"))
         return f"git_{repo_hash}_{new_sha[:8]}_{int(timestamp or 0)}"
 
-    def source_item_version_fingerprint(self, item: dict) -> str:
-        """Generate version fingerprint for change detection."""
-        provenance = item.get("provenance") if isinstance(item.get("provenance"), dict) else {}
-        version_parts = [
-            self.source_item_identity(item),
-            json.dumps(item.get("operation_counts") or provenance.get("operation_counts") or {}, sort_keys=True),
-            str(item.get("activity_count") or provenance.get("activity_count") or ""),
-            str(item.get("last_sha") or provenance.get("last_sha") or item.get("new_sha") or provenance.get("new_sha") or ""),
-            json.dumps(item.get("representative_messages") or provenance.get("representative_messages") or [], sort_keys=True),
-        ]
-        return hashlib.sha1("|".join(version_parts).encode("utf-8")).hexdigest()
 
     def _cursor_key(self, repo_path: str) -> str:
         """Return the normalized key used in the per-repository cursor."""
@@ -207,8 +197,7 @@ class GitActivitySensor(SensorBase):
         try:
             payload = json.loads(text)
         except json.JSONDecodeError:
-            legacy_timestamp = self._coerce_timestamp(text)
-            return {"*": legacy_timestamp if legacy_timestamp is not None else default_start_timestamp}
+            raise ValueError("Git activity cursor must be a JSON object")
         if not isinstance(payload, dict):
             return {}
         repos = payload.get("repos")
@@ -292,7 +281,7 @@ class GitActivitySensor(SensorBase):
             "activity_type": "session",
             "session_start_ts": timestamp,
             "session_end_ts": timestamp,
-            "timestamp": datetime.fromtimestamp(timestamp),
+            "timestamp": timestamp,
             "modified_at": timestamp,
             "operation_counts": {activity_type: 1},
             "operation_summary": self._operation_summary({activity_type: 1}),
@@ -316,7 +305,7 @@ class GitActivitySensor(SensorBase):
         session["operation_summary"] = self._operation_summary(operation_counts)
         session["activity_count"] = int(session.get("activity_count") or 0) + 1
         session["session_end_ts"] = max(float(session.get("session_end_ts") or 0.0), timestamp)
-        session["timestamp"] = datetime.fromtimestamp(float(session["session_end_ts"]))
+        session["timestamp"] = float(session["session_end_ts"])
         session["modified_at"] = float(session["session_end_ts"])
         session["last_sha"] = str(item.get("new_sha") or session.get("last_sha") or "")
         session["new_sha"] = session["last_sha"]
@@ -344,7 +333,7 @@ class GitActivitySensor(SensorBase):
         finalized["operation_summary"] = self._operation_summary(dict(finalized.get("operation_counts") or {}))
         return finalized
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         """Collect git activity data from configured repositories."""
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
@@ -355,8 +344,8 @@ class GitActivitySensor(SensorBase):
         # Get configured repositories
         repos = sensor_settings.get("repos", self._repos)
         if not repos:
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 next_cursor=None,
                 watermark_ts=time.time(),
                 stats={"count": 0, "error": "No repositories configured"},
@@ -444,7 +433,7 @@ class GitActivitySensor(SensorBase):
                         "new_sha": activity.new_sha,
                         "message": processed,
                         "author": activity.author,
-                        "timestamp": activity.timestamp,
+                        "timestamp": activity.timestamp.timestamp(),
                         "sensitive_redacted": processed != activity.message,
                     }
                     repo_items.append(item)
@@ -470,10 +459,11 @@ class GitActivitySensor(SensorBase):
         # Determine next cursor
         next_cursor = self._encode_cursor(latest_by_repo)
 
-        return SensorSyncResult(
-            items=all_items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in all_items],
             next_cursor=next_cursor,
             watermark_ts=latest_timestamp or time.time(),
+            complete=not (source_has_more),
             stats={
                 "count": len(all_items),
                 "raw_activity_count": raw_activity_count,

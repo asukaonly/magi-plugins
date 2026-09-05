@@ -161,7 +161,7 @@ def test_clear_waits_for_watcher_and_future_collect_restarts(
         await clear_task
         result = await collect_task
 
-        assert result.items == []
+        assert [change.payload for change in result.changes] == []
         assert len(restarted_watchers) == 1
         assert restarted_watchers[0].is_running is True
 

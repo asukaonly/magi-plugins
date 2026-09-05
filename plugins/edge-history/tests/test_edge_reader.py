@@ -59,6 +59,7 @@ def _write_history_db(path: Path) -> None:
 def test_edge_reader_filters_non_chain_end_visits(tmp_path: Path) -> None:
     reader_module = _load_edge_reader()
     reader = reader_module.EdgeHistoryReader()
+    reader.prepare_temp_storage(tmp_path / "private-copies")
 
     profile_dir = tmp_path / "Default"
     profile_dir.mkdir(parents=True, exist_ok=True)

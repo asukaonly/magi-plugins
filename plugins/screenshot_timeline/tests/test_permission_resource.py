@@ -1,6 +1,8 @@
 """Tests for the plugin's permission settings resource shape."""
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -49,7 +51,7 @@ def _load_plugin_module() -> ModuleType:
 
 def test_get_settings_resources_declares_permissions() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.ScreenshotTimelinePlugin()
+    plugin = bind_test_plugin(plugin_mod.ScreenshotTimelinePlugin())
     resources = plugin.get_settings_resources()
     assert len(resources) == 1
     spec = resources[0]
@@ -59,7 +61,7 @@ def test_get_settings_resources_declares_permissions() -> None:
 
 def test_read_settings_resource_permissions_shape() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.ScreenshotTimelinePlugin()
+    plugin = bind_test_plugin(plugin_mod.ScreenshotTimelinePlugin())
     payload = plugin.read_settings_resource("permissions")
 
     assert isinstance(payload, dict)
@@ -96,14 +98,14 @@ def test_read_settings_resource_permissions_shape() -> None:
 
 def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.ScreenshotTimelinePlugin()
+    plugin = bind_test_plugin(plugin_mod.ScreenshotTimelinePlugin())
     with pytest.raises(KeyError):
         plugin.read_settings_resource("nonexistent")
 
 
 def test_sensor_metadata_exposes_settings_ui_blocks() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.ScreenshotTimelinePlugin()
+    plugin = bind_test_plugin(plugin_mod.ScreenshotTimelinePlugin())
     sensors = plugin.get_sensors()
     assert sensors, "expected at least one sensor"
     _, _, spec = sensors[0]

@@ -1,7 +1,8 @@
 """Timeline sensor for Calendar data."""
 from __future__ import annotations
 
-import hashlib
+from magi_plugin_sdk.runtime import SourceChange, SourceChangeBatch
+
 import sys
 import time
 from datetime import datetime, timedelta
@@ -14,7 +15,6 @@ from magi_plugin_sdk.sensors import (
     SensorMemoryPolicy,
     SensorOutput,
     SensorSyncContext,
-    SensorSyncResult,
 )
 
 from .exceptions import PlatformNotSupportedError
@@ -60,16 +60,6 @@ class CalendarTimelineSensor(SensorBase):
         event_id = item.get("event_id", "")
         return f"calendar_{event_id}"
 
-    def source_item_version_fingerprint(self, item: dict) -> str:
-        """Generate version fingerprint for change detection."""
-        version_parts = [
-            str(item.get("event_id", "")),
-            str(item.get("title", "")),
-            str(item.get("start_time", "")),
-            str(item.get("end_time", "")),
-            str(item.get("location", "")),
-        ]
-        return hashlib.sha1("|".join(version_parts).encode("utf-8")).hexdigest()
 
     def request_activation_authorization(self, field_values: dict[str, Any] | None = None) -> dict[str, Any]:
         """Request EventKit authorization for calendar access."""
@@ -83,7 +73,7 @@ class CalendarTimelineSensor(SensorBase):
             "message": None if authorized else "Calendar access was not granted.",
         }
 
-    async def collect_items(self, context: SensorSyncContext) -> SensorSyncResult:
+    async def collect_items(self, context: SensorSyncContext) -> SourceChangeBatch:
         """Collect calendar events from EventKit."""
         sensor_settings = (
             context.plugin_settings.get("sensors", {}).get(self.source_type, {})
@@ -120,8 +110,8 @@ class CalendarTimelineSensor(SensorBase):
                 f"authorization_status={auth_status} source_type={self.source_type} "
                 f"manual={context.manual} initial_sync={context.last_cursor is None}"
             )
-            return SensorSyncResult(
-                items=[],
+            return SourceChangeBatch(
+                changes=[],
                 next_cursor=None,
                 watermark_ts=time.time(),
                 stats={
@@ -183,8 +173,8 @@ class CalendarTimelineSensor(SensorBase):
             next_cursor = str(latest_timestamp)
             watermark_ts = latest_timestamp
 
-        return SensorSyncResult(
-            items=items,
+        return SourceChangeBatch(
+            changes=[SourceChange(object_id=self.source_item_identity(item), version=self.source_item_version_fingerprint(item), payload=item) for item in items],
             next_cursor=next_cursor,
             watermark_ts=watermark_ts,
             stats={

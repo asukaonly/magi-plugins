@@ -128,8 +128,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Lookback Days",
             description="How many days of history to sync on initial setup.",
             default=30,
-            min=1,
-            max=365,
+            minimum=1,
+            maximum=365,
             section="sync",
             surface="timeline",
             order=40,
@@ -140,8 +140,8 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             label="Future Recurring Event Window",
             description="How many future days of recurring events should be prefetched into the timeline.",
             default=30,
-            min=1,
-            max=365,
+            minimum=1,
+            maximum=365,
             section="sync",
             surface="timeline",
             order=50,
@@ -282,6 +282,7 @@ class CalendarPlugin(Plugin):
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
         return [
             PluginSettingsResourceSpec(
+                requires_enabled=False,
                 resource_name="calendar_lists",
                 resource_type="collection",
                 description="Selectable calendars grouped by account/source.",

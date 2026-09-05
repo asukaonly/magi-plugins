@@ -34,7 +34,7 @@ from magi_plugin_sdk.channels import (  # noqa: E402
     ChannelTarget,
 )
 
-from telegram.adapter import TelegramChannel, TelegramChannelConfig  # noqa: E402
+from magi_telegram_plugin_test.adapter import TelegramChannel, TelegramChannelConfig  # noqa: E402
 
 
 def _make_channel(*, allowed_user_ids: list[str] | None = None) -> TelegramChannel:
@@ -178,7 +178,7 @@ async def test_callback_query_dispatches_synthesized_slash_approve() -> None:
     channel._message_dispatcher = dispatcher
 
     mapper = MagicMock()
-    mapper.resolve_or_create = AsyncMock(return_value=ChannelSessionMapping(
+    mapper.lookup = AsyncMock(return_value=ChannelSessionMapping(
         channel_type="telegram", external_chat_id="555",
         magi_session_id="sess-1", magi_user_id="local_user",
         metadata_json='{"external_user_id":"42"}',
@@ -218,7 +218,7 @@ async def test_callback_query_dispatches_synthesized_slash_deny() -> None:
     dispatcher.capture_inbound_context = AsyncMock(return_value=_provider_context())
     channel._message_dispatcher = dispatcher
     mapper = MagicMock()
-    mapper.resolve_or_create = AsyncMock(return_value=ChannelSessionMapping(
+    mapper.lookup = AsyncMock(return_value=ChannelSessionMapping(
         channel_type="telegram", external_chat_id="555",
         magi_session_id="sess-1", magi_user_id="local_user",
         metadata_json="{}",

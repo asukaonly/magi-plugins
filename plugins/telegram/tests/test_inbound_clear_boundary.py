@@ -21,7 +21,7 @@ from magi_plugin_sdk.channels import (
     ChannelSessionMapping,
 )
 
-from telegram.adapter import TelegramChannel, TelegramChannelConfig
+from magi_telegram_plugin_test.adapter import TelegramChannel, TelegramChannelConfig
 
 
 PROVIDER_DATE = datetime(2026, 8, 1, 3, 4, 5, tzinfo=UTC)

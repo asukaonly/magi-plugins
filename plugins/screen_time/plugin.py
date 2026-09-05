@@ -120,7 +120,6 @@ class ScreenTimePlugin(Plugin):
                 allowed_assertion_families=["routine_profile"],
                 allow_graph=True,
                 allow_assertion=True,
-                assertion_mode="derived",
                 allowed_assertion_traits=["routine.app.*"],
                 derived_assertion_specs=[
                     {

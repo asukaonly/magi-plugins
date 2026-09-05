@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["local_documents", "local_documents_search"]
 id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "lucide:file-text"
-version = "0.1.2"
+version = "0.2.0"
 description = "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory."
 description_i18n = { "zh-CN" = "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。" }
 author = "Magi Team"
@@ -58,3 +65,134 @@ en = "Text and Markdown from folders you choose"
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 reason_i18n = { en = "Read local document folders selected by the user", "zh-CN" = "读取用户选择的本地文档文件夹" }
+
+[plugin.activation_flow]
+title = "Enable Local Documents"
+description = "Local documents can contain private notes. Choose the folders Magi may read before enabling this source."
+confirm_label = "Enable source"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sensors.local_documents.enabled"
+configured_key = "sensors.local_documents.initial_sync_configured"
+fields = [{ "key" = "sensors.local_documents.root_paths", "type" = "tags", "label" = "Document Folders", "description" = "Local folders to scan for notes and text documents.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "~/Documents/Notes", "depends_on_values" = [] }, { "key" = "sensors.local_documents.cognition_exclude_folders", "type" = "tags", "label" = "Search-only Folders", "description" = "Folders read for search and timeline but kept out of knowledge extraction.", "default" = ["References", "Archive", "Clippings"], "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.cognition_exclude_folders"
+type = "tags"
+label = "Search-only Folders"
+description = "Folders read for search and timeline but kept out of knowledge extraction."
+default = ["References", "Archive", "Clippings"]
+required = false
+section = "privacy"
+surface = "timeline"
+order = 70
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.enabled"
+type = "switch"
+label = "Enabled"
+description = "Whether local document sync is active."
+default = false
+required = false
+section = "general"
+surface = "timeline"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.exclude_folders"
+type = "tags"
+label = "Excluded Folders"
+description = "Folders never read at all."
+default = [".git", ".hg", ".svn", ".DS_Store", "__pycache__", ".mypy_cache", ".pytest_cache", "node_modules", ".venv", "venv"]
+required = false
+section = "privacy"
+surface = "timeline"
+order = 60
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.include_extensions"
+type = "tags"
+label = "Included Extensions"
+description = "Text file extensions to ingest."
+default = [".md", ".markdown", ".txt", ".text", ".rst", ".org", ".log"]
+required = false
+section = "filters"
+surface = "timeline"
+order = 50
+placeholder = ".md, .txt"
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.initial_sync_configured"
+type = "switch"
+label = "Initial Sync Configured"
+description = ""
+default = false
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.max_body_chars"
+type = "number"
+label = "Max Text Characters"
+description = "Maximum characters stored from each document body."
+default = 50000
+required = false
+section = "filters"
+surface = "timeline"
+order = 90
+minimum = 1000.0
+maximum = 500000.0
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.max_file_bytes"
+type = "number"
+label = "Max File Size (bytes)"
+description = "Files larger than this are skipped."
+default = 1000000
+required = false
+section = "filters"
+surface = "timeline"
+order = 80
+minimum = 1024.0
+maximum = 20000000.0
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.root_paths"
+type = "tags"
+label = "Document Folders"
+description = "Local folders to scan for notes and text documents."
+required = true
+section = "general"
+surface = "timeline"
+order = 20
+placeholder = "~/Documents/Notes"
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.sync_interval_minutes"
+type = "number"
+label = "Sync Interval (minutes)"
+description = "How often to rescan the folders for changed documents."
+default = 10
+required = false
+section = "general"
+surface = "timeline"
+order = 40
+depends_on_key = "sensors.local_documents.sync_mode"
+depends_on_values = ["interval"]
+minimum = 1.0
+maximum = 1440.0
+
+[[plugin.settings_fields]]
+key = "sensors.local_documents.sync_mode"
+type = "select"
+label = "Sync Mode"
+description = "How local documents should be synchronized."
+default = "interval"
+required = true
+options = [{ "label" = "Manual", "value" = "manual" }, { "label" = "Interval", "value" = "interval" }]
+section = "general"
+surface = "timeline"
+order = 30

@@ -54,7 +54,7 @@ def _write_places_db(path: Path) -> None:
 
 def test_firefox_reader_auto_detects_default_profile_and_filters_embed(tmp_path: Path) -> None:
     reader_module = _load_firefox_reader()
-    reader = reader_module.FirefoxHistoryReader()
+    reader = reader_module.FirefoxHistoryReader(temp_root=tmp_path / "private-copies")
 
     profile_dir = tmp_path / "Profiles" / "abcd.default-release"
     profile_dir.mkdir(parents=True, exist_ok=True)

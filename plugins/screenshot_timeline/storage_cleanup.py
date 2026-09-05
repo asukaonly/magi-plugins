@@ -10,15 +10,10 @@ from __future__ import annotations
 
 import errno
 import os
-import re
 import stat
 from pathlib import Path
 
 
-_LEGACY_CAPTURE_FILE_RE = re.compile(
-    r"^cap_[A-Z0-9]+_(?:orig|thumb)\.jpg$",
-    re.IGNORECASE,
-)
 _SESSION_SIDECAR_SUFFIXES = ("", "-wal", "-shm", "-journal")
 _ZERO_CHUNK = b"\0" * (1024 * 1024)
 
@@ -62,11 +57,10 @@ def erase_session_database(db_path: Path) -> None:
 
 
 def erase_managed_screenshot_resources(resources_root: Path) -> dict[str, int]:
-    """Remove current and legacy screenshot files without leaving the root.
+    """Remove connection-owned screenshot files without leaving the root.
 
     New-layout ``originals`` and ``thumbnails`` trees are entirely plugin-owned
-    and are removed recursively.  Outside those trees, only legacy capture
-    filenames are removed so unrelated files under the resource root survive.
+    and are removed recursively. Unrelated files under the root survive.
     Internal symbolic links are unlinked but never traversed.
     """
 
@@ -86,15 +80,12 @@ def erase_managed_screenshot_resources(resources_root: Path) -> dict[str, int]:
     try:
         for subtree_name in ("originals", "thumbnails"):
             _remove_managed_tree_entry(root_fd, subtree_name, stats)
-        _remove_legacy_capture_files(root_fd, stats, is_root=True)
         _verify_open_directory(root, root_fd)
         for subtree_name in ("originals", "thumbnails"):
             if _lstat_optional(root_fd, subtree_name) is not None:
                 raise StorageCleanupError(
                     f"Managed screenshot subtree still exists: {subtree_name}"
                 )
-        if _contains_legacy_capture_files(root_fd, is_root=True):
-            raise StorageCleanupError("Legacy screenshot files remain after cleanup")
     finally:
         os.close(root_fd)
     return stats
@@ -294,69 +285,6 @@ def _remove_managed_tree_contents(
         names = [entry.name for entry in entries]
     for name in names:
         _remove_managed_tree_entry(directory_fd, name, stats)
-
-
-def _remove_legacy_capture_files(
-    directory_fd: int,
-    stats: dict[str, int],
-    *,
-    is_root: bool,
-) -> None:
-    with os.scandir(directory_fd) as entries:
-        names = [entry.name for entry in entries]
-    for name in names:
-        if is_root and name in {"originals", "thumbnails"}:
-            continue
-        entry_stat = _lstat_optional(directory_fd, name)
-        if entry_stat is None:
-            continue
-        mode = entry_stat.st_mode
-        if stat.S_ISLNK(mode):
-            if _LEGACY_CAPTURE_FILE_RE.match(name):
-                os.unlink(name, dir_fd=directory_fd)
-                stats["deleted_symlinks"] += 1
-            continue
-        if stat.S_ISDIR(mode):
-            child_fd = _open_child_directory(directory_fd, name, entry_stat)
-            try:
-                _remove_legacy_capture_files(child_fd, stats, is_root=False)
-            finally:
-                os.close(child_fd)
-            continue
-        if not _LEGACY_CAPTURE_FILE_RE.match(name):
-            continue
-        os.unlink(name, dir_fd=directory_fd)
-        if stat.S_ISREG(mode):
-            stats["deleted_files"] += 1
-            stats["deleted_bytes"] += entry_stat.st_size
-        else:
-            stats["deleted_special_entries"] += 1
-
-
-def _contains_legacy_capture_files(
-    directory_fd: int,
-    *,
-    is_root: bool,
-) -> bool:
-    with os.scandir(directory_fd) as entries:
-        names = [entry.name for entry in entries]
-    for name in names:
-        if is_root and name in {"originals", "thumbnails"}:
-            continue
-        entry_stat = _lstat_optional(directory_fd, name)
-        if entry_stat is None:
-            continue
-        mode = entry_stat.st_mode
-        if stat.S_ISDIR(mode):
-            child_fd = _open_child_directory(directory_fd, name, entry_stat)
-            try:
-                if _contains_legacy_capture_files(child_fd, is_root=False):
-                    return True
-            finally:
-                os.close(child_fd)
-        elif _LEGACY_CAPTURE_FILE_RE.match(name):
-            return True
-    return False
 
 
 __all__ = [

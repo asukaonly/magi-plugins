@@ -138,6 +138,7 @@ def _clear_context(tmp_path: Path) -> UserContentClearContext:
 
 def _sync_context(tmp_path: Path) -> SensorSyncContext:
     return SensorSyncContext(
+        connection_id="test-connection",
         source_type="screenshot_timeline",
         manual=True,
         last_cursor="preserved-cursor",
@@ -188,8 +189,7 @@ async def test_clear_stops_runtime_erases_content_and_lazy_restarts(
     )
     old_original = resources_root / "originals" / "2026" / "08" / "01" / "old.jpg"
     old_thumbnail = resources_root / "thumbnails" / "2026" / "08" / "01" / "old.jpg"
-    old_legacy = resources_root / "2026" / "07" / "31" / "cap_OLD123_thumb.jpg"
-    for path in (old_original, old_thumbnail, old_legacy):
+    for path in (old_original, old_thumbnail):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"private")
     sensor._pending_items.append({"capture_id": "old-capture"})
@@ -215,12 +215,11 @@ async def test_clear_stops_runtime_erases_content_and_lazy_restarts(
     assert not session_db.exists()
     assert not resources_root.joinpath("originals").exists()
     assert not resources_root.joinpath("thumbnails").exists()
-    assert not old_legacy.exists()
     assert context.plugin_settings["sensors"]["screenshot_timeline"]["enabled"] is True
     assert all(not helper.started for helper in factory.instances)
 
     result = await sensor.collect_items(_sync_context(tmp_path))
-    assert result.items == []
+    assert [change.payload for change in result.changes] == []
     assert sensor._started is True
     restarted_helper = factory.instances[-1]
     assert restarted_helper.started is True

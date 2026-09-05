@@ -332,7 +332,6 @@ def build_extraction_profiles(source_type: str) -> list[ExtractionProfileSpec]:
             allowed_assertion_families=["interest_profile"],
             allow_graph=True,
             allow_assertion=True,
-            assertion_mode="derived",
             allowed_assertion_traits=["interest.*"],
             derived_assertion_specs=[
                 {

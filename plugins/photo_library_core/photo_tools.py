@@ -26,19 +26,21 @@ LOCAL_PHOTOS_RESOLVER_TOOL = "local_photos_resolve_photo_refs"
 APPLE_PHOTOS_RESOLVER_TOOL = "apple_photos_resolve_photo_refs"
 
 
-def build_local_photo_tool_classes(settings: dict[str, Any]) -> list[type[Tool]]:
+def build_local_photo_tool_classes(settings: dict[str, Any], *, connection_id: str) -> list[type[Tool]]:
     """Build the resolver tool for local photo folders."""
     return _build_photo_tool_classes(
         settings,
+        connection_id=connection_id,
         source_mode="directory",
         tool_name=LOCAL_PHOTOS_RESOLVER_TOOL,
     )
 
 
-def build_apple_photo_tool_classes(settings: dict[str, Any]) -> list[type[Tool]]:
+def build_apple_photo_tool_classes(settings: dict[str, Any], *, connection_id: str) -> list[type[Tool]]:
     """Build the resolver tool for Apple Photos."""
     return _build_photo_tool_classes(
         settings,
+        connection_id=connection_id,
         source_mode="apple_photos",
         tool_name=APPLE_PHOTOS_RESOLVER_TOOL,
     )
@@ -48,6 +50,7 @@ def _build_photo_tool_classes(
     settings: dict[str, Any],
     *,
     source_mode: str,
+    connection_id: str,
     tool_name: str,
 ) -> list[type[Tool]]:
     """Build a configured resolver for exactly one installed photo source."""
@@ -179,6 +182,8 @@ def _build_photo_tool_classes(
                     item,
                     resolver_tool=self._tool_name,
                     resolution_state="resolved",
+                    connection_id=connection_id,
+                    source_type="photo_library_apple_photos" if source_mode == "apple_photos" else "photo_library_directory",
                 )
                 for item in resolved_items
             ]
@@ -210,9 +215,6 @@ def _resolve_source_paths(settings: dict[str, Any]) -> list[str]:
     raw_paths = settings.get("source_paths")
     if isinstance(raw_paths, list):
         return [str(item) for item in raw_paths if str(item or "").strip()]
-    legacy = settings.get("source_path")
-    if str(legacy or "").strip():
-        return [str(legacy).strip()]
     return []
 
 
@@ -253,7 +255,7 @@ def _scan_photo_items(
             if allowed_root in {item_path, *item_path.parents}:
                 items.append(dict(item))
     return items
- 
+
 
 def _asset_ref_id(item: dict[str, Any]) -> str:
     raw = str(item.get("asset_local_id") or item.get("file_hash") or "").strip()
@@ -268,11 +270,14 @@ def _build_asset_ref(
     item: dict[str, Any],
     *,
     resolver_tool: str,
+    connection_id: str,
+    source_type: str,
     resolution_state: str | None = None,
 ) -> dict[str, Any]:
     asset_ref: dict[str, Any] = {
         "asset_ref_id": _asset_ref_id(item),
-        "source_type": "photo_library",
+        "source_type": source_type,
+        "connection_id": connection_id,
         "source_item_id": str(item.get("asset_local_id") or "").strip() or None,
         "original_name": str(item.get("filename") or "").strip() or None,
         "display_name": str(item.get("filename") or "").strip() or None,

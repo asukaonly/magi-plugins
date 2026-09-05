@@ -90,7 +90,7 @@ def _write_history_db(
 
 
 def test_read_play_records_raises_file_not_found_for_missing_cache_path(tmp_path: Path) -> None:
-    reader = NeteaseMusicReader()
+    reader = NeteaseMusicReader(temp_root=tmp_path / "private-copies")
 
     with pytest.raises(FileNotFoundError, match="cache database not found"):
         reader.read_play_records(source_path=str(tmp_path / "missing" / "webdb.dat"))
@@ -100,7 +100,7 @@ def test_read_play_records_skips_liked_lookup_when_playlist_tables_are_missing(t
     db_path = tmp_path / "webdb.dat"
     _write_history_db(db_path, include_playback_tables=True, include_playlist_tables=False)
 
-    reader = NeteaseMusicReader()
+    reader = NeteaseMusicReader(temp_root=tmp_path / "private-copies")
     records = reader.read_play_records(source_path=str(db_path))
 
     assert len(records) == 1
@@ -112,7 +112,7 @@ def test_read_play_records_raises_schema_error_when_playback_tables_are_missing(
     db_path = tmp_path / "webdb.dat"
     _write_history_db(db_path, include_playback_tables=False, include_playlist_tables=False)
 
-    reader = NeteaseMusicReader()
+    reader = NeteaseMusicReader(temp_root=tmp_path / "private-copies")
 
     with pytest.raises(NeteaseMusicDatabaseSchemaError, match=r"missing required table\(s\)"):
         reader.read_play_records(source_path=str(db_path))

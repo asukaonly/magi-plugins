@@ -53,7 +53,6 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
         allowed_assertion_families=[],
         allow_graph=True,
         allow_assertion=False,
-        assertion_mode="none",
         derived_assertion_specs=[],
         extraction_instructions=(
             "These events are settled photo sessions. The source already provides "
@@ -359,10 +358,10 @@ def _build_recall_asset_refs(
     title = str(activity_snapshot.get("title") or "").strip() or None
     location_name = str(provenance.get("location_name") or "").strip() or None
     device_name = str(provenance.get("device_name") or "").strip() or None
-    session_source_item_id = (
-        str(activity_snapshot.get("source_item_id") or event.get("source_item_id") or "").strip()
-        or None
-    )
+    session_source_item_id = str(metadata.get("source_object_id") or "").strip()
+    connection_id = str(metadata.get("source_connection_id") or "").strip()
+    if not session_source_item_id or not connection_id:
+        return []
     event_id = str(event.get("event_id") or "").strip() or None
     occurred_at = event.get("timestamp") or event.get("created_at")
     refs: list[dict[str, Any]] = []
@@ -389,6 +388,7 @@ def _build_recall_asset_refs(
             "event_id": event_id,
             "source_type": event_source_type,
             "source_item_id": asset_ref_id,
+            "connection_id": connection_id,
             "display_name": title,
             "captured_at": item.get("capture_ts")
             or provenance.get("first_capture_ts")

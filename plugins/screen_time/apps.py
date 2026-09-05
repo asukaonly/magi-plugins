@@ -12,7 +12,6 @@ import json
 import logging
 import ntpath
 import os
-import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -166,11 +165,6 @@ def _windows_basename(raw_path: str) -> str:
     return ntpath.basename(raw_path) or os.path.basename(raw_path)
 
 
-_catalog_lock = threading.Lock()
-_catalog: _AppCatalog | None = None
-_catalog_override_path: Path | None = None
-
-
 def _build_catalog(override_path: Path | None) -> _AppCatalog:
     catalog = _AppCatalog()
     documents: list[dict[str, Any]] = []
@@ -200,43 +194,16 @@ def _read_json_file(path: Path) -> dict[str, Any] | None:
     return data
 
 
-def reset_catalog() -> None:
-    """Drop the cached catalog so the next resolve rebuilds it (test helper)."""
-    global _catalog, _catalog_override_path
-    with _catalog_lock:
-        _catalog = None
-        _catalog_override_path = None
+class AppResolver:
+    """Connection-owned catalog, including that connection's local overrides."""
 
+    def __init__(self, override_path: Path | None = None) -> None:
+        self._catalog = _build_catalog(override_path)
 
-def resolve_app(
-    *,
-    platform: str,
-    raw_bundle_id: str,
-    raw_app_name: str,
-    override_path: Path | None = None,
-) -> ResolvedApp:
-    """Resolve a raw foreground-app identifier to a canonical entry.
-
-    Args:
-        platform: ``"darwin"`` or ``"win32"``.
-        raw_bundle_id: macOS bundle id or Windows executable path.
-        raw_app_name: System-provided display name used as a fallback.
-        override_path: Optional path to a user-provided ``apps.local.json`` that
-            extends or overrides bundled entries. When ``None`` no override is
-            applied. The first override path observed is cached; pass
-            ``reset_catalog()`` before changing it (mainly useful for tests).
-    """
-    global _catalog, _catalog_override_path
-    with _catalog_lock:
-        if _catalog is None or _catalog_override_path != override_path:
-            _catalog = _build_catalog(override_path)
-            _catalog_override_path = override_path
-        catalog = _catalog
-    return catalog.resolve(
-        platform=platform,
-        raw_bundle_id=raw_bundle_id,
-        raw_app_name=raw_app_name,
-    )
+    def resolve(self, *, platform: str, raw_bundle_id: str, raw_app_name: str) -> ResolvedApp:
+        return self._catalog.resolve(
+            platform=platform, raw_bundle_id=raw_bundle_id, raw_app_name=raw_app_name,
+        )
 
 
 def local_override_path(runtime_paths: Any) -> Path | None:

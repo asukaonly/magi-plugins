@@ -1,9 +1,16 @@
 [plugin]
+settings_actions = [{ "action_id" = "qr_login", "label" = "Weixin QR Login", "description" = "Scan with Weixin to authorize this channel without pasting a bot token manually.", "button_label" = "Start QR Login", "presentation" = "qr_code", "surface" = "extensions", "contribution_id" = "", "contribution_type" = "channel", "order" = 0, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 2000, "timeout_ms" = 480000, "persist_settings_on_success" = true, "depends_on_values" = [] }, { "action_id" = "validate_credentials", "label" = "Validate Credentials", "description" = "Check the saved Weixin credentials and gateway connection.", "button_label" = "Test Connection", "presentation" = "inline", "surface" = "extensions", "contribution_id" = "", "contribution_type" = "channel", "order" = 1, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 2000, "timeout_ms" = 30000, "persist_settings_on_success" = false, "depends_on_values" = [] }, { "action_id" = "reset_cursor", "label" = "Reset Cursor", "description" = "Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.", "button_label" = "Reset Cursor", "presentation" = "inline", "surface" = "extensions", "contribution_id" = "", "contribution_type" = "channel", "order" = 2, "destructive" = false, "requires_enabled" = true, "poll_interval_ms" = 2000, "timeout_ms" = 30000, "persist_settings_on_success" = false, "depends_on_values" = [] }, { "action_id" = "clear_processed_messages", "label" = "Clear Message Dedupe", "description" = "Clear the local processed-message cache used for Weixin retry safety.", "button_label" = "Clear Dedupe", "presentation" = "inline", "surface" = "extensions", "contribution_id" = "", "contribution_type" = "channel", "order" = 3, "destructive" = false, "requires_enabled" = true, "poll_interval_ms" = 2000, "timeout_ms" = 30000, "persist_settings_on_success" = false, "depends_on_values" = [] }, { "action_id" = "logout", "label" = "Logout Weixin", "description" = "Remove saved Weixin credentials for this account and stop the channel until QR login runs again.", "button_label" = "Logout", "presentation" = "inline", "surface" = "extensions", "contribution_id" = "", "contribution_type" = "channel", "order" = 4, "destructive" = true, "requires_enabled" = true, "poll_interval_ms" = 2000, "timeout_ms" = 30000, "persist_settings_on_success" = true, "depends_on_values" = [] }]
+settings_resources = [{ "resource_name" = "channel_status", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Latest Weixin channel runtime status.", "metadata" = {  } }, { "resource_name" = "accounts", "resource_type" = "collection", "requires_enabled" = false, "description" = "The account bound to this connection.", "metadata" = {  } }]
+settings_ui_blocks = []
+protocol_version = 2
+min_sdk_version = "0.2.0"
+execution_mode = "trusted_process"
+projection_sources = ["weixin"]
 id = "weixin"
 name = "Weixin"
 name_i18n = { "zh-CN" = "微信" }
 icon = "asset:assets/icon.svg"
-version = "0.2.8"
+version = "0.3.0"
 description = "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
 description_i18n = { "zh-CN" = "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话" }
 author = "Magi Team"
@@ -17,3 +24,145 @@ dependencies = ["segno>=1.6.1", "cryptography>=42.0.0", "Pillow>=10.0.0"]
 [[plugin.permissions.capabilities]]
 capability = "network"
 reason_i18n = { en = "Connect to the iLink bot gateway", "zh-CN" = "连接 iLink 机器人网关" }
+
+[[plugin.settings_fields]]
+key = "account"
+type = "secret"
+label = "Account"
+description = ""
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "account_id"
+type = "input"
+label = "Account ID"
+description = "iLink bot account ID. Leave empty only when the state directory contains exactly one logged-in account."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 1
+placeholder = "example@im.bot"
+
+[[plugin.settings_fields]]
+key = "allowed_user_ids"
+type = "tags"
+label = "Allowed Weixin User IDs"
+description = "Whitelist of Weixin user IDs. Empty means allow all users who can message this bot."
+required = false
+section = "general"
+surface = "extensions"
+order = 4
+
+[[plugin.settings_fields]]
+key = "base_url"
+type = "input"
+label = "API Base URL"
+description = "Weixin iLink API base URL."
+default = "https://ilinkai.weixin.qq.com"
+required = false
+section = "general"
+surface = "extensions"
+order = 6
+
+[[plugin.settings_fields]]
+key = "bot_token"
+type = "secret"
+label = "Bot Token"
+description = "iLink bot token returned by the Weixin QR login flow. Leave empty when using QR login."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "bot_type"
+type = "input"
+label = "Bot Type"
+description = "iLink bot_type used by the QR login helper."
+default = "3"
+required = false
+section = "general"
+surface = "extensions"
+order = 7
+
+[[plugin.settings_fields]]
+key = "cdn_base_url"
+type = "input"
+label = "Cdn Base Url"
+description = ""
+default = "https://novac2c.cdn.weixin.qq.com/c2c"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "enable_typing_indicator"
+type = "switch"
+label = "Typing Indicator"
+description = "Send Weixin typing status while Magi is processing a message."
+default = true
+required = false
+section = "general"
+surface = "extensions"
+order = 5
+
+[[plugin.settings_fields]]
+key = "ilink_app_id"
+type = "input"
+label = "Ilink App Id"
+description = ""
+default = "bot"
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "max_message_length"
+type = "number"
+label = "Max Message Length"
+description = "Maximum characters per Weixin outbound text message."
+default = 4000
+required = false
+section = "general"
+surface = "extensions"
+order = 9
+
+[[plugin.settings_fields]]
+key = "poll_timeout_ms"
+type = "number"
+label = "Poll Timeout"
+description = "Long-poll timeout in milliseconds for getUpdates."
+default = 35000
+required = false
+section = "general"
+surface = "extensions"
+order = 10
+
+[[plugin.settings_fields]]
+key = "request_timeout_ms"
+type = "number"
+label = "Request Timeout Ms"
+description = ""
+default = 15000
+required = false
+section = "advanced"
+surface = "extensions"
+order = 0
+
+[[plugin.settings_fields]]
+key = "route_tag"
+type = "input"
+label = "Route Tag"
+description = "Optional SKRouteTag header for internal routing."
+default = ""
+required = false
+section = "general"
+surface = "extensions"
+order = 8

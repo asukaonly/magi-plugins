@@ -30,7 +30,7 @@ def test_chrome_history_profile_declares_derived_interest_rule() -> None:
     profile = plugin.get_extraction_profiles()[0]
 
     assert profile.profile_id == "source.chrome_history"
-    assert profile.assertion_mode == "derived"
+    assert profile.allow_assertion is True
     assert profile.allowed_assertion_families == ["interest_profile"]
     assert profile.allowed_assertion_traits == ["interest.*"]
     assert profile.allow_assertion is True

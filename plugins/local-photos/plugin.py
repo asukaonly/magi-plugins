@@ -31,7 +31,7 @@ class LocalPhotosPlugin(Plugin):
             raw_settings = sensors_settings.get(DIRECTORY_SOURCE_TYPE, {})
             if isinstance(raw_settings, dict):
                 settings = dict(raw_settings)
-        return build_local_photo_tool_classes(settings)
+        return build_local_photo_tool_classes(settings, connection_id=self.connection.connection_id)
 
     def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
         return [

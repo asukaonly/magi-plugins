@@ -93,6 +93,11 @@ def validate_plugin_manifest(meta: Any, *, package_name: str) -> None:
     """Validate one manifest with the SDK plus repository publication policy."""
 
     context = f"{package_name}.plugin"
+    if not isinstance(meta, dict):
+        raise RegistryContractError(f"{context} must be an object")
+    for field in ("protocol_version", "min_sdk_version", "execution_mode", "projection_sources", "settings_fields"):
+        if field not in meta:
+            raise RegistryContractError(f"{context}.{field} must be declared explicitly")
     try:
         manifest = PluginManifest.model_validate(meta)
     except ValidationError as exc:

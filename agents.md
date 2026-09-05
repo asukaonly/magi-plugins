@@ -34,7 +34,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Declare what a plugin accesses with `[[plugin.permissions.capabilities]]` (capability from the known set: screen_recording, accessibility, calendar, photos, contacts, system_media, filesystem_read, filesystem_write, network, subprocess; optional `scope`, `optional`, `reason_i18n`). Users see these at install for consent; reviewers use them as a checklist.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
-- Test plugin functionality against the Magi backend before pushing.
+- Run SDK-only conformance and focused behavior tests before publishing.
 
 **Don't**
 - Don't modify the plugin runtime or contracts here — those live in the main repo.
@@ -62,16 +62,53 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 |--------|-------------------|--------------------------|
 | **URL** | `github.com/asukaonly/magi` | `github.com/asukaonly/magi-plugins` |
 | **Owns** | Plugin runtime, contracts, manager, API, frontend | Plugin source code, registry index |
-| **Core plugins** | `plugins/core-tools`, `plugins/core-actions` (bundled in app) | — |
+| **Core plugins** | `plugins/core-tools` (bundled in app) | — |
 | **Optional plugins** | — | Marketplace plugins and hidden shared libraries |
 | **Registry** | Backend fetches `registry.json` from this repo | Hosts and maintains `registry.json` |
 | **Docs** | `docs/plugin-development-guide.md`, `docs/plugin-extension-architecture.md` | This file (`agents.md`) |
 
-Key contracts defined in the main repo:
-- `backend/src/magi/plugins/base.py` — `Plugin` base class
-- `backend/src/magi/plugins/contracts.py` — `PluginManifest`, `PluginContribution`, `ExtensionFieldSpec`, etc.
-- `backend/src/magi/awareness/sensor.py` — `Sensor` base class for timeline sensors
-- `backend/src/magi/plugins/actions.py` — `BaseAction` for outbound actions
+Key public contracts live under `sdk/src/magi_plugin_sdk/` in the main repo:
+- `base.py` and `context.py`: connection-bound Plugin and host-owned state/resources/credentials.
+- `runtime.py`: invocation identity, source changes, operations, readiness, and resource references.
+- `sensors.py`, `channels.py`, `history_imports.py`: source, channel, and bounded archive authoring.
+- `contracts.py`: strict manifest, settings, extraction and registry declarations.
+
+All packages explicitly declare `protocol_version = 2`, `min_sdk_version = "0.2.0"`,
+`execution_mode`, and `projection_sources`. Existing native/filesystem/network
+packages require `trusted_process` and explicit host trust. A process boundary
+alone is not a sandbox. Never add a legacy alias, adapter, or data migration.
+
+The host calls `configure(manifest=..., connection=..., context=...)`. Use the
+bound `self.connection` identity and `self.context` paths. Every instance, cache,
+source cursor and credential belongs to that connection. Credential access uses
+synchronous scoped `get(key)`, `set(key, value)`, `delete(key)` calls, never a
+caller-chosen connection or credential file. Shared libraries are stateless with
+respect to accounts; caller-owned objects hold mutable state.
+
+Sensors return `SourceChangeBatch` and explicit stable `SourceChange` revisions.
+Payloads must be JSON values; serialize parser timestamps before crossing the
+SDK boundary. Keep source categories independent of connection IDs. Projections
+must declare actual semantic source selectors; the host limits them to authorized
+connection data and versions projection rules by package version.
+
+Declare all settings, including internal controls and secret keys, under
+`[[plugin.settings_fields]]`. The host validates this schema before importing
+plugin code. Export and review declarations with `scripts/export-settings-fields.py`;
+contribution field methods remain descriptive views. Vault keys must match the
+secret field key exactly, including any dotted source prefix.
+
+### Declarative setup catalog
+
+Export `settings_fields`, `activation_flow`, `settings_actions`, `settings_resources`,
+and `settings_ui_blocks` with `scripts/export-settings-fields.py` against the exact
+SDK under development. The first registered sensor activation flow is primary;
+Local Documents and Obsidian Vault use their knowledge tier. Export only public
+schemas. Never resolve a settings resource or start an action during export or
+discovery. The host authorizes explicit pre-enable setup actions and resource reads only
+when their reviewed schema declares `requires_enabled = false`.
+
+Settings fields use `minimum` and `maximum`. Strict SDK models reject unknown
+fields; do not silently discard obsolete extraction or manifest options.
 
 ---
 
@@ -114,7 +151,7 @@ plugins/<plugin_name>/
 ├── assets/              # Packaged brand/static assets (optional)
 │   └── icon.svg
 ├── plugin.toml          # Manifest — declares id, version, contribution types
-├── plugin.py            # Entry class inheriting magi.plugins.Plugin
+├── plugin.py            # Entry class inheriting magi_plugin_sdk.Plugin
 ├── sensor.py            # Sensor implementation (optional, for timeline sensors)
 ├── normalizers.py       # Data normalizers (optional)
 ├── reader.py            # Data source readers (optional)
@@ -128,7 +165,14 @@ plugins/<plugin_name>/
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Unique plugin identifier (kebab-case) |
+| `id` | Yes | Unique identifier accepted by the SDK |
+| `protocol_version` | Yes | Explicit `2`; no old manifest fallback |
+| `min_sdk_version` | Yes | Explicit `"0.2.0"` |
+| `execution_mode` | Yes | Existing packages declare `trusted_process`; host trust is required |
+| `projection_sources` | Yes | Semantic source selectors; grants remain host-owned |
+| `settings_fields` | Yes | Complete declarative schema, including hidden controls and secret keys |
+| `activation_flow` | When needed | Initial setup form; first registered sensor flow is primary |
+| `settings_actions` / `settings_resources` / `settings_ui_blocks` | Yes | Public setup schemas; empty arrays when unused |
 | `name` | Yes | Display name |
 | `version` | Yes | Semver version string |
 | `description` | Yes | One-line description |
@@ -136,10 +180,11 @@ plugins/<plugin_name>/
 | `icon` | No | `asset:assets/icon.svg` for packaged brand art, or `lucide:<name>` for a generic host icon |
 | `entry_module` | Yes | Python module name (usually `plugin`) |
 | `entry_class` | Yes | Class name in entry module |
-| `official` | No | `true` for Magi Team plugins |
-| `contribution_types` | Yes | Array: `["sensor"]`, `["tool"]`, `["action"]`, or combinations |
+| `official` | No | Marketplace status comes from `official-plugins.json`, never self-assertion |
+| `contribution_types` | Yes | SDK contribution values, such as `sensor`, `tool`, `operation`, `channel`, or `history_importer` |
 | `platforms` | No | Array: `["windows", "macos", "linux", "ios"]` |
-| `dependencies` | No | Array of pip package names for auto-install |
+| `dependencies` | No | SDK-validated Python dependencies resolved into the package lockfile |
+| `depends_on` | No | IDs of separately installed shared libraries |
 
 ---
 
@@ -160,7 +205,7 @@ plugins/<plugin_name>/
 - Generic icons may use any icon from the host's Lucide library through a `lucide:` value.
 - Packaged icons must be SVG, PNG, or WebP, no larger than 64 KiB, and pass the registry's safety validation.
 - Use relative imports within a plugin (`from .reader import ...`).
-- Do not import from `magi.plugins` internals beyond the public contracts (`Plugin`, `Sensor`, `BaseAction`, field specs).
+- Never import from the `magi` backend, including re-export paths. Only `magi_plugin_sdk` is public.
 - If a plugin needs third-party packages, declare them in `plugin.toml` `dependencies`. They will be pip-installed into the plugin's `.deps/` directory at install time.
 - Platform-specific code must be guarded. Use `platforms` in `plugin.toml` to declare supported platforms, and use runtime checks for platform-specific imports.
 
@@ -209,7 +254,7 @@ python scripts/build-registry.py
 
 The script scans all staged `plugins/*/plugin.toml` entries from one frozen Git
 snapshot, extracts metadata, and writes `registry.json` with the following
-structure:
+structure (schema arrays abbreviated here; generated entries contain their full declarations):
 
 ```json
 {
@@ -219,7 +264,15 @@ structure:
     {
       "plugin_id": "chrome-history",
       "name": "Chrome History",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.0",
+      "execution_mode": "trusted_process",
+      "projection_sources": ["chrome_history"],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
       "package_sha256": "64 lowercase hexadecimal characters",
       "path": "plugins/chrome-history",
       "description": "...",
@@ -255,7 +308,7 @@ A task is complete only when:
 1. Plugin code is implemented.
 2. `plugin.toml` is correct and complete.
 3. `registry.json` and `version-history.json` are regenerated.
-4. Basic validation is done (import test, or manual test against Magi backend).
+4. SDK-only conformance and focused behavioral validation pass.
 
 Rules:
 - Keep each commit atomic — one plugin change per commit when practical.
@@ -265,13 +318,13 @@ Rules:
 
 ## 7) Testing & Validation
 
-Plugins run inside the Magi backend. To validate:
+Plugins run in connection-bound workers launched by Magi. To validate:
 
 1. Add a development root containing the plugin package to Magi's
    `plugins.scan_paths`. Keep it outside the managed `~/.magi/plugins/`
    install directory.
 2. Start Magi and rescan plugins from Settings → Extensions.
-3. Enable the plugin and verify it loads without errors.
+3. Create a connection, complete its declared setup, grant trusted access, and enable it.
 
 Do not manually copy or symlink a package into the managed install directory.
 If validation uses the product's **Install from local directory** action, Magi
@@ -282,9 +335,8 @@ For sensor plugins, verify:
 - A manual sync produces timeline entries (or logs the expected behavior).
 
 ```bash
-# Quick import validation (from the main magi repo with venv activated)
-cd <magi-repo>
-python -c "import importlib.util; spec = importlib.util.spec_from_file_location('plugin', '<path>/plugin.py'); mod = importlib.util.module_from_spec(spec)"
+python -m pip install -r scripts/conformance-requirements.txt
+python -m pytest --import-mode=importlib scripts/test_sdk_conformance.py plugins -q
 ```
 
 ---
@@ -323,7 +375,7 @@ Commit text must not contain:
 2. Bump the version in `plugin.toml`.
 3. Stage the complete package change.
 4. Run `bash scripts/refresh.sh <plugin_name>`.
-5. Test against the Magi backend.
+5. Run SDK-only conformance and focused package tests.
 6. Commit plugin changes + updated `registry.json` +
    `version-history.json`.
 7. Push.
@@ -361,5 +413,5 @@ Commit text must not contain:
 
 ---
 
-**Last Updated**: 2026-07-31
+**Last Updated**: 2026-09-05
 **Maintainer**: Magi Development Team
