@@ -10,7 +10,7 @@ id = "github-activity"
 name = "GitHub Activity"
 name_i18n = { "zh-CN" = "GitHub 活动" }
 icon = "asset:assets/icon.svg"
-version = "0.2.0"
+version = "0.2.1"
 description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
 description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
 author = "Magi Team"
@@ -24,7 +24,6 @@ platforms = ["macos", "windows", "linux"]
 [plugin.default_settings.sensors.github_activity]
 enabled = false
 client_id = ""
-access_token = ""
 repositories = []
 sync_interval_minutes = 30
 initial_sync_lookback_days = 30
@@ -136,6 +135,7 @@ key = "sensors.github_activity.repositories"
 type = "tags"
 label = "Repositories"
 description = "Repositories to sync, for example owner/repo."
+default = []
 required = false
 section = "connection"
 surface = "timeline"

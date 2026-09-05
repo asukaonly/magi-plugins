@@ -10,7 +10,7 @@ id = "steam-play-history"
 name = "Steam"
 name_i18n = { "zh-CN" = "Steam" }
 icon = "asset:assets/icon.svg"
-version = "0.2.0"
+version = "0.2.1"
 description = "Infers Steam game records from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏记录" }
 author = "Magi Team"
@@ -111,6 +111,7 @@ key = "sensors.steam_play_history.excluded_appids"
 type = "tags"
 label = "Excluded Appids"
 description = ""
+default = []
 required = false
 section = "advanced"
 surface = "extensions"
@@ -121,6 +122,7 @@ key = "sensors.steam_play_history.excluded_keywords"
 type = "tags"
 label = "Excluded Game Keywords"
 description = "Game names containing these case-insensitive keywords are skipped before AI analysis."
+default = []
 required = false
 section = "privacy"
 surface = "timeline"

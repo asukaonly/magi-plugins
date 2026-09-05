@@ -10,7 +10,7 @@ id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "lucide:file-text"
-version = "0.2.0"
+version = "0.2.1"
 description = "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory."
 description_i18n = { "zh-CN" = "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。" }
 author = "Magi Team"
@@ -164,6 +164,7 @@ key = "sensors.local_documents.root_paths"
 type = "tags"
 label = "Document Folders"
 description = "Local folders to scan for notes and text documents."
+default = []
 required = true
 section = "general"
 surface = "timeline"

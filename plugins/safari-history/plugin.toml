@@ -10,7 +10,7 @@ id = "safari-history"
 name = "Safari History"
 name_i18n = { "zh-CN" = "Safari 浏览器历史" }
 icon = "asset:assets/icon.svg"
-version = "0.2.0"
+version = "0.2.1"
 description = "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Safari 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
 author = "Magi Team"
@@ -134,6 +134,7 @@ key = "sensors.safari_history.filter_domains"
 type = "tags"
 label = "Filter Domains (Regex)"
 description = "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
+default = []
 required = false
 section = "filters"
 surface = "timeline"
@@ -145,6 +146,7 @@ key = "sensors.safari_history.filter_keywords"
 type = "tags"
 label = "Filter Keywords"
 description = "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
+default = []
 required = false
 section = "filters"
 surface = "timeline"

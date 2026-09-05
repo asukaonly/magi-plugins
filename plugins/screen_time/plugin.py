@@ -17,7 +17,7 @@ from .sensor import ScreenTimeTimelineSensor
 
 DEFAULT_SETTINGS = {
     "enabled": False,
-    "sync_interval_minutes": 5,
+    "sync_interval_minutes": "5",
 }
 
 SUPPORTED_PLATFORMS = ("darwin", "win32")
@@ -91,7 +91,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
                 "appear (always one per app per clock hour); a smaller value only reduces "
                 "the delay between an hour ending and its records becoming visible."
             ),
-            default=5,
+            default="5",
             options=[
                 ExtensionFieldOption(label="Every minute", value="1"),
                 ExtensionFieldOption(label="Every 5 minutes", value="5"),

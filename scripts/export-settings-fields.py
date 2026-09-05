@@ -119,7 +119,10 @@ def export(path: Path) -> int:
         ))
     for key, field in sorted(fields.items()):
         data = field.model_dump(exclude_none=True)
-        blocks.append("\n[[plugin.settings_fields]]\n" + "\n".join(f"{name} = {toml(value)}" for name, value in data.items() if value != []))
+        blocks.append("\n[[plugin.settings_fields]]\n" + "\n".join(
+            f"{name} = {toml(value)}" for name, value in data.items()
+            if value != [] or name == "default"
+        ))
     path.write_text(text.rstrip() + "\n" + "\n".join(blocks) + "\n")
     return len(fields)
 

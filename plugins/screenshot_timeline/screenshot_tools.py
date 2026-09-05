@@ -56,6 +56,8 @@ def build_screenshot_timeline_tool_classes(
                     "that should then be passed to prepare_chat_attachments."
                 ),
                 category="screenshots",
+                effect_class="read_only",
+                effect_replay_policy="read_only",
                 parameters=[
                     ToolParameter(
                         name="capture_ref_ids",

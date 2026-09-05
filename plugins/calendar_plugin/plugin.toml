@@ -10,7 +10,7 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "lucide:calendar-days"
-version = "0.2.0"
+version = "0.2.1"
 description = "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
 description_i18n = { "zh-CN" = "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划" }
 author = "Magi Team"
@@ -27,7 +27,7 @@ dependencies = [
 [plugin.default_settings.sensors.calendar]
 enabled = false
 sync_mode = "interval"
-sync_interval_minutes = 30
+sync_interval_minutes = "30"
 lookback_days = 30
 recurring_expansion_days = 30
 default_retention_mode = "full"
@@ -158,6 +158,7 @@ key = "sensors.calendar.selected_calendar_ids"
 type = "tags"
 label = "Selected Calendar Ids"
 description = ""
+default = []
 required = false
 section = "advanced"
 surface = "extensions"

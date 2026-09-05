@@ -18,7 +18,7 @@ from .state import MediaSessionStateStore
 
 DEFAULT_SETTINGS = {
     "enabled": False,
-    "sync_interval_minutes": 1,
+    "sync_interval_minutes": "1",
     "min_session_seconds": 30,
     "pause_timeout_seconds": 300,
 }
@@ -92,7 +92,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             type="select",
             label="Recording Frequency",
             description="How often completed playback records are saved to memory.",
-            default=1,
+            default="1",
             options=[
                 ExtensionFieldOption(label="Every 1 minute", value="1"),
                 ExtensionFieldOption(label="Every 5 minutes", value="5"),

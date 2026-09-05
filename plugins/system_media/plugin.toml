@@ -10,7 +10,7 @@ id = "system-media"
 name = "Local Now Playing"
 name_i18n = { "zh-CN" = "本机正在播放" }
 icon = "lucide:music"
-version = "0.2.0"
+version = "0.2.1"
 description = "Records music currently playing on this device through system media controls."
 description_i18n = { "zh-CN" = "通过系统媒体控制记录本机正在播放的音乐" }
 author = "Magi Team"
@@ -38,7 +38,7 @@ member_order = 20
 
 [plugin.default_settings.sensors.system_media]
 enabled = false
-sync_interval_minutes = 1
+sync_interval_minutes = "1"
 min_session_seconds = 30
 pause_timeout_seconds = 300
 [plugin.suggestion_descriptor]
@@ -103,7 +103,7 @@ key = "sensors.system_media.sync_interval_minutes"
 type = "select"
 label = "Recording Frequency"
 description = "How often completed playback records are saved to memory."
-default = 1
+default = "1"
 required = false
 options = [{ "label" = "Every 1 minute", "value" = "1" }, { "label" = "Every 5 minutes", "value" = "5" }, { "label" = "Every 15 minutes", "value" = "15" }]
 section = "sync"

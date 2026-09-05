@@ -82,6 +82,8 @@ def _build_photo_tool_classes(
                     "so the host can prepare chat attachments for sending."
                 ),
                 category="photos",
+                effect_class="read_only",
+                effect_replay_policy="read_only",
                 parameters=[
                     ToolParameter(
                         name="asset_ref_ids",

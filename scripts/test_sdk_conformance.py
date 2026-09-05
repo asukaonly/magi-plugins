@@ -4,12 +4,14 @@ from __future__ import annotations
 import ast
 import importlib.util
 import inspect
+import math
 import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest
+from magi_plugin_sdk.runtime import OperationSpec
 from sdk_test_support import bind_test_plugin, load_plugin
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,13 +68,21 @@ def test_all_declarations_construct_without_backend(path: Path) -> None:
             assert field.type == declared_fields[field.key].type
             assert field.minimum == declared_fields[field.key].minimum
             assert field.maximum == declared_fields[field.key].maximum
+            assert field.default == declared_fields[field.key].default
         original = {"source_item_id": "same-native-id", "body": "original"}
         revised = {**original, "body": "edited", "description": "new metadata"}
         assert sensor.source_item_version_fingerprint(original) != sensor.source_item_version_fingerprint(revised)
         if sensor.supports_pull_sync:
             assert inspect.signature(sensor.collect_items).return_annotation in {"SourceChangeBatch"}
     for tool_class in plugin.get_tools():
-        assert tool_class().schema.name
+        schema = tool_class().schema
+        OperationSpec(
+            operation_id=schema.name, description=schema.description,
+            input_schema=schema.json_input_schema(), output_schema=schema.output_schema,
+            triggers=["user", "model"], effect=schema.effect_class,
+            replay=schema.effect_replay_policy,
+            idempotency_key_parameter=schema.effect_idempotency_key_parameter,
+        )
     for _, importer, _ in plugin.get_history_importers():
         assert callable(importer.parse)
     after = {name for name in sys.modules if name == "magi" or name.startswith("magi.")}
@@ -182,6 +192,49 @@ def test_declared_schema_covers_defaults_and_credential_ports(path: Path) -> Non
             key = node.args[0]
             if isinstance(key, ast.Constant) and isinstance(key.value, str):
                 assert fields[key.value]["type"] == "secret", (source, key.value)
+
+
+def _assert_default_matches_field(field: ExtensionFieldSpec, value: object) -> None:
+    assert field.type != "secret", field.key
+    if field.type == "switch":
+        assert isinstance(value, bool), field.key
+    elif field.type == "number":
+        assert not isinstance(value, bool) and isinstance(value, (int, float)), field.key
+        assert math.isfinite(value), field.key
+        assert field.minimum is None or value >= field.minimum, field.key
+        assert field.maximum is None or value <= field.maximum, field.key
+    elif field.type == "tags" or (field.type == "path" and isinstance(field.default, list)):
+        assert isinstance(value, list) and all(isinstance(item, str) for item in value), field.key
+    else:
+        assert isinstance(value, str), field.key
+        if field.type == "select":
+            assert value in {option.value for option in field.options}, field.key
+
+
+@pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
+def test_settings_defaults_match_host_declarations(path: Path) -> None:
+    manifest = PluginManifest.model_validate(tomllib.loads(path.read_text())["plugin"])
+    fields = {field.key: field for field in manifest.settings_fields}
+
+    def check_values(values: dict, prefix: str = "") -> None:
+        for key, value in values.items():
+            name = f"{prefix}.{key}" if prefix else key
+            if isinstance(value, dict):
+                check_values(value, name)
+            else:
+                _assert_default_matches_field(fields[name], value)
+
+    check_values(manifest.default_settings)
+    for field in fields.values():
+        if field.type == "secret":
+            assert field.default in (None, ""), field.key
+        elif field.default is not None:
+            _assert_default_matches_field(field, field.default)
+    if manifest.kind != "library":
+        plugin = bind_test_plugin(load_plugin(path))
+        for _, _, spec in plugin.get_sensors():
+            prefix = next((field.key.rsplit(".", 1)[0] for field in spec.fields if field.key.startswith("sensors.")), "")
+            check_values(spec.metadata.get("default_settings", {}), prefix)
 
 
 def test_declarative_activation_matches_primary_source() -> None:

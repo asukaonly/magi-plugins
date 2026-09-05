@@ -23,7 +23,7 @@ DEFAULT_SETTINGS = {
     "enabled": False,
     "authorization_configured": False,
     "sync_mode": "interval",
-    "sync_interval_minutes": 30,
+    "sync_interval_minutes": "30",
     "lookback_days": 30,
     "recurring_expansion_days": 30,
     "default_retention_mode": "full",

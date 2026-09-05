@@ -42,7 +42,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkFwcGxlIFBob3RvczwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOS4yIiBmaWxsPSIjZmZmIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iI0VGNDQ0NCIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNGOTczMTYiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNFQUIzMDgiIHRyYW5zZm9ybT0icm90YXRlKDkwIDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiMyMkM1NUUiIHRyYW5zZm9ybT0icm90YXRlKDEzNSAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjMzhCREY4IiB0cmFuc2Zvcm09InJvdGF0ZSgxODAgMTIgMTIpIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iIzYzNjZGMSIgdHJhbnNmb3JtPSJyb3RhdGUoMjI1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNBODU1RjciIHRyYW5zZm9ybT0icm90YXRlKDI3MCAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjRUM0ODk5IiB0cmFuc2Zvcm09InJvdGF0ZSgzMTUgMTIgMTIpIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMi4yNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEuMTUiIGZpbGw9IiM5Q0EzQUYiLz48L3N2Zz4K",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -232,6 +232,7 @@
           "type": "tags",
           "label": "Source Paths",
           "description": "",
+          "default": [],
           "required": false,
           "section": "advanced",
           "surface": "extensions",
@@ -435,7 +436,7 @@
           }
         ]
       },
-      "package_sha256": "58ba3acd0c218272e50a1ce9426a8075672fcd76607d34a0dda2b7c9596309c9"
+      "package_sha256": "e00fc4c59687da0e33a2aa622e0e5b5cc1fb5adf90e4ef1144c21d41eb82f18f"
     },
     {
       "plugin_id": "browser_history_core",
@@ -475,7 +476,7 @@
         "zh-CN": "日历"
       },
       "icon": "lucide:calendar-days",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -547,6 +548,7 @@
           "type": "tags",
           "label": "Selected Calendar Ids",
           "description": "",
+          "default": [],
           "required": false,
           "section": "advanced",
           "surface": "extensions",
@@ -742,7 +744,7 @@
           }
         ]
       },
-      "package_sha256": "5150446681d07a1f97e09d2262be0e09c91de9fb6f8c436d4d170cf34a6e7b79"
+      "package_sha256": "61f4ca5d294bc0c2e246d5eb1172ffa71e78e89dff8900ae116199848773f249"
     },
     {
       "plugin_id": "chatgpt-history",
@@ -814,7 +816,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdvb2dsZSBDaHJvbWU8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTEyIDJhMTAgMTAgMCAwIDEgOC42NiA1SDEyYTUgNSAwIDAgMC00LjMzIDIuNUw1LjE3IDUuMTdBOS45NiA5Ljk2IDAgMCAxIDEyIDJaIi8+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTIwLjY2IDdBMTAgMTAgMCAwIDEgMTIgMjJsNC4zMy03LjVBNSA1IDAgMCAwIDEyIDdoOC42NloiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMTIgMjJBMTAgMTAgMCAwIDEgNS4xNyA1LjE3bDQuMzMgNy41QTUgNSAwIDAgMCAxNi4zMyAxNC41TDEyIDIyWiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjUuMTUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzLjg1IiBmaWxsPSIjNDI4NUY0Ii8+PC9zdmc+Cg==",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -863,6 +865,7 @@
           "type": "tags",
           "label": "Filter Domains (Regex)",
           "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -874,6 +877,7 @@
           "type": "tags",
           "label": "Filter Keywords",
           "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -1201,7 +1205,7 @@
           }
         ]
       },
-      "package_sha256": "b20a2fa1efc919fbbecbcd4a5c7b517370b7dde61374f09c613fe3a02c139798"
+      "package_sha256": "34271cc85594f1cbe230798d25a99baa167fef416698bc960285961e6c2b844d"
     },
     {
       "plugin_id": "claude-code",
@@ -1703,7 +1707,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk1pY3Jvc29mdCBFZGdlPC90aXRsZT48cGF0aCBmaWxsPSIjMEM1OUE0IiBkPSJNMjEuNCAxNS4zQTkuOCA5LjggMCAwIDAgMy4zIDcuOGMxLjgtMiA0LjYtMy4yIDcuNy0yLjggMy40LjQgNS44IDIuNiA2LjUgNS4zSDguMWMuNS0xLjYgMi0yLjcgMy44LTIuNyAxLjIgMCAyLjMuNSAzIDEuM2gyLjRDMTYuMiA2LjYgMTQgNS4yIDExLjQgNS4yYy00LjIgMC03LjYgMy4zLTcuNiA3LjQgMCAuMyAwIC42LjEuOS44LTEuMiAyLTIuMSAzLjQtMi43YTYgNiAwIDAgMCA1LjQgOC42YzMuNyAwIDYuOC0yIDguMS01WiIvPjxwYXRoIGZpbGw9IiMwQUE3QjUiIGQ9Ik0zLjggMTIuNmMwLTQuMSAzLjQtNy40IDcuNi03LjQgMi42IDAgNC44IDEuNCA1LjkgMy43aC0yLjRhNCA0IDAgMCAwLTMtMS4zYy0yLjIgMC00IDEuNy00IDMuOSAwIDIuOCAyLjQgNSA1LjYgNSAyIDAgMy44LS42IDUuMS0xLjctLjggMy4zLTMuOCA1LjgtNy40IDUuOGE3LjUgNy41IDAgMCAxLTcuNC04WiIvPjxwYXRoIGZpbGw9IiMxNkM3OUEiIGQ9Ik04LjEgMTAuM2g5LjRjLS43LTIuNy0zLjEtNC45LTYuNS01LjMtMy4xLS40LTUuOS44LTcuNyAyLjhBOS44IDkuOCAwIDAgMSAyMS40IDE1LjNjLTEuNS44LTMuMyAxLjItNS4yIDEuMi0zLjMgMC02LjItMS40LTcuNS0zLjZhMy44IDMuOCAwIDAgMS0uNi0yLjZaIi8+PC9zdmc+Cg==",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -1738,6 +1742,7 @@
           "type": "tags",
           "label": "Filter Domains (Regex)",
           "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -1749,6 +1754,7 @@
           "type": "tags",
           "label": "Filter Keywords",
           "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -2059,7 +2065,7 @@
           }
         ]
       },
-      "package_sha256": "a4ad0dad288e0b9927210e0ab1d71241dff87e661d5766e8512443d50c581182"
+      "package_sha256": "d4d8c1df289d054b2f15bcb9b9ce25ef116a91937a98daecadd3bdeb297729a1"
     },
     {
       "plugin_id": "firefox-history",
@@ -2069,7 +2075,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkZpcmVmb3ggQnJvd3NlcjwvdGl0bGU+PHBhdGggZmlsbD0iI0ZGNzEzOSIgZD0iTTguODI0IDcuMjg3Yy4wMDggMCAuMDA0IDAgMCAwem0tMi44LTEuNGMuMDA2IDAgLjAwMyAwIDAgMHptMTYuNzU0IDIuMTYxYy0uNTA1LTEuMjE1LTEuNTMtMi41MjgtMi4zMzMtMi45NDMuNjU0IDEuMjgzIDEuMDMzIDIuNTcgMS4xNzcgMy41M2wuMDAyLjAyYy0xLjMxNC0zLjI3OC0zLjU0NC00LjYtNS4zNjYtNy40NzctLjA5MS0uMTQ3LS4xODQtLjI5Mi0uMjczLS40NDZhMy41NDUgMy41NDUgMCAwMS0uMTMtLjI0IDIuMTE4IDIuMTE4IDAgMDEtLjE3Mi0uNDYuMDMuMDMgMCAwMC0uMDI3LS4wMy4wMzguMDM4IDAgMDAtLjAyMSAwbC0uMDA2LjAwMWEuMDM3LjAzNyAwIDAwLS4wMS4wMDVMMTUuNjI0IDBjLTIuNTg1IDEuNTE1LTMuNjU3IDQuMTY4LTMuOTMyIDUuODU2YTYuMTk3IDYuMTk3IDAgMDAtMi4zMDUuNTg3LjI5Ny4yOTcgMCAwMC0uMTQ3LjM3Yy4wNTcuMTYyLjI0LjI0LjM5Ni4xN2E1LjYyMiA1LjYyMiAwIDAxMi4wMDgtLjUyM2wuMDY3LS4wMDVhNS44NDcgNS44NDcgMCAwMTEuOTU3LjIyMmwuMDk1LjAzYTUuODE2IDUuODE2IDAgMDEuNjE2LjIyOGMuMDguMDM2LjE2LjA3My4yMzguMTEybC4xMDcuMDU1YTUuODM1IDUuODM1IDAgMDEuMzY4LjIxMSA1Ljk1MyA1Ljk1MyAwIDAxMi4wMzQgMi4xMDRjLS42Mi0uNDM3LTEuNzMzLS44NjgtMi44MDMtLjY4MSA0LjE4MyAyLjA5IDMuMDYgOS4yOTItMi43MzcgOS4wMmE1LjE2NCA1LjE2NCAwIDAxLTEuNTEzLS4yOTIgNC40MiA0LjQyIDAgMDEtLjUzOC0uMjMyYy0xLjQyLS43MzUtMi41OTMtMi4xMjEtMi43NC0zLjgwNiAwIDAgLjUzNy0yIDMuODQ1LTIgLjM1NyAwIDEuMzgtLjk5OCAxLjM5OC0xLjI4Ny0uMDA1LS4wOTUtMi4wMjktLjktMi44MTctMS42NzctLjQyMi0uNDE2LS42MjItLjYxNi0uOC0uNzY3YTMuNDcgMy40NyAwIDAwLS4zMDEtLjIyNyA1LjM4OCA1LjM4OCAwIDAxLS4wMzItMi44NDJjLTEuMTk1LjU0NC0yLjEyNCAxLjQwMy0yLjggMi4xNjNoLS4wMDZjLS40Ni0uNTg0LS40MjgtMi41MS0uNDAyLTIuOTEzLS4wMDYtLjAyNS0uMzQzLjE3Ni0uMzg5LjIwNi0uNDA2LjI5LS43ODcuNjE2LTEuMTM2Ljk3NC0uMzk3LjQwMy0uNzYuODM5LTEuMDg1IDEuMzAzYTkuODE2IDkuODE2IDAgMDAtMS41NjIgMy41MmMtLjAwMy4wMTMtLjExLjQ4Ny0uMTkgMS4wNzMtLjAxMy4wOS0uMDI2LjE4MS0uMDM3LjI3MmE3LjggNy44IDAgMDAtLjA2OS42NjdsLS4wMDIuMDM0LS4wMjMuMzg3LS4wMDEuMDZDLjM4NiAxOC43OTUgNS41OTMgMjQgMTIuMDE2IDI0YzUuNzUyIDAgMTAuNTI3LTQuMTc2IDExLjQ2My05LjY2MS4wMi0uMTQ5LjAzNS0uMjk4LjA1Mi0uNDQ4LjIzMi0xLjk5NC0uMDI1LTQuMDktLjc1My01Ljg0NHoiLz48L3N2Zz4K",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2104,6 +2110,7 @@
           "type": "tags",
           "label": "Filter Domains (Regex)",
           "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -2115,6 +2122,7 @@
           "type": "tags",
           "label": "Filter Keywords",
           "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -2428,7 +2436,7 @@
           }
         ]
       },
-      "package_sha256": "69cc956d24de9dc40548a81dfdc16204205e27315a0dc1a9895b8b77ec87b2d8"
+      "package_sha256": "8bd7cb9f35201edcc8fc9c917c5938e759316d69accae620c168aaaf44ce0151"
     },
     {
       "plugin_id": "git-activity",
@@ -2438,7 +2446,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdDwvdGl0bGU+PHBhdGggZmlsbD0iI0YwM0MyRSIgZD0iTTEzLjA5IDIzLjU0OWExLjU0IDEuNTQgMCAwIDEtMi4xOCAwTC40NTEgMTMuMDg5YTEuNTQgMS41NCAwIDAgMSAwLTIuMTc5bDcuMTkxLTcuMTkgMi43MzMgMi43MzNhMS44NSAxLjg1IDAgMCAwIC45NjQgMi4zMjZ2Ni42NmExLjg0OSAxLjg0OSAwIDEgMCAxLjU0IDBWOC45NTdsMi41MDggMi41MDhhMS44NSAxLjg1IDAgMSAwIDEuMDktMS4wOWwtMi42MzQtMi42MzRhMS44NSAxLjg1IDAgMCAwLTIuMzc4LTIuMzc3TDguNzMgMi42MyAxMC45MS40NTFhMS41NCAxLjU0IDAgMCAxIDIuMTc5IDBsMTAuNDU5IDEwLjQ2YTEuNTQgMS41NCAwIDAgMSAwIDIuMTc5eiIvPjwvc3ZnPgo=",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2537,6 +2545,7 @@
           "type": "path",
           "label": "Repositories",
           "description": "Select one or more Git repository folders to monitor.",
+          "default": [],
           "required": false,
           "section": "general",
           "surface": "timeline",
@@ -2547,6 +2556,7 @@
           "type": "tags",
           "label": "Additional Sensitive Keywords",
           "description": "Extra keywords to detect in commit messages (built-in: password, secret, token, etc.)",
+          "default": [],
           "required": false,
           "section": "privacy",
           "surface": "timeline",
@@ -2776,7 +2786,7 @@
           }
         ]
       },
-      "package_sha256": "3c4e1b8399eb6400bf52045c57ad94f0c68c0d8b3d5ad8c0ca024e79325e50da"
+      "package_sha256": "f305f4731dce51b481bcaf31f14dd65e42385dc01814da05c56bc8bc5d235780"
     },
     {
       "plugin_id": "github-activity",
@@ -2786,7 +2796,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdEh1YjwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjMTgxNzE3IiBkPSJNMTIgLjI5N2MtNi42MyAwLTEyIDUuMzczLTEyIDEyIDAgNS4zMDMgMy40MzggOS44IDguMjA1IDExLjM4NS42LjExMy44Mi0uMjU4LjgyLS41NzcgMC0uMjg1LS4wMS0xLjA0LS4wMTUtMi4wNC0zLjMzOC43MjQtNC4wNDItMS42MS00LjA0Mi0xLjYxQzQuNDIyIDE4LjA3IDMuNjMzIDE3LjcgMy42MzMgMTcuN2MtMS4wODctLjc0NC4wODQtLjcyOS4wODQtLjcyOSAxLjIwNS4wODQgMS44MzggMS4yMzYgMS44MzggMS4yMzYgMS4wNyAxLjgzNSAyLjgwOSAxLjMwNSAzLjQ5NS45OTguMTA4LS43NzYuNDE3LTEuMzA1Ljc2LTEuNjA1LTIuNjY1LS4zLTUuNDY2LTEuMzMyLTUuNDY2LTUuOTMgMC0xLjMxLjQ2NS0yLjM4IDEuMjM1LTMuMjItLjEzNS0uMzAzLS41NC0xLjUyMy4xMDUtMy4xNzYgMCAwIDEuMDA1LS4zMjIgMy4zIDEuMjMuOTYtLjI2NyAxLjk4LS4zOTkgMy0uNDA1IDEuMDIuMDA2IDIuMDQuMTM4IDMgLjQwNSAyLjI4LTEuNTUyIDMuMjg1LTEuMjMgMy4yODUtMS4yMy42NDUgMS42NTMuMjQgMi44NzMuMTIgMy4xNzYuNzY1Ljg0IDEuMjMgMS45MSAxLjIzIDMuMjIgMCA0LjYxLTIuODA1IDUuNjI1LTUuNDc1IDUuOTIuNDIuMzYuODEgMS4wOTYuODEgMi4yMiAwIDEuNjA2LS4wMTUgMi44OTYtLjAxNSAzLjI4NiAwIC4zMTUuMjEuNjkuODI1LjU3QzIwLjU2NSAyMi4wOTIgMjQgMTcuNTkyIDI0IDEyLjI5N2MwLTYuNjI3LTUuMzczLTEyLTEyLTEyIi8+PC9zdmc+Cg==",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2855,6 +2865,7 @@
           "type": "tags",
           "label": "Repositories",
           "description": "Repositories to sync, for example owner/repo.",
+          "default": [],
           "required": false,
           "section": "connection",
           "surface": "timeline",
@@ -3022,7 +3033,7 @@
           }
         }
       },
-      "package_sha256": "5b5f9eaaa09796432ba3712da35e84e8b18feac1d056f1246e41b456adb7e09d"
+      "package_sha256": "c69b1234fd6f230a4f7e853935bc93d7ef583b29d15c609068b58b70dafb2977"
     },
     {
       "plugin_id": "local-documents",
@@ -3031,7 +3042,7 @@
         "zh-CN": "本地文档"
       },
       "icon": "lucide:file-text",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -3150,6 +3161,7 @@
           "type": "tags",
           "label": "Document Folders",
           "description": "Local folders to scan for notes and text documents.",
+          "default": [],
           "required": true,
           "section": "general",
           "surface": "timeline",
@@ -3320,7 +3332,7 @@
           }
         }
       },
-      "package_sha256": "6e0c620ae522b7a26ec80709a0430c7d37de42f57a7f99db1583947ca7ec834c"
+      "package_sha256": "3192c87373e8d39da1e93e496428cda8b8d4c362b48a00edc5aa53102734c4b8"
     },
     {
       "plugin_id": "local-photos",
@@ -3329,7 +3341,7 @@
         "zh-CN": "本地照片"
       },
       "icon": "lucide:images",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -3519,6 +3531,7 @@
           "type": "path",
           "label": "Photo Directories",
           "description": "Local directories containing photos to scan. Add one or more paths.",
+          "default": [],
           "required": true,
           "section": "general",
           "surface": "timeline",
@@ -3725,7 +3738,7 @@
           }
         ]
       },
-      "package_sha256": "cade3bd3cd7d534852bf5f4badd84a3bc0bb4ad3103eebbb324f9ea462e90613"
+      "package_sha256": "5b07c6ff33d4cd4b302e729554dc03572f93a5bc45c53e55eea302b5f46d3224"
     },
     {
       "plugin_id": "netease-music",
@@ -4309,7 +4322,7 @@
         "zh-CN": "照片来源核心库"
       },
       "icon": "lucide:images",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4331,7 +4344,7 @@
         "macos",
         "windows"
       ],
-      "package_sha256": "0260ee37e1ddfc5f161c4147e0a224a3538c2d93bb65329327511b748731a9b7"
+      "package_sha256": "cc1e1f76609eb08021f481346f2228fedaf23e1af022d5b98647e5ba2ebff130"
     },
     {
       "plugin_id": "safari-history",
@@ -4341,7 +4354,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlNhZmFyaTwvdGl0bGU+PHBhdGggZmlsbD0iIzAwNkNGRiIgZD0iTTEyIDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwem0tLjAwNC45NTNoLjAwNmMuMDYzIDAgLjExMy4wNS4xMTMuMTEzdjEuODQyYzAgLjA2My0uMDUuMTEzLS4xMTMuMTEzaC0uMDA2YS4xMTIuMTEyIDAgMCAxLS4xMTMtLjExM1YxLjA2NmMwLS4wNjMuMDUtLjExMy4xMTMtLjExM3ptLS45NDEuMDQxYy4wNTYuMDAxLjEwNC4wNDYuMTEuMTA0bC4wNzcuOTE4YS4xMTIuMTEyIDAgMCAxLS4xMDEuMTJoLS4wMWEuMTEuMTEgMCAwIDEtLjEyLS4xbC0uMDgtLjkxOWEuMTEyLjExMiAwIDAgMSAuMTAyLS4xMmguMDFsLjAxMi0uMDAzem0xLjg5MiAwSDEyLjk2NWEuMTEzLjExMyAwIDAgMSAuMTAzLjEyMWwtLjA4LjkyYS4xMTEuMTExIDAgMCAxLS4xMi4xMDJoLS4wMDlhLjExMS4xMTEgMCAwIDEtLjEwMS0uMTIxbC4wNzgtLjkyYS4xMTIuMTEyIDAgMCAxIC4xMTEtLjEwMnptLTIuODM4LjEyM2EuMTEuMTEgMCAwIDEgLjEwNi4wOTJsLjMyIDEuODE4Yy4wMS4wNi0uMDMuMTE5LS4wOS4xM2wtLjAxLjAwMWEuMTExLjExMSAwIDAgMS0uMTI4LS4wOWwtLjMyLTEuODE4YS4xMTEuMTExIDAgMCAxIC4wOS0uMTI5bC4wMS0uMDAyYS4xMDMuMTAzIDAgMCAxIC4wMjItLjAwMnptMy43ODQuMDAyaC4wMjFsLjAwOC4wMDJjLjA2MS4wMS4xMDIuMDcuMDkyLjEzMWwtLjMyIDEuODE0Yy0uMDExLjA2Mi0uMDcuMTAxLS4xMzIuMDloLS4wMDVhLjExMy4xMTMgMCAwIDEtLjA5Mi0uMTNsLjMyLTEuODE1YS4xMTEuMTExIDAgMCAxIC4xMDgtLjA5MnptLTQuNzE1LjIwM2MuMDQ4LjAwMi4wOS4wMzUuMTAzLjA4NGwuMjM5Ljg5M2EuMTEyLjExMiAwIDAgMS0uMDc5LjEzOWwtLjAwNS4wMDFhLjExNC4xMTQgMCAwIDEtLjE0LS4wOGwtLjIzNy0uODk0YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzdsLjAwNi0uMDAyYS4xMjMuMTIzIDAgMCAxIC4wMzUtLjAwNHptNS42NDQgMGEuMTEuMTEgMCAwIDEgLjAzMy4wMDRsLjAwNi4wMDJjLjA2LjAxNi4wOTcuMDc5LjA4LjEzOWwtLjI0Ljg5MmEuMTEyLjExMiAwIDAgMS0uMTM3LjA4bC0uMDA1LS4wMDJhLjExNC4xMTQgMCAwIDEtLjA4LS4xMzhsLjI0LS44OTNhLjExMi4xMTIgMCAwIDEgLjEwMy0uMDg0em0tNi41NjIuMjg1YS4xMS4xMSAwIDAgMSAuMTA3LjA3M0w5IDMuNDJhLjEwNy4xMDcgMCAwIDEtLjA2NC4xMzlsLS4wMTIuMDA1YS4xMS4xMSAwIDAgMS0uMTQtLjA2Nkw4LjE1IDEuNzZhLjExLjExIDAgMCAxIC4wNjUtLjE0bC4wMTQtLjAwNWEuMTA2LjEwNiAwIDAgMSAuMDMtLjAwOHptNy40NjkuMDAyYy4wMTQgMCAuMDI4LjAwMS4wNDIuMDA2bC4wMTIuMDA2Yy4wNTcuMDIuMDg3LjA4Mi4wNjcuMTM5bC0uNjMzIDEuNzM4YS4xMS4xMSAwIDAgMS0uMTQuMDY2bC0uMDEzLS4wMDNBLjExLjExIDAgMCAxIDE1IDMuNDJsLjYzMy0xLjczOGEuMTA4LjEwOCAwIDAgMSAuMDk2LS4wNzN6bS04LjM1Mi4zNjZhLjExMi4xMTIgMCAwIDEgLjEwNS4wNjRsLjM5My44MzhhLjExMi4xMTIgMCAwIDEtLjA1NS4xNDhsLS4wMDguMDA0YS4xMS4xMSAwIDAgMS0uMTQ2LS4wNTRsLS4zOTUtLjgzOGEuMTEyLjExMiAwIDAgMSAuMDU1LS4xNDlsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQzLS4wMXptOS4yNDYgMGEuMTEuMTEgMCAwIDEgLjA0My4wMWwuMDA2LjAwM2EuMTEuMTEgMCAwIDEgLjA1My4xNDlsLS4zOTEuODM4YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU0bC0uMDA2LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ4bC4zOTMtLjg0YS4xMTIuMTEyIDAgMCAxIC4xMDUtLjA2NHptLTEwLjA5Mi40NGMuMDQtLjAwMi4wOC4wMTguMTAyLjA1NmwuOTIyIDEuNTk3YS4xMTMuMTEzIDAgMCAxLS4wNDEuMTU1bC0uMDA2LjAwMmEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNDFsLS45MjItMS41OThhLjExMy4xMTMgMCAwIDEgLjA0LS4xNTRsLjAwNy0uMDAyYS4xMS4xMSAwIDAgMSAuMDUyLS4wMTZ6bTEwLjk0LjAwMWMuMDE4IDAgLjAzNS4wMDQuMDUyLjAxNGwuMDA0LjAwMmEuMTE0LjExNCAwIDAgMSAuMDQxLjE1NmwtLjkyMyAxLjU5NmEuMTE0LjExNCAwIDAgMS0uMTU3LjA0bC0uMDA0LS4wMDFhLjExMi4xMTIgMCAwIDEtLjA0LS4xNTVsLjkyNS0xLjU5NWEuMTEzLjExMyAwIDAgMSAuMTAyLS4wNTd6TTUuNzI5IDIuOTNhLjExLjExIDAgMCAxIC4wOTMuMDQ3bC41MzIuNzUzYS4xMTQuMTE0IDAgMCAxLS4wMjguMTU5bC0uMDA0LjAwMmEuMTE0LjExNCAwIDAgMS0uMTU4LS4wMjhsLS41MzEtLjc1MmEuMTE0LjExNCAwIDAgMSAuMDI3LS4xNThsLjAwNi0uMDAyYS4xMTMuMTEzIDAgMCAxIC4wNjMtLjAyMXptMTIuNTQyIDBhLjExLjExIDAgMCAxIC4wNjMuMDJsLjAwNi4wMDNhLjExMi4xMTIgMCAwIDEgLjAyNy4xNTZsLS41MzEuNzU2YS4xMTIuMTEyIDAgMCAxLS4xNTYuMDI4bC0uMDA2LS4wMDRhLjExMi4xMTIgMCAwIDEtLjAyOC0uMTU3bC41MzItLjc1NWEuMTEuMTEgMCAwIDEgLjA5My0uMDQ3em0uNzQ3LjU3OGEuMTEuMTEgMCAwIDEgLjA4LjAyN2wuMDA2LjAwNGMuMDQ3LjA0LjA1My4xMTEuMDEzLjE1OEwxNy45MzIgNS4xMWEuMTEuMTEgMCAwIDEtLjE1Ny4wMTZsLS4wMDUtLjAwNmEuMTEuMTEgMCAwIDEtLjAxNC0uMTU2bDEuMTg1LTEuNDE0YS4xMTQuMTE0IDAgMCAxIC4wNzctLjA0MXpNNC45ODQgMy41MWEuMTEuMTEgMCAwIDEgLjA3Ny4wMzlMNi4yNDQgNC45NmEuMTEyLjExMiAwIDAgMS0uMDE0LjE1OGwtLjAwMy4wMDRhLjExMi4xMTIgMCAwIDEtLjE1OS0uMDE0TDQuODgzIDMuNjk3YS4xMTIuMTEyIDAgMCAxIC4wMTMtLjE1OGwuMDA2LS4wMDRhLjExMS4xMTEgMCAwIDEgLjA4Mi0uMDI1em0tLjcxNC42NGMuMDI3IDAgLjA1NS4wMS4wNzYuMDMybC42NTguNjZhLjEwNy4xMDcgMCAwIDEgMCAuMTUybC0uMDEuMDFhLjEwNy4xMDcgMCAwIDEtLjE1MiAwbC0uNjYtLjY1OGEuMTEuMTEgMCAwIDEgMC0uMTU1bC4wMS0uMDFhLjExMS4xMTEgMCAwIDEgLjA3OC0uMDN6bTE1LjQ2MiAwYy4wMjggMCAuMDU1LjAxLjA3Ny4wMzJsLjAwNy4wMDdhLjEwOS4xMDkgMCAwIDEgMCAuMTU1bC0uNjU4LjY2YS4xMDkuMTA5IDAgMCAxLS4xNTQgMGwtLjAwOC0uMDA4YS4xMDkuMTA5IDAgMCAxIDAtLjE1NGwuNjU4LS42NmEuMTEuMTEgMCAwIDEgLjA3OC0uMDMyem0uNzA3LjY2Yy4wMzggMCAuMDcxLjAyLjA5Mi4wNzVhLjExMi4xMTIgMCAwIDEtLjAyMy4xMTdsLTcuNjA2IDguMDhjLTMuMDg0IDIuMDI0LTYuMTQ5IDQuMDQtOS4yMjIgNi4wNS0uMDc4LjA1MS0uMTcuMDgyLS4yMTEtLjAyOGEuMTEyLjExMiAwIDAgMSAuMDIzLS4xMThsNy41OTQtOC4wOGMzLjA4NC0yLjAyMyA2LjE2MS00LjAzOSA5LjIzNC02LjA0OWEuMjQ3LjI0NyAwIDAgMSAuMTItLjA0NnptLTE2LjgyNC4wNDVhLjEwOS4xMDkgMCAwIDEgLjA4LjAyNmwxLjQxNiAxLjE4N2EuMTEuMTEgMCAwIDEgLjAxNC4xNTdsLS4wMDYuMDA1YS4xMS4xMSAwIDAgMS0uMTU2LjAxNEwzLjU0OSA1LjA1N2EuMTA5LjEwOSAwIDAgMS0uMDE0LS4xNTVsLjAwNi0uMDA3YS4xMDguMTA4IDAgMCAxIC4wNzQtLjA0em0xNy4zMzYuNzU2Yy4wMzYgMCAuMDcyLjAxNy4wOTQuMDVsLjAwNC4wMDNhLjExNC4xMTQgMCAwIDEtLjAyOC4xNThsLS43NTMuNTNhLjExMi4xMTIgMCAwIDEtLjE1Ny0uMDI4bC0uMDA0LS4wMDRhLjExNC4xMTQgMCAwIDEgLjAyOC0uMTU4bC43NTQtLjUzYS4xMTMuMTEzIDAgMCAxIC4wNjItLjAyem0tMTcuOTA0LjAwMmMuMDIgMCAuMDQyLjAwNy4wNi4wMmwuNzYuNTMxYy4wNS4wMzUuMDYuMTAzLjAyNi4xNTJsLS4wMDYuMDFhLjEwOS4xMDkgMCAwIDEtLjE1My4wMjZsLS43Ni0uNTMyYS4xMDkuMTA5IDAgMCAxLS4wMjUtLjE1MmwuMDA2LS4wMWEuMTA4LjEwOCAwIDAgMSAuMDkyLS4wNDV6bS0uNTEyLjgwM2MuMDE4IDAgLjAzNi4wMDYuMDUzLjAxNmwxLjU5Ni45MjNhLjExMS4xMTEgMCAwIDEgLjA0LjE1M2wtLjAwMy4wMDZhLjExMS4xMTEgMCAwIDEtLjE1My4wNEwyLjQ3MyA2LjYzYS4xMTEuMTExIDAgMCAxLS4wNDEtLjE1MmwuMDA0LS4wMDZhLjExLjExIDAgMCAxIC4xLS4wNTV6bTE4LjkzMiAwYS4xMS4xMSAwIDAgMSAuMS4wNTVsLjAwMS4wMDRhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGwtMS41OTYuOTI2YS4xMTMuMTEzIDAgMCAxLS4xNTUtLjA0MWwtLjAwMi0uMDA0YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwxLjU5Ni0uOTI1YS4xMTUuMTE1IDAgMCAxIC4wNTUtLjAxNHptLTE5LjM3My44NDZjLjAxNCAwIC4wMjkuMDAzLjA0My4wMWwuODM4LjM5MmEuMTEuMTEgMCAwIDEgLjA1Mi4xNDdsLS4wMDQuMDFhLjExLjExIDAgMCAxLS4xNDYuMDUybC0uODM4LS4zOTNhLjExLjExIDAgMCAxLS4wNTMtLjE0NmwuMDA0LS4wMWEuMTA5LjEwOSAwIDAgMSAuMTA0LS4wNjJ6bTE5LjgxLjAwMmEuMTEuMTEgMCAwIDEgLjEwNi4wNjJsLjAwMi4wMDhhLjExLjExIDAgMCAxLS4wNTMuMTQ2bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ni0uMDUzbC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTItLjE0NmwuODM4LS4zOTNhLjExLjExIDAgMCAxIC4wNDMtLjAxem0tMjAuMTgzLjg4Yy4wMTQgMCAuMDI4LjAwMS4wNDMuMDA2bDEuNzMyLjYzMWEuMTEyLjExMiAwIDAgMSAuMDY3LjE0NWwtLjAwMi4wMDZhLjExLjExIDAgMCAxLS4xNDMuMDY2bC0xLjczMi0uNjNhLjExMy4xMTMgMCAwIDEtLjA2OS0uMTQ1bC4wMDItLjAwNGEuMTE1LjExNSAwIDAgMSAuMTAyLS4wNzR6bTIwLjU0OSAwYS4xMTMuMTEzIDAgMCAxIC4xMS4wNzVsLjAwMy4wMDRhLjExNS4xMTUgMCAwIDEtLjA2OS4xNDZsLTEuNzMyLjYyOWEuMTEyLjExMiAwIDAgMS0uMTQ1LS4wNjZsLS4wMDEtLjAwNmEuMTEzLjExMyAwIDAgMSAuMDY4LS4xNDVsMS43MzItLjYzYS4xMS4xMSAwIDAgMSAuMDM0LS4wMDZ6bS0yMC44MzYuOTA5YS4xMS4xMSAwIDAgMSAuMDMzLjAwNGwuODkyLjI0Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzdsLS4wMDIuMDA3YS4xMS4xMSAwIDAgMS0uMTM2LjA3OWwtLjg5NS0uMjM5YS4xMTMuMTEzIDAgMCAxLS4wNzgtLjEzOGwuMDAyLS4wMDZhLjExMy4xMTMgMCAwIDEgLjEwNC0uMDg0em0yMS4xMy4wMDJhLjExNS4xMTUgMCAwIDEgLjEwNi4wODR2LjAwNGEuMTEyLjExMiAwIDAgMS0uMDc4LjEzOGwtLjg5My4yMzlhLjExMi4xMTIgMCAwIDEtLjEzOC0uMDc5di0uMDA1YS4xMTIuMTEyIDAgMCAxIC4wNzgtLjE0bC44OTItLjIzN2EuMTEuMTEgMCAwIDEgLjAzMy0uMDA0em0tMjEuMzM1LjkzLjAyMy4wMDEgMS44MTQuMzIzYy4wNjIuMDEuMTAxLjA2OS4wOS4xM3YuMDA2YS4xMTEuMTExIDAgMCAxLS4xMy4wOWwtMS44MTUtLjMyMmEuMTEzLjExMyAwIDAgMS0uMDkyLS4xMzFsLjAwMi0uMDA2YS4xMS4xMSAwIDAgMSAuMTA4LS4wOTJ6bTIxLjUxOS4wMDFoLjAyMmMuMDUyLjAwMi4xLjAzOC4xMDkuMDkydi4wMDZjLjAxLjA2Mi0uMDMuMTItLjA5Mi4xM2wtMS44MTQuMzIxYS4xMTMuMTEzIDAgMCAxLS4xMzEtLjA5MnYtLjAwNWEuMTEzLjExMyAwIDAgMSAuMDkyLS4xMzFsMS44MTQtLjMyem0tMjEuNjQ0Ljk0NGguMDExbC45MjIuMDg0YS4xMS4xMSAwIDAgMSAuMTAyLjExOWwtLjAwMi4wMWEuMTEuMTEgMCAwIDEtLjEyMS4xbC0uOTIyLS4wODNhLjExLjExIDAgMCAxLS4xLS4xMnYtLjAwOWEuMTExLjExMSAwIDAgMSAuMTEtLjEwMXptMjEuNzc5LjAwMmguMDEyYy4wNTYgMCAuMTA2LjA0My4xMS4xMDF2LjAwOGEuMTExLjExMSAwIDAgMS0uMS4xMjFsLS45MjMuMDhhLjExMS4xMTEgMCAwIDEtLjEyLS4xMDF2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjEtLjEyMWwuOTItLjA4em0tMTEuODIuNzNMNi4wOTEgMTYuOTVjMi4wMi0xLjMyNCA0LjAzOS0yLjY0NiA2LjA2Ni0zLjk3NmwtMS4wOTUtMS4zMXptMTEuODcuMjE5Yy4wNjMgMCAuMTE0LjA1LjExNC4xMTN2LjAwNGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2wtMS44NDQuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMTMtLjExM3YtLjAwNGMwLS4wNjMuMDUtLjExMy4xMTMtLjExM2wxLjg0NC0uMDA0em0tMjEuODY5LjAwMmgxLjg0NGMuMDYyIDAgLjExMi4wNS4xMTIuMTExdi4wMDhjMCAuMDYyLS4wNS4xMTEtLjExMi4xMTFIMS4wNjRhLjExMS4xMTEgMCAwIDEtLjExLS4xMTF2LS4wMDhjMC0uMDYxLjA0OS0uMTExLjExLS4xMTF6bS45NTIuODc1aC4wMTFhLjExLjExIDAgMCAxIC4xMS4xMDF2LjAwNmEuMTExLjExMSAwIDAgMS0uMTAyLjEyMWwtLjkyMi4wOGEuMTEuMTEgMCAwIDEtLjExOS0uMTAxbC0uMDAyLS4wMDZhLjExMS4xMTEgMCAwIDEgLjEwMi0uMTIxbC45MjItLjA4em0xOS45NTUgMGguMDExbC45MjIuMDhhLjExLjExIDAgMCAxIC4xMDIuMTE5di4wMDhhLjExMi4xMTIgMCAwIDEtLjEyMS4xMDFsLS45MjItLjA4YS4xMS4xMSAwIDAgMS0uMTAyLS4xMTl2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjExLS4xMDF6bS0xOC45MjQuNzA1Yy4wNTMuMDAxLjA5OC4wNC4xMDcuMDk0bC4wMDIuMDA0Yy4wMTEuMDYxLS4wMy4xMi0uMDkyLjEzbC0xLjgxMi4zMmEuMTEzLjExMyAwIDAgMS0uMTMtLjA5MXYtLjAwNGEuMTE1LjExNSAwIDAgMSAuMDktLjEzM2wxLjgxMS0uMzE4YS4xMTcuMTE3IDAgMCAxIC4wMjQtLjAwMnptMTcuOTAyIDBjLjAwOCAwIC4wMTYgMCAuMDI0LjAwMmwxLjgxNi4zMmMuMDYxLjAxMS4xLjA3LjA5LjEzMXYuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMzEuMDkybC0xLjgxNi0uMzJhLjExMi4xMTIgMCAwIDEtLjA5LS4xMzF2LS4wMDRhLjExMy4xMTMgMCAwIDEgLjEwNy0uMDk0ek0yLjMzMiAxNC40NzdhLjExLjExIDAgMCAxIC4xMDQuMDgybC4wMDIuMDA1Yy4wMTYuMDYtLjAyLjEyMS0uMDguMTM3bC0uODkxLjI0YS4xMTIuMTEyIDAgMCAxLS4xMzctLjA4bC0uMDAyLS4wMDZhLjExMi4xMTIgMCAwIDEgLjA4LS4xMzZsLjg5LS4yMzlhLjExMi4xMTIgMCAwIDEgLjAzNC0uMDAzem0xOS4zMzIgMGMuMDExIDAgLjAyNCAwIC4wMzUuMDAzbC44OTMuMjM5Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzZsLS4wMDIuMDA2YS4xMTEuMTExIDAgMCAxLS4xMzcuMDc4bC0uODk0LS4yMzhhLjExMS4xMTEgMCAwIDEtLjA3OC0uMTM3bC4wMDItLjAwNWEuMTA5LjEwOSAwIDAgMSAuMTAxLS4wODJ6bS0xOC4yMTMuNTE3YS4xMS4xMSAwIDAgMSAuMTEuMDc0bC4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4wNjcuMTQ1bC0xLjczMi42M2EuMTEzLjExMyAwIDAgMS0uMTQ1LS4wNjhsLS4wMDItLjAwNGEuMTEzLjExMyAwIDAgMSAuMDY5LS4xNDRMMy40MTggMTVhLjExLjExIDAgMCAxIC4wMzMtLjAwNnptMTcuMDg2IDBjLjAxNSAwIC4wMjkgMCAuMDQzLjAwNmwxLjczNC42M2EuMTExLjExMSAwIDAgMSAuMDY3LjE0M2wtLjAwMi4wMDhhLjExMS4xMTEgMCAwIDEtLjE0My4wNjdsLTEuNzM0LS42MzFhLjExMS4xMTEgMCAwIDEtLjA2Ni0uMTQzbC4wMDItLjAwOGEuMTExLjExMSAwIDAgMSAuMS0uMDcyek0yLjkyIDE2LjExN2EuMTA5LjEwOSAwIDAgMSAuMTAzLjA2M2wuMDA0LjAxYS4xMDguMTA4IDAgMCAxLS4wNTIuMTQ0bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ny0uMDU1bC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTMtLjE0NmwuODM4LS4zOTFhLjExMi4xMTIgMCAwIDEgLjA0My0uMDF6bTE4LjE1OCAwYS4xMS4xMSAwIDAgMSAuMDQzLjAxbC44MzguMzljLjA1Ni4wMjcuMDguMDkzLjA1NS4xNDlsLS4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4xNDkuMDU1bC0uODM4LS4zOTFhLjExMi4xMTIgMCAwIDEtLjA1NC0uMTQ4bC4wMDItLjAwNGEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjV6bS0xNi45NTcuMzE1Yy4wNC0uMDAxLjA3OC4wMi4xLjA1NmwuMDA0LjAwNGEuMTEuMTEgMCAwIDEtLjA0MS4xNTNsLTEuNTk2LjkyMWEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNGwtLjAwMi0uMDA1YS4xMTMuMTEzIDAgMCAxIC4wNC0uMTU0bDEuNTk2LS45MjJhLjEwOS4xMDkgMCAwIDEgLjA1My0uMDEzem0xNS43NTYgMGMuMDE4IDAgLjAzNi4wMDQuMDUzLjAxM2wxLjU5Ny45MjRhLjExLjExIDAgMCAxIC4wNDEuMTUybC0uMDAyLjAwNGEuMTEuMTEgMCAwIDEtLjE1Mi4wNDFsLTEuNTk4LS45MjFhLjExMy4xMTMgMCAwIDEtLjA0LS4xNTVsLjAwMS0uMDAyYS4xMTEuMTExIDAgMCAxIC4xLS4wNTZ6bS4zMjggMS4xOTNhLjExLjExIDAgMCAxIC4wNi4wMjFsLjc1OC41MzRjLjA1LjAzNS4wNjEuMTAyLjAyNi4xNTJsLS4wMDQuMDA4YS4xMTEuMTExIDAgMCAxLS4xNTQuMDI3bC0uNzU2LS41MzVhLjEwOS4xMDkgMCAwIDEtLjAyOC0uMTUybC4wMDYtLjAwOGEuMTEuMTEgMCAwIDEgLjA5Mi0uMDQ3em0tMTYuNDEyLjAwMmMuMDM1IDAgLjA3Mi4wMTYuMDk0LjA0N2wuMDA0LjAwOGEuMTA5LjEwOSAwIDAgMS0uMDI4LjE1MmwtLjc1Ni41MzFhLjEwOC4xMDggMCAwIDEtLjE1Mi0uMDI1bC0uMDA2LS4wMDhhLjEwOS4xMDkgMCAwIDEgLjAyOC0uMTUybC43NTUtLjUzNGEuMTA3LjEwNyAwIDAgMSAuMDYxLS4wMTl6bTE1LjE2Mi4xMDJhLjExMi4xMTIgMCAwIDEgLjA4Mi4wMjVsMS40MTQgMS4xODdhLjExLjExIDAgMCAxIC4wMTQuMTU3bC0uMDA0LjAwNGEuMTEzLjExMyAwIDAgMS0uMTU4LjAxM0wxOC44OSAxNy45M2EuMTEuMTEgMCAwIDEtLjAxNC0uMTU3bC4wMDQtLjAwNWEuMTA4LjEwOCAwIDAgMSAuMDc0LS4wNHptLTEyLjgxMiAxLjEyYS4xMS4xMSAwIDAgMSAuMDguMDI2bC4wMDcuMDA4YS4xMS4xMSAwIDAgMSAuMDE0LjE1NEw1LjA2IDIwLjQ1MWEuMTEuMTEgMCAwIDEtLjE1NS4wMTJsLS4wMDgtLjAwNmEuMTEuMTEgMCAwIDEtLjAxMy0uMTU0bDEuMTg1LTEuNDE0YS4xMS4xMSAwIDAgMSAuMDc1LS4wNHptMTEuNzAzIDBjLjAzMiAwIC4wNjUuMDE1LjA4OC4wNDJsMS4xODEgMS40MWMuMDQuMDQ4LjAzNS4xMi0uMDEzLjE2bC0uMDAyLjAwMmEuMTE0LjExNCAwIDAgMS0uMTYtLjAxNGwtMS4xODItMS40MWEuMTE0LjExNCAwIDAgMSAuMDEzLS4xNmwuMDAyLS4wMDJhLjExNS4xMTUgMCAwIDEgLjA3My0uMDI3em0tMTIuOTI4LjExNGMuMDI3IDAgLjA1NC4wMS4wNzQuMDMxbC4wMTQuMDEyYS4xMDcuMTA3IDAgMCAxIDAgLjE1bC0uNjYyLjY2YS4xMDUuMTA1IDAgMCAxLS4xNDkgMGwtLjAxMS0uMDExYS4xMDUuMTA1IDAgMCAxIDAtLjE0OWwuNjYtLjY2MmEuMTA1LjEwNSAwIDAgMSAuMDc0LS4wMzF6bTE0LjE2NCAwYy4wMjcgMCAuMDUzLjAxLjA3NC4wMzFsLjY2LjY2MmEuMTA2LjEwNiAwIDAgMSAwIC4xNWwtLjAxMS4wMTJhLjEwNi4xMDYgMCAwIDEtLjE1LS4wMDJsLS42Ni0uNjZhLjEwNi4xMDYgMCAwIDEgLjAwMS0uMTVsLjAxLS4wMTJhLjEwOC4xMDggMCAwIDEgLjA3Ni0uMDMxem0tMTEuNjI3Ljc5N2MuMDE4IDAgLjAzNC4wMDYuMDUuMDE1bC4wMDcuMDA0YS4xMS4xMSAwIDAgMSAuMDQuMTVsLS45MjEgMS41OThhLjExLjExIDAgMCAxLS4xNS4wNDFsLS4wMDgtLjAwNGEuMTExLjExMSAwIDAgMS0uMDQtLjE1MmwuOTIyLTEuNTk2YS4xMTMuMTEzIDAgMCAxIC4xLS4wNTZ6bTkuMDg4LjAwMmEuMTEuMTEgMCAwIDEgLjEuMDU0bC45MjUgMS41OTZhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGgtLjAwNWEuMTEuMTEgMCAwIDEtLjE1Mi0uMDM5bC0uOTI2LTEuNTk1YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwuMDA0LS4wMDJhLjEwOC4xMDggMCAwIDEgLjA1My0uMDEzem0tMTAuMjg1LjMyNGMuMDIxIDAgLjA0My4wMDguMDYyLjAyMWwuMDA0LjAwMmMuMDUxLjAzNi4wNjMuMTA2LjAyOC4xNTdsLS41My43NTVhLjExMi4xMTIgMCAwIDEtLjE1Ni4wMjhsLS4wMDQtLjAwMmEuMTEyLjExMiAwIDAgMS0uMDI3LS4xNTZsLjUzLS43NTZhLjExMy4xMTMgMCAwIDEgLjA5My0uMDV6bTExLjQ4NC4wMDJjLjAzNiAwIC4wNzIuMDE1LjA5NC4wNDdsLjUzLjc1NmMuMDM1LjA1LjAyMy4xMi0uMDI4LjE1NmwtLjAwNC4wMDJhLjExMi4xMTIgMCAwIDEtLjE1Ni0uMDI4bC0uNTMtLjc1NWEuMTEyLjExMiAwIDAgMSAuMDI4LS4xNTdsLjAwNC0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wNjItLjAyem0tOC44NjMuMzQyYS4xMS4xMSAwIDAgMSAuMDQzLjAwNmwuMDEyLjAwNWMuMDU2LjAyLjA4NC4wODEuMDY0LjEzN2wtLjYzMyAxLjc0YS4xMDUuMTA1IDAgMCAxLS4xMzYuMDYzbC0uMDE0LS4wMDRhLjEwNi4xMDYgMCAwIDEtLjA2NS0uMTM3bC42MzMtMS43NGEuMTA3LjEwNyAwIDAgMSAuMDk2LS4wN3ptNi4yMzIgMGEuMTA3LjEwNyAwIDAgMSAuMTA2LjA3bC42MzMgMS43MzhhLjEwNy4xMDcgMCAwIDEtLjA2NS4xMzdsLS4wMTUuMDA2YS4xMDcuMTA3IDAgMCAxLS4xMzctLjA2NUwxNSAyMC41NzhhLjEwNy4xMDcgMCAwIDEgLjA2NC0uMTM3bC4wMTQtLjAwNWEuMTE3LjExNyAwIDAgMSAuMDMzLS4wMDZ6bS00LjY5NS40MWMuMDA4IDAgLjAxNCAwIC4wMjEuMDAybC4wMDYuMDAyYy4wNjIuMDEuMTAxLjA2Ny4wOS4xMjlsLS4zMTggMS44MTJhLjExMy4xMTMgMCAwIDEtLjEzMS4wOTJsLS4wMDQtLjAwMmEuMTExLjExMSAwIDAgMS0uMDkyLS4xMjlsLjMyLTEuODEyYS4xMTMuMTEzIDAgMCAxIC4xMDgtLjA5NHptMy4xNDYuMDAyYy4wMDgtLjAwMi4wMTUgMCAuMDIyIDBhLjExMS4xMTEgMCAwIDEgLjEwNy4wOTJsLjMyIDEuODEyYy4wMTIuMDYxLS4wMy4xMi0uMDkxLjEzMWwtLjAwNC4wMDJhLjExMy4xMTMgMCAwIDEtLjEzLS4wOTJsLS4zMjEtMS44MTJhLjExMy4xMTMgMCAwIDEgLjA5Mi0uMTMxbC4wMDUtLjAwMnptLTUuNzkuMTE5YS4xMS4xMSAwIDAgMSAuMDQyLjAxbC4wMDQuMDAyYS4xMTQuMTE0IDAgMCAxIC4wNTUuMTVsLS4zOTMuODM0YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU1bC0uMDA0LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ5bC4zOTMtLjgzNmEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjR6bTguNDU4IDBhLjEwOC4xMDggMCAwIDEgLjEwNC4wNjJsLjM5Ljg0YS4xMS4xMSAwIDAgMS0uMDUyLjE0N2wtLjAwOC4wMDRhLjExLjExIDAgMCAxLS4xNDYtLjA1NWwtLjM5MS0uODM4YS4xMS4xMSAwIDAgMSAuMDUzLS4xNDZsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQyLS4wMXptLTQuMjM2LjAxOEgxMmMuMDYzIDAgLjExNS4wNS4xMTUuMTEzbC4wMDIgMS44NGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2gtLjAwNmEuMTEzLjExMyAwIDAgMS0uMTEzLS4xMTNsLS4wMDQtMS44MzhjMC0uMDYzLjA1LS4xMTUuMTEzLS4xMTV6bS0yLjU5Mi41NzhjLjAxMSAwIC4wMjIgMCAuMDM0LjAwNGwuMDA1LjAwMmMuMDYuMDE2LjA5NS4wNzcuMDc5LjEzNmwtLjI0Ljg5M2EuMTExLjExMSAwIDAgMS0uMTM3LjA3OGwtLjAwNi0uMDAyYS4xMTEuMTExIDAgMCAxLS4wNzgtLjEzN2wuMjQtLjg5YS4xMTMuMTEzIDAgMCAxIC4xMDMtLjA4NHptNS4xOTYuMDAyYS4xMS4xMSAwIDAgMSAuMTAzLjA4MmwuMjQuODlhLjExLjExIDAgMCAxLS4wNzguMTM3bC0uMDA2LjAwMmEuMTEuMTEgMCAwIDEtLjEzNi0uMDc4bC0uMjQtLjg5YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzhsLjAwNS0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wMzQtLjAwM3ptLTMuNDc1LjMwMmguMDFsLjAwOC4wMDJjLjA2MS4wMDYuMTA3LjA2LjEwMS4xMjFsLS4wOC45MmEuMTEyLjExMiAwIDAgMS0uMTIxLjEwMmgtLjAwOGEuMTEuMTEgMCAwIDEtLjEtLjEyMWwuMDgtLjkyMmEuMTExLjExMSAwIDAgMSAuMTEtLjEwMnptMS43MzYgMGguMDJhLjExLjExIDAgMCAxIC4xMDcuMTAybC4wOC45MjRhLjExLjExIDAgMCAxLS4xMDEuMTE5bC0uMDA4LjAwMmEuMTEuMTEgMCAwIDEtLjEyLS4xMDJsLS4wOC0uOTI0YS4xMTIuMTEyIDAgMCAxIC4xMDItLjEyeiIvPjwvc3ZnPgo=",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4376,6 +4389,7 @@
           "type": "tags",
           "label": "Filter Domains (Regex)",
           "description": "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -4387,6 +4401,7 @@
           "type": "tags",
           "label": "Filter Keywords",
           "description": "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
+          "default": [],
           "required": false,
           "section": "filters",
           "surface": "timeline",
@@ -4731,7 +4746,7 @@
           }
         ]
       },
-      "package_sha256": "04e0b88f57c5539f76938218096b61ff2b6f1fc102823c9fd432c0e9434b7fa0"
+      "package_sha256": "1eb358f237f801330eee6c9d2e16385c8638e8b65e00fe2dfe2e09ab91c774ec"
     },
     {
       "plugin_id": "screen-time",
@@ -4740,7 +4755,7 @@
         "zh-CN": "屏幕使用"
       },
       "icon": "lucide:chart-no-axes-column",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4764,7 +4779,7 @@
           "type": "select",
           "label": "Check Interval",
           "description": "How often the plugin checks for hourly buckets that have just ended and flushes them to the timeline. This does NOT change how often new entries appear (always one per app per clock hour); a smaller value only reduces the delay between an hour ending and its records becoming visible.",
-          "default": 5,
+          "default": "5",
           "required": false,
           "options": [
             {
@@ -4851,7 +4866,7 @@
           "en": "Lets magi see your screen-time usage"
         }
       },
-      "package_sha256": "bbdf847f8ddff7692eb4aed56235ae9781e9bf550a51295026d1ef422621c0f0"
+      "package_sha256": "88c896e9afdccc934b3b2d2093e4bade0d48cc088fe5a0c018946029d7a24c74"
     },
     {
       "plugin_id": "screenshot_timeline",
@@ -4860,7 +4875,7 @@
         "zh-CN": "屏幕快照时间线"
       },
       "icon": "lucide:scan",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5099,6 +5114,7 @@
           "type": "tags",
           "label": "Window title blocklist (substrings)",
           "description": "Any window whose title contains any of these strings will be skipped.",
+          "default": [],
           "required": false,
           "section": "privacy",
           "surface": "timeline",
@@ -5237,7 +5253,7 @@
           "en": "Lets magi see what's on your screen"
         }
       },
-      "package_sha256": "f18c9fddd5806c11133a50034024f59951479fa49cb2a3ef5baabe4a82471ad9"
+      "package_sha256": "9271bb62a2460ad3ab734fae0268c5e172753e717de6aac8809b437dc4bda0c1"
     },
     {
       "plugin_id": "steam-play-history",
@@ -5247,7 +5263,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlN0ZWFtPC90aXRsZT48cGF0aCBmaWxsPSIjNjZDMEY0IiBkPSJNMTEuOTc5IDBDNS42NzggMCAuNTExIDQuODYuMDIyIDExLjAzN2w2LjQzMiAyLjY1OGMuNTQ1LS4zNzEgMS4yMDMtLjU5IDEuOTEyLS41OS4wNjMgMCAuMTI1LjAwNC4xODguMDA2bDIuODYxLTQuMTQyVjguOTFjMC0yLjQ5NSAyLjAyOC00LjUyNCA0LjUyNC00LjUyNCAyLjQ5NCAwIDQuNTI0IDIuMDMxIDQuNTI0IDQuNTI3cy0yLjAzIDQuNTI1LTQuNTI0IDQuNTI1aC0uMTA1bC00LjA3NiAyLjkxMWMwIC4wNTIuMDA0LjEwNS4wMDQuMTU5IDAgMS44NzUtMS41MTUgMy4zOTYtMy4zOSAzLjM5Ni0xLjYzNSAwLTMuMDE2LTEuMTczLTMuMzMxLTIuNzI3TC40MzYgMTUuMjdDMS44NjIgMjAuMzA3IDYuNDg2IDI0IDExLjk3OSAyNGM2LjYyNyAwIDExLjk5OS01LjM3MyAxMS45OTktMTJTMTguNjA1IDAgMTEuOTc5IDB6TTcuNTQgMTguMjFsLTEuNDczLS42MWMuMjYyLjU0My43MTQuOTk5IDEuMzE0IDEuMjUgMS4yOTcuNTM5IDIuNzkzLS4wNzYgMy4zMzItMS4zNzUuMjYzLS42My4yNjQtMS4zMTkuMDA1LTEuOTQ5cy0uNzUtMS4xMjEtMS4zNzctMS4zODNjLS42MjQtLjI2LTEuMjktLjI0OS0xLjg3OC0uMDNsMS41MjMuNjNjLjk1Ni40IDEuNDA5IDEuNSAxLjAwOSAyLjQ1NS0uMzk3Ljk1Ny0xLjQ5NyAxLjQxLTIuNDU0IDEuMDEySDcuNTR6bTExLjQxNS05LjMwM2MwLTEuNjYyLTEuMzUzLTMuMDE1LTMuMDE1LTMuMDE1LTEuNjY1IDAtMy4wMTUgMS4zNTMtMy4wMTUgMy4wMTUgMCAxLjY2NSAxLjM1IDMuMDE1IDMuMDE1IDMuMDE1IDEuNjYzIDAgMy4wMTUtMS4zNSAzLjAxNS0zLjAxNXptLTUuMjczLS4wMDVjMC0xLjI1MiAxLjAxMy0yLjI2NiAyLjI2NS0yLjI2NiAxLjI0OSAwIDIuMjY2IDEuMDE0IDIuMjY2IDIuMjY2IDAgMS4yNTEtMS4wMTcgMi4yNjUtMi4yNjYgMi4yNjUtMS4yNTMgMC0yLjI2NS0xLjAxNC0yLjI2NS0yLjI2NXoiLz48L3N2Zz4K",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5293,6 +5309,7 @@
           "type": "tags",
           "label": "Excluded Appids",
           "description": "",
+          "default": [],
           "required": false,
           "section": "advanced",
           "surface": "extensions",
@@ -5303,6 +5320,7 @@
           "type": "tags",
           "label": "Excluded Game Keywords",
           "description": "Game names containing these case-insensitive keywords are skipped before AI analysis.",
+          "default": [],
           "required": false,
           "section": "privacy",
           "surface": "timeline",
@@ -5594,7 +5612,7 @@
           }
         ]
       },
-      "package_sha256": "5a517c2b817c8a18357d9e4e3522594f58e7d9ba3b48381aec5dfb06c601c79b"
+      "package_sha256": "195e94f1cff777555740bae027e78bafe2d697ef0c1ac08507960c09f0ade7b3"
     },
     {
       "plugin_id": "system-media",
@@ -5603,7 +5621,7 @@
         "zh-CN": "本机正在播放"
       },
       "icon": "lucide:music",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5651,7 +5669,7 @@
           "type": "select",
           "label": "Recording Frequency",
           "description": "How often completed playback records are saved to memory.",
-          "default": 1,
+          "default": "1",
           "required": false,
           "options": [
             {
@@ -5750,7 +5768,7 @@
           "en": "Lets magi see music playing on this device"
         }
       },
-      "package_sha256": "1aecc29aa741b5b95de7bb794bc85d978f9636207d67fd07a8ad719c5675c07e"
+      "package_sha256": "4f052e73e580a6e6295ac24d10d3143e0c752dfa295b11563948ace4a5efb703"
     },
     {
       "plugin_id": "telegram",
@@ -5760,7 +5778,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlRlbGVncmFtPC90aXRsZT48cGF0aCBmaWxsPSIjMjZBNUU0IiBkPSJNMTEuOTQ0IDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwYTEyIDEyIDAgMCAwLS4wNTYgMHptNC45NjIgNy4yMjRjLjEtLjAwMi4zMjEuMDIzLjQ2NS4xNGEuNTA2LjUwNiAwIDAgMSAuMTcxLjMyNWMuMDE2LjA5My4wMzYuMzA2LjAyLjQ3Mi0uMTggMS44OTgtLjk2MiA2LjUwMi0xLjM2IDguNjI3LS4xNjguOS0uNDk5IDEuMjAxLS44MiAxLjIzLS42OTYuMDY1LTEuMjI1LS40Ni0xLjktLjkwMi0xLjA1Ni0uNjkzLTEuNjUzLTEuMTI0LTIuNjc4LTEuOC0xLjE4NS0uNzgtLjQxNy0xLjIxLjI1OC0xLjkxLjE3Ny0uMTg0IDMuMjQ3LTIuOTc3IDMuMzA3LTMuMjMuMDA3LS4wMzIuMDE0LS4xNS0uMDU2LS4yMTJzLS4xNzQtLjA0MS0uMjQ5LS4wMjRjLS4xMDYuMDI0LTEuNzkzIDEuMTQtNS4wNjEgMy4zNDUtLjQ4LjMzLS45MTMuNDktMS4zMDIuNDgtLjQyOC0uMDA4LTEuMjUyLS4yNDEtMS44NjUtLjQ0LS43NTItLjI0NS0xLjM0OS0uMzc0LTEuMjk3LS43ODkuMDI3LS4yMTYuMzI1LS40MzcuODkzLS42NjMgMy40OTgtMS41MjQgNS44My0yLjUyOSA2Ljk5OC0zLjAxNCAzLjMzMi0xLjM4NiA0LjAyNS0xLjYyNyA0LjQ3Ni0xLjYzNXoiLz48L3N2Zz4K",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5773,6 +5791,7 @@
           "type": "tags",
           "label": "Allowed User IDs",
           "description": "Whitelist of Telegram user IDs. Empty means allow all users.",
+          "default": [],
           "required": false,
           "section": "general",
           "surface": "extensions",
@@ -5911,7 +5930,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "1546576f8b77842bf87819a3e55fa4b72e92da3669aec4235c3b3e935d51111c"
+      "package_sha256": "76cb71dbec5a9888ab0cbd7e307cb1319adc6722aa5eaf0d79fda41bdcc7d47e"
     },
     {
       "plugin_id": "terminal-history",
@@ -5920,7 +5939,7 @@
         "zh-CN": "终端历史"
       },
       "icon": "lucide:terminal",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -6029,6 +6048,7 @@
           "type": "tags",
           "label": "Additional Sensitive Keywords",
           "description": "Extra keywords to detect sensitive commands (built-in: password, token, api_key, etc.)",
+          "default": [],
           "required": false,
           "section": "privacy",
           "surface": "timeline",
@@ -6193,7 +6213,7 @@
           }
         ]
       },
-      "package_sha256": "c1a7783d6a5ca16695289b6aed8c7876811c9ddedd69bd0e709635a901416bfb"
+      "package_sha256": "82e5b4b1decb03f7319f910c3fe0a102282a5c43fa4bc65e6327b46a51be879a"
     },
     {
       "plugin_id": "weixin",
@@ -6203,7 +6223,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPldlQ2hhdDwvdGl0bGU+PHBhdGggZmlsbD0iIzA3QzE2MCIgZD0iTTguNjkxIDIuMTg4QzMuODkxIDIuMTg4IDAgNS40NzYgMCA5LjUzYzAgMi4yMTIgMS4xNyA0LjIwMyAzLjAwMiA1LjU1YS41OS41OSAwIDAgMSAuMjEzLjY2NWwtLjM5IDEuNDhjLS4wMTkuMDctLjA0OC4xNDEtLjA0OC4yMTMgMCAuMTYzLjEzLjI5NS4yOS4yOTVhLjMyNi4zMjYgMCAwIDAgLjE2Ny0uMDU0bDEuOTAzLTEuMTE0YS44NjQuODY0IDAgMCAxIC43MTctLjA5OCAxMC4xNiAxMC4xNiAwIDAgMCAyLjgzNy40MDNjLjI3NiAwIC41NDMtLjAyNy44MTEtLjA1LS44NTctMi41NzguMTU3LTQuOTcyIDEuOTMyLTYuNDQ2IDEuNzAzLTEuNDE1IDMuODgyLTEuOTggNS44NTMtMS44MzgtLjU3Ni0zLjU4My00LjE5Ni02LjM0OC04LjU5Ni02LjM0OHpNNS43ODUgNS45OTFjLjY0MiAwIDEuMTYyLjUyOSAxLjE2MiAxLjE4YTEuMTcgMS4xNyAwIDAgMS0xLjE2MiAxLjE3OEExLjE3IDEuMTcgMCAwIDEgNC42MjMgNy4xN2MwLS42NTEuNTItMS4xOCAxLjE2Mi0xLjE4em01LjgxMyAwYy42NDIgMCAxLjE2Mi41MjkgMS4xNjIgMS4xOGExLjE3IDEuMTcgMCAwIDEtMS4xNjIgMS4xNzggMS4xNyAxLjE3IDAgMCAxLTEuMTYyLTEuMTc4YzAtLjY1MS41Mi0xLjE4IDEuMTYyLTEuMTh6bTUuMzQgMi44NjdjLTEuNzk3LS4wNTItMy43NDYuNTEyLTUuMjggMS43ODYtMS43MiAxLjQyOC0yLjY4NyAzLjcyLTEuNzggNi4yMi45NDIgMi40NTMgMy42NjYgNC4yMjkgNi44ODQgNC4yMjkuODI2IDAgMS42MjItLjEyIDIuMzYxLS4zMzZhLjcyMi43MjIgMCAwIDEgLjU5OC4wODJsMS41ODQuOTI2YS4yNzIuMjcyIDAgMCAwIC4xNC4wNDdjLjEzNCAwIC4yNC0uMTExLjI0LS4yNDcgMC0uMDYtLjAyMy0uMTItLjAzOC0uMTc3bC0uMzI3LTEuMjMzYS41ODIuNTgyIDAgMCAxLS4wMjMtLjE1Ni40OS40OSAwIDAgMSAuMjAxLS4zOThDMjMuMDI0IDE4LjQ4IDI0IDE2LjgyIDI0IDE0Ljk4YzAtMy4yMS0yLjkzMS01LjgzNy02LjY1Ni02LjA4OFY4Ljg5Yy0uMTM1LS4wMS0uMjctLjAyNy0uNDA3LS4wM3ptLTIuNTMgMy4yNzRjLjUzNSAwIC45NjkuNDQuOTY5Ljk4MmEuOTc2Ljk3NiAwIDAgMS0uOTY5Ljk4My45NzYuOTc2IDAgMCAxLS45NjktLjk4M2MwLS41NDIuNDM0LS45ODIuOTctLjk4MnptNC44NDQgMGMuNTM1IDAgLjk2OS40NC45NjkuOTgyYS45NzYuOTc2IDAgMCAxLS45NjkuOTgzLjk3Ni45NzYgMCAwIDEtLjk2OS0uOTgzYzAtLjU0Mi40MzQtLjk4Mi45NjktLjk4MnoiLz48L3N2Zz4K",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -6238,6 +6258,7 @@
           "type": "tags",
           "label": "Allowed Weixin User IDs",
           "description": "Whitelist of Weixin user IDs. Empty means allow all users who can message this bot.",
+          "default": [],
           "required": false,
           "section": "general",
           "surface": "extensions",
@@ -6481,7 +6502,7 @@
         "windows",
         "macos"
       ],
-      "package_sha256": "ef2c82894eb451ecc7deba94f7c55f86b559a1b998879e37caca529d45db20ca"
+      "package_sha256": "e252b7fbfe16a85d54accef56925720edef5eeb9b99d7b555b15ebcc7b61811b"
     }
   ]
 }
