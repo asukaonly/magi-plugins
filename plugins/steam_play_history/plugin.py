@@ -5,9 +5,9 @@ from collections import Counter
 import sys
 from typing import Any
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SourceSpec
 
-from .sensor import SteamPlayHistoryTimelineSensor
+from .source import SteamPlayHistoryTimelineSource
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
 from .reader import detect_steam_root
 
@@ -374,14 +374,14 @@ class SteamPlayHistoryPlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         if not (sys.platform == "win32" or sys.platform == "darwin" or sys.platform.startswith("linux")):
             return []
 
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("steam_play_history", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("steam_play_history", {}))
 
         min_session_s = int(settings.get("min_session_seconds", DEFAULT_SETTINGS["min_session_seconds"]))
         idle_timeout_minutes = int(settings.get("idle_timeout_minutes", DEFAULT_SETTINGS["idle_timeout_minutes"]))
@@ -389,7 +389,7 @@ class SteamPlayHistoryPlugin(Plugin):
         configured_steam_path = str(settings.get("steam_path") or DEFAULT_SETTINGS["steam_path"])
         detected_steam_path = str(detect_steam_root(configured_steam_path) or "")
 
-        sensor = SteamPlayHistoryTimelineSensor(
+        source = SteamPlayHistoryTimelineSource(
             state_store=SteamPlayStateStore(
                 idle_timeout_s=max(60, idle_timeout_minutes * 60),
                 min_session_s=min_session_s,
@@ -402,9 +402,9 @@ class SteamPlayHistoryPlugin(Plugin):
         return [
             (
                 "timeline.steam_play_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.steam_play_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.steam_play_history",
                     display_name=self.t("steam_play_history.name", fallback="Steam"),
                     description=self.t(
                         "steam_play_history.description",
@@ -415,7 +415,7 @@ class SteamPlayHistoryPlugin(Plugin):
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode="interval",
                     fields=_fields(
-                        "sensors.steam_play_history",
+                        "sources.steam_play_history",
                         self.t,
                         detected_steam_path=detected_steam_path,
                     ),
@@ -423,7 +423,7 @@ class SteamPlayHistoryPlugin(Plugin):
                         "source_type": "steam_play_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "sync_interval_minutes": sync_interval,
-                        "activation_flow": _activation_flow("sensors.steam_play_history", self.t).model_dump(),
+                        "activation_flow": _activation_flow("sources.steam_play_history", self.t).model_dump(),
                         **GAME_RECORDS_CAPABILITY_METADATA,
                     },
                 ),

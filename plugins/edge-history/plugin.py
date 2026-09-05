@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk import Plugin, SensorSpec
+from magi_plugin_sdk import Plugin, SourceSpec
 
 _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
@@ -22,7 +22,7 @@ from browser_history_core.plugin_support import (
 )
 
 from .edge_reader import _default_edge_root
-from .sensor import EdgeHistoryTimelineSensor
+from .source import EdgeHistoryTimelineSource
 
 
 class EdgeHistoryPlugin(Plugin):
@@ -31,12 +31,12 @@ class EdgeHistoryPlugin(Plugin):
     def get_extraction_profiles(self) -> list[Any]:
         return build_extraction_profiles("edge_history")
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("edge_history", {}))
-        sensor = EdgeHistoryTimelineSensor(
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("edge_history", {}))
+        source = EdgeHistoryTimelineSource(
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             source_path=str(settings.get("source_path") or _default_edge_root()),
             profile=str(settings.get("profile") or DEFAULT_SETTINGS["profile"]),
@@ -47,20 +47,20 @@ class EdgeHistoryPlugin(Plugin):
         return [
             (
                 "timeline.edge_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.edge_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.edge_history",
                     display_name="Edge History",
                     description="Local Microsoft Edge browsing history ingested into the user timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=build_fields("sensors.edge_history", "Edge"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
+                    fields=build_fields("sources.edge_history", "Edge"),
                     metadata={
                         "source_type": "edge_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": build_activation_flow("sensors.edge_history", "Edge").model_dump(),
+                        "activation_flow": build_activation_flow("sources.edge_history", "Edge").model_dump(),
                         **build_browser_capability_metadata(
                             entry_id="edge",
                             entry_display_name="Edge",

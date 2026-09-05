@@ -6,7 +6,7 @@ helper because IT is the binary that actually makes ScreenCaptureKit /
 VNRecognizeTextRequest calls, so its TCC entry is the one that matters.
 
 Probes spawn a one-shot helper subprocess; they do NOT reuse the long-lived
-sensor helper because read_settings_resource() runs even when the sensor is
+source helper because read_settings_resource() runs even when the source is
 disabled (and therefore not running).
 """
 from __future__ import annotations

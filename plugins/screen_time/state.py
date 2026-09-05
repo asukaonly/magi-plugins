@@ -6,7 +6,7 @@ The store maintains two pieces of state per plugin cache:
   open endpoint when computing how much time the current session has consumed.
 - ``open_buckets``: per-hour usage buckets keyed by ``bucket_start::canonical_id``
   that accumulate until they slip past the current hour and are flushed by the
-  sensor.
+  source.
 
 Both the in-plugin Windows / macOS watcher and any future external producer
 funnel activations through :meth:`ScreenTimeStateStore.apply_activation`, so

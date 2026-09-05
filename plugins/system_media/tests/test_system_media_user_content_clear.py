@@ -18,9 +18,9 @@ PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
 if PLUGINS_ROOT not in sys.path:
     sys.path.insert(0, PLUGINS_ROOT)
 
-from system_media import sensor as sensor_module  # noqa: E402
+from system_media import source as source_module  # noqa: E402
 from system_media.models import MediaState  # noqa: E402
-from system_media.sensor import SystemMediaTimelineSensor  # noqa: E402
+from system_media.source import SystemMediaTimelineSource  # noqa: E402
 
 
 class _RuntimePaths:
@@ -36,9 +36,9 @@ def _clear_context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=1),
         runtime_paths=runtime_paths,
         plugin_id="system-media",
-        sensor_id="timeline.system_media",
+        source_id="timeline.system_media",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "system_media": {
                     "enabled": True,
                     "min_session_seconds": 45,
@@ -92,13 +92,13 @@ def test_clear_erases_sessions_and_does_not_poll(
     credentials_path.write_text('{"account": "keep"}', encoding="utf-8")
 
     media_reader = AsyncMock(side_effect=AssertionError("clear must not poll media"))
-    monkeypatch.setattr(sensor_module, "get_current_media", media_reader)
-    sensor = SystemMediaTimelineSensor()
+    monkeypatch.setattr(source_module, "get_current_media", media_reader)
+    source = SystemMediaTimelineSource()
     context = _clear_context(runtime_paths)
 
     async def run_clear_twice() -> None:
-        await sensor.clear_user_content(context)
-        await sensor.clear_user_content(context)
+        await source.clear_user_content(context)
+        await source.clear_user_content(context)
 
     asyncio.run(run_clear_twice())
 
@@ -106,7 +106,7 @@ def test_clear_erases_sessions_and_does_not_poll(
     assert not state_path.exists()
     assert settings_path.read_text(encoding="utf-8") == '{"min_session_seconds": 45}'
     assert credentials_path.read_text(encoding="utf-8") == '{"account": "keep"}'
-    assert context.plugin_settings["sensors"]["system_media"]["enabled"] is True
+    assert context.plugin_settings["sources"]["system_media"]["enabled"] is True
 
 
 def test_clear_waits_for_active_collect_and_later_collect_recovers(
@@ -115,7 +115,7 @@ def test_clear_waits_for_active_collect_and_later_collect_recovers(
 ) -> None:
     runtime_paths = _RuntimePaths(tmp_path)
     state_path = runtime_paths.plugin_cache_dir("system_media") / "state.json"
-    sensor = SystemMediaTimelineSensor()
+    source = SystemMediaTimelineSource()
 
     async def scenario() -> None:
         poll_started = asyncio.Event()
@@ -132,13 +132,13 @@ def test_clear_waits_for_active_collect_and_later_collect_recovers(
                 playback_status="playing",
             )
 
-        monkeypatch.setattr(sensor_module, "get_current_media", blocking_media_read)
+        monkeypatch.setattr(source_module, "get_current_media", blocking_media_read)
         sync_context = SimpleNamespace(runtime_paths=runtime_paths)
-        collect_task = asyncio.create_task(sensor.collect_items(sync_context))
+        collect_task = asyncio.create_task(source.collect_items(sync_context))
         await poll_started.wait()
 
         clear_task = asyncio.create_task(
-            sensor.clear_user_content(_clear_context(runtime_paths))
+            source.clear_user_content(_clear_context(runtime_paths))
         )
         await asyncio.sleep(0)
         assert not clear_task.done()
@@ -158,8 +158,8 @@ def test_clear_waits_for_active_collect_and_later_collect_recovers(
                 playback_status="playing",
             )
 
-        monkeypatch.setattr(sensor_module, "get_current_media", resumed_media_read)
-        result = await sensor.collect_items(sync_context)
+        monkeypatch.setattr(source_module, "get_current_media", resumed_media_read)
+        result = await source.collect_items(sync_context)
         assert [change.payload for change in result.changes] == []
 
     asyncio.run(scenario())
@@ -179,7 +179,7 @@ def test_clear_removes_state_symlink_without_touching_target(tmp_path: Path) -> 
     state_path.symlink_to(external_state)
 
     asyncio.run(
-        SystemMediaTimelineSensor().clear_user_content(
+        SystemMediaTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -198,7 +198,7 @@ def test_clear_removes_hardlink_without_touching_other_links(tmp_path: Path) -> 
     os.link(external_state, state_path)
 
     asyncio.run(
-        SystemMediaTimelineSensor().clear_user_content(
+        SystemMediaTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -218,7 +218,7 @@ def test_clear_removes_fifo_without_opening_it(tmp_path: Path) -> None:
     os.mkfifo(state_path)
 
     asyncio.run(
-        SystemMediaTimelineSensor().clear_user_content(
+        SystemMediaTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -241,7 +241,7 @@ def test_clear_rejects_linked_state_directory(tmp_path: Path) -> None:
 
     with pytest.raises(UnsafeManagedPathError):
         asyncio.run(
-            SystemMediaTimelineSensor().clear_user_content(
+            SystemMediaTimelineSource().clear_user_content(
                 _clear_context(_RuntimePaths(runtime_root))
             )
         )
@@ -258,7 +258,7 @@ def test_clear_missing_state_does_not_create_through_linked_ancestor(
     linked_root.symlink_to(external_root, target_is_directory=True)
 
     asyncio.run(
-        SystemMediaTimelineSensor().clear_user_content(
+        SystemMediaTimelineSource().clear_user_content(
             _clear_context(_RuntimePaths(linked_root))
         )
     )

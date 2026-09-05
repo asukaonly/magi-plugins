@@ -2,7 +2,7 @@
 
 Each agent (Claude Code, Codex, ...) has its own on-disk transcript format. An
 ``Adapter`` normalizes that format into a stream of ``Conversation`` records --
-one per session, carrying *only the user's own turns* -- which the sensor then
+one per session, carrying *only the user's own turns* -- which the source then
 scrubs and emits as first-person (``author_type="user"``) events.
 
 ``select_adapter`` picks the right adapter for a configured source path. It

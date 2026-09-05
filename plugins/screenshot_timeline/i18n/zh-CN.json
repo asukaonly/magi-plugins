@@ -11,7 +11,7 @@
     "fields": {
       "enabled": {
         "label": "启用",
-        "description": "屏幕快照传感器是否激活。"
+        "description": "屏幕快照数据来源是否激活。"
       },
       "capture_scope": {
         "label": "捕获范围",

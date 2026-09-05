@@ -31,11 +31,11 @@ def _load_plugin_module():
     return module
 
 
-def test_plugin_exposes_timeline_sensor_with_github_connection_action() -> None:
+def test_plugin_exposes_timeline_source_with_github_connection_action() -> None:
     plugin_mod = _load_plugin_module()
     plugin = bind_test_plugin(plugin_mod.GitHubActivityPlugin())
     plugin.settings = {
-        "sensors": {
+        "sources": {
             "github_activity": {
                 "enabled": True,
                 "access_token": "token",
@@ -45,21 +45,21 @@ def test_plugin_exposes_timeline_sensor_with_github_connection_action() -> None:
         }
     }
 
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
     actions = plugin.get_settings_actions()
 
-    assert len(sensors) == 1
-    _, sensor, spec = sensors[0]
-    assert sensor.repositories == ["acme/app"]
+    assert len(sources) == 1
+    _, source, spec = sources[0]
+    assert source.repositories == ["acme/app"]
     assert spec.metadata["source_type"] == "github_activity"
-    assert spec.metadata["activation_flow"]["enabled_key"] == "sensors.github_activity.enabled"
+    assert spec.metadata["activation_flow"]["enabled_key"] == "sources.github_activity.enabled"
     assert spec.metadata["activation_flow"]["first_context"]["max_items_per_sync"] == 200
     field_keys = [field.key for field in spec.fields]
-    assert "sensors.github_activity.client_id" not in field_keys
-    assert "sensors.github_activity.access_token" not in field_keys
-    assert "sensors.github_activity.repositories" in field_keys
+    assert "sources.github_activity.client_id" not in field_keys
+    assert "sources.github_activity.access_token" not in field_keys
+    assert "sources.github_activity.repositories" in field_keys
     activation_field_keys = [field["key"] for field in spec.metadata["activation_flow"]["fields"]]
-    assert "sensors.github_activity.client_id" not in activation_field_keys
+    assert "sources.github_activity.client_id" not in activation_field_keys
     assert any(action.action_id == "connect_github" for action in actions)
 
 
@@ -88,7 +88,7 @@ def test_connect_action_uses_configured_client_id_without_user_field(monkeypatch
         plugin.start_settings_action(
             "connect_github",
             session_id="session-1",
-            field_values={"sensors.github_activity.repositories": ["acme/app"]},
+            field_values={"sources.github_activity.repositories": ["acme/app"]},
         )
     )
 
@@ -124,7 +124,7 @@ def test_connect_action_uses_packaged_client_id_without_environment_override(mon
         plugin.start_settings_action(
             "connect_github",
             session_id="session-1",
-            field_values={"sensors.github_activity.repositories": ["acme/app"]},
+            field_values={"sources.github_activity.repositories": ["acme/app"]},
         )
     )
 
@@ -174,7 +174,7 @@ def test_extraction_profile_keeps_github_activity_structured_and_project_focused
     assert rule.durable_min_span_days == 14
 
 
-def test_github_activity_declares_sensor_ui_i18n_keys() -> None:
+def test_github_activity_declares_source_ui_i18n_keys() -> None:
     plugin_dir = Path(__file__).resolve().parents[1]
     zh = json.loads((plugin_dir / "i18n" / "zh-CN.json").read_text())
     en = json.loads((plugin_dir / "i18n" / "en.json").read_text())

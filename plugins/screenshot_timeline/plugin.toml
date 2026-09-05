@@ -10,7 +10,7 @@ id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
 icon = "lucide:scan"
-version = "0.6.1"
+version = "0.7.0"
 description = "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days."
 description_i18n = { "zh-CN" = "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。" }
 author = "Magi Team"
@@ -18,13 +18,13 @@ entry_module = "plugin"
 entry_class = "ScreenshotTimelinePlugin"
 official = true
 data_locality = "local_only"
-contribution_types = ["sensor", "tool"]
+contribution_types = ["source", "tool"]
 platforms = ["macos"]
 dependencies = [
     "pyobjc-framework-Cocoa>=10.0",
 ]
 
-[plugin.default_settings.sensors.screenshot_timeline]
+[plugin.default_settings.sources.screenshot_timeline]
 enabled = false
 capture_scope = "hybrid"
 active_window_interval_sec = 10
@@ -94,12 +94,12 @@ description = "This plugin continuously captures your screen and runs local OCR 
 confirm_label = "I understand — enable"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.screenshot_timeline.enabled"
-configured_key = "sensors.screenshot_timeline.initial_sync_configured"
+enabled_key = "sources.screenshot_timeline.enabled"
+configured_key = "sources.screenshot_timeline.initial_sync_configured"
 fields = []
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.active_window_interval_sec"
+key = "sources.screenshot_timeline.active_window_interval_sec"
 type = "number"
 label = "Active window interval (sec)"
 description = "How often to capture the active window. Recommended: 10s."
@@ -110,7 +110,7 @@ surface = "timeline"
 order = 30
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.app_blocklist"
+key = "sources.screenshot_timeline.app_blocklist"
 type = "tags"
 label = "App blocklist (bundle IDs)"
 description = "Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*). Defaults block known password managers and the macOS SecurityAgent; remove entries to allow them."
@@ -121,7 +121,7 @@ surface = "timeline"
 order = 100
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ax_enabled"
+key = "sources.screenshot_timeline.ax_enabled"
 type = "switch"
 label = "Ax Enabled"
 description = ""
@@ -132,7 +132,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ax_min_content_chars"
+key = "sources.screenshot_timeline.ax_min_content_chars"
 type = "number"
 label = "Ax Min Content Chars"
 description = ""
@@ -143,7 +143,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ax_min_content_nodes"
+key = "sources.screenshot_timeline.ax_min_content_nodes"
 type = "number"
 label = "Ax Min Content Nodes"
 description = ""
@@ -154,7 +154,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ax_wake"
+key = "sources.screenshot_timeline.ax_wake"
 type = "switch"
 label = "Ax Wake"
 description = ""
@@ -165,7 +165,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.capture_scope"
+key = "sources.screenshot_timeline.capture_scope"
 type = "select"
 label = "Capture scope"
 description = "What part of the screen to capture each tick."
@@ -177,10 +177,10 @@ surface = "timeline"
 order = 20
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.enabled"
+key = "sources.screenshot_timeline.enabled"
 type = "switch"
 label = "Enabled"
-description = "Whether the screenshot timeline sensor is active."
+description = "Whether the screenshot timeline source is active."
 default = false
 required = false
 section = "general"
@@ -188,7 +188,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.full_screen_interval_min"
+key = "sources.screenshot_timeline.full_screen_interval_min"
 type = "number"
 label = "Full-screen interval (min)"
 description = "Periodic full-screen capture interval (used in hybrid or full_screen modes)."
@@ -199,7 +199,7 @@ surface = "timeline"
 order = 40
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.initial_sync_configured"
+key = "sources.screenshot_timeline.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -210,7 +210,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.jpeg_quality_original"
+key = "sources.screenshot_timeline.jpeg_quality_original"
 type = "number"
 label = "Jpeg Quality Original"
 description = ""
@@ -221,7 +221,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.jpeg_quality_thumbnail"
+key = "sources.screenshot_timeline.jpeg_quality_thumbnail"
 type = "number"
 label = "Jpeg Quality Thumbnail"
 description = ""
@@ -232,7 +232,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ocr_languages"
+key = "sources.screenshot_timeline.ocr_languages"
 type = "tags"
 label = "OCR languages"
 description = "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. Order matters: the first language is the primary character-set hypothesis. If your screen content is mostly Chinese with code/URLs mixed in, keep zh-Hans first; English-only users can put en-US first."
@@ -243,7 +243,7 @@ surface = "timeline"
 order = 50
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.ocr_level"
+key = "sources.screenshot_timeline.ocr_level"
 type = "select"
 label = "OCR recognition level"
 description = "Apple Vision text-recognition precision tier. \"Accurate\" uses a neural network — handles small fonts, mixed-language text, and dense UI; ~0.5–2s per screenshot. \"Fast\" uses traditional character recognition — 5-10× faster but small fonts, CJK characters, and busy UI degrade quickly. Keep \"Accurate\" unless CPU is an issue."
@@ -255,7 +255,7 @@ surface = "timeline"
 order = 60
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.original_retention_days"
+key = "sources.screenshot_timeline.original_retention_days"
 type = "number"
 label = "Original retention (days)"
 description = "Originals older than this are deleted. Thumbnails are kept permanently."
@@ -266,7 +266,7 @@ surface = "timeline"
 order = 70
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.sync_mode"
+key = "sources.screenshot_timeline.sync_mode"
 type = "input"
 label = "Sync Mode"
 description = ""
@@ -277,7 +277,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.thumbnail_max_width"
+key = "sources.screenshot_timeline.thumbnail_max_width"
 type = "number"
 label = "Thumbnail Max Width"
 description = ""
@@ -288,7 +288,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.screenshot_timeline.window_title_blocklist"
+key = "sources.screenshot_timeline.window_title_blocklist"
 type = "tags"
 label = "Window title blocklist (substrings)"
 description = "Any window whose title contains any of these strings will be skipped."

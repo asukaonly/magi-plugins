@@ -23,6 +23,6 @@ def test_en_and_zh_have_matching_keys_and_required_namespaces() -> None:
     assert "obsidian_vault" in en
     assert "fields" in en["obsidian_vault"]
     assert "activation" in en["obsidian_vault"]
-    # Activity facet i18n keys used by the sensor must resolve.
+    # Activity facet i18n keys used by the source must resolve.
     assert en["activity"]["source"]["obsidian"]
     assert en["activity"]["object"]["note"]

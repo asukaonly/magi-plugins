@@ -733,7 +733,7 @@ class PhotoLibraryReader:
         entirely.
 
         Returns a :class:`ScanResult` with normalized item dicts suitable for
-        the sensor's ``collect_items`` pipeline.
+        the source's ``collect_items`` pipeline.
         """
         root = Path(source_path).expanduser().resolve()
         if not root.is_dir():

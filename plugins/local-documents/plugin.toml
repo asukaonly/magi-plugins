@@ -10,7 +10,7 @@ id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "lucide:file-text"
-version = "0.2.1"
+version = "0.3.0"
 description = "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory."
 description_i18n = { "zh-CN" = "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。" }
 author = "Magi Team"
@@ -18,10 +18,10 @@ entry_module = "plugin"
 entry_class = "LocalDocumentsPlugin"
 official = true
 data_locality = "local_only"
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos", "windows", "linux"]
 
-[plugin.default_settings.sensors.local_documents]
+[plugin.default_settings.sources.local_documents]
 enabled = false
 root_paths = []
 include_extensions = [".md", ".markdown", ".txt", ".text", ".rst", ".org", ".log"]
@@ -72,13 +72,13 @@ description = "Local documents can contain private notes. Choose the folders Mag
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.local_documents.enabled"
-configured_key = "sensors.local_documents.initial_sync_configured"
-fields = [{ "key" = "sensors.local_documents.root_paths", "type" = "tags", "label" = "Document Folders", "description" = "Local folders to scan for notes and text documents.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "~/Documents/Notes", "depends_on_values" = [] }, { "key" = "sensors.local_documents.cognition_exclude_folders", "type" = "tags", "label" = "Search-only Folders", "description" = "Folders read for search and timeline but kept out of knowledge extraction.", "default" = ["References", "Archive", "Clippings"], "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }]
+enabled_key = "sources.local_documents.enabled"
+configured_key = "sources.local_documents.initial_sync_configured"
+fields = [{ "key" = "sources.local_documents.root_paths", "type" = "tags", "label" = "Document Folders", "description" = "Local folders to scan for notes and text documents.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "~/Documents/Notes", "depends_on_values" = [] }, { "key" = "sources.local_documents.cognition_exclude_folders", "type" = "tags", "label" = "Search-only Folders", "description" = "Folders read for search and timeline but kept out of knowledge extraction.", "default" = ["References", "Archive", "Clippings"], "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }]
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.cognition_exclude_folders"
+key = "sources.local_documents.cognition_exclude_folders"
 type = "tags"
 label = "Search-only Folders"
 description = "Folders read for search and timeline but kept out of knowledge extraction."
@@ -89,7 +89,7 @@ surface = "timeline"
 order = 70
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.enabled"
+key = "sources.local_documents.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether local document sync is active."
@@ -100,7 +100,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.exclude_folders"
+key = "sources.local_documents.exclude_folders"
 type = "tags"
 label = "Excluded Folders"
 description = "Folders never read at all."
@@ -111,7 +111,7 @@ surface = "timeline"
 order = 60
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.include_extensions"
+key = "sources.local_documents.include_extensions"
 type = "tags"
 label = "Included Extensions"
 description = "Text file extensions to ingest."
@@ -123,7 +123,7 @@ order = 50
 placeholder = ".md, .txt"
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.initial_sync_configured"
+key = "sources.local_documents.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -134,7 +134,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.max_body_chars"
+key = "sources.local_documents.max_body_chars"
 type = "number"
 label = "Max Text Characters"
 description = "Maximum characters stored from each document body."
@@ -147,7 +147,7 @@ minimum = 1000.0
 maximum = 500000.0
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.max_file_bytes"
+key = "sources.local_documents.max_file_bytes"
 type = "number"
 label = "Max File Size (bytes)"
 description = "Files larger than this are skipped."
@@ -160,7 +160,7 @@ minimum = 1024.0
 maximum = 20000000.0
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.root_paths"
+key = "sources.local_documents.root_paths"
 type = "tags"
 label = "Document Folders"
 description = "Local folders to scan for notes and text documents."
@@ -172,7 +172,7 @@ order = 20
 placeholder = "~/Documents/Notes"
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.sync_interval_minutes"
+key = "sources.local_documents.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to rescan the folders for changed documents."
@@ -181,13 +181,13 @@ required = false
 section = "general"
 surface = "timeline"
 order = 40
-depends_on_key = "sensors.local_documents.sync_mode"
+depends_on_key = "sources.local_documents.sync_mode"
 depends_on_values = ["interval"]
 minimum = 1.0
 maximum = 1440.0
 
 [[plugin.settings_fields]]
-key = "sensors.local_documents.sync_mode"
+key = "sources.local_documents.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "How local documents should be synchronized."

@@ -10,11 +10,11 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
 )
 
 from .reader import is_git_repo
-from .sensor import GitActivitySensor
+from .source import GitActivitySource
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -351,17 +351,17 @@ class GitActivityPlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        """Get sensor specifications for Git Activity.
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
+        """Get source specifications for Git Activity.
 
         Returns:
-            List of sensor tuples (sensor_id, sensor_instance, sensor_spec)
+            List of source tuples (source_id, source_instance, source_spec)
         """
         # Get settings
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("git_activity", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("git_activity", {}))
 
         source_enabled = bool(settings.get("enabled", DEFAULT_SETTINGS["enabled"]))
 
@@ -372,8 +372,8 @@ class GitActivityPlugin(Plugin):
             if isinstance(repo, str) and repo.strip() and is_git_repo(repo):
                 valid_repos.append(repo.strip())
 
-        # Create sensor with available repos (may be empty)
-        sensor = GitActivitySensor(
+        # Create source with available repos (may be empty)
+        source = GitActivitySource(
             retention_mode="analyze_only",
             repos=valid_repos,
             l3_summary_enabled=True,
@@ -385,20 +385,20 @@ class GitActivityPlugin(Plugin):
         return [
             (
                 "timeline.git_activity",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.git_activity",
+                source,
+                SourceSpec(
+                    source_id="timeline.git_activity",
                     display_name="Git Activity",
                     description="Git repository activity ingestion for the timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sensors.git_activity"),
+                    fields=_fields("sources.git_activity"),
                     metadata={
                         "source_type": "git_activity",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.git_activity").model_dump(),
+                        "activation_flow": _activation_flow("sources.git_activity").model_dump(),
                         "sync_interval_minutes": sync_interval_minutes,
                     },
                 ),

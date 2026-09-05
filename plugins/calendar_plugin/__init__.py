@@ -1,4 +1,4 @@
-"""Calendar plugin for timeline sensor integration."""
+"""Calendar plugin for timeline source integration."""
 from __future__ import annotations
 
 from .plugin import CalendarPlugin, DEFAULT_SETTINGS

@@ -1,5 +1,5 @@
 [plugin]
-settings_actions = [{ "action_id" = "connect_github", "label" = "Connect GitHub", "description" = "Open the GitHub device authorization page, enter the code, and save the resulting token locally.", "button_label" = "Connect GitHub", "presentation" = "inline", "surface" = "timeline", "contribution_id" = "timeline.github_activity", "contribution_type" = "sensor", "order" = 0, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 5000, "timeout_ms" = 900000, "persist_settings_on_success" = true, "depends_on_values" = [] }]
+settings_actions = [{ "action_id" = "connect_github", "label" = "Connect GitHub", "description" = "Open the GitHub device authorization page, enter the code, and save the resulting token locally.", "button_label" = "Connect GitHub", "presentation" = "inline", "surface" = "timeline", "contribution_id" = "timeline.github_activity", "contribution_type" = "source", "order" = 0, "destructive" = false, "requires_enabled" = false, "poll_interval_ms" = 5000, "timeout_ms" = 900000, "persist_settings_on_success" = true, "depends_on_values" = [] }]
 settings_resources = []
 settings_ui_blocks = []
 protocol_version = 2
@@ -10,7 +10,7 @@ id = "github-activity"
 name = "GitHub Activity"
 name_i18n = { "zh-CN" = "GitHub 活动" }
 icon = "asset:assets/icon.svg"
-version = "0.2.1"
+version = "0.3.0"
 description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
 description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
 author = "Magi Team"
@@ -18,10 +18,10 @@ entry_module = "plugin"
 entry_class = "GitHubActivityPlugin"
 official = true
 data_locality = "local_only"
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos", "windows", "linux"]
 
-[plugin.default_settings.sensors.github_activity]
+[plugin.default_settings.sources.github_activity]
 enabled = false
 client_id = ""
 repositories = []
@@ -69,13 +69,13 @@ description = "Choose the repositories Magi should read from this device. No Git
 confirm_label = "Enable GitHub sync"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.github_activity.enabled"
-configured_key = "sensors.github_activity.initial_sync_configured"
-fields = [{ "key" = "sensors.github_activity.repositories", "type" = "tags", "label" = "Repositories", "description" = "Repositories to sync, for example owner/repo or a GitHub repository URL.", "default" = [], "required" = true, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }, { "key" = "sensors.github_activity.initial_sync_lookback_days", "type" = "number", "label" = "Initial Sync Days", "description" = "How many recent days to import on the first sync.", "default" = 30, "required" = false, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 30, "depends_on_values" = [], "minimum" = 1.0, "maximum" = 365.0 }]
+enabled_key = "sources.github_activity.enabled"
+configured_key = "sources.github_activity.initial_sync_configured"
+fields = [{ "key" = "sources.github_activity.repositories", "type" = "tags", "label" = "Repositories", "description" = "Repositories to sync, for example owner/repo or a GitHub repository URL.", "default" = [], "required" = true, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }, { "key" = "sources.github_activity.initial_sync_lookback_days", "type" = "number", "label" = "Initial Sync Days", "description" = "How many recent days to import on the first sync.", "default" = 30, "required" = false, "options" = [], "section" = "connection", "surface" = "timeline", "order" = 30, "depends_on_values" = [], "minimum" = 1.0, "maximum" = 365.0 }]
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.access_token"
+key = "sources.github_activity.access_token"
 type = "secret"
 label = "Access Token"
 description = ""
@@ -85,7 +85,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.client_id"
+key = "sources.github_activity.client_id"
 type = "input"
 label = "Client Id"
 description = ""
@@ -96,7 +96,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.enabled"
+key = "sources.github_activity.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether GitHub activity sync is active."
@@ -107,7 +107,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.initial_sync_configured"
+key = "sources.github_activity.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -118,7 +118,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.initial_sync_lookback_days"
+key = "sources.github_activity.initial_sync_lookback_days"
 type = "number"
 label = "Initial Sync Days"
 description = "How many recent days to import when no previous cursor exists."
@@ -131,7 +131,7 @@ minimum = 1.0
 maximum = 365.0
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.repositories"
+key = "sources.github_activity.repositories"
 type = "tags"
 label = "Repositories"
 description = "Repositories to sync, for example owner/repo."
@@ -142,7 +142,7 @@ surface = "timeline"
 order = 20
 
 [[plugin.settings_fields]]
-key = "sensors.github_activity.sync_interval_minutes"
+key = "sources.github_activity.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to check GitHub for updates."

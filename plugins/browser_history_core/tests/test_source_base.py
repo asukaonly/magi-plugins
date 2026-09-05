@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+import asyncio
+import importlib.util
+import sys
+from pathlib import Path
+from types import ModuleType
+
+
+def _load_source_module() -> ModuleType:
+    plugin_dir = Path(__file__).resolve().parents[1]
+    package_name = "browser_history_core_source_under_test"
+    if package_name not in sys.modules:
+        package_spec = importlib.util.spec_from_file_location(
+            package_name,
+            plugin_dir / "__init__.py",
+            submodule_search_locations=[str(plugin_dir)],
+        )
+        assert package_spec is not None and package_spec.loader is not None
+        package = importlib.util.module_from_spec(package_spec)
+        sys.modules[package_name] = package
+        package_spec.loader.exec_module(package)
+
+    spec = importlib.util.spec_from_file_location(
+        f"{package_name}.source_base",
+        plugin_dir / "source_base.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+class _RuntimePaths:
+    def __init__(self, root: Path = Path("/tmp")) -> None:
+        self.root = root
+
+    def plugin_cache_dir(self, plugin_id: str) -> Path:
+        return self.root / plugin_id
+
+
+class _Reader:
+    def read_visits(self, *, limit: int, **kwargs):
+        return [
+            {
+                "visit_id": str(idx),
+                "last_visit_id": str(idx),
+                "visit_time": 1_710_000_000.0 + idx,
+                "canonical_url": f"https://example.com/{idx}",
+                "url": f"https://example.com/{idx}",
+                "domain": "example.com",
+                "title": f"Page {idx}",
+                "merged_visit_count": 1,
+            }
+            for idx in range(1, limit + 1)
+        ]
+
+    def get_latest_visit_id(self, **kwargs) -> int:
+        return 100
+
+
+class _ClearableReader(_Reader):
+    def __init__(self) -> None:
+        self.cleared_root: Path | None = None
+
+    def clear_temp_copies(self, temp_root: Path) -> None:
+        self.cleared_root = temp_root
+
+
+def test_browser_history_marks_has_more_when_limit_is_full() -> None:
+    mod = _load_source_module()
+    source = mod.BaseBrowserHistoryTimelineSource(reader=_Reader())
+
+    from magi_plugin_sdk.sources import SourceSyncContext
+
+    result = asyncio.run(
+        source.collect_items(
+            SourceSyncContext(
+        connection_id="test-connection",
+                source_type="browser_history",
+                manual=True,
+                last_cursor="0",
+                last_success_at=None,
+                limit=3,
+                runtime_paths=_RuntimePaths(),
+                plugin_settings={"sources": {"browser_history": {}}},
+            )
+        )
+    )
+
+    assert result.stats["has_more"] is True
+    assert result.next_cursor == "3"
+
+
+def test_browser_history_output_includes_source_facets() -> None:
+    mod = _load_source_module()
+    source = mod.BaseBrowserHistoryTimelineSource(reader=_Reader())
+
+    output = asyncio.run(
+        source.build_output(
+            {
+                "visit_id": "42",
+                "canonical_url": "https://example.com/docs",
+                "url": "https://example.com/docs",
+                "domain": "example.com",
+                "title": "Example docs",
+                "visit_time": 1_710_000_000.0,
+                "merged_visit_count": 3,
+            }
+        )
+    )
+
+    facets = output.domain_payload["source_facets"]
+    assert {"name": "browser.domain", "text": "example.com"} in facets
+    assert {"name": "browser.title", "text": "Example docs"} in facets
+    assert {"name": "browser.url", "text": "https://example.com/docs"} in facets
+    assert {"name": "browser.visit_count", "numeric": 3} in facets
+
+
+def test_browser_history_clear_uses_the_plugin_owned_temp_directory(
+    tmp_path: Path,
+) -> None:
+    from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
+
+    mod = _load_source_module()
+    reader = _ClearableReader()
+    source = mod.BaseBrowserHistoryTimelineSource(reader=reader)
+
+    asyncio.run(
+        source.clear_user_content(
+            UserContentClearContext(
+                request=UserContentClearRequest(clear_generation=3),
+                runtime_paths=_RuntimePaths(tmp_path),
+                plugin_id="edge-history",
+                source_id="timeline.edge_history",
+                plugin_settings={},
+            )
+        )
+    )
+
+    assert reader.cleared_root == (
+        tmp_path
+        / "edge-history"
+        / "temporary-database-copies"
+        / "browser-history"
+    )

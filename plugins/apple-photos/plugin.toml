@@ -10,14 +10,14 @@ id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
 icon = "asset:assets/icon.svg"
-version = "0.2.1"
+version = "0.3.0"
 description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ApplePhotosPlugin"
 official = true
-contribution_types = ["sensor", "tool"]
+contribution_types = ["source", "tool"]
 platforms = ["macos"]
 depends_on = ["photo_library_core"]
 dependencies = [
@@ -36,7 +36,7 @@ member_label = "Apple Photos"
 member_label_i18n = { "zh-CN" = "Apple Photos" }
 member_order = 10
 
-[plugin.default_settings.sensors.photo_library_apple_photos]
+[plugin.default_settings.sources.photo_library_apple_photos]
 enabled = false
 source_mode = "apple_photos"
 photos_library_path = ""
@@ -105,8 +105,8 @@ description = "Apple Photos is sensitive local data. Magi reads photo metadata (
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.photo_library_apple_photos.enabled"
-configured_key = "sensors.photo_library_apple_photos.initial_sync_configured"
+enabled_key = "sources.photo_library_apple_photos.enabled"
+configured_key = "sources.photo_library_apple_photos.initial_sync_configured"
 fields = []
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
@@ -122,7 +122,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.analysis_features"
+key = "sources.photo_library_apple_photos.analysis_features"
 type = "tags"
 label = "Analysis Features"
 description = "Metadata extraction capabilities to apply."
@@ -134,7 +134,7 @@ surface = "timeline"
 order = 45
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.default_retention_mode"
+key = "sources.photo_library_apple_photos.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -145,7 +145,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.edge_whitelist"
+key = "sources.photo_library_apple_photos.edge_whitelist"
 type = "tags"
 label = "Edge Whitelist"
 description = ""
@@ -156,7 +156,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.enabled"
+key = "sources.photo_library_apple_photos.enabled"
 type = "switch"
 label = "Enable"
 description = "Whether this photo source is active."
@@ -167,7 +167,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.exclude_patterns"
+key = "sources.photo_library_apple_photos.exclude_patterns"
 type = "tags"
 label = "Exclude Patterns"
 description = ""
@@ -178,7 +178,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.initial_sync_configured"
+key = "sources.photo_library_apple_photos.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -189,7 +189,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.initial_sync_end_date"
+key = "sources.photo_library_apple_photos.initial_sync_end_date"
 type = "input"
 label = "Initial Sync End Date"
 description = ""
@@ -200,7 +200,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.initial_sync_policy"
+key = "sources.photo_library_apple_photos.initial_sync_policy"
 type = "input"
 label = "Initial Sync Policy"
 description = ""
@@ -211,7 +211,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.initial_sync_start_date"
+key = "sources.photo_library_apple_photos.initial_sync_start_date"
 type = "input"
 label = "Initial Sync Start Date"
 description = ""
@@ -222,7 +222,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.max_items_per_sync"
+key = "sources.photo_library_apple_photos.max_items_per_sync"
 type = "number"
 label = "Max Items Per Sync"
 description = "Maximum number of photos to process per sync run."
@@ -233,7 +233,7 @@ surface = "timeline"
 order = 40
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.photos_library_path"
+key = "sources.photo_library_apple_photos.photos_library_path"
 type = "path"
 label = "Custom Apple Photos Library"
 description = "Optional .photoslibrary path. Leave empty to use the current system Photos library."
@@ -245,7 +245,7 @@ order = 14
 placeholder = "~/Pictures/Photos Library.photoslibrary"
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.settle_window_hours"
+key = "sources.photo_library_apple_photos.settle_window_hours"
 type = "number"
 label = "Session Settle Window (hours)"
 description = "A photo session is emitted only after no new photos arrive for this many hours."
@@ -256,7 +256,7 @@ surface = "timeline"
 order = 50
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.source_mode"
+key = "sources.photo_library_apple_photos.source_mode"
 type = "input"
 label = "Source Mode"
 description = ""
@@ -267,7 +267,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.source_paths"
+key = "sources.photo_library_apple_photos.source_paths"
 type = "tags"
 label = "Source Paths"
 description = ""
@@ -278,7 +278,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.storage_mode"
+key = "sources.photo_library_apple_photos.storage_mode"
 type = "input"
 label = "Storage Mode"
 description = ""
@@ -289,7 +289,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.sync_interval_minutes"
+key = "sources.photo_library_apple_photos.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "Polling interval used for interval-based sync."
@@ -298,11 +298,11 @@ required = false
 section = "general"
 surface = "timeline"
 order = 30
-depends_on_key = "sensors.photo_library_apple_photos.sync_mode"
+depends_on_key = "sources.photo_library_apple_photos.sync_mode"
 depends_on_values = ["interval"]
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_apple_photos.sync_mode"
+key = "sources.photo_library_apple_photos.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "How this photo source should be synchronized."

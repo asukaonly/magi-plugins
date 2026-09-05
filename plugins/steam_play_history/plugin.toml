@@ -10,14 +10,14 @@ id = "steam-play-history"
 name = "Steam"
 name_i18n = { "zh-CN" = "Steam" }
 icon = "asset:assets/icon.svg"
-version = "0.2.1"
+version = "0.3.0"
 description = "Infers Steam game records from local Steam files and playtime changes."
 description_i18n = { "zh-CN" = "根据本地 Steam 文件和游玩时长变化推断游戏记录" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SteamPlayHistoryPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["windows", "macos", "linux"]
 
 [plugin.display_group]
@@ -69,12 +69,12 @@ description = "Steam game records reveal gaming habits. Choose how the first syn
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.steam_play_history.enabled"
-configured_key = "sensors.steam_play_history.initial_sync_configured"
-fields = [{ "key" = "sensors.steam_play_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much previous Steam activity should be imported.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Import all last-played summaries", "value" = "full" }, { "label" = "Import recent last-played summaries", "value" = "lookback_days" }, { "label" = "Only record play from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.steam_play_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent summaries.", "default" = 14, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.steam_play_history.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0 }]
+enabled_key = "sources.steam_play_history.enabled"
+configured_key = "sources.steam_play_history.initial_sync_configured"
+fields = [{ "key" = "sources.steam_play_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much previous Steam activity should be imported.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Import all last-played summaries", "value" = "full" }, { "label" = "Import recent last-played summaries", "value" = "lookback_days" }, { "label" = "Only record play from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sources.steam_play_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent summaries.", "default" = 14, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sources.steam_play_history.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0 }]
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.account_id"
+key = "sources.steam_play_history.account_id"
 type = "input"
 label = "Account Id"
 description = ""
@@ -85,7 +85,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.default_retention_mode"
+key = "sources.steam_play_history.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -96,7 +96,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.enabled"
+key = "sources.steam_play_history.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether Steam game record sync is active."
@@ -107,7 +107,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.excluded_appids"
+key = "sources.steam_play_history.excluded_appids"
 type = "tags"
 label = "Excluded Appids"
 description = ""
@@ -118,7 +118,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.excluded_keywords"
+key = "sources.steam_play_history.excluded_keywords"
 type = "tags"
 label = "Excluded Game Keywords"
 description = "Game names containing these case-insensitive keywords are skipped before AI analysis."
@@ -130,7 +130,7 @@ order = 80
 placeholder = "e.g. private"
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.idle_timeout_minutes"
+key = "sources.steam_play_history.idle_timeout_minutes"
 type = "number"
 label = "Idle Timeout (minutes)"
 description = "A session is closed after this many minutes without additional Steam playtime."
@@ -142,7 +142,7 @@ order = 60
 minimum = 2.0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.initial_sync_configured"
+key = "sources.steam_play_history.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -153,7 +153,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.initial_sync_lookback_days"
+key = "sources.steam_play_history.initial_sync_lookback_days"
 type = "number"
 label = "Recent Days"
 description = "Used when the first-sync scope is set to recent summaries."
@@ -162,12 +162,12 @@ required = false
 section = "activation"
 surface = "timeline"
 order = 20
-depends_on_key = "sensors.steam_play_history.initial_sync_policy"
+depends_on_key = "sources.steam_play_history.initial_sync_policy"
 depends_on_values = ["lookback_days"]
 minimum = 1.0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.initial_sync_policy"
+key = "sources.steam_play_history.initial_sync_policy"
 type = "select"
 label = "First Sync Scope"
 description = "Decide how much previous Steam activity should be imported."
@@ -179,7 +179,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.max_items_per_sync"
+key = "sources.steam_play_history.max_items_per_sync"
 type = "number"
 label = "Max Items Per Sync"
 description = "Maximum number of Steam records to emit per sync."
@@ -191,7 +191,7 @@ order = 70
 minimum = 1.0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.min_session_seconds"
+key = "sources.steam_play_history.min_session_seconds"
 type = "number"
 label = "Minimum Session Duration (seconds)"
 description = "Inferred play sessions shorter than this are ignored."
@@ -203,7 +203,7 @@ order = 50
 minimum = 60.0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.steam_path"
+key = "sources.steam_play_history.steam_path"
 type = "path"
 label = "Steam Path"
 description = "Optional Steam install path. Leave empty to auto-detect the local Steam folder."
@@ -214,7 +214,7 @@ surface = "timeline"
 order = 20
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.sync_interval_minutes"
+key = "sources.steam_play_history.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to poll Steam playtime changes."
@@ -223,12 +223,12 @@ required = false
 section = "sync"
 surface = "timeline"
 order = 40
-depends_on_key = "sensors.steam_play_history.sync_mode"
+depends_on_key = "sources.steam_play_history.sync_mode"
 depends_on_values = ["interval"]
 minimum = 1.0
 
 [[plugin.settings_fields]]
-key = "sensors.steam_play_history.sync_mode"
+key = "sources.steam_play_history.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "How Steam game records should be synchronized."

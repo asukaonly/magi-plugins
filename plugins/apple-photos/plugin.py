@@ -11,7 +11,7 @@ from magi_plugin_sdk import (
     ExtractionProfileSpec,
     Plugin,
     PluginSettingsResourceSpec,
-    SensorSpec,
+    SourceSpec,
     SettingsUIBlockSpec,
 )
 
@@ -24,7 +24,7 @@ from photo_library_core.plugin_support import (
     APPLE_PHOTOS_SOURCE_TYPE,
     build_extraction_profile,
     build_recall_artifacts,
-    build_sensor_registration,
+    build_source_registration,
     build_temporal_summary_features,
 )
 
@@ -36,16 +36,16 @@ class ApplePhotosPlugin(Plugin):
         return [build_extraction_profile(APPLE_PHOTOS_SOURCE_TYPE)]
 
     def get_tools(self) -> list[type[object]]:
-        sensors_settings = self.settings.get("sensors", {})
+        sources_settings = self.settings.get("sources", {})
         settings: dict[str, Any] = {}
-        if isinstance(sensors_settings, dict):
-            raw_settings = sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
+        if isinstance(sources_settings, dict):
+            raw_settings = sources_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
             if isinstance(raw_settings, dict):
                 settings = dict(raw_settings)
         return build_apple_photo_tool_classes(settings, connection_id=self.connection.connection_id)
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        prefix = f"sensors.{APPLE_PHOTOS_SOURCE_TYPE}"
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
+        prefix = f"sources.{APPLE_PHOTOS_SOURCE_TYPE}"
         permission_block = SettingsUIBlockSpec(
             block_id="apple_photos_permissions",
             type="resource_picker",
@@ -59,7 +59,7 @@ class ApplePhotosPlugin(Plugin):
             presentation="permission_status",
         )
         return [
-            build_sensor_registration(
+            build_source_registration(
                 self.settings,
                 source_type=APPLE_PHOTOS_SOURCE_TYPE,
                 entry_id="apple_photos",
@@ -165,9 +165,9 @@ class ApplePhotosPlugin(Plugin):
 
 
 def _photos_library_path(plugin_settings: dict[str, Any]) -> str:
-    sensors_settings = plugin_settings.get("sensors", {})
-    if isinstance(sensors_settings, dict):
-        settings = sensors_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
+    sources_settings = plugin_settings.get("sources", {})
+    if isinstance(sources_settings, dict):
+        settings = sources_settings.get(APPLE_PHOTOS_SOURCE_TYPE, {})
         if isinstance(settings, dict):
             return str(
                 settings.get("photos_library_path", DEFAULT_PHOTOS_LIBRARY_PATH)

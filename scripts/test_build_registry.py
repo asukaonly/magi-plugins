@@ -104,18 +104,18 @@ def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
         assert group["member_order"] == spec["member_order"]
 
 
-def test_each_installable_sensor_package_owns_at_most_one_source() -> None:
+def test_each_installable_source_package_owns_at_most_one_source() -> None:
     """Independent sources must remain independently installable."""
     for manifest_path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
         plugin = tomllib.loads(manifest_path.read_text())["plugin"]
         if plugin.get("kind", "plugin") == "library":
             continue
-        if "sensor" not in plugin.get("contribution_types", []):
+        if "source" not in plugin.get("contribution_types", []):
             continue
-        sensors = (plugin.get("default_settings") or {}).get("sensors") or {}
+        sources = (plugin.get("default_settings") or {}).get("sources") or {}
         assert (
-            len(sensors) <= 1
-        ), f"{plugin['id']} bundles multiple sources: {sorted(sensors)}"
+            len(sources) <= 1
+        ), f"{plugin['id']} bundles multiple sources: {sorted(sources)}"
 
 
 def test_photo_sources_are_separate_marketplace_plugins() -> None:

@@ -121,7 +121,7 @@ public struct HelperResponse: Codable {
     // window content, minor pixel difference" (e.g. cursor blink, tiny scroll).
     public let phash: String?
     // System-wide seconds since the last input event of any kind
-    // (keyboard, mouse, scroll). Used by the Python sensor's session
+    // (keyboard, mouse, scroll). Used by the Python source's session
     // tracker to decide whether the user has been idle long enough to
     // close the current activity session. Zero macOS permissions required.
     public let idleSeconds: Double?

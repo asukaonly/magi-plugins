@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest
+from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest, Source
 from magi_plugin_sdk.runtime import OperationSpec
 from sdk_test_support import bind_test_plugin, load_plugin
 
@@ -44,10 +44,10 @@ def test_package_uses_explicit_protocol_and_public_sdk(path: Path) -> None:
 def test_all_declarations_construct_without_backend(path: Path) -> None:
     before = {name for name in sys.modules if name == "magi" or name.startswith("magi.")}
     if tomllib.loads(path.read_text())["plugin"].get("kind") == "library":
-        for source in path.parent.glob("*.py"):
-            if source.name == "__init__.py":
+        for source_file in path.parent.glob("*.py"):
+            if source_file.name == "__init__.py":
                 continue
-            __import__(f"{path.parent.name}.{source.stem}")
+            __import__(f"{path.parent.name}.{source_file.stem}")
         return
     plugin = bind_test_plugin(load_plugin(path))
     for method_name in ("get_extraction_profiles", "get_summary_profiles", "get_settings_resources", "get_settings_actions", "get_channel_fields", "get_operations"):
@@ -58,10 +58,13 @@ def test_all_declarations_construct_without_backend(path: Path) -> None:
     for field in plugin.get_channel_fields():
         assert field.key in declared_fields
         assert field.type == declared_fields[field.key].type
-    declarations = plugin.get_sensors()
-    for sensor_id, sensor, spec in declarations:
-        assert sensor_id == spec.sensor_id
-        assert sensor.source_type in plugin.manifest.projection_sources
+    declarations = plugin.get_sources()
+    assert len({source_id for source_id, _, _ in declarations}) == len(declarations)
+    for source_id, source, spec in declarations:
+        assert isinstance(source, Source)
+        assert source_id == source.source_id == spec.source_id
+        assert isinstance(source.source_type, str)
+        assert source.source_type in plugin.manifest.projection_sources
         for field in spec.fields:
             assert isinstance(field, ExtensionFieldSpec)
             assert field.key in declared_fields
@@ -71,9 +74,9 @@ def test_all_declarations_construct_without_backend(path: Path) -> None:
             assert field.default == declared_fields[field.key].default
         original = {"source_item_id": "same-native-id", "body": "original"}
         revised = {**original, "body": "edited", "description": "new metadata"}
-        assert sensor.source_item_version_fingerprint(original) != sensor.source_item_version_fingerprint(revised)
-        if sensor.supports_pull_sync:
-            assert inspect.signature(sensor.collect_items).return_annotation in {"SourceChangeBatch"}
+        assert source.source_item_version_fingerprint(original) != source.source_item_version_fingerprint(revised)
+        if source.supports_pull_sync:
+            assert inspect.signature(source.collect_items).return_annotation in {"SourceChangeBatch"}
     for tool_class in plugin.get_tools():
         schema = tool_class().schema
         OperationSpec(
@@ -125,45 +128,45 @@ def test_screenshot_collector_and_resolver_use_connection_resources() -> None:
     path = ROOT / "plugins" / "screenshot_timeline" / "plugin.toml"
     first = bind_test_plugin(load_plugin(path), connection_id="first")
     second = bind_test_plugin(load_plugin(path), connection_id="second")
-    first_sensor = first.get_sensors()[0][1]
-    second_sensor = second.get_sensors()[0][1]
-    assert first_sensor.resources_root == first.context.resources_dir
-    assert first_sensor._session_db_path.parent == first.context.resources_dir
-    assert first_sensor.resources_root != second_sensor.resources_root
+    first_source = first.get_sources()[0][1]
+    second_source = second.get_sources()[0][1]
+    assert first_source.resources_root == first.context.resources_dir
+    assert first_source._session_db_path.parent == first.context.resources_dir
+    assert first_source.resources_root != second_source.resources_root
 
 
 def test_local_documents_preserve_category_but_isolate_data_and_versions(tmp_path: Path) -> None:
     import asyncio
     from magi_plugin_sdk.runtime import SourceChangeBatch
-    from magi_plugin_sdk.sensors import SensorSyncContext
+    from magi_plugin_sdk.sources import SourceSyncContext
 
     path = ROOT / "plugins" / "local-documents" / "plugin.toml"
     results = []
-    sensors = []
+    sources = []
     for connection_id in ("first", "second"):
         root = tmp_path / connection_id
         root.mkdir()
         (root / "notes.md").write_text(f"# {connection_id}\nPrivate notes")
         plugin = bind_test_plugin(load_plugin(path), connection_id=connection_id, settings={
-            "sensors": {"local_documents": {"root_paths": [str(root)]}},
+            "sources": {"local_documents": {"root_paths": [str(root)]}},
         })
-        sensor = plugin.get_sensors()[0][1]
-        context = SensorSyncContext(
-            connection_id=plugin.connection.connection_id, source_type=sensor.source_type,
+        source = plugin.get_sources()[0][1]
+        context = SourceSyncContext(
+            connection_id=plugin.connection.connection_id, source_type=source.source_type,
             manual=True, last_cursor=None, last_success_at=None, limit=50,
             runtime_paths=None, plugin_settings=plugin.settings,
         )
-        batch = asyncio.run(sensor.collect_items(context))
+        batch = asyncio.run(source.collect_items(context))
         batch = SourceChangeBatch.model_validate_json(batch.model_dump_json())
         assert len(batch.changes) == 1
         assert connection_id in batch.changes[0].payload["body"]
         results.append(batch)
-        sensors.append(sensor)
-    assert sensors[0].source_type == sensors[1].source_type == "local_documents"
+        sources.append(source)
+    assert sources[0].source_type == sources[1].source_type == "local_documents"
     first = results[0].changes[0]
     edited = {**first.payload, "body": "Edited notes"}
-    assert sensors[0].source_item_identity(edited) == first.object_id
-    assert sensors[0].source_item_version_fingerprint(edited) != first.version
+    assert sources[0].source_item_identity(edited) == first.object_id
+    assert sources[0].source_item_version_fingerprint(edited) != first.version
 
 
 @pytest.mark.parametrize("path", PACKAGES, ids=lambda path: path.parent.name)
@@ -232,8 +235,8 @@ def test_settings_defaults_match_host_declarations(path: Path) -> None:
             _assert_default_matches_field(field, field.default)
     if manifest.kind != "library":
         plugin = bind_test_plugin(load_plugin(path))
-        for _, _, spec in plugin.get_sensors():
-            prefix = next((field.key.rsplit(".", 1)[0] for field in spec.fields if field.key.startswith("sensors.")), "")
+        for _, _, spec in plugin.get_sources():
+            prefix = next((field.key.rsplit(".", 1)[0] for field in spec.fields if field.key.startswith("sources.")), "")
             check_values(spec.metadata.get("default_settings", {}), prefix)
 
 
@@ -243,7 +246,7 @@ def test_declarative_activation_matches_primary_source() -> None:
         if meta.get("kind") == "library":
             continue
         plugin = bind_test_plugin(load_plugin(path))
-        flows = [spec.metadata["activation_flow"] for _, _, spec in plugin.get_sensors() if spec.metadata.get("activation_flow")]
+        flows = [spec.metadata["activation_flow"] for _, _, spec in plugin.get_sources() if spec.metadata.get("activation_flow")]
         if flows:
             assert plugin.manifest.activation_flow.model_dump() == flows[0]
         else:
@@ -254,26 +257,28 @@ def test_declarative_activation_matches_primary_source() -> None:
 def test_bounded_document_batches_do_not_skip_equal_timestamps(package_name: str, tmp_path: Path) -> None:
     import asyncio
     import os
-    from magi_plugin_sdk.sensors import SensorSyncContext
+    from magi_plugin_sdk.sources import SourceSyncContext
 
     for name in ("a.md", "b.md", "c.md"):
         file = tmp_path / name
         file.write_text(f"# {name}")
         os.utime(file, (1700000000, 1700000000))
-    source = "local_documents" if package_name == "local-documents" else "obsidian_vault"
+    source_type = "local_documents" if package_name == "local-documents" else "obsidian_vault"
     settings = {"root_paths": [str(tmp_path)]} if package_name == "local-documents" else {"vault_path": str(tmp_path)}
-    plugin = bind_test_plugin(load_plugin(ROOT / "plugins" / package_name / "plugin.toml"), settings={"sensors": {source: settings}})
-    sensor = plugin.get_sensors()[0][1]
-    context = SensorSyncContext(connection_id=plugin.connection.connection_id, source_type=source, manual=True, last_cursor=None, last_success_at=None, limit=1, runtime_paths=None, plugin_settings=plugin.settings)
+    plugin = bind_test_plugin(load_plugin(ROOT / "plugins" / package_name / "plugin.toml"), settings={"sources": {source_type: settings}})
+    source = plugin.get_sources()[0][1]
+    context = SourceSyncContext(connection_id=plugin.connection.connection_id, source_type=source_type, manual=True, last_cursor=None, last_success_at=None, limit=1, runtime_paths=None, plugin_settings=plugin.settings)
+    assert isinstance(context.source_type, str)
+    assert context.source_type == source.source_type
     seen = []
     for _ in range(3):
-        result = asyncio.run(sensor.collect_items(context))
+        result = asyncio.run(source.collect_items(context))
         assert len(result.changes) == 1
         seen.append(result.changes[0].object_id)
         context.last_cursor = result.next_cursor
     assert len(set(seen)) == 3
     assert result.complete is True
-    assert asyncio.run(sensor.collect_items(context)).changes == []
+    assert asyncio.run(source.collect_items(context)).changes == []
 
 
 def test_declarative_setup_catalog_matches_public_schemas() -> None:
@@ -288,7 +293,7 @@ def test_declarative_setup_catalog_matches_public_schemas() -> None:
         assert [entry.model_dump() for entry in plugin.manifest.settings_resources] == [entry.model_dump() for entry in plugin.get_settings_resources()]
         assert all(not resource.requires_enabled for resource in plugin.manifest.settings_resources)
         blocks = {entry.block_id: entry.model_dump() for entry in plugin.manifest.settings_ui_blocks}
-        for _, _, spec in plugin.get_sensors():
+        for _, _, spec in plugin.get_sources():
             for block in spec.metadata.get("settings_ui_blocks", []):
                 assert blocks[block["block_id"]] == block
         if meta["id"] in {"weixin", "github-activity"}:
@@ -304,4 +309,4 @@ def test_declarative_setup_catalog_matches_public_schemas() -> None:
 def test_internal_source_controls_are_declared(directory: str, keys: set[str]) -> None:
     meta = tomllib.loads((ROOT / "plugins" / directory / "plugin.toml").read_text())["plugin"]
     declared = {entry["key"] for entry in meta["settings_fields"]}
-    assert {f"sensors.{directory}.{key}" for key in keys} <= declared
+    assert {f"sources.{directory}.{key}" for key in keys} <= declared

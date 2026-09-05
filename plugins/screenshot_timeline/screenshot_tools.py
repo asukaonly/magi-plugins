@@ -17,7 +17,7 @@ This tool is that bridge. Given a list of capture_ids, it:
      ``prepare_chat_attachments(file_paths=...)`` next.
 
 Mirrors photo_library_resolve_photo_refs' interface so the chat LLM
-uses the same calling pattern across sensors.
+uses the same calling pattern across sources.
 """
 from __future__ import annotations
 

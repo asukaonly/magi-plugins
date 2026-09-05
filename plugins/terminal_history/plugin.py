@@ -11,12 +11,12 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
 )
 
 from .filters import BUILTIN_SENSITIVE_KEYWORDS
 from .reader import TerminalHistoryReader
-from .sensor import TerminalHistorySensor
+from .source import TerminalHistorySource
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -357,11 +357,11 @@ class TerminalHistoryPlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        """Get sensor specifications for Terminal History.
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
+        """Get source specifications for Terminal History.
 
         Returns:
-            List of sensor tuples (sensor_id, sensor_instance, sensor_spec)
+            List of source tuples (source_id, source_instance, source_spec)
         """
         # Check platform - only supported on Darwin
         if sys.platform != "darwin":
@@ -369,13 +369,13 @@ class TerminalHistoryPlugin(Plugin):
 
         # Get settings
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("terminal_history", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("terminal_history", {}))
 
         source_enabled = bool(settings.get("enabled", DEFAULT_SETTINGS["enabled"]))
 
-        # Check history availability (but still return sensor spec even if not available)
+        # Check history availability (but still return source spec even if not available)
         reader = None
         if source_enabled:
             try:
@@ -385,8 +385,8 @@ class TerminalHistoryPlugin(Plugin):
             except Exception:
                 reader = None
 
-        # Create sensor (reader may be None if not available)
-        sensor = TerminalHistorySensor(
+        # Create source (reader may be None if not available)
+        source = TerminalHistorySource(
             retention_mode=str(settings.get("default_retention_mode", DEFAULT_SETTINGS["default_retention_mode"])),
             reader=reader,
         )
@@ -397,21 +397,21 @@ class TerminalHistoryPlugin(Plugin):
         return [
             (
                 "timeline.terminal_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.terminal_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.terminal_history",
                     display_name="Terminal History",
                     description="Terminal command history ingestion for the timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sensors.terminal_history"),
+                    fields=_fields("sources.terminal_history"),
                     metadata={
                         "source_type": "terminal_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
                         "sync_interval_minutes": sync_interval_minutes,
-                        "activation_flow": _activation_flow("sensors.terminal_history").model_dump(),
+                        "activation_flow": _activation_flow("sources.terminal_history").model_dump(),
                     },
                 ),
             )

@@ -10,17 +10,17 @@ id = "git-activity"
 name = "Git Activity"
 name_i18n = { "zh-CN" = "Git 活动" }
 icon = "asset:assets/icon.svg"
-version = "0.2.1"
+version = "0.3.0"
 description = "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow."
 description_i18n = { "zh-CN" = "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "GitActivityPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos", "windows"]
 
-[plugin.default_settings.sensors.git_activity]
+[plugin.default_settings.sources.git_activity]
 enabled = false
 repos = []
 sync_interval_minutes = 30
@@ -85,13 +85,13 @@ description = "Git activity can reveal repository names and local work patterns.
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.git_activity.enabled"
-configured_key = "sensors.git_activity.initial_sync_configured"
-fields = [{ "key" = "sensors.git_activity.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much Git history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.git_activity.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 30, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.git_activity.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0, "maximum" = 365.0 }, { "key" = "sensors.git_activity.repos", "type" = "path", "label" = "Repository Folders", "description" = "Select one or more Git repository folders to monitor.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 30, "depends_on_values" = [] }]
+enabled_key = "sources.git_activity.enabled"
+configured_key = "sources.git_activity.initial_sync_configured"
+fields = [{ "key" = "sources.git_activity.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much Git history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sources.git_activity.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 30, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sources.git_activity.initial_sync_policy", "depends_on_values" = ["lookback_days"], "minimum" = 1.0, "maximum" = 365.0 }, { "key" = "sources.git_activity.repos", "type" = "path", "label" = "Repository Folders", "description" = "Select one or more Git repository folders to monitor.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 30, "depends_on_values" = [] }]
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.default_retention_mode"
+key = "sources.git_activity.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -102,7 +102,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.enabled"
+key = "sources.git_activity.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether git activity sync is active."
@@ -113,7 +113,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.initial_sync_configured"
+key = "sources.git_activity.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -124,7 +124,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.initial_sync_lookback_days"
+key = "sources.git_activity.initial_sync_lookback_days"
 type = "number"
 label = "Recent Days"
 description = "Used when the first-sync scope is set to recent days."
@@ -133,13 +133,13 @@ required = false
 section = "activation"
 surface = "timeline"
 order = 20
-depends_on_key = "sensors.git_activity.initial_sync_policy"
+depends_on_key = "sources.git_activity.initial_sync_policy"
 depends_on_values = ["lookback_days"]
 minimum = 1.0
 maximum = 365.0
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.initial_sync_policy"
+key = "sources.git_activity.initial_sync_policy"
 type = "select"
 label = "First Sync Scope"
 description = "Decide how much Git history should be imported when this source is enabled for the first time."
@@ -151,7 +151,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.max_messages_per_session"
+key = "sources.git_activity.max_messages_per_session"
 type = "number"
 label = "Max Messages Per Session"
 description = ""
@@ -162,7 +162,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.repos"
+key = "sources.git_activity.repos"
 type = "path"
 label = "Repositories"
 description = "Select one or more Git repository folders to monitor."
@@ -173,7 +173,7 @@ surface = "timeline"
 order = 20
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.sensitive_keywords"
+key = "sources.git_activity.sensitive_keywords"
 type = "tags"
 label = "Additional Sensitive Keywords"
 description = "Extra keywords to detect in commit messages (built-in: password, secret, token, etc.)"
@@ -184,7 +184,7 @@ surface = "timeline"
 order = 70
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.sensitive_mode"
+key = "sources.git_activity.sensitive_mode"
 type = "select"
 label = "Sensitive Message Mode"
 description = "How to handle commit messages with sensitive content."
@@ -196,7 +196,7 @@ surface = "timeline"
 order = 60
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.session_window_minutes"
+key = "sources.git_activity.session_window_minutes"
 type = "number"
 label = "Session Window Minutes"
 description = ""
@@ -207,7 +207,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.git_activity.sync_interval_minutes"
+key = "sources.git_activity.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to check for new git activity."

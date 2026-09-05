@@ -12,7 +12,7 @@ from typing import Any
 
 from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
 from magi_plugin_sdk.fs import UnsafeManagedPathError
-from magi_plugin_sdk.sensors import SensorSyncContext
+from magi_plugin_sdk.sources import SourceSyncContext
 import pytest
 
 PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
@@ -40,9 +40,9 @@ def _context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=7),
         runtime_paths=runtime_paths,
         plugin_id="steam-play-history",
-        sensor_id="timeline.steam_play_history",
+        source_id="timeline.steam_play_history",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "steam_play_history": {
                     "account_id": "configured-account",
                     "steam_path": "/configured/steam",
@@ -55,7 +55,7 @@ def _context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
 def test_clear_removes_collected_state_but_preserves_settings(
     tmp_path: Path,
 ) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_paths = _RuntimePaths(tmp_path)
     state_path = runtime_paths.plugin_cache_dir("steam_play_history") / "state.json"
     state_path.parent.mkdir(parents=True)
@@ -84,7 +84,7 @@ def test_clear_removes_collected_state_but_preserves_settings(
         ),
         encoding="utf-8",
     )
-    sensor = sensor_module.SteamPlayHistoryTimelineSensor(
+    source = source_module.SteamPlayHistoryTimelineSource(
         reader=_ReaderTrap(),
         steam_path="/configured/steam",
         account_id="configured-account",
@@ -92,22 +92,22 @@ def test_clear_removes_collected_state_but_preserves_settings(
     context = _context(runtime_paths)
 
     async def run_clear() -> None:
-        await sensor.clear_user_content(context)
-        await sensor.clear_user_content(context)
+        await source.clear_user_content(context)
+        await source.clear_user_content(context)
 
     asyncio.run(run_clear())
 
     assert not state_path.exists()
-    assert context.plugin_settings["sensors"]["steam_play_history"]["account_id"] == (
+    assert context.plugin_settings["sources"]["steam_play_history"]["account_id"] == (
         "configured-account"
     )
-    assert sensor.steam_path == "/configured/steam"
-    assert sensor.account_id == "configured-account"
+    assert source.steam_path == "/configured/steam"
+    assert source.account_id == "configured-account"
 
 
 def test_clear_waits_for_collection_and_collection_can_resume(tmp_path: Path) -> None:
     reader_module = importlib.import_module("steam_play_history.reader")
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_paths = _RuntimePaths(tmp_path)
     operation_order: list[str] = []
 
@@ -139,11 +139,11 @@ def test_clear_waits_for_collection_and_collection_can_resume(tmp_path: Path) ->
 
     async def run_scenario() -> None:
         state_store = _BlockingStateStore()
-        sensor = sensor_module.SteamPlayHistoryTimelineSensor(
+        source = source_module.SteamPlayHistoryTimelineSource(
             reader=_Reader(),
             state_store=state_store,
         )
-        sync_context = SensorSyncContext(
+        sync_context = SourceSyncContext(
         connection_id="test-connection",
             source_type="steam_play_history",
             manual=True,
@@ -151,12 +151,12 @@ def test_clear_waits_for_collection_and_collection_can_resume(tmp_path: Path) ->
             last_success_at=1_750_000_000.0,
             limit=10,
             runtime_paths=runtime_paths,
-            plugin_settings={"sensors": {"steam_play_history": {}}},
+            plugin_settings={"sources": {"steam_play_history": {}}},
         )
-        collect_task = asyncio.create_task(sensor.collect_items(sync_context))
+        collect_task = asyncio.create_task(source.collect_items(sync_context))
         await state_store.apply_started.wait()
         clear_task = asyncio.create_task(
-            sensor.clear_user_content(_context(runtime_paths))
+            source.clear_user_content(_context(runtime_paths))
         )
         await asyncio.sleep(0)
 
@@ -168,14 +168,14 @@ def test_clear_waits_for_collection_and_collection_can_resume(tmp_path: Path) ->
         assert sync_context.last_cursor == "preserved-cursor"
 
         operation_order.clear()
-        await sensor.collect_items(sync_context)
+        await source.collect_items(sync_context)
         assert operation_order == ["apply-start", "apply-end", "flush"]
 
     asyncio.run(run_scenario())
 
 
 def test_clear_removes_state_symlink_without_touching_target(tmp_path: Path) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_paths = _RuntimePaths(tmp_path / "runtime")
     state_path = runtime_paths.plugin_cache_dir("steam_play_history") / "state.json"
     state_path.parent.mkdir(parents=True)
@@ -185,7 +185,7 @@ def test_clear_removes_state_symlink_without_touching_target(tmp_path: Path) -> 
     state_path.symlink_to(external_state)
 
     asyncio.run(
-        sensor_module.SteamPlayHistoryTimelineSensor().clear_user_content(
+        source_module.SteamPlayHistoryTimelineSource().clear_user_content(
             _context(runtime_paths)
         )
     )
@@ -195,7 +195,7 @@ def test_clear_removes_state_symlink_without_touching_target(tmp_path: Path) -> 
 
 
 def test_clear_removes_hardlink_without_touching_other_links(tmp_path: Path) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_paths = _RuntimePaths(tmp_path / "runtime")
     state_path = runtime_paths.plugin_cache_dir("steam_play_history") / "state.json"
     state_path.parent.mkdir(parents=True)
@@ -205,7 +205,7 @@ def test_clear_removes_hardlink_without_touching_other_links(tmp_path: Path) -> 
     os.link(external_state, state_path)
 
     asyncio.run(
-        sensor_module.SteamPlayHistoryTimelineSensor().clear_user_content(
+        source_module.SteamPlayHistoryTimelineSource().clear_user_content(
             _context(runtime_paths)
         )
     )
@@ -219,14 +219,14 @@ def test_clear_removes_hardlink_without_touching_other_links(tmp_path: Path) -> 
     reason="POSIX FIFOs are unavailable",
 )
 def test_clear_removes_fifo_without_opening_it(tmp_path: Path) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_paths = _RuntimePaths(tmp_path / "runtime")
     state_path = runtime_paths.plugin_cache_dir("steam_play_history") / "state.json"
     state_path.parent.mkdir(parents=True)
     os.mkfifo(state_path)
 
     asyncio.run(
-        sensor_module.SteamPlayHistoryTimelineSensor().clear_user_content(
+        source_module.SteamPlayHistoryTimelineSource().clear_user_content(
             _context(runtime_paths)
         )
     )
@@ -235,7 +235,7 @@ def test_clear_removes_fifo_without_opening_it(tmp_path: Path) -> None:
 
 
 def test_clear_rejects_linked_state_directory(tmp_path: Path) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     runtime_root = tmp_path / "runtime"
     runtime_root.mkdir()
     external_cache = tmp_path / "external-cache"
@@ -250,7 +250,7 @@ def test_clear_rejects_linked_state_directory(tmp_path: Path) -> None:
 
     with pytest.raises(UnsafeManagedPathError):
         asyncio.run(
-            sensor_module.SteamPlayHistoryTimelineSensor().clear_user_content(
+            source_module.SteamPlayHistoryTimelineSource().clear_user_content(
                 _context(_RuntimePaths(runtime_root))
             )
         )
@@ -261,14 +261,14 @@ def test_clear_rejects_linked_state_directory(tmp_path: Path) -> None:
 def test_clear_missing_state_does_not_create_through_linked_ancestor(
     tmp_path: Path,
 ) -> None:
-    sensor_module = importlib.import_module("steam_play_history.sensor")
+    source_module = importlib.import_module("steam_play_history.source")
     external_root = tmp_path / "external"
     external_root.mkdir()
     linked_root = tmp_path / "linked-runtime"
     linked_root.symlink_to(external_root, target_is_directory=True)
 
     asyncio.run(
-        sensor_module.SteamPlayHistoryTimelineSensor().clear_user_content(
+        source_module.SteamPlayHistoryTimelineSource().clear_user_content(
             _context(_RuntimePaths(linked_root))
         )
     )

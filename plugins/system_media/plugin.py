@@ -10,10 +10,10 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
 )
 
-from .sensor import SystemMediaTimelineSensor
+from .source import SystemMediaTimelineSource
 from .state import MediaSessionStateStore
 
 DEFAULT_SETTINGS = {
@@ -128,7 +128,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
 
 
 class SystemMediaPlugin(Plugin):
-    """Registers the system-media timeline sensor."""
+    """Registers the system-media timeline source."""
 
     def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
         return [
@@ -256,14 +256,14 @@ class SystemMediaPlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         if sys.platform not in ("win32", "darwin"):
             return []
 
         settings: dict = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("system_media", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("system_media", {}))
 
         min_session_s = int(settings.get("min_session_seconds", DEFAULT_SETTINGS["min_session_seconds"]))
         pause_timeout_s = int(settings.get("pause_timeout_seconds", DEFAULT_SETTINGS["pause_timeout_seconds"]))
@@ -273,21 +273,21 @@ class SystemMediaPlugin(Plugin):
             pause_timeout_s=pause_timeout_s,
             min_session_s=min_session_s,
         )
-        sensor = SystemMediaTimelineSensor(state_store=state_store)
+        source = SystemMediaTimelineSource(state_store=state_store)
 
         return [
             (
                 "timeline.system_media",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.system_media",
+                source,
+                SourceSpec(
+                    source_id="timeline.system_media",
                     display_name="Local Now Playing",
                     description="Records music playback from apps that expose OS media controls. Support varies by player, and some apps may not be detected.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sensors.system_media"),
+                    fields=_fields("sources.system_media"),
                     metadata={
                         "source_type": "system_media",
                         "default_settings": dict(DEFAULT_SETTINGS),

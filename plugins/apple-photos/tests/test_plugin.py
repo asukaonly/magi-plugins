@@ -30,10 +30,10 @@ def _load_plugin_module() -> ModuleType:
 
 def test_apple_photos_registers_only_the_apple_source() -> None:
     plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    assert len(sensors) == 1
-    _sensor_id, _sensor, spec = sensors[0]
+    assert len(sources) == 1
+    _source_id, _source, spec = sources[0]
     assert spec.metadata["source_type"] == "photo_library_apple_photos"
     assert spec.metadata["entry_id"] == "apple_photos"
     assert spec.metadata["capability_id"] == "photo_library"
@@ -42,20 +42,20 @@ def test_apple_photos_registers_only_the_apple_source() -> None:
 
 def test_apple_photos_activation_does_not_request_a_folder() -> None:
     plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
-    spec = plugin.get_sensors()[0][2]
+    spec = plugin.get_sources()[0][2]
     flow = spec.metadata["activation_flow"]
 
-    assert flow["enabled_key"] == "sensors.photo_library_apple_photos.enabled"
+    assert flow["enabled_key"] == "sources.photo_library_apple_photos.enabled"
     assert flow["fields"] == []
     assert any(
-        field.key == "sensors.photo_library_apple_photos.photos_library_path"
+        field.key == "sources.photo_library_apple_photos.photos_library_path"
         for field in spec.fields
     )
 
 
 def test_apple_photos_has_its_own_permission_status() -> None:
     plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
-    spec = plugin.get_sensors()[0][2]
+    spec = plugin.get_sources()[0][2]
     blocks = spec.metadata["settings_ui_blocks"]
     payload = plugin.read_settings_resource("apple_photos_permissions")
 
@@ -79,7 +79,7 @@ def test_apple_photos_registers_only_its_extraction_profile() -> None:
 def test_apple_photos_tool_uses_only_apple_settings() -> None:
     plugin = bind_test_plugin(_load_plugin_module().ApplePhotosPlugin())
     plugin.settings = {
-        "sensors": {
+        "sources": {
             "photo_library_apple_photos": {
                 "photos_library_path": "/Libs/A.photoslibrary"
             },

@@ -22,7 +22,7 @@ if PLUGINS_ROOT not in sys.path:
 
 from photo_library_core.file_index import FileIndexCache  # noqa: E402
 from photo_library_core.reader import PhotoLibraryReader  # noqa: E402
-from photo_library_core.sensor import PhotoLibraryTimelineSensor  # noqa: E402
+from photo_library_core.source import PhotoLibraryTimelineSource  # noqa: E402
 
 
 class _RuntimePaths:
@@ -40,9 +40,9 @@ def _clear_context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=7),
         runtime_paths=runtime_paths,
         plugin_id="local-photos",
-        sensor_id="timeline.photo_library.directory",
+        source_id="timeline.photo_library.directory",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "photo_library_directory": {
                     "enabled": True,
                     "source_paths": ["/private/photos"],
@@ -122,7 +122,7 @@ def test_clear_deletes_photo_index_and_preserves_non_user_cache(
     index.user_content_paths[3].write_bytes(b"rollback journal")
 
     reader = PhotoLibraryReader(file_index=index)
-    sensor = PhotoLibraryTimelineSensor(
+    source = PhotoLibraryTimelineSource(
         source_type=source_type,
         source_paths=[str(source_dir)],
         reader=reader,
@@ -133,8 +133,8 @@ def test_clear_deletes_photo_index_and_preserves_non_user_cache(
     monkeypatch.setattr(urllib.request, "urlopen", network_call)
 
     async def clear_twice() -> None:
-        await sensor.clear_user_content(context)
-        await sensor.clear_user_content(context)
+        await source.clear_user_content(context)
+        await source.clear_user_content(context)
 
     asyncio.run(clear_twice())
 
@@ -146,13 +146,13 @@ def test_clear_deletes_photo_index_and_preserves_non_user_cache(
         assert path.read_bytes() == content
     assert source_photo.read_bytes() == b"private photo bytes"
     assert runtime_paths.requested_plugin_ids[-2:] == [source_type, source_type]
-    assert context.plugin_settings["sensors"][source_type]["cursor"] == "source-cursor-42"
+    assert context.plugin_settings["sources"][source_type]["cursor"] == "source-cursor-42"
     assert (
-        context.plugin_settings["sensors"][source_type]["watermark_ts"]
+        context.plugin_settings["sources"][source_type]["watermark_ts"]
         == 1_775_000_123.5
     )
     assert (
-        context.plugin_settings["sensors"]["photo_library_apple_photos"][
+        context.plugin_settings["sources"]["photo_library_apple_photos"][
             "permission"
         ]
         == "granted"
@@ -256,13 +256,13 @@ def test_clear_waits_for_scan_and_later_scan_rebuilds_index(tmp_path: Path) -> N
             )
 
     reader = _BlockingReader()
-    sensor = PhotoLibraryTimelineSensor(
+    source = PhotoLibraryTimelineSource(
         source_type=source_type,
         source_paths=[str(source_dir)],
         reader=reader,  # type: ignore[arg-type]
     )
     sync_context = SimpleNamespace(
-        plugin_settings={"sensors": {source_type: {}}},
+        plugin_settings={"sources": {source_type: {}}},
         runtime_paths=runtime_paths,
         last_cursor=None,
         last_success_at=None,
@@ -271,11 +271,11 @@ def test_clear_waits_for_scan_and_later_scan_rebuilds_index(tmp_path: Path) -> N
     index_paths = FileIndexCache(cache_dir).user_content_paths
 
     async def scenario() -> None:
-        collect_task = asyncio.create_task(sensor.collect_items(sync_context))
+        collect_task = asyncio.create_task(source.collect_items(sync_context))
         while not scan_started.is_set():
             await asyncio.sleep(0)
         clear_task = asyncio.create_task(
-            sensor.clear_user_content(_clear_context(runtime_paths))
+            source.clear_user_content(_clear_context(runtime_paths))
         )
         await asyncio.sleep(0)
         assert not clear_task.done()
@@ -285,7 +285,7 @@ def test_clear_waits_for_scan_and_later_scan_rebuilds_index(tmp_path: Path) -> N
         await clear_task
         assert all(not os.path.lexists(path) for path in index_paths)
 
-        result = await sensor.collect_items(sync_context)
+        result = await source.collect_items(sync_context)
         assert [change.payload for change in result.changes] == []
 
     asyncio.run(scenario())

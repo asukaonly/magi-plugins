@@ -25,11 +25,11 @@ def _load_plugin_class():
     return module.SafariHistoryPlugin
 
 
-def test_plugin_registers_browser_core_sensor_spec() -> None:
+def test_plugin_registers_browser_core_source_spec() -> None:
     cls = _load_plugin_class()
     plugin = cls()
     plugin.settings = {
-        "sensors": {
+        "sources": {
             "safari_history": {
                 "enabled": False,
                 "source_path": "/tmp/Safari",
@@ -38,19 +38,19 @@ def test_plugin_registers_browser_core_sensor_spec() -> None:
         }
     }
 
-    sensors = plugin.get_sensors()
-    assert len(sensors) == 1
-    sensor_id, sensor, spec = sensors[0]
-    assert sensor_id == "timeline.safari_history"
-    assert sensor.source_type == "safari_history"
-    assert sensor.browser_code == "safari"
+    sources = plugin.get_sources()
+    assert len(sources) == 1
+    source_id, source, spec = sources[0]
+    assert source_id == "timeline.safari_history"
+    assert source.source_type == "safari_history"
+    assert source.browser_code == "safari"
     assert spec.display_name == "Safari History"
     assert spec.sync_mode == "manual"
     assert spec.metadata["source_type"] == "safari_history"
-    assert spec.metadata["activation_flow"]["enabled_key"] == "sensors.safari_history.enabled"
+    assert spec.metadata["activation_flow"]["enabled_key"] == "sources.safari_history.enabled"
     assert spec.metadata["activation_flow"]["first_context"]["settings_overrides"] == {
-        "sensors.safari_history.initial_sync_policy": "lookback_days",
-        "sensors.safari_history.initial_sync_lookback_days": 7,
+        "sources.safari_history.initial_sync_policy": "lookback_days",
+        "sources.safari_history.initial_sync_lookback_days": 7,
     }
     assert spec.metadata["activation_flow"]["first_context"]["max_items_per_sync"] == 200
 

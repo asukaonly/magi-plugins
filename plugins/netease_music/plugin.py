@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import sys
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SourceSpec
 from .reader import DEFAULT_DB_PATH
-from .sensor import NeteaseMusicTimelineSensor
+from .source import NeteaseMusicTimelineSource
 from .summary_features import build_netease_temporal_summary_features
 
 DEFAULT_SETTINGS = {
@@ -391,42 +391,42 @@ class NeteaseMusicPlugin(Plugin):
             "summary_lines": [line for line in summary_lines if str(line).strip()],
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         if sys.platform not in ("darwin", "win32"):
             return []
 
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("netease_music", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("netease_music", {}))
         resolved_sync_mode = _normalize_sync_mode(settings.get("sync_mode"))
         configured_db_path = str(settings.get("db_path") or DEFAULT_SETTINGS["db_path"])
 
-        sensor = NeteaseMusicTimelineSensor(
+        source = NeteaseMusicTimelineSource(
             min_play_duration=int(settings.get("min_play_duration") or DEFAULT_SETTINGS["min_play_duration"]),
             source_path=configured_db_path,
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             tag_strategy=str(settings.get("tag_strategy") or "off"),
-            lastfm_api_key=self.context.credentials.get("sensors.netease_music.lastfm_api_key") or "",
+            lastfm_api_key=self.context.credentials.get("sources.netease_music.lastfm_api_key") or "",
         )
 
         return [
             (
                 "timeline.netease_music",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.netease_music",
+                source,
+                SourceSpec(
+                    source_id="timeline.netease_music",
                     display_name="NetEase Cloud Music",
                     description="Local NetEase Cloud Music play history ingestion for the timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=resolved_sync_mode,
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=_fields("sensors.netease_music"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
+                    fields=_fields("sources.netease_music"),
                     metadata={
                         "source_type": "netease_music",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.netease_music").model_dump(),
+                        "activation_flow": _activation_flow("sources.netease_music").model_dump(),
                         **LISTENING_HISTORY_CAPABILITY_METADATA,
                     },
                 ),

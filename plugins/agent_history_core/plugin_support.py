@@ -7,10 +7,10 @@ from magi_plugin_sdk import (
     ActivationFlowSpec,
     ExtensionFieldSpec,
     ExtractionProfileSpec,
-    SensorSpec,
+    SourceSpec,
 )
 
-from .sensor import CodingAgentHistorySensor
+from .source import CodingAgentHistorySource
 
 CAPABILITY_ID = "agent_history"
 CAPABILITY_DISPLAY_NAME = "Agent History"
@@ -190,7 +190,7 @@ def build_activation_flow(
     )
 
 
-def build_sensor_registration(
+def build_source_registration(
     plugin_settings: dict[str, Any],
     *,
     agent: str,
@@ -199,27 +199,27 @@ def build_sensor_registration(
     description: str,
     default_source_paths: list[str],
     entry_order: int,
-) -> tuple[str, Any, SensorSpec]:
-    sensors_settings = plugin_settings.get("sensors", {})
-    sensors_payload = sensors_settings if isinstance(sensors_settings, dict) else {}
-    settings = dict(sensors_payload.get(source_type, {}))
+) -> tuple[str, Any, SourceSpec]:
+    sources_settings = plugin_settings.get("sources", {})
+    sources_payload = sources_settings if isinstance(sources_settings, dict) else {}
+    settings = dict(sources_payload.get(source_type, {}))
     defaults = source_defaults(default_source_paths)
     sync_interval_minutes = settings.get(
         "sync_interval_minutes", defaults["sync_interval_minutes"]
     )
-    sensor_id = f"timeline.{source_type}"
-    sensor = CodingAgentHistorySensor(
+    source_id = f"timeline.{source_type}"
+    source = CodingAgentHistorySource(
         agent=agent,
         source_type=source_type,
         display_name=display_name,
         default_source_paths=list(default_source_paths),
     )
-    prefix = f"sensors.{source_type}"
+    prefix = f"sources.{source_type}"
     return (
-        sensor_id,
-        sensor,
-        SensorSpec(
-            sensor_id=sensor_id,
+        source_id,
+        source,
+        SourceSpec(
+            source_id=source_id,
             display_name=display_name,
             description=description,
             domain="timeline",

@@ -10,17 +10,17 @@ id = "terminal-history"
 name = "Terminal History"
 name_i18n = { "zh-CN" = "终端历史" }
 icon = "lucide:terminal"
-version = "0.2.1"
+version = "0.3.0"
 description = "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits."
 description_i18n = { "zh-CN" = "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "TerminalHistoryPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos"]
 
-[plugin.default_settings.sensors.terminal_history]
+[plugin.default_settings.sources.terminal_history]
 enabled = false
 sync_interval_minutes = 15
 initial_sync_policy = "lookback_days"
@@ -65,12 +65,12 @@ description = "Terminal history contains commands you've executed. Choose how mu
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.terminal_history.enabled"
-configured_key = "sensors.terminal_history.initial_sync_configured"
-fields = [{ "key" = "sensors.terminal_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much command history should be imported.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new commands from now", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.terminal_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.terminal_history.initial_sync_policy", "depends_on_values" = ["lookback_days"] }]
+enabled_key = "sources.terminal_history.enabled"
+configured_key = "sources.terminal_history.initial_sync_configured"
+fields = [{ "key" = "sources.terminal_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much command history should be imported.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new commands from now", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sources.terminal_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sources.terminal_history.initial_sync_policy", "depends_on_values" = ["lookback_days"] }]
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.dedup_window_seconds"
+key = "sources.terminal_history.dedup_window_seconds"
 type = "number"
 label = "Dedup Window (seconds)"
 description = "Time window for session-based command deduplication."
@@ -83,7 +83,7 @@ minimum = 0.0
 maximum = 3600.0
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.default_retention_mode"
+key = "sources.terminal_history.default_retention_mode"
 type = "select"
 label = "Retention Mode"
 description = "How terminal history data should be retained."
@@ -95,7 +95,7 @@ surface = "timeline"
 order = 30
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.enabled"
+key = "sources.terminal_history.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether terminal history sync is active."
@@ -106,7 +106,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.initial_sync_configured"
+key = "sources.terminal_history.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -117,7 +117,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.initial_sync_lookback_days"
+key = "sources.terminal_history.initial_sync_lookback_days"
 type = "number"
 label = "Recent Days"
 description = "Used when the first-sync scope is set to recent days."
@@ -126,11 +126,11 @@ required = false
 section = "activation"
 surface = "timeline"
 order = 20
-depends_on_key = "sensors.terminal_history.initial_sync_policy"
+depends_on_key = "sources.terminal_history.initial_sync_policy"
 depends_on_values = ["lookback_days"]
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.initial_sync_policy"
+key = "sources.terminal_history.initial_sync_policy"
 type = "select"
 label = "First Sync Scope"
 description = "Decide how much command history should be imported."
@@ -142,7 +142,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.sensitive_keywords"
+key = "sources.terminal_history.sensitive_keywords"
 type = "tags"
 label = "Additional Sensitive Keywords"
 description = "Extra keywords to detect sensitive commands (built-in: password, token, api_key, etc.)"
@@ -153,7 +153,7 @@ surface = "timeline"
 order = 50
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.sensitive_mode"
+key = "sources.terminal_history.sensitive_mode"
 type = "select"
 label = "Sensitive Command Mode"
 description = "How to handle commands containing sensitive information."
@@ -165,7 +165,7 @@ surface = "timeline"
 order = 40
 
 [[plugin.settings_fields]]
-key = "sensors.terminal_history.sync_interval_minutes"
+key = "sources.terminal_history.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to check for new terminal commands."

@@ -1,7 +1,7 @@
 [plugin]
 settings_actions = []
 settings_resources = [{ "resource_name" = "calendar_lists", "resource_type" = "collection", "requires_enabled" = false, "description" = "Selectable calendars grouped by account/source.", "metadata" = {  } }]
-settings_ui_blocks = [{ "block_id" = "selected_calendars", "type" = "resource_picker", "title" = "Calendars", "description" = "Choose which calendars should be synced into the timeline.", "resource_name" = "calendar_lists", "value_key" = "sensors.calendar.selected_calendar_ids", "presentation" = "calendar_list", "depends_on_key" = "sensors.calendar.authorization_configured", "depends_on_values" = ["true"] }]
+settings_ui_blocks = [{ "block_id" = "selected_calendars", "type" = "resource_picker", "title" = "Calendars", "description" = "Choose which calendars should be synced into the timeline.", "resource_name" = "calendar_lists", "value_key" = "sources.calendar.selected_calendar_ids", "presentation" = "calendar_list", "depends_on_key" = "sources.calendar.authorization_configured", "depends_on_values" = ["true"] }]
 protocol_version = 2
 min_sdk_version = "0.2.0"
 execution_mode = "trusted_process"
@@ -10,21 +10,21 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "lucide:calendar-days"
-version = "0.2.1"
+version = "0.3.0"
 description = "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
 description_i18n = { "zh-CN" = "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "CalendarPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos"]
 dependencies = [
     "pyobjc-framework-EventKit>=10.0",
     "pyobjc-framework-Cocoa>=10.0",
 ]
 
-[plugin.default_settings.sensors.calendar]
+[plugin.default_settings.sources.calendar]
 enabled = false
 sync_mode = "interval"
 sync_interval_minutes = "30"
@@ -89,13 +89,13 @@ description = "Allow Magi to read your calendar events for timeline sync."
 confirm_label = "Allow calendar access"
 cancel_label = "Not now"
 authorize_on_confirm = true
-enabled_key = "sensors.calendar.enabled"
-configured_key = "sensors.calendar.authorization_configured"
+enabled_key = "sources.calendar.enabled"
+configured_key = "sources.calendar.authorization_configured"
 fields = []
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.authorization_configured"
+key = "sources.calendar.authorization_configured"
 type = "switch"
 label = "Authorization Configured"
 description = ""
@@ -106,7 +106,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.default_retention_mode"
+key = "sources.calendar.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -117,7 +117,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.enabled"
+key = "sources.calendar.enabled"
 type = "switch"
 label = "Enable Calendar Sync"
 description = "Sync calendar events to timeline."
@@ -128,7 +128,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.lookback_days"
+key = "sources.calendar.lookback_days"
 type = "number"
 label = "Lookback Days"
 description = "How many days of history to sync on initial setup."
@@ -141,7 +141,7 @@ minimum = 1.0
 maximum = 365.0
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.recurring_expansion_days"
+key = "sources.calendar.recurring_expansion_days"
 type = "number"
 label = "Future Recurring Event Window"
 description = "How many future days of recurring events should be prefetched into the timeline."
@@ -154,7 +154,7 @@ minimum = 1.0
 maximum = 365.0
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.selected_calendar_ids"
+key = "sources.calendar.selected_calendar_ids"
 type = "tags"
 label = "Selected Calendar Ids"
 description = ""
@@ -165,7 +165,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.sync_interval_minutes"
+key = "sources.calendar.sync_interval_minutes"
 type = "select"
 label = "Sync Interval"
 description = "How often to sync calendar events when scheduled sync is enabled."
@@ -175,11 +175,11 @@ options = [{ "label" = "15 minutes", "value" = "15" }, { "label" = "30 minutes",
 section = "sync"
 surface = "timeline"
 order = 30
-depends_on_key = "sensors.calendar.sync_mode"
+depends_on_key = "sources.calendar.sync_mode"
 depends_on_values = ["interval"]
 
 [[plugin.settings_fields]]
-key = "sensors.calendar.sync_mode"
+key = "sources.calendar.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "Choose whether calendar sync runs manually or on a schedule."

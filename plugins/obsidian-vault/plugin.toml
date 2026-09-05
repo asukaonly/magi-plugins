@@ -10,17 +10,17 @@ id = "obsidian-vault"
 name = "Obsidian Vault"
 name_i18n = { "zh-CN" = "Obsidian 笔记库" }
 icon = "asset:assets/icon.svg"
-version = "0.2.0"
+version = "0.3.0"
 description = "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder."
 description_i18n = { "zh-CN" = "可选。在本地读取 Obsidian 笔记库的 markdown（含 wikilink、标签、frontmatter），让 Magi 把你写的内容和其他活动连起来。默认关闭；笔记不出本机，任意文件夹都可排除。" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ObsidianVaultPlugin"
 official = false
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["macos", "windows"]
 
-[plugin.default_settings.sensors.obsidian_vault]
+[plugin.default_settings.sources.obsidian_vault]
 enabled = false
 vault_path = ""
 exclude_folders = [".obsidian", ".trash", "Templates"]
@@ -67,13 +67,13 @@ description = "Choose the Obsidian vault Magi may read before enabling this sour
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.obsidian_vault.enabled"
-configured_key = "sensors.obsidian_vault.initial_sync_configured"
-fields = [{ "key" = "sensors.obsidian_vault.vault_path", "type" = "path", "path_kind" = "directory", "label" = "Obsidian Vault Folder", "description" = "Choose the vault root folder that contains the .obsidian directory.", "default" = "", "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.obsidian_vault.cognition_exclude_folders", "type" = "tags", "label" = "Search-only Folders", "description" = "Folders read for search but kept out of knowledge extraction.", "default" = ["Clippings", "References"], "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }]
+enabled_key = "sources.obsidian_vault.enabled"
+configured_key = "sources.obsidian_vault.initial_sync_configured"
+fields = [{ "key" = "sources.obsidian_vault.vault_path", "type" = "path", "path_kind" = "directory", "label" = "Obsidian Vault Folder", "description" = "Choose the vault root folder that contains the .obsidian directory.", "default" = "", "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sources.obsidian_vault.cognition_exclude_folders", "type" = "tags", "label" = "Search-only Folders", "description" = "Folders read for search but kept out of knowledge extraction.", "default" = ["Clippings", "References"], "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_values" = [] }]
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.cognition_exclude_folders"
+key = "sources.obsidian_vault.cognition_exclude_folders"
 type = "tags"
 label = "Search-only Folders"
 description = "Folders read for search but kept out of the knowledge graph (e.g. clippings, references)."
@@ -84,10 +84,10 @@ surface = "timeline"
 order = 40
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.enabled"
+key = "sources.obsidian_vault.enabled"
 type = "switch"
 label = "Enabled"
-description = "Whether the Obsidian vault sensor is active."
+description = "Whether the Obsidian vault source is active."
 default = false
 required = false
 section = "general"
@@ -95,7 +95,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.exclude_folders"
+key = "sources.obsidian_vault.exclude_folders"
 type = "tags"
 label = "Excluded Folders"
 description = "Folders never read at all (privacy). Defaults skip Obsidian internals."
@@ -106,7 +106,7 @@ surface = "timeline"
 order = 30
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.initial_sync_configured"
+key = "sources.obsidian_vault.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -117,7 +117,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.sync_interval_minutes"
+key = "sources.obsidian_vault.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "How often to rescan the vault for changes."
@@ -130,7 +130,7 @@ minimum = 1.0
 maximum = 1440.0
 
 [[plugin.settings_fields]]
-key = "sensors.obsidian_vault.vault_path"
+key = "sources.obsidian_vault.vault_path"
 type = "path"
 path_kind = "directory"
 label = "Obsidian Vault Folder"

@@ -70,7 +70,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 Key public contracts live under `sdk/src/magi_plugin_sdk/` in the main repo:
 - `base.py` and `context.py`: connection-bound Plugin and host-owned state/resources/credentials.
 - `runtime.py`: invocation identity, source changes, operations, readiness, and resource references.
-- `sensors.py`, `channels.py`, `history_imports.py`: source, channel, and bounded archive authoring.
+- `sources.py`, `channels.py`, `history_imports.py`: source, channel, and bounded archive authoring.
 - `contracts.py`: strict manifest, settings, extraction and registry declarations.
 
 All packages explicitly declare `protocol_version = 2`, `min_sdk_version = "0.2.0"`,
@@ -85,7 +85,7 @@ synchronous scoped `get(key)`, `set(key, value)`, `delete(key)` calls, never a
 caller-chosen connection or credential file. Shared libraries are stateless with
 respect to accounts; caller-owned objects hold mutable state.
 
-Sensors return `SourceChangeBatch` and explicit stable `SourceChange` revisions.
+Sources return `SourceChangeBatch` and explicit stable `SourceChange` revisions.
 Payloads must be JSON values; serialize parser timestamps before crossing the
 SDK boundary. Keep source categories independent of connection IDs. Projections
 must declare actual semantic source selectors; the host limits them to authorized
@@ -101,7 +101,7 @@ secret field key exactly, including any dotted source prefix.
 
 Export `settings_fields`, `activation_flow`, `settings_actions`, `settings_resources`,
 and `settings_ui_blocks` with `scripts/export-settings-fields.py` against the exact
-SDK under development. The first registered sensor activation flow is primary;
+SDK under development. The first registered source activation flow is primary;
 Local Documents and Obsidian Vault use their knowledge tier. Export only public
 schemas. Never resolve a settings resource or start an action during export or
 discovery. The host authorizes explicit pre-enable setup actions and resource reads only
@@ -121,19 +121,19 @@ magi-plugins/
 ├── agents.md                      # This file
 ├── README.md
 ├── plugins/
-│   ├── calendar_plugin/           # Sensor: Calendar events (macOS/iOS)
-│   ├── chrome-history/            # Sensor: Chrome browsing history
-│   ├── claude-code/               # Sensor: Claude Code transcripts
-│   ├── codex/                     # Sensor: Codex transcripts
-│   ├── git_activity/              # Sensor: Git repository activity
-│   ├── netease_music/             # Sensor: NetEase Cloud Music history
-│   ├── apple-photos/              # Sensor: Apple Photos (macOS)
-│   ├── local-photos/              # Sensor: User-selected local photo folders
+│   ├── calendar_plugin/           # Source: Calendar events (macOS/iOS)
+│   ├── chrome-history/            # Source: Chrome browsing history
+│   ├── claude-code/               # Source: Claude Code transcripts
+│   ├── codex/                     # Source: Codex transcripts
+│   ├── git_activity/              # Source: Git repository activity
+│   ├── netease_music/             # Source: NetEase Cloud Music history
+│   ├── apple-photos/              # Source: Apple Photos (macOS)
+│   ├── local-photos/              # Source: User-selected local photo folders
 │   ├── agent_history_core/        # Hidden shared transcript library
 │   ├── photo_library_core/        # Hidden shared photo library
-│   ├── screen_time/               # Sensor: App usage tracking (macOS)
-│   ├── system_media/              # Sensor: Media playback tracking
-│   └── terminal_history/          # Sensor: Terminal command history (macOS)
+│   ├── screen_time/               # Source: App usage tracking (macOS)
+│   ├── system_media/              # Source: Media playback tracking
+│   └── terminal_history/          # Source: Terminal command history (macOS)
 └── scripts/
     ├── build-registry.py          # Writes registry + version history
     ├── registry-requirements.txt  # Authoritative host-contract dependency
@@ -152,7 +152,7 @@ plugins/<plugin_name>/
 │   └── icon.svg
 ├── plugin.toml          # Manifest — declares id, version, contribution types
 ├── plugin.py            # Entry class inheriting magi_plugin_sdk.Plugin
-├── sensor.py            # Sensor implementation (optional, for timeline sensors)
+├── source.py            # Source implementation (optional, for timeline sources)
 ├── normalizers.py       # Data normalizers (optional)
 ├── reader.py            # Data source readers (optional)
 ├── i18n/                # Localisation files (optional)
@@ -171,7 +171,7 @@ plugins/<plugin_name>/
 | `execution_mode` | Yes | Existing packages declare `trusted_process`; host trust is required |
 | `projection_sources` | Yes | Semantic source selectors; grants remain host-owned |
 | `settings_fields` | Yes | Complete declarative schema, including hidden controls and secret keys |
-| `activation_flow` | When needed | Initial setup form; first registered sensor flow is primary |
+| `activation_flow` | When needed | Initial setup form; first registered source flow is primary |
 | `settings_actions` / `settings_resources` / `settings_ui_blocks` | Yes | Public setup schemas; empty arrays when unused |
 | `name` | Yes | Display name |
 | `version` | Yes | Semver version string |
@@ -181,7 +181,7 @@ plugins/<plugin_name>/
 | `entry_module` | Yes | Python module name (usually `plugin`) |
 | `entry_class` | Yes | Class name in entry module |
 | `official` | No | Marketplace status comes from `official-plugins.json`, never self-assertion |
-| `contribution_types` | Yes | SDK contribution values, such as `sensor`, `tool`, `operation`, `channel`, or `history_importer` |
+| `contribution_types` | Yes | SDK contribution values, such as `source`, `tool`, `operation`, `channel`, or `history_importer` |
 | `platforms` | No | Array: `["windows", "macos", "linux", "ios"]` |
 | `dependencies` | No | SDK-validated Python dependencies resolved into the package lockfile |
 | `depends_on` | No | IDs of separately installed shared libraries |
@@ -278,7 +278,7 @@ structure (schema arrays abbreviated here; generated entries contain their full 
       "description": "...",
       "author": "Magi Team",
       "official": true,
-      "contribution_types": ["sensor"],
+      "contribution_types": ["source"],
       "platforms": ["windows", "macos", "linux"]
     }
   ]
@@ -330,8 +330,8 @@ Do not manually copy or symlink a package into the managed install directory.
 If validation uses the product's **Install from local directory** action, Magi
 copies the package into that directory and records the installation.
 
-For sensor plugins, verify:
-- The sensor appears in Settings → Sensors.
+For source plugins, verify:
+- The source appears in Settings → Sources.
 - A manual sync produces timeline entries (or logs the expected behavior).
 
 ```bash

@@ -25,7 +25,7 @@ def _make_plugin(enabled: bool):
     cls = _load_plugin_class()
     plugin = cls()
     plugin.settings = {
-        "sensors": {
+        "sources": {
             "local_documents": {
                 "enabled": enabled,
                 "root_paths": ["/tmp/notes", "/tmp/docs"],
@@ -38,33 +38,33 @@ def _make_plugin(enabled: bool):
     return plugin
 
 
-def test_get_sensors_returns_knowledge_and_search_tiers_when_enabled() -> None:
+def test_get_sources_returns_knowledge_and_search_tiers_when_enabled() -> None:
     plugin = _make_plugin(enabled=True)
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    ids = {sensor_id for sensor_id, _inst, _spec in sensors}
+    ids = {source_id for source_id, _inst, _spec in sources}
     assert ids == {"timeline.local_documents.knowledge", "timeline.local_documents.search"}
-    source_types = {sensor_id: inst.source_type for sensor_id, inst, _ in sensors}
+    source_types = {source_id: inst.source_type for source_id, inst, _ in sources}
     assert source_types["timeline.local_documents.knowledge"] == "local_documents"
     assert source_types["timeline.local_documents.search"] == "local_documents_search"
-    policies = {sensor_id: inst.memory_policy.cognition_eligible for sensor_id, inst, _ in sensors}
+    policies = {source_id: inst.memory_policy.cognition_eligible for source_id, inst, _ in sources}
     assert policies["timeline.local_documents.knowledge"] is True
     assert policies["timeline.local_documents.search"] is False
-    spec_source_types = {sensor_id: spec.metadata["source_type"] for sensor_id, _inst, spec in sensors}
+    spec_source_types = {source_id: spec.metadata["source_type"] for source_id, _inst, spec in sources}
     assert spec_source_types["timeline.local_documents.search"] == "local_documents_search"
-    for _, _, spec in sensors:
+    for _, _, spec in sources:
         assert spec.metadata["capability_id"] == "local_documents"
         assert spec.metadata["entry_id"] == "local_documents"
         assert spec.metadata["entry_display_name"] == "Local Documents"
 
 
-def test_get_sensors_stay_discoverable_when_disabled() -> None:
-    sensors = _make_plugin(enabled=False).get_sensors()
+def test_get_sources_stay_discoverable_when_disabled() -> None:
+    sources = _make_plugin(enabled=False).get_sources()
 
-    assert len(sensors) == 2
-    for _sensor_id, _sensor, spec in sensors:
+    assert len(sources) == 2
+    for _source_id, _source, spec in sources:
         flow = spec.metadata["activation_flow"]
-        assert flow["enabled_key"] == "sensors.local_documents.enabled"
+        assert flow["enabled_key"] == "sources.local_documents.enabled"
         assert flow["first_context"]["max_items_per_sync"] == 200
 
 

@@ -9,11 +9,11 @@ from magi_plugin_sdk import (
     ExtensionFieldOption,
     ExtensionFieldSpec,
     ExtractionProfileSpec,
-    SensorSpec,
+    SourceSpec,
 )
 
 from .apple_photos_reader import DEFAULT_PHOTOS_LIBRARY_PATH
-from .sensor import PhotoLibraryTimelineSensor
+from .source import PhotoLibraryTimelineSource
 
 CAPABILITY_ID = "photo_library"
 CAPABILITY_DISPLAY_NAME = "Photo Library"
@@ -231,7 +231,7 @@ def build_activation_flow(
     )
 
 
-def build_sensor_registration(
+def build_source_registration(
     plugin_settings: dict[str, Any],
     *,
     source_type: str,
@@ -241,10 +241,10 @@ def build_sensor_registration(
     source_mode: str,
     entry_order: int,
     metadata_extra: dict[str, Any] | None = None,
-) -> tuple[str, object, SensorSpec]:
-    sensors_settings = plugin_settings.get("sensors", {})
-    sensors_payload = sensors_settings if isinstance(sensors_settings, dict) else {}
-    settings = dict(sensors_payload.get(source_type, {}))
+) -> tuple[str, object, SourceSpec]:
+    sources_settings = plugin_settings.get("sources", {})
+    sources_payload = sources_settings if isinstance(sources_settings, dict) else {}
+    settings = dict(sources_payload.get(source_type, {}))
     defaults = source_defaults(source_mode)
     raw_paths = settings.get("source_paths")
     source_paths = [str(path) for path in raw_paths if path] if isinstance(raw_paths, list) else []
@@ -254,9 +254,9 @@ def build_sensor_registration(
         if isinstance(raw_excludes, list)
         else []
     )
-    sensor_id = f"timeline.photo_library.{entry_id}"
-    sensor = PhotoLibraryTimelineSensor(
-        sensor_id=sensor_id,
+    source_id = f"timeline.photo_library.{entry_id}"
+    source = PhotoLibraryTimelineSource(
+        source_id=source_id,
         source_type=source_type,
         display_name=display_name,
         source_paths=source_paths,
@@ -276,7 +276,7 @@ def build_sensor_registration(
         )
         * 3600.0,
     )
-    prefix = f"sensors.{source_type}"
+    prefix = f"sources.{source_type}"
     metadata = {
         "source_type": source_type,
         "default_settings": defaults,
@@ -295,16 +295,16 @@ def build_sensor_registration(
         **(metadata_extra or {}),
     }
     return (
-        sensor_id,
-        sensor,
-        SensorSpec(
-            sensor_id=sensor_id,
+        source_id,
+        source,
+        SourceSpec(
+            source_id=source_id,
             display_name=display_name,
             description=description,
             domain="timeline",
             surface="timeline",
             sync_mode=str(settings.get("sync_mode", defaults["sync_mode"])),
-            polling_mode=getattr(sensor, "polling_mode", "interval"),
+            polling_mode=getattr(source, "polling_mode", "interval"),
             fields=build_fields(prefix, source_mode),
             metadata=metadata,
         ),

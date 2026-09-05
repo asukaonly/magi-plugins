@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from magi_plugin_sdk import ExtractionProfileSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ExtractionProfileSpec, Plugin, SourceSpec
 
 from photo_library_core.photo_tools import (
     LOCAL_PHOTOS_RESOLVER_TOOL,
@@ -13,7 +13,7 @@ from photo_library_core.plugin_support import (
     DIRECTORY_SOURCE_TYPE,
     build_extraction_profile,
     build_recall_artifacts,
-    build_sensor_registration,
+    build_source_registration,
     build_temporal_summary_features,
 )
 
@@ -25,17 +25,17 @@ class LocalPhotosPlugin(Plugin):
         return [build_extraction_profile(DIRECTORY_SOURCE_TYPE)]
 
     def get_tools(self) -> list[type[object]]:
-        sensors_settings = self.settings.get("sensors", {})
+        sources_settings = self.settings.get("sources", {})
         settings: dict[str, Any] = {}
-        if isinstance(sensors_settings, dict):
-            raw_settings = sensors_settings.get(DIRECTORY_SOURCE_TYPE, {})
+        if isinstance(sources_settings, dict):
+            raw_settings = sources_settings.get(DIRECTORY_SOURCE_TYPE, {})
             if isinstance(raw_settings, dict):
                 settings = dict(raw_settings)
         return build_local_photo_tool_classes(settings, connection_id=self.connection.connection_id)
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         return [
-            build_sensor_registration(
+            build_source_registration(
                 self.settings,
                 source_type=DIRECTORY_SOURCE_TYPE,
                 entry_id="directory",

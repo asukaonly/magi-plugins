@@ -10,14 +10,14 @@ id = "safari-history"
 name = "Safari History"
 name_i18n = { "zh-CN" = "Safari 浏览器历史" }
 icon = "asset:assets/icon.svg"
-version = "0.2.1"
+version = "0.3.0"
 description = "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites."
 description_i18n = { "zh-CN" = "读取本地 Safari 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SafariHistoryPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 depends_on = ["browser_history_core"]
 platforms = ["macos"]
 
@@ -33,7 +33,7 @@ member_label = "Safari"
 member_label_i18n = { "zh-CN" = "Safari" }
 member_order = 20
 
-[plugin.default_settings.sensors.safari_history]
+[plugin.default_settings.sources.safari_history]
 enabled = false
 sync_mode = "interval"
 sync_interval_minutes = 30
@@ -102,13 +102,13 @@ description = "Safari history is sensitive local data. Choose how the first sync
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.safari_history.enabled"
-configured_key = "sensors.safari_history.initial_sync_configured"
-fields = [{ "key" = "sensors.safari_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sensors.safari_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sensors.safari_history.initial_sync_policy", "depends_on_values" = ["lookback_days"] }]
-first_context = { "max_items_per_sync" = 200, "settings_overrides" = { "sensors.safari_history.initial_sync_policy" = "lookback_days", "sensors.safari_history.initial_sync_lookback_days" = 7 } }
+enabled_key = "sources.safari_history.enabled"
+configured_key = "sources.safari_history.initial_sync_configured"
+fields = [{ "key" = "sources.safari_history.initial_sync_policy", "type" = "select", "label" = "First Sync Scope", "description" = "Decide how much history should be imported when this source is enabled for the first time.", "default" = "lookback_days", "required" = false, "options" = [{ "label" = "Sync full history", "value" = "full" }, { "label" = "Sync recent days", "value" = "lookback_days" }, { "label" = "Only new records from now on", "value" = "from_now" }], "section" = "activation", "surface" = "timeline", "order" = 10, "depends_on_values" = [] }, { "key" = "sources.safari_history.initial_sync_lookback_days", "type" = "number", "label" = "Recent Days", "description" = "Used when the first-sync scope is set to recent days.", "default" = 7, "required" = false, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 20, "depends_on_key" = "sources.safari_history.initial_sync_policy", "depends_on_values" = ["lookback_days"] }]
+first_context = { "max_items_per_sync" = 200, "settings_overrides" = { "sources.safari_history.initial_sync_policy" = "lookback_days", "sources.safari_history.initial_sync_lookback_days" = 7 } }
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.default_retention_mode"
+key = "sources.safari_history.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -119,7 +119,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.enabled"
+key = "sources.safari_history.enabled"
 type = "switch"
 label = "Enabled"
 description = "Whether Safari history sync is active."
@@ -130,7 +130,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.filter_domains"
+key = "sources.safari_history.filter_domains"
 type = "tags"
 label = "Filter Domains (Regex)"
 description = "Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches."
@@ -142,7 +142,7 @@ order = 70
 placeholder = "e.g. ^mail\\.google\\.com$"
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.filter_keywords"
+key = "sources.safari_history.filter_keywords"
 type = "tags"
 label = "Filter Keywords"
 description = "Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex."
@@ -154,7 +154,7 @@ order = 80
 placeholder = "e.g. password reset"
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.initial_sync_configured"
+key = "sources.safari_history.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -165,7 +165,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.initial_sync_lookback_days"
+key = "sources.safari_history.initial_sync_lookback_days"
 type = "number"
 label = "Recent Days"
 description = "Used when the first-sync scope is set to recent days."
@@ -174,11 +174,11 @@ required = false
 section = "activation"
 surface = "timeline"
 order = 20
-depends_on_key = "sensors.safari_history.initial_sync_policy"
+depends_on_key = "sources.safari_history.initial_sync_policy"
 depends_on_values = ["lookback_days"]
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.initial_sync_policy"
+key = "sources.safari_history.initial_sync_policy"
 type = "select"
 label = "First Sync Scope"
 description = "Decide how much history should be imported when this source is enabled for the first time."
@@ -190,7 +190,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.max_items_per_sync"
+key = "sources.safari_history.max_items_per_sync"
 type = "number"
 label = "Max Items Per Sync"
 description = "Maximum number of history records to ingest per run."
@@ -201,7 +201,7 @@ surface = "timeline"
 order = 60
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.merge_window_minutes"
+key = "sources.safari_history.merge_window_minutes"
 type = "number"
 label = "Merge Window (minutes)"
 description = "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them."
@@ -212,7 +212,7 @@ surface = "timeline"
 order = 50
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.profile"
+key = "sources.safari_history.profile"
 type = "input"
 label = "Profile"
 description = "Safari stores history in one History.db file; leave this empty."
@@ -223,7 +223,7 @@ surface = "timeline"
 order = 20
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.source_path"
+key = "sources.safari_history.source_path"
 type = "input"
 label = "Source Path"
 description = ""
@@ -234,7 +234,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.storage_mode"
+key = "sources.safari_history.storage_mode"
 type = "input"
 label = "Storage Mode"
 description = ""
@@ -245,7 +245,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.sync_interval_minutes"
+key = "sources.safari_history.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "Polling interval used for interval-based sync."
@@ -254,11 +254,11 @@ required = false
 section = "general"
 surface = "timeline"
 order = 40
-depends_on_key = "sensors.safari_history.sync_mode"
+depends_on_key = "sources.safari_history.sync_mode"
 depends_on_values = ["interval"]
 
 [[plugin.settings_fields]]
-key = "sensors.safari_history.sync_mode"
+key = "sources.safari_history.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "How Safari history should be synchronized."

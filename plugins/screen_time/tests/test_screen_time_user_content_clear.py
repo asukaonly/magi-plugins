@@ -17,8 +17,8 @@ PLUGINS_ROOT = str(Path(__file__).resolve().parents[2])
 if PLUGINS_ROOT not in sys.path:
     sys.path.insert(0, PLUGINS_ROOT)
 
-from screen_time import sensor as sensor_module  # noqa: E402
-from screen_time.sensor import ScreenTimeTimelineSensor  # noqa: E402
+from screen_time import source as source_module  # noqa: E402
+from screen_time.source import ScreenTimeTimelineSource  # noqa: E402
 
 
 class _RuntimePaths:
@@ -34,9 +34,9 @@ def _clear_context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=1),
         runtime_paths=runtime_paths,
         plugin_id="screen-time",
-        sensor_id="timeline.screen_time",
+        source_id="timeline.screen_time",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "screen_time": {
                     "enabled": True,
                     "sync_interval_minutes": 15,
@@ -88,21 +88,21 @@ def test_clear_erases_plugin_state_and_is_local(
         raise AssertionError("clear must not start foreground observation")
 
     monkeypatch.setattr(
-        sensor_module, "ForegroundAppWatcher", fail_if_watcher_is_created
+        source_module, "ForegroundAppWatcher", fail_if_watcher_is_created
     )
-    sensor = ScreenTimeTimelineSensor()
+    source = ScreenTimeTimelineSource()
     context = _clear_context(runtime_paths)
 
     async def run_clear_twice() -> None:
-        await sensor.clear_user_content(context)
-        await sensor.clear_user_content(context)
+        await source.clear_user_content(context)
+        await source.clear_user_content(context)
 
     asyncio.run(run_clear_twice())
 
     assert not state_path.exists()
     assert settings_path.read_text(encoding="utf-8") == '{"enabled": true}'
     assert credentials_path.read_text(encoding="utf-8") == '{"token": "keep"}'
-    assert context.plugin_settings["sensors"]["screen_time"]["enabled"] is True
+    assert context.plugin_settings["sources"]["screen_time"]["enabled"] is True
 
 
 def test_clear_waits_for_watcher_and_future_collect_restarts(
@@ -112,7 +112,7 @@ def test_clear_waits_for_watcher_and_future_collect_restarts(
     runtime_paths = _RuntimePaths(tmp_path)
     state_path = runtime_paths.plugin_cache_dir("screen_time") / "state.json"
     _write_state(state_path)
-    sensor = ScreenTimeTimelineSensor()
+    source = ScreenTimeTimelineSource()
     restarted_watchers: list[Any] = []
 
     async def scenario() -> None:
@@ -141,16 +141,16 @@ def test_clear_waits_for_watcher_and_future_collect_restarts(
             async def stop(self) -> None:
                 self.is_running = False
 
-        sensor._watcher = BlockingWatcher()  # type: ignore[assignment]
-        monkeypatch.setattr(sensor_module, "ForegroundAppWatcher", RestartedWatcher)
+        source._watcher = BlockingWatcher()  # type: ignore[assignment]
+        monkeypatch.setattr(source_module, "ForegroundAppWatcher", RestartedWatcher)
 
         clear_task = asyncio.create_task(
-            sensor.clear_user_content(_clear_context(runtime_paths))
+            source.clear_user_content(_clear_context(runtime_paths))
         )
         await stop_started.wait()
 
         collect_task = asyncio.create_task(
-            sensor.collect_items(SimpleNamespace(runtime_paths=runtime_paths))
+            source.collect_items(SimpleNamespace(runtime_paths=runtime_paths))
         )
         await asyncio.sleep(0)
         assert not clear_task.done()
@@ -184,7 +184,7 @@ def test_clear_removes_state_symlink_without_touching_its_target(
     state_path.symlink_to(external_state)
 
     asyncio.run(
-        ScreenTimeTimelineSensor().clear_user_content(
+        ScreenTimeTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -204,7 +204,7 @@ def test_clear_removes_fifo_without_opening_it(tmp_path: Path) -> None:
     os.mkfifo(state_path)
 
     asyncio.run(
-        ScreenTimeTimelineSensor().clear_user_content(
+        ScreenTimeTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -224,7 +224,7 @@ def test_clear_removes_hardlink_without_touching_other_links(
     os.link(external_state, state_path)
 
     asyncio.run(
-        ScreenTimeTimelineSensor().clear_user_content(
+        ScreenTimeTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -243,7 +243,7 @@ def test_clear_missing_state_does_not_create_through_linked_ancestor(
     runtime_paths = _RuntimePaths(linked_root)
 
     asyncio.run(
-        ScreenTimeTimelineSensor().clear_user_content(
+        ScreenTimeTimelineSource().clear_user_content(
             _clear_context(runtime_paths)
         )
     )
@@ -265,7 +265,7 @@ def test_clear_rejects_linked_cache_directory(
 
     with pytest.raises(UnsafeManagedPathError):
         asyncio.run(
-            ScreenTimeTimelineSensor().clear_user_content(
+            ScreenTimeTimelineSource().clear_user_content(
                 _clear_context(runtime_paths)
             )
         )

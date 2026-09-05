@@ -10,12 +10,12 @@ from typing import Any
 from .types import GitActivity
 
 
-def normalize_git_activity(item: dict[str, Any] | GitActivity, sensor: Any) -> dict[str, Any]:
+def normalize_git_activity(item: dict[str, Any] | GitActivity, source: Any) -> dict[str, Any]:
     """Normalize git activity data into timeline event format.
 
     Args:
         item: Git activity data (dict or GitActivity object)
-        sensor: The sensor instance
+        source: The source instance
 
     Returns:
         Dictionary with normalized event data
@@ -36,7 +36,7 @@ def normalize_git_activity(item: dict[str, Any] | GitActivity, sensor: Any) -> d
     activity_type = str(item.get("activity_type") or "other")
 
     if activity_type == "session" or item.get("operation_counts"):
-        return _normalize_git_session(item, sensor, repo_path=repo_path, repo_name=repo_name)
+        return _normalize_git_session(item, source, repo_path=repo_path, repo_name=repo_name)
 
     timestamp = _coerce_datetime(item.get("timestamp"))
     message = str(item.get("message") or "")
@@ -45,7 +45,7 @@ def normalize_git_activity(item: dict[str, Any] | GitActivity, sensor: Any) -> d
     event_id = str(item.get("source_item_id") or _single_event_id(repo_path, str(item.get("new_sha") or ""), timestamp))
     tags = ["git", activity_type, repo_name]
     provenance = {
-        "sensor_id": sensor.sensor_id,
+        "source_id": source.source_id,
         "repo_path": repo_path,
         "repo_name": repo_name,
         "activity_type": activity_type,
@@ -68,7 +68,7 @@ def normalize_git_activity(item: dict[str, Any] | GitActivity, sensor: Any) -> d
 
 def _normalize_git_session(
     item: dict[str, Any],
-    sensor: Any,
+    source: Any,
     *,
     repo_path: str,
     repo_name: str,
@@ -77,7 +77,7 @@ def _normalize_git_session(
     end_ts = _coerce_timestamp(item.get("session_end_ts")) or start_ts
     operation_counts = _normalize_counts(item.get("operation_counts"))
     activity_count = int(item.get("activity_count") or sum(operation_counts.values()) or 0)
-    operation_summary = _operation_summary(operation_counts, sensor)
+    operation_summary = _operation_summary(operation_counts, source)
     time_range = str(item.get("time_range") or _format_time_range(start_ts, end_ts))
     representative_messages = _normalize_string_list(item.get("representative_messages"), limit=5)
     authors = _normalize_string_list(item.get("authors"), limit=8)
@@ -85,13 +85,13 @@ def _normalize_git_session(
     last_sha = str(item.get("last_sha") or item.get("new_sha") or "")
     event_id = str(item.get("source_item_id") or _session_event_id(repo_path, start_ts, end_ts))
 
-    title = sensor.t(
+    title = source.t(
         "narration.session_title",
         repo_name=repo_name,
         fallback=repo_name,
     )
     if activity_count > 1 and len(operation_counts) == 1:
-        summary = sensor.t(
+        summary = source.t(
             "narration.session_summary_multiple_single_kind",
             repo_name=repo_name,
             operations=operation_summary,
@@ -99,7 +99,7 @@ def _normalize_git_session(
             fallback=f"Worked in {repo_name}: {operation_summary}.",
         )
     elif activity_count > 1:
-        summary = sensor.t(
+        summary = source.t(
             "narration.session_summary_multiple",
             repo_name=repo_name,
             operations=operation_summary,
@@ -107,7 +107,7 @@ def _normalize_git_session(
             fallback=f"Worked in {repo_name}: {operation_summary} across {activity_count} Git operations.",
         )
     else:
-        summary = sensor.t(
+        summary = source.t(
             "narration.session_summary_single",
             repo_name=repo_name,
             operations=operation_summary,
@@ -117,7 +117,7 @@ def _normalize_git_session(
     tags = ["git", "git_session", repo_name]
     tags.extend(operation for operation in operation_counts if operation not in tags)
     provenance = {
-        "sensor_id": sensor.sensor_id,
+        "source_id": source.source_id,
         "repo_path": repo_path,
         "repo_name": repo_name,
         "activity_type": "session",
@@ -198,20 +198,20 @@ def _normalize_counts(value: Any) -> dict[str, int]:
     return dict(counts)
 
 
-def _operation_summary(operation_counts: dict[str, int], sensor: Any) -> str:
+def _operation_summary(operation_counts: dict[str, int], source: Any) -> str:
     parts = []
     force_counts = len(operation_counts) > 1
     for operation, count in Counter(operation_counts).most_common():
         if count <= 0:
             continue
-        label = sensor.t(
+        label = source.t(
             f"activity_types.{operation}",
             fallback=operation,
         )
         label = _operation_label_for_summary(label)
         if count == 1 and not force_counts:
             parts.append(
-                sensor.t(
+                source.t(
                     "operation_summary.single",
                     operation=label,
                     fallback=label,
@@ -219,14 +219,14 @@ def _operation_summary(operation_counts: dict[str, int], sensor: Any) -> str:
             )
             continue
         parts.append(
-            sensor.t(
+            source.t(
                 "operation_summary.multiple",
                 count=count,
                 operation=_pluralize_operation(label) if count != 1 else label,
                 fallback=f"{count} {_pluralize_operation(label) if count != 1 else label}",
             )
         )
-    separator = sensor.t("operation_summary.separator", fallback=", ")
+    separator = source.t("operation_summary.separator", fallback=", ")
     return separator.join(parts) if parts else "activity"
 
 

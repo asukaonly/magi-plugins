@@ -1,4 +1,4 @@
-"""Generic local documents sensor plugin."""
+"""Generic local documents source plugin."""
 from __future__ import annotations
 
 from typing import Any
@@ -9,14 +9,14 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
     SummaryProfileSpec,
 )
 
 from .reader import DEFAULT_EXTENSIONS
-from .sensor import DEFAULT_EXCLUDE_FOLDERS, DEFAULT_SEARCH_ONLY_FOLDERS, LocalDocumentsSensor
+from .source import DEFAULT_EXCLUDE_FOLDERS, DEFAULT_SEARCH_ONLY_FOLDERS, LocalDocumentsSource
 
-_PREFIX = "sensors.local_documents"
+_PREFIX = "sources.local_documents"
 _SOURCE_ENTRY_ID = "local_documents"
 _SOURCE_DISPLAY_NAME = "Local Documents"
 _SOURCE_DESCRIPTION = "Local notes and text documents ingested into the user timeline."
@@ -185,7 +185,7 @@ def _activation_flow() -> ActivationFlowSpec:
 
 
 class LocalDocumentsPlugin(Plugin):
-    """Registers generic local document sensors."""
+    """Registers generic local document sources."""
 
     def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
         return [
@@ -224,9 +224,9 @@ class LocalDocumentsPlugin(Plugin):
             )
         ]
 
-    def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
-        sensors_cfg = self.settings.get("sensors", {})
-        cfg = dict(sensors_cfg.get("local_documents", {})) if isinstance(sensors_cfg, dict) else {}
+    def get_sources(self) -> list[tuple[str, Any, SourceSpec]]:
+        sources_cfg = self.settings.get("sources", {})
+        cfg = dict(sources_cfg.get("local_documents", {})) if isinstance(sources_cfg, dict) else {}
         root_paths = list(cfg.get("root_paths", DEFAULT_SETTINGS["root_paths"]) or [])
         include_extensions = list(cfg.get("include_extensions", DEFAULT_SETTINGS["include_extensions"]) or [])
         exclude = list(cfg.get("exclude_folders", DEFAULT_SETTINGS["exclude_folders"]) or [])
@@ -238,18 +238,18 @@ class LocalDocumentsPlugin(Plugin):
         sync_mode = str(cfg.get("sync_mode", DEFAULT_SETTINGS["sync_mode"]))
         interval = int(cfg.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"]))
 
-        def _spec(sensor: LocalDocumentsSensor) -> SensorSpec:
-            return SensorSpec(
-                sensor_id=sensor.sensor_id,
+        def _spec(source: LocalDocumentsSource) -> SourceSpec:
+            return SourceSpec(
+                source_id=source.source_id,
                 display_name=_SOURCE_DISPLAY_NAME,
                 description=_SOURCE_DESCRIPTION,
                 domain="timeline",
                 surface="timeline",
                 sync_mode=sync_mode,
-                polling_mode=getattr(sensor, "polling_mode", "interval"),
+                polling_mode=getattr(source, "polling_mode", "interval"),
                 fields=_fields(),
                 metadata={
-                    "source_type": sensor.source_type,
+                    "source_type": source.source_type,
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
                     "activation_flow": _activation_flow().model_dump(),
@@ -262,11 +262,11 @@ class LocalDocumentsPlugin(Plugin):
                 },
             )
 
-        result: list[tuple[str, Any, SensorSpec]] = []
+        result: list[tuple[str, Any, SourceSpec]] = []
         for suffix, cognition in (("knowledge", True), ("search", False)):
-            sensor = LocalDocumentsSensor(
+            source = LocalDocumentsSource(
                 cognition_eligible=cognition,
-                sensor_suffix=suffix,
+                source_suffix=suffix,
                 root_paths=root_paths,
                 include_extensions=include_extensions,
                 exclude_folders=exclude,
@@ -274,7 +274,7 @@ class LocalDocumentsPlugin(Plugin):
                 max_file_bytes=max_file_bytes,
                 max_body_chars=max_body_chars,
             )
-            result.append((sensor.sensor_id, sensor, _spec(sensor)))
+            result.append((source.source_id, source, _spec(source)))
         return result
 
     def get_summary_profiles(self) -> list[SummaryProfileSpec]:

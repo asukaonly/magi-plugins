@@ -30,10 +30,10 @@ def _load_plugin_module() -> ModuleType:
 
 def test_local_photos_registers_only_the_directory_source() -> None:
     plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    assert len(sensors) == 1
-    _sensor_id, _sensor, spec = sensors[0]
+    assert len(sources) == 1
+    _source_id, _source, spec = sources[0]
     assert spec.metadata["source_type"] == "photo_library_directory"
     assert spec.metadata["entry_id"] == "directory"
     assert spec.metadata["capability_id"] == "photo_library"
@@ -42,14 +42,14 @@ def test_local_photos_registers_only_the_directory_source() -> None:
 
 def test_local_photos_activation_requires_a_folder() -> None:
     plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
-    spec = plugin.get_sensors()[0][2]
+    spec = plugin.get_sources()[0][2]
     flow = spec.metadata["activation_flow"]
 
-    assert flow["enabled_key"] == "sensors.photo_library_directory.enabled"
+    assert flow["enabled_key"] == "sources.photo_library_directory.enabled"
     source_paths = next(
         field
         for field in flow["fields"]
-        if field["key"] == "sensors.photo_library_directory.source_paths"
+        if field["key"] == "sources.photo_library_directory.source_paths"
     )
     assert source_paths["required"] is True
 
@@ -67,7 +67,7 @@ def test_local_photos_registers_only_its_extraction_profile() -> None:
 def test_local_photos_tool_uses_only_directory_settings() -> None:
     plugin = bind_test_plugin(_load_plugin_module().LocalPhotosPlugin())
     plugin.settings = {
-        "sensors": {
+        "sources": {
             "photo_library_directory": {
                 "source_paths": ["/exports"],
                 "exclude_patterns": ["**/thumbs"],

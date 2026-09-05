@@ -1,7 +1,7 @@
 """Best-effort secret redaction for ingested coding-agent transcripts.
 
 Bias: over-redact secrets, never touch ordinary prose. Runs before any content
-leaves the sensor (the memory pipeline does no redaction and uploads content to
+leaves the source (the memory pipeline does no redaction and uploads content to
 the configured LLM).
 """
 from __future__ import annotations

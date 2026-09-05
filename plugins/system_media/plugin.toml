@@ -10,14 +10,14 @@ id = "system-media"
 name = "Local Now Playing"
 name_i18n = { "zh-CN" = "本机正在播放" }
 icon = "lucide:music"
-version = "0.2.1"
+version = "0.3.0"
 description = "Records music currently playing on this device through system media controls."
 description_i18n = { "zh-CN" = "通过系统媒体控制记录本机正在播放的音乐" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SystemMediaPlugin"
 official = true
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["windows", "macos"]
 dependencies = [
     "winrt-runtime>=2.0; sys_platform == 'win32'",
@@ -36,7 +36,7 @@ member_label = "Local Now Playing"
 member_label_i18n = { "zh-CN" = "本机正在播放" }
 member_order = 20
 
-[plugin.default_settings.sensors.system_media]
+[plugin.default_settings.sources.system_media]
 enabled = false
 sync_interval_minutes = "1"
 min_session_seconds = 30
@@ -64,7 +64,7 @@ capability = "system_media"
 reason_i18n = { en = "Read system media playback (now-playing) info", "zh-CN" = "读取系统媒体播放（正在播放）信息" }
 
 [[plugin.settings_fields]]
-key = "sensors.system_media.enabled"
+key = "sources.system_media.enabled"
 type = "switch"
 label = "Enable Media Recording"
 description = "Automatically detect and record playback from apps that expose OS media controls. Some players may not be supported."
@@ -75,7 +75,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.system_media.min_session_seconds"
+key = "sources.system_media.min_session_seconds"
 type = "number"
 label = "Minimum Play Duration (seconds)"
 description = "Tracks played shorter than this are ignored (skipped songs won't be recorded)."
@@ -87,7 +87,7 @@ order = 30
 minimum = 5.0
 
 [[plugin.settings_fields]]
-key = "sensors.system_media.pause_timeout_seconds"
+key = "sources.system_media.pause_timeout_seconds"
 type = "number"
 label = "Pause Before Ending Record (seconds)"
 description = "When paused for longer than this, the current record is saved. 300 = 5 minutes."
@@ -99,7 +99,7 @@ order = 40
 minimum = 30.0
 
 [[plugin.settings_fields]]
-key = "sensors.system_media.sync_interval_minutes"
+key = "sources.system_media.sync_interval_minutes"
 type = "select"
 label = "Recording Frequency"
 description = "How often completed playback records are saved to memory."

@@ -220,19 +220,19 @@ def build_entry(
     version = meta.get("version", "0.0.0")
     package_version_key(plugin_id, version)
     default_settings = meta.get("default_settings") or {}
-    default_sensors = (
-        (default_settings.get("sensors") or {})
+    default_sources = (
+        (default_settings.get("sources") or {})
         if isinstance(default_settings, dict)
         else {}
     )
     if (
         meta.get("kind", "plugin") != "library"
-        and "sensor" in meta.get("contribution_types", [])
-        and len(default_sensors) > 1
+        and "source" in meta.get("contribution_types", [])
+        and len(default_sources) > 1
     ):
         raise ValueError(
             f"{plugin_id} bundles multiple independently installable sources: "
-            f"{', '.join(sorted(default_sensors))}"
+            f"{', '.join(sorted(default_sources))}"
         )
     entry: dict = {
         "plugin_id": plugin_id,

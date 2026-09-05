@@ -78,7 +78,7 @@ func handle(_ req: HelperRequest) async {
             let phash = computeDHash(of: image)
 
             // System idle time piggybacks on the capture response — no
-            // separate IPC round-trip needed by the Python sensor. Uses
+            // separate IPC round-trip needed by the Python source. Uses
             // CGEventSource which requires no permissions and is cheap
             // (one syscall). Drives session-boundary detection.
             let idleSeconds = systemIdleSeconds()

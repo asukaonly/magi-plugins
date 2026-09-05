@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk import Plugin, SensorSpec
+from magi_plugin_sdk import Plugin, SourceSpec
 
 _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
@@ -22,7 +22,7 @@ from browser_history_core.plugin_support import (
 )
 
 from .firefox_reader import _default_firefox_root
-from .sensor import FirefoxHistoryTimelineSensor
+from .source import FirefoxHistoryTimelineSource
 
 
 class FirefoxHistoryPlugin(Plugin):
@@ -31,12 +31,12 @@ class FirefoxHistoryPlugin(Plugin):
     def get_extraction_profiles(self) -> list[Any]:
         return build_extraction_profiles("firefox_history")
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("firefox_history", {}))
-        sensor = FirefoxHistoryTimelineSensor(
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("firefox_history", {}))
+        source = FirefoxHistoryTimelineSource(
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             source_path=str(settings.get("source_path") or _default_firefox_root()),
             profile=str(settings.get("profile") or ""),
@@ -47,17 +47,17 @@ class FirefoxHistoryPlugin(Plugin):
         return [
             (
                 "timeline.firefox_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.firefox_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.firefox_history",
                     display_name="Firefox History",
                     description="Local Firefox browsing history ingested into the user timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
                     fields=build_fields(
-                        "sensors.firefox_history",
+                        "sources.firefox_history",
                         "Firefox",
                         profile_default="",
                         profile_description=(
@@ -67,7 +67,7 @@ class FirefoxHistoryPlugin(Plugin):
                     metadata={
                         "source_type": "firefox_history",
                         "default_settings": {**dict(DEFAULT_SETTINGS), "profile": ""},
-                        "activation_flow": build_activation_flow("sensors.firefox_history", "Firefox").model_dump(),
+                        "activation_flow": build_activation_flow("sources.firefox_history", "Firefox").model_dump(),
                         **build_browser_capability_metadata(
                             entry_id="firefox",
                             entry_display_name="Firefox",

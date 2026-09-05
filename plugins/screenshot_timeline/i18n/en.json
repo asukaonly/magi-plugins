@@ -11,7 +11,7 @@
     "fields": {
       "enabled": {
         "label": "Enabled",
-        "description": "Whether the screenshot timeline sensor is active."
+        "description": "Whether the screenshot timeline source is active."
       },
       "capture_scope": {
         "label": "Capture scope",

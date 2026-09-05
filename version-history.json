@@ -13,6 +13,10 @@
       "package_sha256": "e3bd8887e6e4bd0809860a092ffba60e07cbc71b6b22cb516a56f664069d0dda",
       "executable_paths": []
     },
+    "agent_history_core@0.3.0": {
+      "package_sha256": "7afac1467e40ad97e5ec8219b7a0477958cb63a9a6fb4d8e1958ddd1a6e0821e",
+      "executable_paths": []
+    },
     "apple-photos@0.1.0": {
       "package_sha256": "09827a11070c27e49baf12319590beaa18182fa679f2272ef7c9828026e02f29",
       "executable_paths": []
@@ -23,6 +27,10 @@
     },
     "apple-photos@0.2.1": {
       "package_sha256": "e00fc4c59687da0e33a2aa622e0e5b5cc1fb5adf90e4ef1144c21d41eb82f18f",
+      "executable_paths": []
+    },
+    "apple-photos@0.3.0": {
+      "package_sha256": "d72e98a39e95e78d725f0db09b981a2abac6a616adade53378aad7bf839c91ec",
       "executable_paths": []
     },
     "browser_history_core@0.1.1": {
@@ -41,6 +49,10 @@
       "package_sha256": "434a7b335d75b995c29d9096217f3ebe0f64683b6e963db420ae62bb8b493431",
       "executable_paths": []
     },
+    "browser_history_core@0.3.0": {
+      "package_sha256": "e2477f50b6b9daf12509f26918e12ac4c5d138017d9dfa96e97beef06d36eb74",
+      "executable_paths": []
+    },
     "calendar@0.1.2": {
       "package_sha256": "9590ce4d9fbafd1de6e4b948148b058477c6b39794bc03e22b1969df017d9138",
       "executable_paths": []
@@ -51,6 +63,10 @@
     },
     "calendar@0.2.1": {
       "package_sha256": "61f4ca5d294bc0c2e246d5eb1172ffa71e78e89dff8900ae116199848773f249",
+      "executable_paths": []
+    },
+    "calendar@0.3.0": {
+      "package_sha256": "b426e583ceb0fc9333b142a4de8ed70afa596fd55aef89ebdc0ddf4b9bf44beb",
       "executable_paths": []
     },
     "chatgpt-history@0.1.0": {
@@ -89,6 +105,10 @@
       "package_sha256": "34271cc85594f1cbe230798d25a99baa167fef416698bc960285961e6c2b844d",
       "executable_paths": []
     },
+    "chrome-history@0.3.0": {
+      "package_sha256": "19391fb2a467b7d56fea78bd89721e57f0c497baf5a7754c3e6382c80cd5546c",
+      "executable_paths": []
+    },
     "claude-code@0.1.0": {
       "package_sha256": "39cdefcfba338b4eeb64a2f50ee25bb80064641891c6d31f3e938d2077c29111",
       "executable_paths": []
@@ -97,12 +117,20 @@
       "package_sha256": "17829c2551ff0767d96a7ad40c5bde6ede94b57bb824d3611503cc9466ddbc92",
       "executable_paths": []
     },
+    "claude-code@0.3.0": {
+      "package_sha256": "0c8e2ae2fc72cbe8229f04ac841e77e14a9b30cb32a03e23e7837d87f7c66d35",
+      "executable_paths": []
+    },
     "codex@0.1.0": {
       "package_sha256": "10e7d1ef1838c30ef36cbea1d03c363461fe74b33c1c876cff045e447bd8c73a",
       "executable_paths": []
     },
     "codex@0.2.0": {
       "package_sha256": "70bdfb807496b1454a53532ef9d3b7ad82b7ba1211bff00f5b6943b29f581f93",
+      "executable_paths": []
+    },
+    "codex@0.3.0": {
+      "package_sha256": "5a33232819bceaa9cc96145eb621c4b7a77bf14a466ce8aab47b7963bb99566b",
       "executable_paths": []
     },
     "edge-history@0.1.2": {
@@ -117,6 +145,10 @@
       "package_sha256": "d4d8c1df289d054b2f15bcb9b9ce25ef116a91937a98daecadd3bdeb297729a1",
       "executable_paths": []
     },
+    "edge-history@0.3.0": {
+      "package_sha256": "6f3455da16f286527ad0728afeb1340eeb05d553f705cce13c3ce744e58640e4",
+      "executable_paths": []
+    },
     "firefox-history@0.1.2": {
       "package_sha256": "1da11248de10c892a9009f16204f65cd52a22e2b3028488af4589bf829ddbb6f",
       "executable_paths": []
@@ -127,6 +159,10 @@
     },
     "firefox-history@0.2.1": {
       "package_sha256": "8bd7cb9f35201edcc8fc9c917c5938e759316d69accae620c168aaaf44ce0151",
+      "executable_paths": []
+    },
+    "firefox-history@0.3.0": {
+      "package_sha256": "75c6f03671a9d9bfcc3b132ced01f490989012eee4c936464fc927f453cb1e1b",
       "executable_paths": []
     },
     "git-activity@0.1.2": {
@@ -141,6 +177,10 @@
       "package_sha256": "f305f4731dce51b481bcaf31f14dd65e42385dc01814da05c56bc8bc5d235780",
       "executable_paths": []
     },
+    "git-activity@0.3.0": {
+      "package_sha256": "297982e89f73b288670f56bb009ef76e8427127ebe54276d6ace87137f9becd9",
+      "executable_paths": []
+    },
     "github-activity@0.1.1": {
       "package_sha256": "e7a3e64ee2129962ddfea5f227819916eec6b3116dfbcae333a78719d948f6c2",
       "executable_paths": []
@@ -151,6 +191,10 @@
     },
     "github-activity@0.2.1": {
       "package_sha256": "c69b1234fd6f230a4f7e853935bc93d7ef583b29d15c609068b58b70dafb2977",
+      "executable_paths": []
+    },
+    "github-activity@0.3.0": {
+      "package_sha256": "5c103b6538f3465bbd8bad1a87104fdf6b0b0f0baaa51f3b7aac499d27081d6e",
       "executable_paths": []
     },
     "local-documents@0.1.2": {
@@ -165,6 +209,10 @@
       "package_sha256": "3192c87373e8d39da1e93e496428cda8b8d4c362b48a00edc5aa53102734c4b8",
       "executable_paths": []
     },
+    "local-documents@0.3.0": {
+      "package_sha256": "891595385ba7814688d09ef2bb72f25e59c85bab4800d96f05cadd1f13636c01",
+      "executable_paths": []
+    },
     "local-photos@0.1.0": {
       "package_sha256": "f9fcd8f2af7473091632d98f489600986f8b6f26aeac4c7c58d8c51ae4f19b54",
       "executable_paths": []
@@ -175,6 +223,10 @@
     },
     "local-photos@0.2.1": {
       "package_sha256": "5b07c6ff33d4cd4b302e729554dc03572f93a5bc45c53e55eea302b5f46d3224",
+      "executable_paths": []
+    },
+    "local-photos@0.3.0": {
+      "package_sha256": "c9f2ce3fed462c25a47cbf86c2b2ff59da7bd49bddd237822e094e6872bf5dad",
       "executable_paths": []
     },
     "netease-music@0.1.2": {
@@ -193,12 +245,20 @@
       "package_sha256": "819db13a41e7a301e3b04f379f5b08fa486714d69cc5c6236302e80c8ba0d1df",
       "executable_paths": []
     },
+    "netease-music@0.3.0": {
+      "package_sha256": "3ff993dae2360d5c3607bd5f11764bbf2a50583a81ced904bbbc782213a6131d",
+      "executable_paths": []
+    },
     "obsidian-vault@0.1.3": {
       "package_sha256": "3e724f92b01e33b10bcbf6809ec193c08e4820009b6c6b8a3ca56ce7e0f7c5ba",
       "executable_paths": []
     },
     "obsidian-vault@0.2.0": {
       "package_sha256": "26736eed97cdd3ddc639e3bd1c4880c098bfd22c98888d1c16c8f34f99338551",
+      "executable_paths": []
+    },
+    "obsidian-vault@0.3.0": {
+      "package_sha256": "14a361e1aa9142d479ee175d592db749874c299f1325603028063bbb95fa8895",
       "executable_paths": []
     },
     "photo_library_core@0.1.0": {
@@ -217,6 +277,10 @@
       "package_sha256": "cc1e1f76609eb08021f481346f2228fedaf23e1af022d5b98647e5ba2ebff130",
       "executable_paths": []
     },
+    "photo_library_core@0.3.0": {
+      "package_sha256": "d44c5a79786aa70b6173096ac9cc733803c907f94571f30a52557929e8a044a4",
+      "executable_paths": []
+    },
     "safari-history@0.1.2": {
       "package_sha256": "22546175ca3fa163a0abdae0512f12466b1bf9be7e5ed2482cf6bc5a4b708409",
       "executable_paths": []
@@ -231,6 +295,10 @@
     },
     "safari-history@0.2.1": {
       "package_sha256": "1eb358f237f801330eee6c9d2e16385c8638e8b65e00fe2dfe2e09ab91c774ec",
+      "executable_paths": []
+    },
+    "safari-history@0.3.0": {
+      "package_sha256": "e954d91916f4686b164d04c052a681010138f925c868dcbc9143acacf565d776",
       "executable_paths": []
     },
     "screen-time@0.2.6": {
@@ -251,6 +319,10 @@
     },
     "screen-time@0.3.1": {
       "package_sha256": "88c896e9afdccc934b3b2d2093e4bade0d48cc088fe5a0c018946029d7a24c74",
+      "executable_paths": []
+    },
+    "screen-time@0.4.0": {
+      "package_sha256": "85bcae1fec011c5fe5c14875dc5b39ff7a611cddb66de97f5b8fec0f2f1f6585",
       "executable_paths": []
     },
     "screenshot_timeline@0.5.2": {
@@ -279,6 +351,12 @@
         "bin/magi-vision-helper"
       ]
     },
+    "screenshot_timeline@0.7.0": {
+      "package_sha256": "79fa8f7667fbdf085e657171a2db0b28b3e90b372bb756429d70f9fe5dd03607",
+      "executable_paths": [
+        "bin/magi-vision-helper"
+      ]
+    },
     "steam-play-history@0.1.1": {
       "package_sha256": "06e4af4cbf7d53d733b93e174bccfbab46917cc42e248c536c688a48b5410add",
       "executable_paths": []
@@ -295,6 +373,10 @@
       "package_sha256": "195e94f1cff777555740bae027e78bafe2d697ef0c1ac08507960c09f0ade7b3",
       "executable_paths": []
     },
+    "steam-play-history@0.3.0": {
+      "package_sha256": "f20729e72f4e0a1810619989678f5cdad1967101d9ca6942a980816c5c275a5d",
+      "executable_paths": []
+    },
     "system-media@0.1.2": {
       "package_sha256": "d289be73fdd3d8536e04f22e6e1afedc5eb3ef726a94d29eeeb3ecb1ae1b0967",
       "executable_paths": []
@@ -309,6 +391,10 @@
     },
     "system-media@0.2.1": {
       "package_sha256": "4f052e73e580a6e6295ac24d10d3143e0c752dfa295b11563948ace4a5efb703",
+      "executable_paths": []
+    },
+    "system-media@0.3.0": {
+      "package_sha256": "aca07445a90cf9ceaef1fb447b07defb6b94099e6b712c72bd6b63163f3e8c0f",
       "executable_paths": []
     },
     "telegram@0.2.2": {
@@ -337,6 +423,10 @@
     },
     "terminal-history@0.2.1": {
       "package_sha256": "82e5b4b1decb03f7319f910c3fe0a102282a5c43fa4bc65e6327b46a51be879a",
+      "executable_paths": []
+    },
+    "terminal-history@0.3.0": {
+      "package_sha256": "0f81714794b4824bb3451bd4604699d8b310edbc3353f3fae6ddd4a31e8fdd87",
       "executable_paths": []
     },
     "weixin@0.2.6": {

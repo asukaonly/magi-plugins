@@ -72,7 +72,7 @@ def export(path: Path) -> int:
                 collect_catalog(key, method())
         for field in plugin.get_channel_fields():
             fields[field.key] = field
-        for _, sensor, spec in plugin.get_sensors():
+        for _, source, spec in plugin.get_sources():
             for key in catalog_types:
                 collect_catalog(key, spec.metadata.get(key, []))
             for field in spec.fields:
@@ -87,24 +87,24 @@ def export(path: Path) -> int:
             for flag in ("configured_key", "enabled_key"):
                 if flow.get(flag):
                     defaults.setdefault(flow[flag], False)
-            prefix = next((f.key.rsplit(".", 1)[0] for f in spec.fields if f.key.startswith("sensors.")), f"sensors.{sensor.source_type}")
+            prefix = next((f.key.rsplit(".", 1)[0] for f in spec.fields if f.key.startswith("sources.")), f"sources.{source.source_type}")
             defaults.update({f"{prefix}.{key}": value for key, value in spec.metadata.get("default_settings", {}).items()})
         # Runtime-only channel controls absent from their descriptive form.
         hidden = {
             "telegram": {"webhook_secret": "", "magi_user_id": "default", "max_message_length": 4096},
             "weixin": {"account": "", "base_url": "https://ilinkai.weixin.qq.com", "cdn_base_url": "https://novac2c.cdn.weixin.qq.com/c2c", "bot_type": "3", "ilink_app_id": "bot", "route_tag": "", "max_message_length": 4000, "poll_timeout_ms": 35000, "request_timeout_ms": 15000},
-            "github-activity": {"sensors.github_activity.client_id": "", "sensors.github_activity.access_token": ""},
-            "steam-play-history": {"sensors.steam_play_history.account_id": "auto", "sensors.steam_play_history.excluded_appids": [], "sensors.steam_play_history.excluded_keywords": []},
-            "git-activity": {"sensors.git_activity.session_window_minutes": 30, "sensors.git_activity.max_messages_per_session": 5},
-            "terminal-history": {"sensors.terminal_history.dedup_window_seconds": 60},
+            "github-activity": {"sources.github_activity.client_id": "", "sources.github_activity.access_token": ""},
+            "steam-play-history": {"sources.steam_play_history.account_id": "auto", "sources.steam_play_history.excluded_appids": [], "sources.steam_play_history.excluded_keywords": []},
+            "git-activity": {"sources.git_activity.session_window_minutes": 30, "sources.git_activity.max_messages_per_session": 5},
+            "terminal-history": {"sources.terminal_history.dedup_window_seconds": 60},
             "local-photos": {"locale": ""},
             "apple-photos": {"locale": ""},
         }.get(meta["id"], {})
         defaults.update(hidden)
         if meta["id"] in {"apple-photos", "local-photos"}:
-            source = "photo_library_apple_photos" if meta["id"] == "apple-photos" else "photo_library_directory"
+            source_type = "photo_library_apple_photos" if meta["id"] == "apple-photos" else "photo_library_directory"
             for key, value in {"initial_sync_policy": "", "initial_sync_start_date": "", "initial_sync_end_date": ""}.items():
-                defaults.setdefault(f"sensors.{source}.{key}", value)
+                defaults.setdefault(f"sources.{source_type}.{key}", value)
     for key, value in defaults.items():
         fields.setdefault(key, implicit_field(key, value))
     catalog_text = "".join(f"{key} = {toml(list(entries.values()))}\n" for key, entries in catalogs.items())

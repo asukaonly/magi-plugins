@@ -12,7 +12,7 @@ This module is intentionally self-contained:
     NOT in the host's memory store. The host knows nothing about
     sessions — if/when we extract structured information from a
     session, that flows back to host KG via the existing
-    SensorOutput.metadata.entities path.
+    SourceOutput.metadata.entities path.
   - We never poll on a timer to detect "user went idle". The signal
     comes for free with every screenshot via the helper's
     ``idle_seconds`` field. When the next capture arrives, we look at
@@ -233,7 +233,7 @@ class SessionTracker:
       - open a new session if none is open;
       - append the capture to whatever session is now current.
 
-    Call ``shutdown()`` from sensor.stop() to gracefully close the
+    Call ``shutdown()`` from source.stop() to gracefully close the
     in-flight session as ``shutdown``.
 
     Crash recovery: on first observe, if the DB contains a session with
@@ -308,7 +308,7 @@ class SessionTracker:
         return closed, self._open
 
     def shutdown(self, *, now: float | None = None) -> SessionRecord | None:
-        """Close any open session at sensor stop. Called once."""
+        """Close any open session at source stop. Called once."""
         if self._open is None:
             return None
         return self._close_current(now if now is not None else time.time(), "shutdown")

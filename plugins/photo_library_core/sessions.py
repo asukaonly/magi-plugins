@@ -56,7 +56,7 @@ def _local_date_str(ts: float) -> str:
 def _weekday_index(ts: float) -> int:
     """Return ISO weekday index 0-6 (Mon=0). -1 when the timestamp is invalid.
 
-    Stored as a language-neutral key so the sensor can localise it at
+    Stored as a language-neutral key so the source can localise it at
     output time via i18n templates.
     """
     try:

@@ -12,12 +12,12 @@ from magi_plugin_sdk import (
     ExtractionProfileSpec,
     Plugin,
     PluginSettingsResourceSpec,
-    SensorSpec,
+    SourceSpec,
     SettingsUIBlockSpec,
 )
 
 from .reader import EventKitReader
-from .sensor import CalendarTimelineSensor
+from .source import CalendarTimelineSource
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -314,11 +314,11 @@ class CalendarPlugin(Plugin):
             )
         return {"groups": list(grouped.values())}
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        """Get sensor specifications for Calendar.
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
+        """Get source specifications for Calendar.
 
         Returns:
-            List of sensor tuples (sensor_id, sensor_instance, sensor_spec)
+            List of source tuples (source_id, source_instance, source_spec)
         """
         # Check platform - only supported on Darwin
         if sys.platform != "darwin":
@@ -326,13 +326,13 @@ class CalendarPlugin(Plugin):
 
         # Get settings
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("calendar", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("calendar", {}))
 
         source_enabled = bool(settings.get("enabled", DEFAULT_SETTINGS["enabled"]))
 
-        # Check EventKit availability (but still return sensor spec even if not available)
+        # Check EventKit availability (but still return source spec even if not available)
         reader = None
         if source_enabled:
             try:
@@ -342,8 +342,8 @@ class CalendarPlugin(Plugin):
             except Exception:
                 reader = None
 
-        # Create sensor (reader may be None if not available)
-        sensor = CalendarTimelineSensor(
+        # Create source (reader may be None if not available)
+        source = CalendarTimelineSource(
             retention_mode=DEFAULT_SETTINGS["default_retention_mode"],
             reader=reader,
         )
@@ -355,22 +355,22 @@ class CalendarPlugin(Plugin):
         return [
             (
                 "timeline.calendar",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.calendar",
+                source,
+                SourceSpec(
+                    source_id="timeline.calendar",
                     display_name="Calendar",
                     description="Calendar event ingestion for the timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=sync_mode,
                     polling_mode=sync_mode,
-                    fields=_fields("sensors.calendar"),
+                    fields=_fields("sources.calendar"),
                     metadata={
                         "source_type": "calendar",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks("sensors.calendar")],
+                        "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks("sources.calendar")],
                         "sync_interval_minutes": sync_interval_minutes,
-                        "activation_flow": _activation_flow("sensors.calendar").model_dump(),
+                        "activation_flow": _activation_flow("sources.calendar").model_dump(),
                     },
                 ),
             )

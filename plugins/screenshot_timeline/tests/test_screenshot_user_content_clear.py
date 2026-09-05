@@ -9,9 +9,9 @@ from typing import Any
 import pytest
 
 from magi_plugin_sdk import UserContentClearContext, UserContentClearRequest
-from magi_plugin_sdk.sensors import SensorSyncContext
-from screenshot_timeline import sensor as sensor_module
-from screenshot_timeline.sensor import ScreenshotSensor
+from magi_plugin_sdk.sources import SourceSyncContext
+from screenshot_timeline import source as source_module
+from screenshot_timeline.source import ScreenshotSource
 from screenshot_timeline.storage_cleanup import UnsafeStoragePathError
 
 
@@ -81,7 +81,7 @@ class _FakeHelper:
                     path.write_bytes(b"late private screenshot")
 
             self.late_write_tasks.append(asyncio.create_task(_write_late()))
-            raise sensor_module.HelperTimeoutError("simulated helper timeout")
+            raise source_module.HelperTimeoutError("simulated helper timeout")
         if self.block_capture:
             await self.capture_release.wait()
         for raw_path in payload["save_paths"].values():
@@ -124,9 +124,9 @@ def _clear_context(tmp_path: Path) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=11),
         runtime_paths=_RuntimePaths(tmp_path / "runtime"),
         plugin_id="screenshot_timeline",
-        sensor_id="timeline.screenshot",
+        source_id="timeline.screenshot",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "screenshot_timeline": {
                     "enabled": True,
                     "active_window_interval_sec": 600,
@@ -136,8 +136,8 @@ def _clear_context(tmp_path: Path) -> UserContentClearContext:
     )
 
 
-def _sync_context(tmp_path: Path) -> SensorSyncContext:
-    return SensorSyncContext(
+def _sync_context(tmp_path: Path) -> SourceSyncContext:
+    return SourceSyncContext(
         connection_id="test-connection",
         source_type="screenshot_timeline",
         manual=True,
@@ -145,7 +145,7 @@ def _sync_context(tmp_path: Path) -> SensorSyncContext:
         last_success_at=None,
         limit=10,
         runtime_paths=_RuntimePaths(tmp_path / "runtime"),
-        plugin_settings={"sensors": {"screenshot_timeline": {}}},
+        plugin_settings={"sources": {"screenshot_timeline": {}}},
     )
 
 
@@ -153,10 +153,10 @@ def _patch_runtime(
     monkeypatch: pytest.MonkeyPatch,
     factory: _HelperFactory,
 ) -> None:
-    monkeypatch.setattr(sensor_module, "HelperClient", factory)
-    monkeypatch.setattr(sensor_module, "request_screen_recording", lambda: "granted")
-    monkeypatch.setattr(sensor_module, "screen_recording_status", lambda: "granted")
-    monkeypatch.setattr(sensor_module, "install_nsworkspace_observer", lambda _cb: None)
+    monkeypatch.setattr(source_module, "HelperClient", factory)
+    monkeypatch.setattr(source_module, "request_screen_recording", lambda: "granted")
+    monkeypatch.setattr(source_module, "screen_recording_status", lambda: "granted")
+    monkeypatch.setattr(source_module, "install_nsworkspace_observer", lambda _cb: None)
 
 
 @pytest.mark.asyncio
@@ -168,19 +168,19 @@ async def test_clear_stops_runtime_erases_content_and_lazy_restarts(
     _patch_runtime(monkeypatch, factory)
     resources_root = tmp_path / "screenshots"
     session_db = tmp_path / "plugin-state" / "sessions.db"
-    sensor = ScreenshotSensor(
+    source = ScreenshotSource(
         helper_argv=["fake-helper"],
         resources_root=resources_root,
         session_db_path=session_db,
         active_window_interval_sec=600,
         full_screen_interval_min=600,
     )
-    await sensor.start()
+    await source.start()
     old_helper = factory.instances[0]
-    old_orchestrator = sensor._orchestrator
+    old_orchestrator = source._orchestrator
 
-    assert sensor._session_tracker is not None
-    sensor._session_tracker.observe_capture(
+    assert source._session_tracker is not None
+    source._session_tracker.observe_capture(
         capture_id="old-capture",
         captured_at=1_775_000_000.0,
         app_bundle="com.example.Private",
@@ -192,35 +192,35 @@ async def test_clear_stops_runtime_erases_content_and_lazy_restarts(
     for path in (old_original, old_thumbnail):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"private")
-    sensor._pending_items.append({"capture_id": "old-capture"})
-    sensor._last_phash_by_window[("private", "window")] = "abcdef"
-    sensor._guard.engage_panic(duration_seconds=600, now=100.0)
+    source._pending_items.append({"capture_id": "old-capture"})
+    source._last_phash_by_window[("private", "window")] = "abcdef"
+    source._guard.engage_panic(duration_seconds=600, now=100.0)
 
     context = _clear_context(tmp_path)
-    await sensor.clear_user_content(context)
-    await sensor.clear_user_content(context)
+    await source.clear_user_content(context)
+    await source.clear_user_content(context)
 
     assert old_helper.shutdown_calls == 1
-    assert sensor._started is False
-    assert sensor._capture_enabled is False
-    assert sensor._active_timer is None
-    assert sensor._full_screen_timer is None
-    assert sensor._workspace_handle is None
-    assert sensor._retention_task is None
-    assert sensor._session_tracker is None
-    assert sensor._session_store is None
-    assert sensor._pending_items == []
-    assert sensor._last_phash_by_window == {}
-    assert sensor._guard.is_panic_active(now=101.0) is False
+    assert source._started is False
+    assert source._capture_enabled is False
+    assert source._active_timer is None
+    assert source._full_screen_timer is None
+    assert source._workspace_handle is None
+    assert source._retention_task is None
+    assert source._session_tracker is None
+    assert source._session_store is None
+    assert source._pending_items == []
+    assert source._last_phash_by_window == {}
+    assert source._guard.is_panic_active(now=101.0) is False
     assert not session_db.exists()
     assert not resources_root.joinpath("originals").exists()
     assert not resources_root.joinpath("thumbnails").exists()
-    assert context.plugin_settings["sensors"]["screenshot_timeline"]["enabled"] is True
+    assert context.plugin_settings["sources"]["screenshot_timeline"]["enabled"] is True
     assert all(not helper.started for helper in factory.instances)
 
-    result = await sensor.collect_items(_sync_context(tmp_path))
+    result = await source.collect_items(_sync_context(tmp_path))
     assert [change.payload for change in result.changes] == []
-    assert sensor._started is True
+    assert source._started is True
     restarted_helper = factory.instances[-1]
     assert restarted_helper.started is True
 
@@ -228,11 +228,11 @@ async def test_clear_stops_runtime_erases_content_and_lazy_restarts(
     await old_orchestrator.emit("window_switch", now=10_000.0)
     assert restarted_helper.capture_requests == 0
 
-    await sensor.trigger_once("manual")
-    resumed_items = await sensor.drain_pending_items()
+    await source.trigger_once("manual")
+    resumed_items = await source.drain_pending_items()
     assert len(resumed_items) == 1
     assert resumed_items[0]["ocr_text"] == "private text"
-    await sensor.stop()
+    await source.stop()
 
 
 @pytest.mark.asyncio
@@ -243,28 +243,28 @@ async def test_clear_waits_for_inflight_capture_and_rejects_queued_old_generatio
     factory = _HelperFactory(block_first_capture=True)
     _patch_runtime(monkeypatch, factory)
     resources_root = tmp_path / "screenshots"
-    sensor = ScreenshotSensor(
+    source = ScreenshotSource(
         helper_argv=["fake-helper"],
         resources_root=resources_root,
         session_db_path=tmp_path / "plugin-state" / "sessions.db",
         capture_scope="active_window",
         active_window_interval_sec=600,
     )
-    await sensor.start()
+    await source.start()
     helper = factory.instances[0]
-    old_generation = sensor._capture_generation
+    old_generation = source._capture_generation
 
     active = asyncio.create_task(
-        sensor.trigger_once("timer", generation=old_generation)
+        source.trigger_once("timer", generation=old_generation)
     )
     await helper.capture_started.wait()
     queued = asyncio.create_task(
-        sensor.trigger_once("window_switch", generation=old_generation)
+        source.trigger_once("window_switch", generation=old_generation)
     )
     await asyncio.sleep(0)
 
     clear_task = asyncio.create_task(
-        sensor.clear_user_content(_clear_context(tmp_path))
+        source.clear_user_content(_clear_context(tmp_path))
     )
     await clear_task
     await active
@@ -272,10 +272,10 @@ async def test_clear_waits_for_inflight_capture_and_rejects_queued_old_generatio
 
     assert helper.shutdown_calls == 1
     assert helper.capture_requests == 1
-    assert sensor._active_capture_count == 0
-    assert sensor._captures_idle.is_set()
-    assert sensor._pending_items == []
-    assert sensor._last_phash_by_window == {}
+    assert source._active_capture_count == 0
+    assert source._captures_idle.is_set()
+    assert source._pending_items == []
+    assert source._last_phash_by_window == {}
     assert not resources_root.joinpath("originals").exists()
     assert not resources_root.joinpath("thumbnails").exists()
     await asyncio.sleep(0.05)
@@ -283,7 +283,7 @@ async def test_clear_waits_for_inflight_capture_and_rejects_queued_old_generatio
 
 
 @pytest.mark.asyncio
-async def test_clear_failure_from_symlinked_root_keeps_sensor_stopped_and_retries(
+async def test_clear_failure_from_symlinked_root_keeps_source_stopped_and_retries(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -295,28 +295,28 @@ async def test_clear_failure_from_symlinked_root_keeps_sensor_stopped_and_retrie
     capture.write_bytes(b"outside")
     resources_root = tmp_path / "screenshots"
     resources_root.symlink_to(external, target_is_directory=True)
-    sensor = ScreenshotSensor(
+    source = ScreenshotSource(
         helper_argv=["fake-helper"],
         resources_root=resources_root,
         session_db_path=tmp_path / "plugin-state" / "sessions.db",
         active_window_interval_sec=600,
     )
-    await sensor.start()
+    await source.start()
 
     with pytest.raises(UnsafeStoragePathError):
-        await sensor.clear_user_content(_clear_context(tmp_path))
+        await source.clear_user_content(_clear_context(tmp_path))
 
-    assert sensor._started is False
-    assert sensor._capture_enabled is False
-    assert sensor._active_timer is None
-    assert sensor._retention_task is None
+    assert source._started is False
+    assert source._capture_enabled is False
+    assert source._active_timer is None
+    assert source._retention_task is None
     assert factory.instances[0].shutdown_calls == 1
     assert capture.read_bytes() == b"outside"
 
     resources_root.unlink()
     resources_root.mkdir()
-    await sensor.clear_user_content(_clear_context(tmp_path))
-    assert sensor._started is False
+    await source.clear_user_content(_clear_context(tmp_path))
+    assert source._started is False
     assert capture.read_bytes() == b"outside"
 
 
@@ -328,26 +328,26 @@ async def test_clear_kills_timed_out_helper_before_its_delayed_write(
     factory = _HelperFactory(late_first_capture=True)
     _patch_runtime(monkeypatch, factory)
     resources_root = tmp_path / "screenshots"
-    sensor = ScreenshotSensor(
+    source = ScreenshotSource(
         helper_argv=["fake-helper"],
         resources_root=resources_root,
         session_db_path=tmp_path / "plugin-state" / "sessions.db",
         capture_scope="active_window",
         active_window_interval_sec=600,
     )
-    await sensor.start()
+    await source.start()
     helper = factory.instances[0]
 
-    await sensor.trigger_once("timer")
+    await source.trigger_once("timer")
     assert helper.capture_started.is_set()
     assert helper.late_write_tasks
 
-    await sensor.clear_user_content(_clear_context(tmp_path))
+    await source.clear_user_content(_clear_context(tmp_path))
     await asyncio.sleep(0.1)
 
     assert helper.shutdown_calls == 1
     assert all(task.cancelled() for task in helper.late_write_tasks)
-    assert sensor._pending_items == []
+    assert source._pending_items == []
     assert not list(resources_root.rglob("*.jpg"))
 
 
@@ -364,21 +364,21 @@ async def test_clear_attempts_every_storage_target_before_reporting_failure(
     def record_resource_erase(resources_root: Path) -> None:
         erased_resources.append(resources_root)
 
-    monkeypatch.setattr(sensor_module, "erase_session_database", fail_database_erase)
+    monkeypatch.setattr(source_module, "erase_session_database", fail_database_erase)
     monkeypatch.setattr(
-        sensor_module,
+        source_module,
         "erase_managed_screenshot_resources",
         record_resource_erase,
     )
     resources_root = tmp_path / "screenshots"
-    sensor = ScreenshotSensor(
+    source = ScreenshotSource(
         resources_root=resources_root,
         session_db_path=tmp_path / "plugin-state" / "sessions.db",
     )
 
     with pytest.raises(OSError, match="session database is busy"):
-        await sensor.clear_user_content(_clear_context(tmp_path))
+        await source.clear_user_content(_clear_context(tmp_path))
 
     assert erased_resources == [resources_root]
-    assert sensor._started is False
-    assert sensor._capture_enabled is False
+    assert source._started is False
+    assert source._capture_enabled is False

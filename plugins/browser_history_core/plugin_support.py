@@ -1,4 +1,4 @@
-"""Shared plugin-level helpers for browser history sensors."""
+"""Shared plugin-level helpers for browser history sources."""
 from __future__ import annotations
 
 from collections import Counter

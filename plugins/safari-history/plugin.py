@@ -6,7 +6,7 @@ from errno import EACCES, EPERM
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk import Plugin, PluginSettingsResourceSpec, SensorSpec, SettingsUIBlockSpec
+from magi_plugin_sdk import Plugin, PluginSettingsResourceSpec, SourceSpec, SettingsUIBlockSpec
 
 _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
@@ -23,7 +23,7 @@ from browser_history_core.plugin_support import (
 )
 
 from .safari_reader import _default_safari_root
-from .sensor import SafariHistoryTimelineSensor
+from .source import SafariHistoryTimelineSource
 
 
 def _settings_ui_blocks() -> list[SettingsUIBlockSpec]:
@@ -64,12 +64,12 @@ class SafariHistoryPlugin(Plugin):
     def get_extraction_profiles(self) -> list[Any]:
         return build_extraction_profiles("safari_history")
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("safari_history", {}))
-        sensor = SafariHistoryTimelineSensor(
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("safari_history", {}))
+        source = SafariHistoryTimelineSource(
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             source_path=str(settings.get("source_path") or _default_safari_root()),
             profile=str(settings.get("profile") or ""),
@@ -80,17 +80,17 @@ class SafariHistoryPlugin(Plugin):
         return [
             (
                 "timeline.safari_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.safari_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.safari_history",
                     display_name="Safari History",
                     description="Local Safari browsing history ingested into the user timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
                     fields=build_fields(
-                        "sensors.safari_history",
+                        "sources.safari_history",
                         "Safari",
                         profile_default="",
                         profile_description="Safari stores history in one History.db file; leave this empty.",
@@ -102,7 +102,7 @@ class SafariHistoryPlugin(Plugin):
                             "profile": "",
                             "source_path": _default_safari_root(),
                         },
-                        "activation_flow": build_activation_flow("sensors.safari_history", "Safari").model_dump(),
+                        "activation_flow": build_activation_flow("sources.safari_history", "Safari").model_dump(),
                         "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks()],
                         **build_browser_capability_metadata(
                             entry_id="safari",

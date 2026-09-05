@@ -10,7 +10,7 @@ from types import ModuleType
 def _load_plugin_module() -> ModuleType:
     """Load ``plugin.py`` for the ``git_activity`` dir.
 
-    ``plugin.py`` uses relative imports (``from .sensor import ...``), so we
+    ``plugin.py`` uses relative imports (``from .source import ...``), so we
     synthesize a parent package whose ``__path__`` points at the plugin dir,
     register it in ``sys.modules``, then load ``plugin.py`` as a submodule so
     its relative imports resolve.
@@ -34,10 +34,10 @@ def _load_plugin_module() -> ModuleType:
 
 def test_git_activity_flow_includes_repos() -> None:
     git_plugin = _load_plugin_module()
-    flow = git_plugin._activation_flow("sensors.git_activity")
+    flow = git_plugin._activation_flow("sources.git_activity")
     keys = [f.key for f in flow.fields]
-    assert "sensors.git_activity.repos" in keys, "repos must be in the activation_flow"
-    repos = next(f for f in flow.fields if f.key == "sensors.git_activity.repos")
+    assert "sources.git_activity.repos" in keys, "repos must be in the activation_flow"
+    repos = next(f for f in flow.fields if f.key == "sources.git_activity.repos")
     assert repos.type == "path" and repos.required is True
     assert flow.first_context is not None
     assert flow.first_context.max_items_per_sync == 200

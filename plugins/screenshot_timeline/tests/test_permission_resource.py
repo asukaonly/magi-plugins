@@ -103,12 +103,12 @@ def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
         plugin.read_settings_resource("nonexistent")
 
 
-def test_sensor_metadata_exposes_settings_ui_blocks() -> None:
+def test_source_metadata_exposes_settings_ui_blocks() -> None:
     plugin_mod = _load_plugin_module()
     plugin = bind_test_plugin(plugin_mod.ScreenshotTimelinePlugin())
-    sensors = plugin.get_sensors()
-    assert sensors, "expected at least one sensor"
-    _, _, spec = sensors[0]
+    sources = plugin.get_sources()
+    assert sources, "expected at least one source"
+    _, _, spec = sources[0]
     blocks = spec.metadata.get("settings_ui_blocks")
     assert isinstance(blocks, list)
     assert len(blocks) == 1

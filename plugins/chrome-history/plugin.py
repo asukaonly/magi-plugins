@@ -10,12 +10,12 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
     SummaryProfileSpec,
 )
 
 from .chrome_reader import _default_chrome_root
-from .sensor import ChromeHistoryTimelineSensor
+from .source import ChromeHistoryTimelineSource
 
 
 DEFAULT_SETTINGS = {
@@ -335,12 +335,12 @@ class ChromeHistoryPlugin(Plugin):
             )
         ]
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         settings = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("chrome_history", {}))
-        sensor = ChromeHistoryTimelineSensor(
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("chrome_history", {}))
+        source = ChromeHistoryTimelineSource(
             retention_mode=str(settings.get("default_retention_mode") or DEFAULT_SETTINGS["default_retention_mode"]),
             source_path=str(settings.get("source_path") or _default_chrome_root()),
             profile=str(settings.get("profile") or DEFAULT_SETTINGS["profile"]),
@@ -351,20 +351,20 @@ class ChromeHistoryPlugin(Plugin):
         return [
             (
                 "timeline.chrome_history",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.chrome_history",
+                source,
+                SourceSpec(
+                    source_id="timeline.chrome_history",
                     display_name="Chrome History",
                     description="Local Google Chrome browsing history ingested into the user timeline.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=_fields("sensors.chrome_history"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
+                    fields=_fields("sources.chrome_history"),
                     metadata={
                         "source_type": "chrome_history",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.chrome_history").model_dump(),
+                        "activation_flow": _activation_flow("sources.chrome_history").model_dump(),
                         **BROWSER_HISTORY_CAPABILITY_METADATA,
                     },
                 ),

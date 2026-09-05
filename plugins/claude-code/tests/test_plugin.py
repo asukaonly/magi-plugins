@@ -28,10 +28,10 @@ def _load_plugin_module() -> ModuleType:
 
 def test_claude_history_registers_only_claude_code() -> None:
     plugin = _load_plugin_module().ClaudeCodePlugin()
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    assert len(sensors) == 1
-    _sensor_id, _sensor, spec = sensors[0]
+    assert len(sources) == 1
+    _source_id, _source, spec = sources[0]
     assert spec.metadata["source_type"] == "claude_code_agent_history"
     assert spec.metadata["entry_id"] == "claude_code"
     assert spec.metadata["capability_id"] == "agent_history"
@@ -55,7 +55,7 @@ def test_claude_history_manifest_is_independent() -> None:
 
     plugin_dir = Path(__file__).resolve().parents[1]
     plugin = tomllib.loads((plugin_dir / "plugin.toml").read_text())["plugin"]
-    defaults = plugin["default_settings"]["sensors"]
+    defaults = plugin["default_settings"]["sources"]
 
     assert plugin["entry_class"] == "ClaudeCodePlugin"
     assert plugin["depends_on"] == ["agent_history_core"]

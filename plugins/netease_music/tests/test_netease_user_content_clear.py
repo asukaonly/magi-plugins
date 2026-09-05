@@ -32,9 +32,9 @@ def _context(runtime_paths: _RuntimePaths) -> UserContentClearContext:
         request=UserContentClearRequest(clear_generation=9),
         runtime_paths=runtime_paths,
         plugin_id="netease-music",
-        sensor_id="timeline.netease_music",
+        source_id="timeline.netease_music",
         plugin_settings={
-            "sensors": {
+            "sources": {
                 "netease_music": {
                     "db_path": "/configured/music.db",
                     "lastfm_api_key": "configured-secret",
@@ -74,7 +74,7 @@ def test_clear_removes_lastfm_cache_without_network_or_configuration_changes(
     tmp_path: Path,
     monkeypatch: Any,
 ) -> None:
-    sensor_module = importlib.import_module("netease_music.sensor")
+    source_module = importlib.import_module("netease_music.source")
     runtime_paths = _RuntimePaths(tmp_path)
     plugin_cache_dir = runtime_paths.plugin_cache_dir("netease-music")
     cursor_path = plugin_cache_dir / "cursor.txt"
@@ -93,12 +93,12 @@ def test_clear_removes_lastfm_cache_without_network_or_configuration_changes(
     external_file = tmp_path / "external.db"
     external_file.write_bytes(b"external must survive")
     (temporary_copy / "external-link").symlink_to(external_file)
-    sensor = sensor_module.NeteaseMusicTimelineSensor(
+    source = source_module.NeteaseMusicTimelineSource(
         source_path="/configured/music.db",
         tag_strategy="lastfm",
         lastfm_api_key="configured-secret",
     )
-    sensor._lastfm_cache.update(
+    source._lastfm_cache.update(
         {
             "artist|track": ["rock", "indie"],
             "artist|other": ["pop"],
@@ -113,20 +113,20 @@ def test_clear_removes_lastfm_cache_without_network_or_configuration_changes(
     monkeypatch.setitem(sys.modules, "aiohttp", _NetworkTrap())
 
     async def run_clear() -> None:
-        await sensor.clear_user_content(context)
-        await sensor.clear_user_content(context)
+        await source.clear_user_content(context)
+        await source.clear_user_content(context)
 
     asyncio.run(run_clear())
 
-    assert sensor._lastfm_cache == {}
+    assert source._lastfm_cache == {}
     assert temporary_copy.exists() is False
     assert source_database.read_bytes() == b"source must survive"
     assert external_file.read_bytes() == b"external must survive"
     assert cursor_path.read_text(encoding="utf-8") == "preserved-cursor"
-    assert sensor.source_path == "/configured/music.db"
-    assert sensor.tag_strategy == "lastfm"
-    assert sensor.lastfm_api_key == "configured-secret"
-    assert context.plugin_settings["sensors"]["netease_music"]["lastfm_api_key"] == (
+    assert source.source_path == "/configured/music.db"
+    assert source.tag_strategy == "lastfm"
+    assert source.lastfm_api_key == "configured-secret"
+    assert context.plugin_settings["sources"]["netease_music"]["lastfm_api_key"] == (
         "configured-secret"
     )
 
@@ -134,11 +134,11 @@ def test_clear_removes_lastfm_cache_without_network_or_configuration_changes(
 def test_clear_waits_for_cache_writer_and_future_tag_fetches_resume(
     tmp_path: Path,
 ) -> None:
-    sensor_module = importlib.import_module("netease_music.sensor")
+    source_module = importlib.import_module("netease_music.source")
     runtime_paths = _RuntimePaths(tmp_path)
 
     async def run_scenario() -> None:
-        sensor = sensor_module.NeteaseMusicTimelineSensor(
+        source = source_module.NeteaseMusicTimelineSource(
             tag_strategy="lastfm",
             lastfm_api_key="configured-secret",
         )
@@ -148,14 +148,14 @@ def test_clear_waits_for_cache_writer_and_future_tag_fetches_resume(
         async def blocked_fetch(artist: str, track: str) -> list[str]:
             fetch_started.set()
             await release_fetch.wait()
-            sensor._lastfm_cache[f"{artist.lower()}|{track.lower()}"] = ["old-tag"]
+            source._lastfm_cache[f"{artist.lower()}|{track.lower()}"] = ["old-tag"]
             return ["old-tag"]
 
-        sensor._fetch_lastfm_tags_locked = blocked_fetch
-        fetch_task = asyncio.create_task(sensor._fetch_lastfm_tags("Artist", "Track"))
+        source._fetch_lastfm_tags_locked = blocked_fetch
+        fetch_task = asyncio.create_task(source._fetch_lastfm_tags("Artist", "Track"))
         await fetch_started.wait()
         clear_task = asyncio.create_task(
-            sensor.clear_user_content(_context(runtime_paths))
+            source.clear_user_content(_context(runtime_paths))
         )
         await asyncio.sleep(0)
 
@@ -163,15 +163,15 @@ def test_clear_waits_for_cache_writer_and_future_tag_fetches_resume(
         release_fetch.set()
         assert await fetch_task == ["old-tag"]
         await clear_task
-        assert sensor._lastfm_cache == {}
+        assert source._lastfm_cache == {}
 
         async def resumed_fetch(artist: str, track: str) -> list[str]:
-            sensor._lastfm_cache[f"{artist.lower()}|{track.lower()}"] = ["new-tag"]
+            source._lastfm_cache[f"{artist.lower()}|{track.lower()}"] = ["new-tag"]
             return ["new-tag"]
 
-        sensor._fetch_lastfm_tags_locked = resumed_fetch
-        assert await sensor._fetch_lastfm_tags("Artist", "Track") == ["new-tag"]
-        assert sensor._lastfm_cache == {"artist|track": ["new-tag"]}
+        source._fetch_lastfm_tags_locked = resumed_fetch
+        assert await source._fetch_lastfm_tags("Artist", "Track") == ["new-tag"]
+        assert source._lastfm_cache == {"artist|track": ["new-tag"]}
 
     asyncio.run(run_scenario())
 

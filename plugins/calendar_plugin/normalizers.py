@@ -7,12 +7,12 @@ from typing import Any
 from .types import CalendarEvent, Participant
 
 
-def normalize_calendar_event(event: CalendarEvent, sensor: Any) -> dict[str, Any]:
+def normalize_calendar_event(event: CalendarEvent, source: Any) -> dict[str, Any]:
     """Normalize a calendar event into timeline event data.
 
     Args:
         event: CalendarEvent to normalize
-        sensor: The sensor instance (for sensor_id)
+        source: The source instance (for source_id)
 
     Returns:
         Dictionary with normalized event data
@@ -91,7 +91,7 @@ def normalize_calendar_event(event: CalendarEvent, sensor: Any) -> dict[str, Any
 
     # Build provenance
     provenance = {
-        "sensor_id": sensor.sensor_id,
+        "source_id": source.source_id,
         "event_id": event.event_id,
         "title": event.title,
         "location": event.location,

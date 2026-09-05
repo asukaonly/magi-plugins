@@ -8,7 +8,7 @@ from pathlib import Path
 from types import ModuleType
 
 
-def _load_sensor() -> ModuleType:
+def _load_source() -> ModuleType:
     pd = Path(__file__).resolve().parents[1]
     pkg = "git_activity_under_test"
     spec = importlib.util.spec_from_file_location(
@@ -17,7 +17,7 @@ def _load_sensor() -> ModuleType:
     m = importlib.util.module_from_spec(spec)
     sys.modules[pkg] = m
     spec.loader.exec_module(m)
-    s = importlib.util.spec_from_file_location(f"{pkg}.sensor", pd / "sensor.py")
+    s = importlib.util.spec_from_file_location(f"{pkg}.source", pd / "source.py")
     mod = importlib.util.module_from_spec(s)
     sys.modules[s.name] = mod
     s.loader.exec_module(mod)
@@ -25,13 +25,13 @@ def _load_sensor() -> ModuleType:
 
 
 def test_structured_only_flag_is_set() -> None:
-    sensor = _load_sensor().GitActivitySensor(repos=[])
-    assert sensor.memory_policy.allow_llm_extraction is False
+    source = _load_source().GitActivitySource(repos=[])
+    assert source.memory_policy.allow_llm_extraction is False
 
 
 def test_extract_metadata_emits_committed_edge() -> None:
-    sensor = _load_sensor().GitActivitySensor(repos=[])
-    meta = asyncio.run(sensor.extract_metadata({"repo_path": "/home/u/code/magi"}))
+    source = _load_source().GitActivitySource(repos=[])
+    meta = asyncio.run(source.extract_metadata({"repo_path": "/home/u/code/magi"}))
     assert meta.entities == [
         {"mention_text": "magi", "entity_type": "software", "canonical_name_hint": "magi"}
     ]
@@ -44,6 +44,6 @@ def test_extract_metadata_emits_committed_edge() -> None:
 
 
 def test_extract_metadata_empty_without_repo() -> None:
-    sensor = _load_sensor().GitActivitySensor(repos=[])
-    meta = asyncio.run(sensor.extract_metadata({}))
+    source = _load_source().GitActivitySource(repos=[])
+    meta = asyncio.run(source.extract_metadata({}))
     assert meta.entities == [] and meta.fact_hints == []

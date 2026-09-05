@@ -34,7 +34,7 @@ def _manifest(**overrides):
         "name": "Example",
         "version": "1.0.0",
         "kind": "plugin",
-        "contribution_types": ["sensor"],
+        "contribution_types": ["source"],
         "depends_on": [],
     }
     manifest.update(overrides)
@@ -49,7 +49,7 @@ def _entry(plugin_id: str = "example", **overrides):
         "package_sha256": PACKAGE_SHA256,
         "path": f"plugins/{plugin_id}",
         "kind": "plugin",
-        "contribution_types": ["sensor"],
+        "contribution_types": ["source"],
         "depends_on": [],
         "platforms": [],
     }
@@ -289,7 +289,7 @@ def test_publication_policy_rejects_duplicate_values() -> None:
     with pytest.raises(RegistryContractError, match="duplicate values"):
         validate_registry_index(
             _index(
-                _entry(contribution_types=["sensor", "sensor"]),
+                _entry(contribution_types=["source", "source"]),
             )
         )
 

@@ -24,47 +24,47 @@ def _load_plugin_class():
 def _make_plugin(enabled: bool):
     cls = _load_plugin_class()
     plugin = cls()
-    plugin.settings = {"sensors": {"obsidian_vault": {
+    plugin.settings = {"sources": {"obsidian_vault": {
         "enabled": enabled, "vault_path": "/tmp/vault",
         "exclude_folders": [".obsidian"], "cognition_exclude_folders": ["Clippings"],
     }}}
     return plugin
 
 
-def test_get_sensors_returns_two_tiers_when_enabled() -> None:
+def test_get_sources_returns_two_tiers_when_enabled() -> None:
     plugin = _make_plugin(enabled=True)
-    sensors = plugin.get_sensors()
-    ids = {sid for sid, _inst, _spec in sensors}
+    sources = plugin.get_sources()
+    ids = {sid for sid, _inst, _spec in sources}
     assert ids == {"timeline.obsidian_vault.knowledge", "timeline.obsidian_vault.search"}
-    cog = {sid: inst.memory_policy.cognition_eligible for sid, inst, _ in sensors}
+    cog = {sid: inst.memory_policy.cognition_eligible for sid, inst, _ in sources}
     assert cog["timeline.obsidian_vault.knowledge"] is True
     assert cog["timeline.obsidian_vault.search"] is False
-    for _, _, spec in sensors:
+    for _, _, spec in sources:
         assert spec.metadata["capability_id"] == "obsidian_vault"
         assert spec.metadata["entry_id"] == "obsidian_vault"
         assert spec.metadata["entry_display_name"] == "Obsidian Vault"
     # Distinct source_type per tier so the host doesn't collide them: resolve/schedule/
     # cursor are keyed by (plugin_id, source_type), first-match-wins.
-    src = {sid: inst.source_type for sid, inst, _ in sensors}
+    src = {sid: inst.source_type for sid, inst, _ in sources}
     assert src["timeline.obsidian_vault.knowledge"] == "obsidian_vault"
     assert src["timeline.obsidian_vault.search"] == "obsidian_vault_search"
-    spec_src = {sid: spec.metadata["source_type"] for sid, _inst, spec in sensors}
+    spec_src = {sid: spec.metadata["source_type"] for sid, _inst, spec in sources}
     assert spec_src["timeline.obsidian_vault.search"] == "obsidian_vault_search"
 
 
-def test_get_sensors_stay_discoverable_when_disabled() -> None:
+def test_get_sources_stay_discoverable_when_disabled() -> None:
     plugin = _make_plugin(enabled=False)
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    assert len(sensors) == 2
-    for _sensor_id, _sensor, spec in sensors:
+    assert len(sources) == 2
+    for _source_id, _source, spec in sources:
         flow = spec.metadata["activation_flow"]
-        assert flow["enabled_key"] == "sensors.obsidian_vault.enabled"
+        assert flow["enabled_key"] == "sources.obsidian_vault.enabled"
         assert flow["first_context"]["max_items_per_sync"] == 200
         vault_field = next(
             field
             for field in flow["fields"]
-            if field["key"] == "sensors.obsidian_vault.vault_path"
+            if field["key"] == "sources.obsidian_vault.vault_path"
         )
         assert vault_field["path_kind"] == "directory"
 

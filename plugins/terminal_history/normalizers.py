@@ -9,12 +9,12 @@ from typing import Any
 from .types import TerminalCommand
 
 
-def normalize_terminal_command(item: dict[str, Any] | TerminalCommand, sensor: Any) -> dict[str, Any]:
+def normalize_terminal_command(item: dict[str, Any] | TerminalCommand, source: Any) -> dict[str, Any]:
     """Normalize terminal command data into timeline event format.
 
     Args:
         item: Terminal command data (dict or TerminalCommand object)
-        sensor: The sensor instance
+        source: The source instance
 
     Returns:
         Dictionary with normalized event data
@@ -59,7 +59,7 @@ def normalize_terminal_command(item: dict[str, Any] | TerminalCommand, sensor: A
 
     # Build provenance
     provenance = {
-        "sensor_id": sensor.sensor_id,
+        "source_id": source.source_id,
         "shell": command.shell,
         "history_line": command.history_line,
         "command_length": len(command.command),

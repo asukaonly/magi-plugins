@@ -14,14 +14,14 @@ from magi_plugin_sdk import (
     PluginSettingsResourceSpec,
     SettingsUIBlockSpec,
 )
-from magi_plugin_sdk.sensors import SensorSpec
+from magi_plugin_sdk.sources import SourceSpec
 
 from .privacy_guard import DEFAULT_APP_BLOCKLIST
 from .screenshot_tools import (
     build_recall_asset_refs as _build_recall_asset_refs,
     build_screenshot_timeline_tool_classes,
 )
-from .sensor import ScreenshotSensor
+from .source import ScreenshotSource
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "enabled": False,
@@ -118,7 +118,7 @@ def _fields(prefix: str) -> list[ExtensionFieldSpec]:
             key=f"{prefix}.enabled",
             type="switch",
             label="Enabled",
-            description="Whether the screenshot timeline sensor is active.",
+            description="Whether the screenshot timeline source is active.",
             default=False,
             section="general",
             surface="timeline",
@@ -315,20 +315,20 @@ class ScreenshotTimelinePlugin(Plugin):
 
     def __init__(self) -> None:
         super().__init__()
-        # Track sensors we created so `shutdown()` can stop them. The host
-        # calls `get_sensors()` once on load and the same instances are
-        # retained in the SensorRegistry until unload — caching here lets
+        # Track sources we created so `shutdown()` can stop them. The host
+        # calls `get_sources()` once on load and the same instances are
+        # retained in the SourceRegistry until unload — caching here lets
         # us tear them down on reload without poking the registry.
-        self._owned_sensors: list[ScreenshotSensor] = []
+        self._owned_sources: list[ScreenshotSource] = []
 
-    def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, Any, SourceSpec]]:
         settings: dict[str, Any] = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
             # The YAML key must match `metadata.source_type` below — the host
-            # scheduler reads `sensors.<source_type>.enabled` to decide whether
+            # scheduler reads `sources.<source_type>.enabled` to decide whether
             # to schedule this contribution. Keep them aligned.
-            settings = dict(sensors_settings.get("screenshot_timeline", {}))
+            settings = dict(sources_settings.get("screenshot_timeline", {}))
 
         plugin_dir = Path(__file__).resolve().parent
         helper_argv = [str(plugin_dir / "bin" / "magi-vision-helper")]
@@ -338,7 +338,7 @@ class ScreenshotTimelinePlugin(Plugin):
                 return tuple(value)
             return tuple(default)
 
-        sensor = ScreenshotSensor(
+        source = ScreenshotSource(
             helper_argv=helper_argv,
             resources_root=self.context.resources_dir,
             session_db_path=self.context.resources_dir / "sessions.db",
@@ -358,27 +358,27 @@ class ScreenshotTimelinePlugin(Plugin):
             active_window_interval_sec=float(settings.get("active_window_interval_sec", DEFAULT_SETTINGS["active_window_interval_sec"])),
             full_screen_interval_min=float(settings.get("full_screen_interval_min", DEFAULT_SETTINGS["full_screen_interval_min"])),
         )
-        self._owned_sensors.append(sensor)
+        self._owned_sources.append(source)
 
         return [
             (
                 "timeline.screenshot",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.screenshot",
+                source,
+                SourceSpec(
+                    source_id="timeline.screenshot",
                     display_name="Screenshot Timeline",
                     description="Continuous screen capture + local OCR fed into magi memory.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
-                    polling_mode=getattr(sensor, "polling_mode", "interval"),
-                    fields=_fields("sensors.screenshot_timeline"),
+                    polling_mode=getattr(source, "polling_mode", "interval"),
+                    fields=_fields("sources.screenshot_timeline"),
                     metadata={
                         "source_type": "screenshot_timeline",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.screenshot_timeline").model_dump(),
+                        "activation_flow": _activation_flow("sources.screenshot_timeline").model_dump(),
                         "settings_ui_blocks": [
-                            block.model_dump() for block in _settings_ui_blocks("sensors.screenshot_timeline")
+                            block.model_dump() for block in _settings_ui_blocks("sources.screenshot_timeline")
                         ],
                     },
                 ),
@@ -523,26 +523,26 @@ class ScreenshotTimelinePlugin(Plugin):
         )
 
     async def shutdown(self) -> None:
-        """Stop the screenshot sensor and its helper subprocess on unload.
+        """Stop the screenshot source and its helper subprocess on unload.
 
         The host calls this on reload (settings change, disable, upgrade).
-        Without it, every reload leaks the previous sensor: its timer
+        Without it, every reload leaks the previous source: its timer
         keeps ticking, its NSWorkspace observer keeps listening, and its
         helper subprocess keeps consuming memory + battery. The visible
         symptom is "I set the interval to 120s and now captures fire
-        every 3s" — actually multiple sensor instances stacking up.
+        every 3s" — actually multiple source instances stacking up.
         """
         # Snapshot + clear up front so a re-entrant call is a no-op.
-        owned = list(self._owned_sensors)
-        self._owned_sensors.clear()
-        for sensor in owned:
+        owned = list(self._owned_sources)
+        self._owned_sources.clear()
+        for source in owned:
             try:
-                await sensor.stop()
+                await source.stop()
             except Exception:
                 import logging
                 logging.getLogger(__name__).exception(
-                    "plugin.sensor_stop_failed sensor=%r",
-                    getattr(sensor, "source_type", sensor),
+                    "plugin.source_stop_failed source=%r",
+                    getattr(source, "source_type", source),
                 )
 
 

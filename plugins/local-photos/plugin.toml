@@ -10,14 +10,14 @@ id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "lucide:images"
-version = "0.2.1"
+version = "0.3.0"
 description = "Scans photo folders you choose and reads capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "LocalPhotosPlugin"
 official = true
-contribution_types = ["sensor", "tool"]
+contribution_types = ["source", "tool"]
 platforms = ["macos", "windows"]
 depends_on = ["photo_library_core"]
 
@@ -33,7 +33,7 @@ member_label = "Local Photos"
 member_label_i18n = { "zh-CN" = "本地照片" }
 member_order = 20
 
-[plugin.default_settings.sensors.photo_library_directory]
+[plugin.default_settings.sources.photo_library_directory]
 enabled = false
 source_mode = "directory"
 sync_mode = "interval"
@@ -105,9 +105,9 @@ description = "Local Photos is sensitive local data. Magi reads photo metadata (
 confirm_label = "Enable source"
 cancel_label = "Not now"
 authorize_on_confirm = false
-enabled_key = "sensors.photo_library_directory.enabled"
-configured_key = "sensors.photo_library_directory.initial_sync_configured"
-fields = [{ "key" = "sensors.photo_library_directory.source_paths", "type" = "path", "label" = "Photo Directories", "description" = "Local folders containing photos to scan. Add one or more.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "/path/to/photos", "depends_on_values" = [] }]
+enabled_key = "sources.photo_library_directory.enabled"
+configured_key = "sources.photo_library_directory.initial_sync_configured"
+fields = [{ "key" = "sources.photo_library_directory.source_paths", "type" = "path", "label" = "Photo Directories", "description" = "Local folders containing photos to scan. Add one or more.", "default" = [], "required" = true, "options" = [], "section" = "activation", "surface" = "timeline", "order" = 10, "placeholder" = "/path/to/photos", "depends_on_values" = [] }]
 first_context = { "max_items_per_sync" = 200, "settings_overrides" = {  } }
 
 [[plugin.settings_fields]]
@@ -122,7 +122,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.analysis_features"
+key = "sources.photo_library_directory.analysis_features"
 type = "tags"
 label = "Analysis Features"
 description = "Metadata extraction capabilities to apply."
@@ -134,7 +134,7 @@ surface = "timeline"
 order = 45
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.default_retention_mode"
+key = "sources.photo_library_directory.default_retention_mode"
 type = "input"
 label = "Default Retention Mode"
 description = ""
@@ -145,7 +145,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.edge_whitelist"
+key = "sources.photo_library_directory.edge_whitelist"
 type = "tags"
 label = "Edge Whitelist"
 description = ""
@@ -156,7 +156,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.enabled"
+key = "sources.photo_library_directory.enabled"
 type = "switch"
 label = "Enable"
 description = "Whether this photo source is active."
@@ -167,7 +167,7 @@ surface = "timeline"
 order = 10
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.exclude_patterns"
+key = "sources.photo_library_directory.exclude_patterns"
 type = "tags"
 label = "Exclude Patterns"
 description = "Glob patterns for directories or files to skip."
@@ -179,7 +179,7 @@ order = 16
 placeholder = "**/thumbnails"
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.initial_sync_configured"
+key = "sources.photo_library_directory.initial_sync_configured"
 type = "switch"
 label = "Initial Sync Configured"
 description = ""
@@ -190,7 +190,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.initial_sync_end_date"
+key = "sources.photo_library_directory.initial_sync_end_date"
 type = "input"
 label = "Initial Sync End Date"
 description = ""
@@ -201,7 +201,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.initial_sync_policy"
+key = "sources.photo_library_directory.initial_sync_policy"
 type = "input"
 label = "Initial Sync Policy"
 description = ""
@@ -212,7 +212,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.initial_sync_start_date"
+key = "sources.photo_library_directory.initial_sync_start_date"
 type = "input"
 label = "Initial Sync Start Date"
 description = ""
@@ -223,7 +223,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.max_items_per_sync"
+key = "sources.photo_library_directory.max_items_per_sync"
 type = "number"
 label = "Max Items Per Sync"
 description = "Maximum number of photos to process per sync run."
@@ -234,7 +234,7 @@ surface = "timeline"
 order = 40
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.photos_library_path"
+key = "sources.photo_library_directory.photos_library_path"
 type = "input"
 label = "Photos Library Path"
 description = ""
@@ -245,7 +245,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.settle_window_hours"
+key = "sources.photo_library_directory.settle_window_hours"
 type = "number"
 label = "Session Settle Window (hours)"
 description = "A photo session is emitted only after no new photos arrive for this many hours."
@@ -256,7 +256,7 @@ surface = "timeline"
 order = 50
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.source_mode"
+key = "sources.photo_library_directory.source_mode"
 type = "input"
 label = "Source Mode"
 description = ""
@@ -267,7 +267,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.source_paths"
+key = "sources.photo_library_directory.source_paths"
 type = "path"
 label = "Photo Directories"
 description = "Local directories containing photos to scan. Add one or more paths."
@@ -279,7 +279,7 @@ order = 15
 placeholder = "/path/to/photos"
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.storage_mode"
+key = "sources.photo_library_directory.storage_mode"
 type = "input"
 label = "Storage Mode"
 description = ""
@@ -290,7 +290,7 @@ surface = "extensions"
 order = 0
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.sync_interval_minutes"
+key = "sources.photo_library_directory.sync_interval_minutes"
 type = "number"
 label = "Sync Interval (minutes)"
 description = "Polling interval used for interval-based sync."
@@ -299,11 +299,11 @@ required = false
 section = "general"
 surface = "timeline"
 order = 30
-depends_on_key = "sensors.photo_library_directory.sync_mode"
+depends_on_key = "sources.photo_library_directory.sync_mode"
 depends_on_values = ["interval"]
 
 [[plugin.settings_fields]]
-key = "sensors.photo_library_directory.sync_mode"
+key = "sources.photo_library_directory.sync_mode"
 type = "select"
 label = "Sync Mode"
 description = "How this photo source should be synchronized."

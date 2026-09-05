@@ -15,10 +15,10 @@ from system_media.plugin import SystemMediaPlugin
 def test_system_media_registers_as_local_now_playing_entry() -> None:
     plugin = SystemMediaPlugin()
 
-    sensors = plugin.get_sensors()
+    sources = plugin.get_sources()
 
-    assert len(sensors) == 1
-    _, _, spec = sensors[0]
+    assert len(sources) == 1
+    _, _, spec = sources[0]
     assert spec.display_name == "Local Now Playing"
     assert spec.metadata["source_type"] == "system_media"
     assert spec.metadata["capability_id"] == "listening_history"

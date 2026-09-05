@@ -117,12 +117,12 @@ def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
         plugin.read_settings_resource("missing")
 
 
-def test_sensor_metadata_exposes_permissions_settings_block() -> None:
+def test_source_metadata_exposes_permissions_settings_block() -> None:
     plugin_mod = _load_plugin_module()
     plugin = plugin_mod.SafariHistoryPlugin()
-    plugin.settings = {"sensors": {"safari_history": {"source_path": "/tmp/Safari"}}}
+    plugin.settings = {"sources": {"safari_history": {"source_path": "/tmp/Safari"}}}
 
-    _, _, spec = plugin.get_sensors()[0]
+    _, _, spec = plugin.get_sources()[0]
     blocks = spec.metadata.get("settings_ui_blocks")
 
     assert isinstance(blocks, list)

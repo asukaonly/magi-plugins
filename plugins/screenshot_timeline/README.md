@@ -24,7 +24,7 @@ If you only grant Screen Recording, capture works but window titles fall back to
 
 ## Architecture (overview)
 
-Python sensor inside the plugin spawns a long-lived Swift child process (`bin/magi-vision-helper`) that owns ScreenCaptureKit and Vision Framework. The sensor handles triggers, session grouping, privacy guards, and returns typed `SourceChangeBatch` records to the connection-bound host. Screenshots and session data live in `PluginContext.resources_dir`; the host imports thumbnails into its resource store.
+Python source inside the plugin spawns a long-lived Swift child process (`bin/magi-vision-helper`) that owns ScreenCaptureKit and Vision Framework. The source handles triggers, session grouping, privacy guards, and returns typed `SourceChangeBatch` records to the connection-bound host. Screenshots and session data live in `PluginContext.resources_dir`; the host imports thumbnails into its resource store.
 
 See the plugin development guide in the main Magi repository for the public SDK contract.
 
@@ -49,7 +49,7 @@ Use after a fresh install to verify end-to-end behavior:
 ### 1. Install + enable
 - [ ] Install via Settings → Extensions → Marketplace (or symlink for dev)
 - [ ] Enable the plugin; macOS prompts for Screen Recording permission
-- [ ] Grant the permission and toggle the sensor on
+- [ ] Grant the permission and toggle the source on
 
 ### 2. Live capture
 - [ ] Open Safari, navigate to a few different pages
@@ -81,7 +81,7 @@ Use after a fresh install to verify end-to-end behavior:
 - AX entity extraction (people/links from the structured `ax_blocks`) and Pass-2 vision-LLM enrichment are reserved but not yet exposed
 - Helper binary is committed unsigned in the dev tree; release builds will use a signed/notarized binary distributed via `magi-plugins` GitHub Releases (separate workflow)
 - Retention deletes expired originals via filesystem-walk; L1 metadata still references the (now-missing) `original_path` and readers must handle gracefully. Proper L1 metadata patching needs an SDK hook that doesn't exist yet
-- Lockscreen pause uses `CGSessionCopyCurrentDictionary` inside the Swift helper; if the probe fails (no helper, timeout) the sensor degrades to "assume unlocked"
+- Lockscreen pause uses `CGSessionCopyCurrentDictionary` inside the Swift helper; if the probe fails (no helper, timeout) the source degrades to "assume unlocked"
 
 ## Development
 

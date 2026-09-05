@@ -154,7 +154,7 @@ class MediaSessionStateStore:
             })
 
     # ------------------------------------------------------------------
-    # Flush API (called by sensor)
+    # Flush API (called by source)
     # ------------------------------------------------------------------
 
     async def flush_completed(

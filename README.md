@@ -35,8 +35,8 @@ values before enabling or importing the package. Declarative `settings_actions`,
 `settings_resources`, and `settings_ui_blocks` expose setup controls before enable.
 Host-approved user actions and resource requests marked `requires_enabled = false`
 may run in a scoped setup worker. Catalog export includes schemas, never resource
-values or secrets. For multi-sensor packages, the
-first registered sensor flow is primary (the knowledge tier for Local Documents
+values or secrets. For multi-source packages, the
+first registered source flow is primary (the knowledge tier for Local Documents
 and Obsidian Vault); secondary tiers reuse that connection configuration.
 Selectors grant no access by themselves: the host intersects them with the
 connection's authorized data. Projection revision is the immutable package
@@ -82,29 +82,29 @@ also declares its complete settings schema (an empty list when none is needed).
 | Package | Contributions | Projection sources | Before enable |
 | --- | --- | --- | --- |
 | [agent_history_core](plugins/agent_history_core/plugin.toml) | library | — | — |
-| [apple-photos](plugins/apple-photos/plugin.toml) | sensor, tool | `photo_library_apple_photos` | Form, Resources |
+| [apple-photos](plugins/apple-photos/plugin.toml) | source, tool | `photo_library_apple_photos` | Form, Resources |
 | [browser_history_core](plugins/browser_history_core/plugin.toml) | library | — | — |
-| [calendar](plugins/calendar_plugin/plugin.toml) | sensor | `calendar` | Form, Resources |
+| [calendar](plugins/calendar_plugin/plugin.toml) | source | `calendar` | Form, Resources |
 | [chatgpt-history](plugins/chatgpt-history/plugin.toml) | history_importer | — | — |
-| [chrome-history](plugins/chrome-history/plugin.toml) | sensor | `chrome_history` | Form |
-| [claude-code](plugins/claude-code/plugin.toml) | sensor | `claude_code_agent_history` | Form |
-| [codex](plugins/codex/plugin.toml) | sensor | `codex_agent_history` | Form |
-| [edge-history](plugins/edge-history/plugin.toml) | sensor | `edge_history` | Form |
-| [firefox-history](plugins/firefox-history/plugin.toml) | sensor | `firefox_history` | Form |
-| [git-activity](plugins/git_activity/plugin.toml) | sensor | `git_activity` | Form |
-| [github-activity](plugins/github_activity/plugin.toml) | sensor | `github_activity` | Form, Actions |
-| [local-documents](plugins/local-documents/plugin.toml) | sensor | `local_documents`, `local_documents_search` | Form |
-| [local-photos](plugins/local-photos/plugin.toml) | sensor, tool | `photo_library_directory` | Form |
-| [netease-music](plugins/netease_music/plugin.toml) | sensor | `netease_music` | Form |
-| [obsidian-vault](plugins/obsidian-vault/plugin.toml) | sensor | `obsidian_vault`, `obsidian_vault_search` | Form |
+| [chrome-history](plugins/chrome-history/plugin.toml) | source | `chrome_history` | Form |
+| [claude-code](plugins/claude-code/plugin.toml) | source | `claude_code_agent_history` | Form |
+| [codex](plugins/codex/plugin.toml) | source | `codex_agent_history` | Form |
+| [edge-history](plugins/edge-history/plugin.toml) | source | `edge_history` | Form |
+| [firefox-history](plugins/firefox-history/plugin.toml) | source | `firefox_history` | Form |
+| [git-activity](plugins/git_activity/plugin.toml) | source | `git_activity` | Form |
+| [github-activity](plugins/github_activity/plugin.toml) | source | `github_activity` | Form, Actions |
+| [local-documents](plugins/local-documents/plugin.toml) | source | `local_documents`, `local_documents_search` | Form |
+| [local-photos](plugins/local-photos/plugin.toml) | source, tool | `photo_library_directory` | Form |
+| [netease-music](plugins/netease_music/plugin.toml) | source | `netease_music` | Form |
+| [obsidian-vault](plugins/obsidian-vault/plugin.toml) | source | `obsidian_vault`, `obsidian_vault_search` | Form |
 | [photo_library_core](plugins/photo_library_core/plugin.toml) | library | — | — |
-| [safari-history](plugins/safari-history/plugin.toml) | sensor | `safari_history` | Form, Resources |
-| [screen-time](plugins/screen_time/plugin.toml) | sensor | `screen_time` | — |
-| [screenshot_timeline](plugins/screenshot_timeline/plugin.toml) | sensor, tool | `screenshot_timeline` | Form, Actions, Resources |
-| [steam-play-history](plugins/steam_play_history/plugin.toml) | sensor | `steam_play_history` | Form |
-| [system-media](plugins/system_media/plugin.toml) | sensor | `system_media` | — |
+| [safari-history](plugins/safari-history/plugin.toml) | source | `safari_history` | Form, Resources |
+| [screen-time](plugins/screen_time/plugin.toml) | source | `screen_time` | — |
+| [screenshot_timeline](plugins/screenshot_timeline/plugin.toml) | source, tool | `screenshot_timeline` | Form, Actions, Resources |
+| [steam-play-history](plugins/steam_play_history/plugin.toml) | source | `steam_play_history` | Form |
+| [system-media](plugins/system_media/plugin.toml) | source | `system_media` | — |
 | [telegram](plugins/telegram/plugin.toml) | channel | `telegram` | — |
-| [terminal-history](plugins/terminal_history/plugin.toml) | sensor | `terminal_history` | Form |
+| [terminal-history](plugins/terminal_history/plugin.toml) | source | `terminal_history` | Form |
 | [weixin](plugins/weixin/plugin.toml) | channel | `weixin` | Actions, Resources |
 
 `scripts/export-settings-fields.py` exports reviewed declarations;
@@ -120,7 +120,7 @@ live in a hidden library package installed automatically through `depends_on`:
 plugins/<plugin_name>/
 ├── plugin.toml          # Manifest (required)
 ├── plugin.py            # Entry point (required)
-├── sensor.py            # Sensor implementation (if contribution_types includes "sensor")
+├── source.py            # Source implementation (if contribution_types includes "source")
 ├── normalizers.py       # Data normalizers
 ├── reader.py            # Data source readers
 ├── i18n/                # Localisation (optional)
@@ -147,7 +147,7 @@ description = "Local Google Chrome browsing history ingestion for the timeline."
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ChromeHistoryPlugin"
-contribution_types = ["sensor"]
+contribution_types = ["source"]
 platforms = ["windows", "macos", "linux"]
 ```
 

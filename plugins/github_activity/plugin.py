@@ -13,7 +13,7 @@ from magi_plugin_sdk import (
     Plugin,
     PluginSettingsActionResult,
     PluginSettingsActionSpec,
-    SensorSpec,
+    SourceSpec,
 )
 
 from .client import (
@@ -21,7 +21,7 @@ from .client import (
     GitHubDeviceAuthClient,
     GitHubDeviceAuthorizationPending,
 )
-from .sensor import GitHubActivitySensor
+from .source import GitHubActivitySource
 
 
 CONNECT_ACTION_ID = "connect_github"
@@ -59,7 +59,7 @@ def _settings_value(
 
 
 def _configured_client_id(field_values: dict[str, Any] | None, settings: dict[str, Any]) -> str:
-    field_value = _settings_value(field_values, settings, "sensors.github_activity.client_id")
+    field_value = _settings_value(field_values, settings, "sources.github_activity.client_id")
     candidates = (
         field_value,
         settings.get("client_id"),
@@ -179,7 +179,7 @@ class GitHubActivityPlugin(Plugin):
                 presentation="inline",
                 surface="timeline",
                 contribution_id="timeline.github_activity",
-                contribution_type=ContributionType.SENSOR,
+                contribution_type=ContributionType.SOURCE,
                 order=0,
                 poll_interval_ms=5_000,
                 timeout_ms=900_000,
@@ -197,7 +197,7 @@ class GitHubActivityPlugin(Plugin):
     ) -> PluginSettingsActionResult:
         if action_id != CONNECT_ACTION_ID:
             raise KeyError(action_id)
-        settings = self._sensor_settings()
+        settings = self._source_settings()
         client_id = _configured_client_id(field_values, settings)
         if not client_id:
             return PluginSettingsActionResult(
@@ -257,12 +257,12 @@ class GitHubActivityPlugin(Plugin):
             return PluginSettingsActionResult(status="failed", message=str(exc))
 
         self._device_sessions.pop(session_id, None)
-        self.context.credentials.set("sensors.github_activity.access_token", token.access_token)
+        self.context.credentials.set("sources.github_activity.access_token", token.access_token)
         return PluginSettingsActionResult(
             status="succeeded",
             message="GitHub connected. Sync will run locally for the selected repositories.",
             settings_updates={
-                "sensors.github_activity.initial_sync_configured": True,
+                "sources.github_activity.initial_sync_configured": True,
             },
         )
 
@@ -317,12 +317,12 @@ class GitHubActivityPlugin(Plugin):
             )
         ]
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
-        settings = self._sensor_settings()
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
+        settings = self._source_settings()
         source_enabled = bool(settings.get("enabled", DEFAULT_SETTINGS["enabled"]))
-        token = (self.context.credentials.get("sensors.github_activity.access_token") or "") if source_enabled else ""
+        token = (self.context.credentials.get("sources.github_activity.access_token") or "") if source_enabled else ""
         repositories = list(settings.get("repositories") or []) if source_enabled else []
-        sensor = GitHubActivitySensor(
+        source = GitHubActivitySource(
             access_token=token,
             repositories=[str(repo) for repo in repositories],
             initial_sync_lookback_days=int(settings.get("initial_sync_lookback_days") or 30),
@@ -331,20 +331,20 @@ class GitHubActivityPlugin(Plugin):
         return [
             (
                 "timeline.github_activity",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.github_activity",
+                source,
+                SourceSpec(
+                    source_id="timeline.github_activity",
                     display_name="GitHub Activity",
                     description="Local-only GitHub repository activity sync.",
                     domain="timeline",
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sensors.github_activity"),
+                    fields=_fields("sources.github_activity"),
                     metadata={
                         "source_type": "github_activity",
                         "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sensors.github_activity").model_dump(),
+                        "activation_flow": _activation_flow("sources.github_activity").model_dump(),
                         "sync_interval_minutes": sync_interval_minutes,
                     },
                 ),
@@ -389,12 +389,12 @@ class GitHubActivityPlugin(Plugin):
             ],
         }
 
-    def _sensor_settings(self) -> dict[str, Any]:
-        sensors_settings = self.settings.get("sensors", {})
-        if not isinstance(sensors_settings, dict):
+    def _source_settings(self) -> dict[str, Any]:
+        sources_settings = self.settings.get("sources", {})
+        if not isinstance(sources_settings, dict):
             return dict(DEFAULT_SETTINGS)
         current = dict(DEFAULT_SETTINGS)
-        raw = sensors_settings.get("github_activity", {})
+        raw = sources_settings.get("github_activity", {})
         if isinstance(raw, dict):
             current.update(raw)
         return current

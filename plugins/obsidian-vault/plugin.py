@@ -1,5 +1,5 @@
 # plugin.py
-"""Obsidian Vault sensor plugin."""
+"""Obsidian Vault source plugin."""
 from __future__ import annotations
 
 from typing import Any
@@ -9,12 +9,12 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
 )
 
-from .sensor import ObsidianVaultSensor
+from .source import ObsidianVaultSource
 
-_PREFIX = "sensors.obsidian_vault"
+_PREFIX = "sources.obsidian_vault"
 _SOURCE_ENTRY_ID = "obsidian_vault"
 _SOURCE_DISPLAY_NAME = "Obsidian Vault"
 _SOURCE_DESCRIPTION = "Obsidian vault note ingestion for the timeline."
@@ -71,7 +71,7 @@ def _fields() -> list[ExtensionFieldSpec]:
     return [
         ExtensionFieldSpec(
             key=f"{_PREFIX}.enabled", type="switch", label="Enabled",
-            description="Whether the Obsidian vault sensor is active.",
+            description="Whether the Obsidian vault source is active.",
             default=False, section="general", surface="timeline", order=10,
         ),
         ExtensionFieldSpec(
@@ -104,7 +104,7 @@ def _fields() -> list[ExtensionFieldSpec]:
 
 
 class ObsidianVaultPlugin(Plugin):
-    """Registers two Obsidian vault sensors (knowledge + search-only)."""
+    """Registers two Obsidian vault sources (knowledge + search-only)."""
 
     def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
         return [
@@ -132,17 +132,17 @@ class ObsidianVaultPlugin(Plugin):
             )
         ]
 
-    def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
-        sensors_cfg = self.settings.get("sensors", {})
-        cfg = dict(sensors_cfg.get("obsidian_vault", {})) if isinstance(sensors_cfg, dict) else {}
+    def get_sources(self) -> list[tuple[str, Any, SourceSpec]]:
+        sources_cfg = self.settings.get("sources", {})
+        cfg = dict(sources_cfg.get("obsidian_vault", {})) if isinstance(sources_cfg, dict) else {}
         vault_path = str(cfg.get("vault_path", "")).strip()
         exclude = cfg.get("exclude_folders", DEFAULT_SETTINGS["exclude_folders"])
         search_only = cfg.get("cognition_exclude_folders", DEFAULT_SETTINGS["cognition_exclude_folders"])
         interval = cfg.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"])
 
-        def _spec(sensor: ObsidianVaultSensor) -> SensorSpec:
-            return SensorSpec(
-                sensor_id=sensor.sensor_id,
+        def _spec(source: ObsidianVaultSource) -> SourceSpec:
+            return SourceSpec(
+                source_id=source.source_id,
                 display_name=_SOURCE_DISPLAY_NAME,
                 description=_SOURCE_DESCRIPTION,
                 domain="timeline",
@@ -151,9 +151,9 @@ class ObsidianVaultPlugin(Plugin):
                 polling_mode="interval",
                 fields=_fields(),
                 metadata={
-                    # Per-tier source_type so the two sensors get independent
+                    # Per-tier source_type so the two sources get independent
                     # registry/schedule/cursor entries (no first-match-wins collision).
-                    "source_type": sensor.source_type,
+                    "source_type": source.source_type,
                     "default_settings": dict(DEFAULT_SETTINGS),
                     "sync_interval_minutes": interval,
                     "activation_flow": _activation_flow().model_dump(),
@@ -166,14 +166,14 @@ class ObsidianVaultPlugin(Plugin):
                 },
             )
 
-        result: list[tuple[str, Any, SensorSpec]] = []
+        result: list[tuple[str, Any, SourceSpec]] = []
         for suffix, cognition in (("knowledge", True), ("search", False)):
-            sensor = ObsidianVaultSensor(
+            source = ObsidianVaultSource(
                 cognition_eligible=cognition,
-                sensor_suffix=suffix,
+                source_suffix=suffix,
                 vault_path=vault_path,
                 exclude_folders=list(exclude),
                 cognition_exclude_folders=list(search_only),
             )
-            result.append((sensor.sensor_id, sensor, _spec(sensor)))
+            result.append((source.source_id, source, _spec(source)))
         return result

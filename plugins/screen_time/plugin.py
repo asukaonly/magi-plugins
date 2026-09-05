@@ -10,10 +10,10 @@ from magi_plugin_sdk import (
     ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
-    SensorSpec,
+    SourceSpec,
 )
 
-from .sensor import ScreenTimeTimelineSensor
+from .source import ScreenTimeTimelineSource
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -252,16 +252,16 @@ class ScreenTimePlugin(Plugin):
             "summary_lines": summary_lines,
         }
 
-    def get_sensors(self) -> list[tuple[str, object, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         if sys.platform not in SUPPORTED_PLATFORMS:
             return []
 
         settings: dict[str, Any] = {}
-        sensors_settings = self.settings.get("sensors", {})
-        if isinstance(sensors_settings, dict):
-            settings = dict(sensors_settings.get("screen_time", {}))
+        sources_settings = self.settings.get("sources", {})
+        if isinstance(sources_settings, dict):
+            settings = dict(sources_settings.get("screen_time", {}))
 
-        sensor = ScreenTimeTimelineSensor()
+        source = ScreenTimeTimelineSource()
         sync_interval_minutes = int(
             settings.get("sync_interval_minutes", DEFAULT_SETTINGS["sync_interval_minutes"])
         )
@@ -269,9 +269,9 @@ class ScreenTimePlugin(Plugin):
         return [
             (
                 "timeline.screen_time",
-                sensor,
-                SensorSpec(
-                    sensor_id="timeline.screen_time",
+                source,
+                SourceSpec(
+                    source_id="timeline.screen_time",
                     display_name="App Usage",
                     description=(
                         "Polls the foreground app each second and emits one summary per "
@@ -281,7 +281,7 @@ class ScreenTimePlugin(Plugin):
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sensors.screen_time"),
+                    fields=_fields("sources.screen_time"),
                     metadata={
                         "source_type": "screen_time",
                         "default_settings": dict(DEFAULT_SETTINGS),

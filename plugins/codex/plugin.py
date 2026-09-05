@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from magi_plugin_sdk import ExtractionProfileSpec, Plugin, SensorSpec
+from magi_plugin_sdk import ExtractionProfileSpec, Plugin, SourceSpec
 
 from agent_history_core.plugin_support import (
     build_extraction_profile,
-    build_sensor_registration,
+    build_source_registration,
 )
 
 SOURCE_TYPE = "codex_agent_history"
@@ -19,9 +19,9 @@ class CodexPlugin(Plugin):
     def get_extraction_profiles(self) -> list[ExtractionProfileSpec]:
         return [build_extraction_profile(SOURCE_TYPE)]
 
-    def get_sensors(self) -> list[tuple[str, Any, SensorSpec]]:
+    def get_sources(self) -> list[tuple[str, Any, SourceSpec]]:
         return [
-            build_sensor_registration(
+            build_source_registration(
                 self.settings,
                 agent="codex",
                 source_type=SOURCE_TYPE,

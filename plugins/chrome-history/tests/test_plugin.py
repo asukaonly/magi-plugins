@@ -49,11 +49,11 @@ def test_chrome_history_profile_declares_derived_interest_rule() -> None:
 def test_chrome_history_activation_flow_declares_first_context_overrides() -> None:
     cls = _load_plugin_class()
     plugin = cls()
-    _sensor_id, _sensor, spec = plugin.get_sensors()[0]
+    _source_id, _source, spec = plugin.get_sources()[0]
     flow = spec.metadata["activation_flow"]
 
     assert flow["first_context"]["settings_overrides"] == {
-        "sensors.chrome_history.initial_sync_policy": "lookback_days",
-        "sensors.chrome_history.initial_sync_lookback_days": 7,
+        "sources.chrome_history.initial_sync_policy": "lookback_days",
+        "sources.chrome_history.initial_sync_lookback_days": 7,
     }
     assert flow["first_context"]["max_items_per_sync"] == 200
