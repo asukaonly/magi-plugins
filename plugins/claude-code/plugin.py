@@ -23,6 +23,7 @@ class ClaudeCodePlugin(Plugin):
         return [
             build_source_registration(
                 self.settings,
+                manifest=self.manifest,
                 agent="claude_code",
                 source_type=SOURCE_TYPE,
                 display_name="Claude Code",

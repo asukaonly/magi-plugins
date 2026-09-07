@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -23,7 +25,7 @@ def _load_plugin_class():
 
 def _make_plugin(enabled: bool):
     cls = _load_plugin_class()
-    plugin = cls()
+    plugin = bind_test_plugin(cls())
     plugin.settings = {
         "sources": {
             "local_documents": {

@@ -1,6 +1,8 @@
 """Tests for system media plugin registration."""
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -17,7 +19,7 @@ from system_media.plugin import SystemMediaPlugin
 
 @pytest.mark.parametrize("runtime_platform", ["darwin", "win32"])
 def test_system_media_registers_as_local_now_playing_entry(runtime_platform: str) -> None:
-    plugin = SystemMediaPlugin()
+    plugin = bind_test_plugin(SystemMediaPlugin())
 
     with patch.object(sys, "platform", runtime_platform):
         sources = plugin.get_sources()
@@ -33,13 +35,13 @@ def test_system_media_registers_as_local_now_playing_entry(runtime_platform: str
 
 
 def test_system_media_does_not_register_on_linux() -> None:
-    plugin = SystemMediaPlugin()
+    plugin = bind_test_plugin(SystemMediaPlugin())
     with patch.object(sys, "platform", "linux"):
         assert plugin.get_sources() == []
 
 
 def test_system_media_profile_declares_derived_music_rule() -> None:
-    plugin = SystemMediaPlugin()
+    plugin = bind_test_plugin(SystemMediaPlugin())
     profile = plugin.get_extraction_profiles()[0]
 
     assert profile.profile_id == "source.system_media"

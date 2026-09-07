@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -27,7 +29,7 @@ def _load_plugin_module() -> ModuleType:
 
 
 def test_codex_history_registers_only_codex() -> None:
-    plugin = _load_plugin_module().CodexPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().CodexPlugin())
     sources = plugin.get_sources()
 
     assert len(sources) == 1
@@ -39,7 +41,7 @@ def test_codex_history_registers_only_codex() -> None:
 
 
 def test_codex_history_registers_only_codex_profile() -> None:
-    plugin = _load_plugin_module().CodexPlugin()
+    plugin = bind_test_plugin(_load_plugin_module().CodexPlugin())
     profiles = plugin.get_extraction_profiles()
 
     assert [profile.source_types for profile in profiles] == [["codex_agent_history"]]

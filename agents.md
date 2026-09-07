@@ -31,7 +31,7 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
     same file.
   - To adopt newer dependency versions, bump `EXCLUDE_NEWER` in `scripts/lock-deps.py` and re-run `bash scripts/refresh.sh`. The pinned uv version in CI (`0.11.17`) is a coupled determinism input — bump it deliberately too.
 - To mark a plugin official, add its `plugin_id` to `official-plugins.json` (maintainer-gated via CODEOWNERS), then regenerate the registry.
-- Declare what a plugin accesses with `[[plugin.permissions.capabilities]]` (capability from the known set: screen_recording, accessibility, calendar, photos, contacts, system_media, filesystem_read, filesystem_write, network, subprocess; optional `scope`, `optional`, `reason_i18n`). Users see these at install for consent; reviewers use them as a checklist.
+- Declare what a plugin accesses with `[[plugin.permissions.capabilities]]` (capability from the known set: screen_recording, accessibility, calendar, photos, contacts, system_media, filesystem_read, filesystem_write, network, subprocess, memory_search, interaction_ask; optional `scope`, `optional`, `reason_i18n`). Host services require the exact `current_user` or `current_session` scope respectively and separate invocation authorization. Users review package access before every marketplace install or update.
 - Use Conventional Commits with clear English subjects.
 - Use English for comments, docstrings, logs, and error messages.
 - Run SDK-only conformance and focused behavior tests before publishing.
@@ -49,7 +49,8 @@ This is a companion repository to the [Magi main repo](https://github.com/asukao
 - Don't manually edit or remove entries from `version-history.json`. Published
   `plugin_id@version` identities are append-only.
 - Don't commit links, special files, caches, dependency directories, or build
-  output inside a plugin package.
+  output inside a plugin package, except reviewed prebuilt wheels under
+  `wheels/` with exact lock hashes and packaged source provenance.
 - Don't hand-edit `requirements.lock` files — always regenerate via `scripts/lock-deps.py`.
 - Don't set `official = true` in a plugin's `plugin.toml` expecting a badge — the `official` flag is derived solely from `official-plugins.json` (maintainer-controlled). Self-declared values are ignored.
 - Don't declare a capability outside the known set — `build-registry.py` will fail the build. Adding a new capability requires updating the SDK + frontend too.
@@ -95,18 +96,42 @@ connection data and versions projection rules by package version.
 Declare all settings, including internal controls and secret keys, under
 `[[plugin.settings_fields]]`. The host validates this schema before importing
 plugin code. Export and review declarations with `scripts/export-settings-fields.py`;
-contribution field methods remain descriptive views. Vault keys must match the
+contribution field methods must copy this manifest rather than build a second schema. Vault keys must match the
 secret field key exactly, including any dotted source prefix.
 
 ### Declarative setup catalog
 
-Export `settings_fields`, `activation_flow`, `settings_actions`, `settings_resources`,
-and `settings_ui_blocks` with `scripts/export-settings-fields.py` against the exact
-SDK under development. The first registered source activation flow is primary;
-Local Documents and Obsidian Vault use their knowledge tier. Export only public
-schemas. Never resolve a settings resource or start an action during export or
-discovery. The host authorizes explicit pre-enable setup actions and resource reads only
-when their reviewed schema declares `requires_enabled = false`.
+`plugin.toml` is the static authority for `settings_fields`, `activation_flow`,
+`settings_actions`, `settings_resources`, and `settings_ui_blocks`. Author these
+sections directly, including hidden controls and credentials. Validate with
+`python scripts/export-settings-fields.py --check`; omit `--check` for a reviewed
+JSON export. Optional positional paths select specific manifests. Export is read-only
+and uses the public SDK models, via `scripts/settings_declarations.py`.
+
+Never import plugin code, instantiate collectors, inspect local installations,
+resolve resources, start actions, or call `get_sources()` to obtain static declarations.
+Do not patch the platform in the exporter. Unsupported platforms and disabled
+connections must export exactly the same complete catalog.
+
+Runtime source/channel fields and setup catalogs must be copies of the configured
+manifest. Timeline views select `surface = "timeline"` and exclude `section =
+"activation"`; channel views exclude internal `section = "advanced"` fields.
+Preserve `order`. Source configuration defaults also come from the manifest; reader
+fallbacks and installation detection belong to execution, never authoring/export.
+Shared registration builders require the owning manifest. Localization may change
+copied presentation text only; it must not change defaults, types, constraints,
+action/resource access, or mutate the manifest.
+
+Author the primary connection activation explicitly in `plugin.activation_flow`.
+Local Documents and Obsidian Vault register knowledge first and let their search tier
+reuse that flow and configuration. Export must preserve the chosen primary flow
+without enumerating runtime sources. The host authorizes explicit pre-enable setup
+actions and resource reads only when `requires_enabled = false` is reviewed.
+
+Run `scripts/test_settings_declarations.py` (all packages under Linux/macOS/Windows
+identifiers, including unsupported cases) plus `scripts/test_sdk_conformance.py` and
+package tests. Platform simulation belongs only in tests. Do not replace these checks
+with filtered export cases, runtime availability checks, or skipped schema validation.
 
 Settings fields use `minimum` and `maximum`. Strict SDK models reject unknown
 fields; do not silently discard obsolete extraction or manifest options.
@@ -172,7 +197,7 @@ plugins/<plugin_name>/
 | `execution_mode` | Yes | Existing packages declare `trusted_process`; host trust is required |
 | `projection_sources` | Yes | Semantic source selectors; grants remain host-owned |
 | `settings_fields` | Yes | Complete declarative schema, including hidden controls and secret keys |
-| `activation_flow` | When needed | Initial setup form; first registered source flow is primary |
+| `activation_flow` | When needed | Explicit primary connection setup form |
 | `settings_actions` / `settings_resources` / `settings_ui_blocks` | Yes | Public setup schemas; empty arrays when unused |
 | `name` | Yes | Display name |
 | `version` | Yes | Semver version string |
@@ -337,7 +362,7 @@ For source plugins, verify:
 
 ```bash
 python -m pip install -r scripts/conformance-requirements.txt
-python -m pytest --import-mode=importlib scripts/test_sdk_conformance.py plugins -q
+python -m pytest --import-mode=importlib scripts/test_settings_declarations.py scripts/test_sdk_conformance.py plugins -q
 ```
 
 ---

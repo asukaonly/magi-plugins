@@ -12,7 +12,6 @@ from magi_plugin_sdk import (
     Plugin,
     PluginSettingsResourceSpec,
     SourceSpec,
-    SettingsUIBlockSpec,
 )
 
 from photo_library_core.apple_photos_reader import DEFAULT_PHOTOS_LIBRARY_PATH
@@ -46,21 +45,10 @@ class ApplePhotosPlugin(Plugin):
 
     def get_sources(self) -> list[tuple[str, object, SourceSpec]]:
         prefix = f"sources.{APPLE_PHOTOS_SOURCE_TYPE}"
-        permission_block = SettingsUIBlockSpec(
-            block_id="apple_photos_permissions",
-            type="resource_picker",
-            title="Apple Photos Access",
-            description=(
-                "Apple Photos needs the local reader dependency and macOS "
-                "permission to read the Photos library."
-            ),
-            resource_name="apple_photos_permissions",
-            value_key="_readonly",
-            presentation="permission_status",
-        )
         return [
             build_source_registration(
                 self.settings,
+                manifest=self.manifest,
                 source_type=APPLE_PHOTOS_SOURCE_TYPE,
                 entry_id="apple_photos",
                 display_name="Apple Photos",
@@ -75,21 +63,14 @@ class ApplePhotosPlugin(Plugin):
                         if sys.platform == "darwin"
                         else "Apple Photos is only available on macOS."
                     ),
-                    "settings_ui_blocks": [permission_block.model_dump()],
+                    "settings_ui_blocks": [block.model_dump() for block in self.manifest.settings_ui_blocks],
                     "settings_prefix": prefix,
                 },
             )
         ]
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
-        return [
-            PluginSettingsResourceSpec(
-                requires_enabled=False,
-                resource_name="apple_photos_permissions",
-                resource_type="channel_status",
-                description="Live dependency and permission status for Apple Photos.",
-            )
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_resources]
 
     def read_settings_resource(self, resource_name: str) -> Any:
         if resource_name != "apple_photos_permissions":

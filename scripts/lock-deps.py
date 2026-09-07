@@ -9,11 +9,13 @@ Resolution is frozen with `--exclude-newer EXCLUDE_NEWER` so re-running is
 deterministic: an upstream release does not silently change the lock and
 does not flap CI. To adopt newer versions, bump EXCLUDE_NEWER and re-run.
 """
+
 from __future__ import annotations
 
 import argparse
+import os
+import stat
 import subprocess
-import sys
 from pathlib import Path
 
 try:
@@ -54,17 +56,62 @@ def read_dependencies(plugin_dir: Path) -> list[str]:
     return [str(dep) for dep in deps]
 
 
-def compile_lock(dependencies: list[str]) -> str:
+def package_wheels(plugin_dir: Path) -> Path | None:
+    """Use only regular wheel files carried by this package's release identity."""
+    directory = plugin_dir / "wheels"
+    try:
+        metadata = directory.lstat()
+    except FileNotFoundError:
+        return None
+    reparse_point = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+
+    def is_link(info: os.stat_result) -> bool:
+        return stat.S_ISLNK(info.st_mode) or bool(
+            getattr(info, "st_file_attributes", 0) & reparse_point
+        )
+
+    if (
+        is_link(plugin_dir.lstat())
+        or is_link(metadata)
+        or not stat.S_ISDIR(metadata.st_mode)
+    ):
+        raise ValueError("Package wheels must be a real directory inside the package")
+    resolved = directory.resolve(strict=True)
+    if resolved.parent != plugin_dir.resolve(strict=True):
+        raise ValueError("Package wheels directory escapes its package")
+    for path in directory.iterdir():
+        info = path.lstat()
+        if (
+            is_link(info)
+            or not stat.S_ISREG(info.st_mode)
+            or path.suffix != ".whl"
+            or path.resolve(strict=True).parent != resolved
+        ):
+            raise ValueError("Package wheels may contain only regular .whl files")
+    return resolved
+
+
+def compile_lock(dependencies: list[str], plugin_dir: Path) -> str:
     reqs_text = "\n".join(dependencies) + "\n"
     cmd = [
-        "uv", "pip", "compile",
+        "uv",
+        "pip",
+        "compile",
         "--universal",
         "--generate-hashes",
-        "--python-version", PYTHON_VERSION,
-        "--exclude-newer", EXCLUDE_NEWER,
+        "--no-build",
+        "--python-version",
+        PYTHON_VERSION,
+        "--exclude-newer",
+        EXCLUDE_NEWER,
     ]
     for package, timestamp in EXCLUDE_NEWER_PACKAGES.items():
         cmd.extend(["--exclude-newer-package", f"{package}={timestamp}"])
+    wheels = package_wheels(plugin_dir)
+    if wheels is not None:
+        # Emit ordinary exact package requirements; the local source must not
+        # become a machine-specific URL or directive in the published lock.
+        cmd.extend(["--find-links", str(wheels)])
     cmd.extend(
         [
             "--no-header",
@@ -79,6 +126,10 @@ def compile_lock(dependencies: list[str]) -> str:
         raise SystemExit(
             f"uv pip compile failed (exit {exc.returncode}):\n{exc.stderr}"
         ) from exc
+    if "file://" in result.stdout or (
+        wheels is not None and str(wheels) in result.stdout
+    ):
+        raise ValueError("Generated lock must not expose machine-local wheel paths")
     return LOCK_HEADER + result.stdout
 
 
@@ -121,7 +172,7 @@ def main() -> int:
                     print(f"  - removed {lock_file}")
             continue
 
-        new_text = compile_lock(deps)
+        new_text = compile_lock(deps, plugin_dir)
         if args.check:
             existing = lock_file.read_text() if lock_file.exists() else ""
             if existing != new_text:

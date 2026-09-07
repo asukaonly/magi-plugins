@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SourceSpec
+from magi_plugin_sdk import ExtractionProfileSpec, Plugin, SourceSpec
 from .reader import DEFAULT_DB_PATH
 from .source import NeteaseMusicTimelineSource
 from .summary_features import build_netease_temporal_summary_features
@@ -52,153 +52,6 @@ def _normalize_sync_mode(value: object | None) -> str:
     if mode in {"manual", "interval"}:
         return mode
     return str(DEFAULT_SETTINGS["sync_mode"])
-
-
-def _activation_flow(prefix: str) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Enable NetEase Cloud Music",
-        description=(
-            "NetEase Cloud Music history reveals your listening habits. Choose how the first sync should seed "
-            "the timeline before this source starts running."
-        ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_policy",
-                type="select",
-                label="First Sync Scope",
-                description="Decide how much listening history should be imported when this source is enabled for the first time.",
-                default="lookback_days",
-                options=[
-                    ExtensionFieldOption(label="Sync full history", value="full"),
-                    ExtensionFieldOption(label="Sync recent days", value="lookback_days"),
-                    ExtensionFieldOption(label="Only new records from now on", value="from_now"),
-                ],
-                section="activation",
-                surface="timeline",
-                order=10,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_lookback_days",
-                type="number",
-                label="Recent Days",
-                description="Used when the first-sync scope is set to recent days.",
-                default=7,
-                minimum=1,
-                section="activation",
-                surface="timeline",
-                order=20,
-                depends_on_key=f"{prefix}.initial_sync_policy",
-                depends_on_values=["lookback_days"],
-            ),
-        ],
-    )
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enabled",
-            description="Whether NetEase Music sync is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_mode",
-            type="select",
-            label="Sync Mode",
-            description="How NetEase Music history should be synchronized.",
-            default="interval",
-            options=[
-                ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
-            ],
-            section="general",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="number",
-            label="Sync Interval (minutes)",
-            description="Polling interval used for interval-based sync.",
-            default=10,
-            section="general",
-            surface="timeline",
-            order=30,
-            depends_on_key=f"{prefix}.sync_mode",
-            depends_on_values=["interval"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.min_play_duration",
-            type="number",
-            label="Minimum Play Duration (seconds)",
-            description="Minimum track play duration to include in timeline (seconds).",
-            default=20,
-            minimum=1,
-            section="general",
-            surface="timeline",
-            order=40,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.db_path",
-            type="path",
-            label="Cache Database Path",
-            description=(
-                "Defaults to the standard NetEase cache database path. "
-                "If NetEase settings show a cache folder such as "
-                "C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. "
-                "Choose the database file under the sibling Library directory instead, usually "
-                "C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat."
-            ),
-            default=DEFAULT_DB_PATH,
-            placeholder=DEFAULT_DB_PATH,
-            section="general",
-            surface="timeline",
-            order=50,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.tag_strategy",
-            type="select",
-            label="Genre Tag Source",
-            description=(
-                "How to extract genre/style tags for listened tracks. "
-                "'Built-in' reads local alias data (limited coverage). "
-                "'Last.fm' queries the Last.fm API (requires an API key)."
-            ),
-            default="off",
-            options=[
-                ExtensionFieldOption(label="Off", value="off"),
-                ExtensionFieldOption(label="Built-in (local alias data)", value="builtin"),
-                ExtensionFieldOption(label="Last.fm", value="lastfm"),
-            ],
-            section="analysis",
-            surface="timeline",
-            order=75,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.lastfm_api_key",
-            type="secret",
-            label="Last.fm API Key",
-            description=(
-                "Required when Genre Tag Source is set to Last.fm. "
-                "Apply for a free key at last.fm/api/account/create"
-            ),
-            default="",
-            section="analysis",
-            surface="timeline",
-            order=76,
-            depends_on_key=f"{prefix}.tag_strategy",
-            depends_on_values=["lastfm"],
-        ),
-    ]
 
 
 class NeteaseMusicPlugin(Plugin):
@@ -422,11 +275,19 @@ class NeteaseMusicPlugin(Plugin):
                     surface="timeline",
                     sync_mode=resolved_sync_mode,
                     polling_mode=getattr(source, "polling_mode", "interval"),
-                    fields=_fields("sources.netease_music"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "netease_music",
-                        "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sources.netease_music").model_dump(),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                         **LISTENING_HISTORY_CAPABILITY_METADATA,
                     },
                 ),

@@ -1,0 +1,20 @@
+{
+  "distribution": "bitmath",
+  "version": "1.4.0.1",
+  "source_url": "https://files.pythonhosted.org/packages/ed/d4/e6cbc5632347e8326a5ecc49a5a22bc8b195edb885000d67aade392f5f2d/bitmath-1.4.0.1.tar.gz",
+  "source_sha256": "7e64a1e7161887e254dbb910942e265fe840a4cf0cede4e29a1da9754b7334e8",
+  "wheel_file": "wheels/bitmath-1.4.0.1-py3-none-any.whl",
+  "wheel_sha256": "86423d08f9a60a6da9cde8368551e4e58977f5c0b318ab2f039c070509898569",
+  "source_changes": [],
+  "license": "MIT",
+  "license_file": "wheel-provenance/LICENSE.bitmath",
+  "build_recipe": "wheel-provenance/build_bitmath.py",
+  "build_requirements": "wheel-provenance/build-requirements.txt",
+  "build_python": "CPython 3.13.5",
+  "source_date_epoch": 1776384000,
+  "validation": {
+    "independent_builds": 2,
+    "byte_identical": true
+  },
+  "purpose": "osxphotos requires bitmath below 2.0; those upstream releases provide no wheel. This artifact avoids source builds at plugin installation time."
+}

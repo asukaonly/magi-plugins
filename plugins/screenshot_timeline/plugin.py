@@ -5,14 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
     Plugin,
     PluginSettingsActionResult,
     PluginSettingsActionSpec,
     PluginSettingsResourceSpec,
-    SettingsUIBlockSpec,
 )
 from magi_plugin_sdk.sources import SourceSpec
 
@@ -56,258 +52,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "initial_sync_configured": False,
     "sync_mode": "interval",
 }
-
-
-def _activation_flow(prefix: str) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Enable Screenshot Timeline",
-        description=(
-            "This plugin continuously captures your screen and runs local OCR (via Apple Vision) "
-            "to feed the recognised text into magi's memory. Captures and thumbnails stay on "
-            "this Mac — they are not uploaded anywhere. Originals are deleted after 30 days "
-            "by default; thumbnails are kept indefinitely.\n\n"
-            "Password managers, Keychain, and incognito browser windows are skipped by default. "
-            "You can add more app or window-title rules in Settings after enabling.\n\n"
-            "macOS will ask for Screen Recording permission the first time captures start. "
-            "Accessibility permission provides window titles and structured on-screen text."
-        ),
-        confirm_label="I understand — enable",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        fields=[],  # Capture scope / retention live in the regular settings panel.
-    )
-
-
-def _settings_ui_blocks(prefix: str) -> list[SettingsUIBlockSpec]:
-    """Host-rendered custom blocks for the Screenshot Timeline plugin."""
-    return [
-        SettingsUIBlockSpec(
-            block_id="macos_permissions",
-            type="resource_picker",
-            title="macOS Permissions",
-            description=(
-                "Screen Recording is required for capture. Accessibility is optional, "
-                "and provides window titles and structured on-screen text."
-            ),
-            resource_name="permissions",
-            value_key="_readonly",
-            presentation="permission_status",
-        ),
-    ]
-
-
-# Settings that are config-file overridable but intentionally NOT shown in the
-# settings UI. These are internal extraction/sync machinery a normal user can't
-# act on meaningfully ("AX min content nodes", "wake Chromium apps", "how the
-# host pulls bursts"). Their defaults live in DEFAULT_SETTINGS + plugin.toml, so
-# power users can still override them via the settings config file. To re-expose
-# one, just drop it from this set. Keyed by the field's short name (last segment).
-_HIDDEN_FROM_UI = {
-    "ax_enabled",
-    "ax_wake",
-    "ax_min_content_chars",
-    "ax_min_content_nodes",
-    "sync_mode",
-}
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    specs = [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enabled",
-            description="Whether the screenshot timeline source is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.capture_scope",
-            type="select",
-            label="Capture scope",
-            description="What part of the screen to capture each tick.",
-            default="hybrid",
-            options=[
-                ExtensionFieldOption(label="Active window only", value="active_window"),
-                ExtensionFieldOption(label="Primary display (full screen)", value="full_screen"),
-                ExtensionFieldOption(label="Active window + periodic full screen", value="hybrid"),
-                ExtensionFieldOption(label="All connected displays", value="all_displays"),
-            ],
-            section="capture",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.active_window_interval_sec",
-            type="number",
-            label="Active window interval (sec)",
-            description="How often to capture the active window. Recommended: 10s.",
-            default=10,
-            section="capture",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.full_screen_interval_min",
-            type="number",
-            label="Full-screen interval (min)",
-            description="Periodic full-screen capture interval (used in hybrid or full_screen modes).",
-            default=5,
-            section="capture",
-            surface="timeline",
-            order=40,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ax_enabled",
-            type="switch",
-            label="Accessibility-first text",
-            description=(
-                "Read on-screen text from the focused window's macOS accessibility "
-                "tree first — exact, structured, ~0 CPU — falling back to OCR only "
-                "when that tree is hollow (custom-rendered apps, games). Requires "
-                "Accessibility permission. Turn off to always use OCR."
-            ),
-            default=True,
-            section="ocr",
-            surface="timeline",
-            order=46,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ax_wake",
-            type="switch",
-            label="Wake Chromium/Electron apps",
-            description=(
-                "Send the AXManualAccessibility signal so Chromium/Electron apps "
-                "(VS Code, Chrome, Slack…) expose their content to the accessibility "
-                "tree. Off = only natively-accessible apps yield AX text. Imposes a "
-                "small accessibility cost on the app being captured."
-            ),
-            default=True,
-            section="ocr",
-            surface="timeline",
-            order=47,
-            depends_on_key=f"{prefix}.ax_enabled",
-            depends_on_values=["true"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ax_min_content_chars",
-            type="number",
-            label="AX min content chars",
-            description=(
-                "Use AX text (skip OCR) only when the window's accessibility tree "
-                "carries at least this many characters of non-control text. Lower = "
-                "trust AX more often. Rich windows score 1000s, hollow ones <10."
-            ),
-            default=80,
-            section="ocr",
-            surface="timeline",
-            order=48,
-            depends_on_key=f"{prefix}.ax_enabled",
-            depends_on_values=["true"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ax_min_content_nodes",
-            type="number",
-            label="AX min content nodes",
-            description=(
-                "Companion to the char threshold: also require at least this many "
-                "non-control text nodes before skipping OCR."
-            ),
-            default=5,
-            section="ocr",
-            surface="timeline",
-            order=49,
-            depends_on_key=f"{prefix}.ax_enabled",
-            depends_on_values=["true"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ocr_languages",
-            type="tags",
-            label="OCR languages",
-            description=(
-                "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. "
-                "Order matters: the first language is the primary character-set hypothesis. "
-                "If your screen content is mostly Chinese with code/URLs mixed in, keep "
-                "zh-Hans first; English-only users can put en-US first."
-            ),
-            default=["zh-Hans", "en-US"],
-            section="ocr",
-            surface="timeline",
-            order=50,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.ocr_level",
-            type="select",
-            label="OCR recognition level",
-            description=(
-                "Apple Vision text-recognition precision tier. \"Accurate\" uses "
-                "a neural network — handles small fonts, mixed-language text, "
-                "and dense UI; ~0.5–2s per screenshot. \"Fast\" uses traditional "
-                "character recognition — 5-10× faster but small fonts, CJK "
-                "characters, and busy UI degrade quickly. Keep \"Accurate\" "
-                "unless CPU is an issue."
-            ),
-            default="accurate",
-            options=[
-                ExtensionFieldOption(label="Accurate", value="accurate"),
-                ExtensionFieldOption(label="Fast", value="fast"),
-            ],
-            section="ocr",
-            surface="timeline",
-            order=60,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.original_retention_days",
-            type="number",
-            label="Original retention (days)",
-            description="Originals older than this are deleted. Thumbnails are kept permanently.",
-            default=30,
-            section="storage",
-            surface="timeline",
-            order=70,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.app_blocklist",
-            type="tags",
-            label="App blocklist (bundle IDs)",
-            description="Bundle IDs to never capture. Glob patterns supported (e.g. com.example.*). Defaults block known password managers and the macOS SecurityAgent; remove entries to allow them.",
-            default=list(DEFAULT_APP_BLOCKLIST),
-            section="privacy",
-            surface="timeline",
-            order=100,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.window_title_blocklist",
-            type="tags",
-            label="Window title blocklist (substrings)",
-            description="Any window whose title contains any of these strings will be skipped.",
-            default=[],
-            section="privacy",
-            surface="timeline",
-            order=110,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_mode",
-            type="select",
-            label="Sync mode",
-            description="How the host should pull collected captures.",
-            default="interval",
-            options=[
-                ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
-            ],
-            section="general",
-            surface="timeline",
-            order=140,
-        ),
-    ]
-    return [
-        spec for spec in specs
-        if spec.key.rsplit(".", 1)[-1] not in _HIDDEN_FROM_UI
-    ]
 
 
 class ScreenshotTimelinePlugin(Plugin):
@@ -372,13 +116,21 @@ class ScreenshotTimelinePlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode=getattr(source, "polling_mode", "interval"),
-                    fields=_fields("sources.screenshot_timeline"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "screenshot_timeline",
-                        "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sources.screenshot_timeline").model_dump(),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                         "settings_ui_blocks": [
-                            block.model_dump() for block in _settings_ui_blocks("sources.screenshot_timeline")
+                            block.model_dump() for block in self.manifest.settings_ui_blocks
                         ],
                     },
                 ),
@@ -425,14 +177,7 @@ class ScreenshotTimelinePlugin(Plugin):
         return {"asset_refs": asset_refs}
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
-        return [
-            PluginSettingsResourceSpec(
-                requires_enabled=False,
-                resource_name="permissions",
-                resource_type="channel_status",
-                description="Live macOS permission grants required by the screenshot timeline plugin.",
-            ),
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_resources]
 
     def read_settings_resource(self, resource_name: str) -> Any:
         if resource_name != "permissions":
@@ -466,23 +211,7 @@ class ScreenshotTimelinePlugin(Plugin):
         }
 
     def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
-        return [
-            PluginSettingsActionSpec(
-                action_id="request_permissions",
-                label="System permissions",
-                description=(
-                    "Check Screen Recording (required) and Accessibility (optional, for "
-                    "window titles and structured text) permissions. macOS will prompt "
-                    "if not yet granted."
-                ),
-                button_label="Check & request",
-                presentation="inline",
-                surface="extensions",
-                contribution_id="timeline",
-                requires_enabled=False,
-                order=10,
-            ),
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_actions]
 
     async def start_settings_action(
         self,

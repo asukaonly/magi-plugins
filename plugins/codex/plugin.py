@@ -23,6 +23,7 @@ class CodexPlugin(Plugin):
         return [
             build_source_registration(
                 self.settings,
+                manifest=self.manifest,
                 agent="codex",
                 source_type=SOURCE_TYPE,
                 display_name="Codex",

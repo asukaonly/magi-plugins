@@ -1,43 +1,15 @@
-"""git_activity's activation_flow must include the mandatory repos path field."""
-from __future__ import annotations
-
-import importlib.util
-import sys
+"""Git activity activation requires reviewed repository paths."""
 from pathlib import Path
-from types import ModuleType
 
-
-def _load_plugin_module() -> ModuleType:
-    """Load ``plugin.py`` for the ``git_activity`` dir.
-
-    ``plugin.py`` uses relative imports (``from .source import ...``), so we
-    synthesize a parent package whose ``__path__`` points at the plugin dir,
-    register it in ``sys.modules``, then load ``plugin.py`` as a submodule so
-    its relative imports resolve.
-    """
-    plugin_dir = Path(__file__).resolve().parents[1]
-    package_name = "git_activity_under_test"
-    package = ModuleType(package_name)
-    package.__path__ = [str(plugin_dir)]  # type: ignore[attr-defined]
-    sys.modules[package_name] = package
-
-    spec = importlib.util.spec_from_file_location(
-        f"{package_name}.plugin",
-        plugin_dir / "plugin.py",
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+from sdk_test_support import bind_test_plugin, load_plugin
 
 
 def test_git_activity_flow_includes_repos() -> None:
-    git_plugin = _load_plugin_module()
-    flow = git_plugin._activation_flow("sources.git_activity")
-    keys = [f.key for f in flow.fields]
-    assert "sources.git_activity.repos" in keys, "repos must be in the activation_flow"
-    repos = next(f for f in flow.fields if f.key == "sources.git_activity.repos")
+    plugin = bind_test_plugin(load_plugin(Path(__file__).resolve().parents[1] / "plugin.toml"))
+    flow = plugin.manifest.activation_flow
+    assert flow is not None
+    repos = next(field for field in flow.fields if field.key == "sources.git_activity.repos")
     assert repos.type == "path" and repos.required is True
     assert flow.first_context is not None
     assert flow.first_context.max_items_per_sync == 200
+    assert plugin.get_sources()[0][2].metadata["activation_flow"] == flow.model_dump()

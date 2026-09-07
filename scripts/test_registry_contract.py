@@ -302,3 +302,10 @@ def test_registry_rejects_duplicate_ids_without_mutating_input() -> None:
         validate_registry_index(registry)
 
     assert registry == original
+
+
+@pytest.mark.parametrize("name,scope", [("memory_search", "current_user"), ("interaction_ask", "current_session")])
+def test_publication_accepts_scoped_host_service_permissions(name, scope):
+    capability = {"capability": name, "scope": [scope]}
+    validate_plugin_manifest(_manifest(permissions={"capabilities": [capability]}), package_name="example")
+    validate_registry_index(_index(_entry(capabilities=[capability])))

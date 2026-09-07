@@ -4,9 +4,6 @@ from __future__ import annotations
 from typing import Any
 
 from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
     SourceSpec,
@@ -33,155 +30,6 @@ DEFAULT_SETTINGS = {
     "sync_interval_minutes": 10,
     "initial_sync_configured": False,
 }
-
-
-def _fields() -> list[ExtensionFieldSpec]:
-    return [
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.enabled",
-            type="switch",
-            label="Enabled",
-            description="Whether local document sync is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.root_paths",
-            type="tags",
-            label="Document Folders",
-            description="Local folders to scan for notes and text documents.",
-            default=[],
-            required=True,
-            section="general",
-            surface="timeline",
-            order=20,
-            placeholder="~/Documents/Notes",
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.sync_mode",
-            type="select",
-            label="Sync Mode",
-            description="How local documents should be synchronized.",
-            default="interval",
-            required=True,
-            options=[
-                ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
-            ],
-            section="general",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.sync_interval_minutes",
-            type="number",
-            label="Sync Interval (minutes)",
-            description="How often to rescan the folders for changed documents.",
-            default=10,
-            minimum=1,
-            maximum=1440,
-            section="general",
-            surface="timeline",
-            order=40,
-            depends_on_key=f"{_PREFIX}.sync_mode",
-            depends_on_values=["interval"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.include_extensions",
-            type="tags",
-            label="Included Extensions",
-            description="Text file extensions to ingest.",
-            default=DEFAULT_EXTENSIONS,
-            section="filters",
-            surface="timeline",
-            order=50,
-            placeholder=".md, .txt",
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.exclude_folders",
-            type="tags",
-            label="Excluded Folders",
-            description="Folders never read at all.",
-            default=DEFAULT_EXCLUDE_FOLDERS,
-            section="privacy",
-            surface="timeline",
-            order=60,
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.cognition_exclude_folders",
-            type="tags",
-            label="Search-only Folders",
-            description="Folders read for search and timeline but kept out of knowledge extraction.",
-            default=DEFAULT_SEARCH_ONLY_FOLDERS,
-            section="privacy",
-            surface="timeline",
-            order=70,
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.max_file_bytes",
-            type="number",
-            label="Max File Size (bytes)",
-            description="Files larger than this are skipped.",
-            default=1_000_000,
-            minimum=1024,
-            maximum=20_000_000,
-            section="filters",
-            surface="timeline",
-            order=80,
-        ),
-        ExtensionFieldSpec(
-            key=f"{_PREFIX}.max_body_chars",
-            type="number",
-            label="Max Text Characters",
-            description="Maximum characters stored from each document body.",
-            default=50_000,
-            minimum=1000,
-            maximum=500_000,
-            section="filters",
-            surface="timeline",
-            order=90,
-        ),
-    ]
-
-
-def _activation_flow() -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Enable Local Documents",
-        description=(
-            "Local documents can contain private notes. Choose the folders Magi may read before enabling this source."
-        ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
-        enabled_key=f"{_PREFIX}.enabled",
-        configured_key=f"{_PREFIX}.initial_sync_configured",
-        first_context={"max_items_per_sync": 200},
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{_PREFIX}.root_paths",
-                type="tags",
-                label="Document Folders",
-                description="Local folders to scan for notes and text documents.",
-                default=[],
-                required=True,
-                section="activation",
-                surface="timeline",
-                order=10,
-                placeholder="~/Documents/Notes",
-            ),
-            ExtensionFieldSpec(
-                key=f"{_PREFIX}.cognition_exclude_folders",
-                type="tags",
-                label="Search-only Folders",
-                description="Folders read for search and timeline but kept out of knowledge extraction.",
-                default=DEFAULT_SEARCH_ONLY_FOLDERS,
-                section="activation",
-                surface="timeline",
-                order=20,
-            ),
-        ],
-    )
 
 
 class LocalDocumentsPlugin(Plugin):
@@ -247,12 +95,20 @@ class LocalDocumentsPlugin(Plugin):
                 surface="timeline",
                 sync_mode=sync_mode,
                 polling_mode=getattr(source, "polling_mode", "interval"),
-                fields=_fields(),
+                fields=[
+                    field.model_copy(deep=True)
+                    for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                    if field.surface == "timeline" and field.section != "activation"
+                ],
                 metadata={
                     "source_type": source.source_type,
-                    "default_settings": dict(DEFAULT_SETTINGS),
+                    "default_settings": {
+                        field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                        for field in self.manifest.settings_fields
+                        if field.key.startswith("sources.") and field.type != "secret"
+                    },
                     "sync_interval_minutes": interval,
-                    "activation_flow": _activation_flow().model_dump(),
+                    "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                     "capability_id": _SOURCE_ENTRY_ID,
                     "capability_display_name": _SOURCE_DISPLAY_NAME,
                     "capability_description": _SOURCE_DESCRIPTION,

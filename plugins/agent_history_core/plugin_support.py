@@ -4,8 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ExtensionFieldSpec,
+    PluginManifest,
     ExtractionProfileSpec,
     SourceSpec,
 )
@@ -83,116 +82,10 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
     )
 
 
-def build_fields(
-    prefix: str,
-    *,
-    display_name: str,
-    default_source_paths: list[str],
-) -> list[ExtensionFieldSpec]:
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enabled",
-            description=f"Whether {display_name} history sync is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.source_paths",
-            type="path",
-            label="Transcript Folders",
-            description=f"Folders to scan for {display_name} transcripts.",
-            default=list(default_source_paths),
-            required=True,
-            section="general",
-            surface="timeline",
-            order=20,
-            placeholder=default_source_paths[0],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.initial_sync_lookback_days",
-            type="number",
-            label="First-sync window (days)",
-            description="First sync ingests sessions from the last N days.",
-            default=30,
-            minimum=1,
-            maximum=3650,
-            section="general",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="number",
-            label="Sync Interval (minutes)",
-            description="How often to rescan transcript folders for new sessions.",
-            default=30,
-            minimum=5,
-            maximum=1440,
-            section="general",
-            surface="timeline",
-            order=40,
-        ),
-    ]
-
-
-def build_activation_flow(
-    prefix: str,
-    *,
-    display_name: str,
-    default_source_paths: list[str],
-) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title=f"Connect {display_name} history",
-        description=(
-            f"Magi reads only your own messages from local {display_name} "
-            "transcripts. Obvious secrets are scrubbed first."
-        ),
-        confirm_label="Connect",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        first_context={
-            "max_items_per_sync": 200,
-            "settings_overrides": {
-                f"{prefix}.initial_sync_lookback_days": 30,
-            },
-        },
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.source_paths",
-                type="path",
-                label="Transcript Folders",
-                description=f"Folders to scan for {display_name} transcripts.",
-                default=list(default_source_paths),
-                required=True,
-                section="activation",
-                surface="timeline",
-                order=10,
-                placeholder=default_source_paths[0],
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_lookback_days",
-                type="number",
-                label="First-sync window (days)",
-                description="First sync ingests sessions from the last N days.",
-                default=30,
-                minimum=1,
-                maximum=3650,
-                section="activation",
-                surface="timeline",
-                order=20,
-            ),
-        ],
-    )
-
-
 def build_source_registration(
     plugin_settings: dict[str, Any],
     *,
+    manifest: PluginManifest,
     agent: str,
     source_type: str,
     display_name: str,
@@ -214,7 +107,6 @@ def build_source_registration(
         display_name=display_name,
         default_source_paths=list(default_source_paths),
     )
-    prefix = f"sources.{source_type}"
     return (
         source_id,
         source,
@@ -226,19 +118,19 @@ def build_source_registration(
             surface="timeline",
             sync_mode="interval",
             polling_mode="interval",
-            fields=build_fields(
-                prefix,
-                display_name=display_name,
-                default_source_paths=default_source_paths,
-            ),
+            fields=[
+                field.model_copy(deep=True)
+                for field in sorted(manifest.settings_fields, key=lambda field: field.order)
+                if field.surface == "timeline" and field.section != "activation"
+            ],
             metadata={
                 "source_type": source_type,
-                "default_settings": defaults,
-                "activation_flow": build_activation_flow(
-                    prefix,
-                    display_name=display_name,
-                    default_source_paths=default_source_paths,
-                ).model_dump(),
+                "default_settings": {
+                    field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                    for field in manifest.settings_fields
+                    if field.key.startswith("sources.") and field.type != "secret"
+                },
+                "activation_flow": manifest.activation_flow.model_dump() if manifest.activation_flow is not None else None,
                 "sync_interval_minutes": sync_interval_minutes,
                 "capability_id": CAPABILITY_ID,
                 "capability_display_name": CAPABILITY_DISPLAY_NAME,

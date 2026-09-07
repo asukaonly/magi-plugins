@@ -13,10 +13,8 @@ if str(_CORE_PARENT) not in sys.path:
 
 from browser_history_core.plugin_support import (
     DEFAULT_SETTINGS,
-    build_activation_flow,
     build_browser_capability_metadata,
     build_extraction_profiles,
-    build_fields,
     build_summary_profile,
     build_temporal_summary_features,
 )
@@ -56,18 +54,19 @@ class FirefoxHistoryPlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode=getattr(source, "polling_mode", "interval"),
-                    fields=build_fields(
-                        "sources.firefox_history",
-                        "Firefox",
-                        profile_default="",
-                        profile_description=(
-                            "Firefox profile path segment (optional). Leave empty to auto-detect the default profile."
-                        ),
-                    ),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "firefox_history",
-                        "default_settings": {**dict(DEFAULT_SETTINGS), "profile": ""},
-                        "activation_flow": build_activation_flow("sources.firefox_history", "Firefox").model_dump(),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                         **build_browser_capability_metadata(
                             entry_id="firefox",
                             entry_display_name="Firefox",

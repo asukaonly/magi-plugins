@@ -6,33 +6,100 @@ on:
     branches: [main]
 
 jobs:
+  plugin-runtime:
+    name: Paired real workers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - name: Checkout companion under test
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Set up supported plugin Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+      - name: Resolve exact host from registry SDK requirement
+        id: host
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import re
+          lines = Path("scripts/registry-requirements.txt").read_text(encoding="utf-8").splitlines()
+          pins = [line.strip() for line in lines if not line.lstrip().startswith("#") and "magi-plugin-sdk" in line.lower()]
+          pattern = r"magi-plugin-sdk\s*@\s*git\+https://github\.com/asukaonly/magi\.git@([0-9a-f]{40})#subdirectory=sdk"
+          match = re.fullmatch(pattern, pins[0]) if len(pins) == 1 else None
+          if match is None:
+              raise SystemExit("Require one exact Magi SDK VCS pin ending in #subdirectory=sdk")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"sha={match[1]}\n")
+          print(f"Paired Magi host: {match[1]}")
+      - name: Checkout exact host selected by SDK pin
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: asukaonly/magi
+          ref: ${{ steps.host.outputs.sha }}
+          path: .paired-host
+      - name: Install selected host SDK and backend test dependencies
+        timeout-minutes: 10
+        run: |
+          python -m pip install --upgrade pip "setuptools>=83.0.0"
+          python -m pip install ./.paired-host/sdk "./.paired-host/backend[dev]"
+      - name: Check native workers and official package registration
+        run: >-
+          python .paired-host/scripts/plugin_runtime_ci.py
+          --plugins-repo . --report-dir runtime-results
+          --pair-source companion-ci --expected-host-sha ${{ steps.host.outputs.sha }}
+          --expected-plugins-sha ${{ github.sha }}
+      - name: Preserve paired worker evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: plugin-runtime-${{ matrix.os }}
+          path: runtime-results/
+          if-no-files-found: warn
+          retention-days: 14
+
   sdk-conformance:
     name: SDK-only plugin conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
       - name: Install public SDK and plugin test dependencies
         run: python -m pip install -r scripts/conformance-requirements.txt
       - name: Assert backend is absent
         run: python -c "import importlib.util; assert importlib.util.find_spec('magi') is None"
+      - name: Validate static manifest catalogs without mutation
+        run: |
+          python scripts/export-settings-fields.py --check
+          git diff --exit-code -- plugins registry.json version-history.json
       - name: Validate all packages and parser behavior
-        run: python -m pytest --import-mode=importlib scripts/test_sdk_conformance.py plugins -q
+        run: python -m pytest --import-mode=importlib scripts/test_settings_declarations.py scripts/test_sdk_conformance.py plugins -q
 
   lockfiles-in-sync:
     name: Plugin lockfiles in sync with manifests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
       # Pin uv: --exclude-newer freezes version selection but not uv's lockfile
       # output formatting, so an unpinned uv could flap the --check byte compare.
       - name: Install uv
-        run: pip install "uv==0.11.17"
+        run: pip install "uv==0.11.17" "pytest==8.4.1"
+      - name: Validate portable vendored wheel locking
+        run: python -m pytest scripts/test_lock_deps.py -q
       - name: Check lockfiles
         run: python scripts/lock-deps.py --check
 
@@ -40,12 +107,12 @@ jobs:
     name: registry and package history in sync
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           # Version-history validation checks every package identity published
           # by intermediate commits in one pull request or push.
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
       - name: Install registry test dependencies

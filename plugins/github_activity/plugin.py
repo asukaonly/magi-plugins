@@ -5,16 +5,7 @@ from dataclasses import dataclass
 import os
 from typing import Any
 
-from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ContributionType,
-    ExtensionFieldSpec,
-    ExtractionProfileSpec,
-    Plugin,
-    PluginSettingsActionResult,
-    PluginSettingsActionSpec,
-    SourceSpec,
-)
+from magi_plugin_sdk import ExtractionProfileSpec, Plugin, PluginSettingsActionResult, PluginSettingsActionSpec, SourceSpec
 
 from .client import (
     GitHubClientError,
@@ -73,95 +64,6 @@ def _configured_client_id(field_values: dict[str, Any] | None, settings: dict[st
     return ""
 
 
-def _activation_flow(prefix: str) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Connect GitHub",
-        description=(
-            "Choose the repositories Magi should read from this device. "
-            "No GitHub data is sent to a Magi cloud service."
-        ),
-        confirm_label="Enable GitHub sync",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        first_context={"max_items_per_sync": 200},
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.repositories",
-                type="tags",
-                label="Repositories",
-                description="Repositories to sync, for example owner/repo or a GitHub repository URL.",
-                default=[],
-                required=True,
-                section="connection",
-                surface="timeline",
-                order=20,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_lookback_days",
-                type="number",
-                label="Initial Sync Days",
-                description="How many recent days to import on the first sync.",
-                default=30,
-                minimum=1,
-                maximum=365,
-                section="connection",
-                surface="timeline",
-                order=30,
-            ),
-        ],
-    )
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enabled",
-            description="Whether GitHub activity sync is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.repositories",
-            type="tags",
-            label="Repositories",
-            description="Repositories to sync, for example owner/repo.",
-            default=[],
-            section="connection",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="number",
-            label="Sync Interval (minutes)",
-            description="How often to check GitHub for updates.",
-            default=30,
-            minimum=5,
-            maximum=1440,
-            section="general",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.initial_sync_lookback_days",
-            type="number",
-            label="Initial Sync Days",
-            description="How many recent days to import when no previous cursor exists.",
-            default=30,
-            minimum=1,
-            maximum=365,
-            section="general",
-            surface="timeline",
-            order=40,
-        ),
-    ]
-
-
 class GitHubActivityPlugin(Plugin):
     """Registers local-only GitHub repository activity ingestion."""
 
@@ -170,23 +72,7 @@ class GitHubActivityPlugin(Plugin):
         self._device_sessions: dict[str, _DeviceSession] = {}
 
     def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
-        return [
-            PluginSettingsActionSpec(
-                action_id=CONNECT_ACTION_ID,
-                label="Connect GitHub",
-                description="Open the GitHub device authorization page, enter the code, and save the resulting token locally.",
-                button_label="Connect GitHub",
-                presentation="inline",
-                surface="timeline",
-                contribution_id="timeline.github_activity",
-                contribution_type=ContributionType.SOURCE,
-                order=0,
-                poll_interval_ms=5_000,
-                timeout_ms=900_000,
-                persist_settings_on_success=True,
-                requires_enabled=False,
-            )
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_actions]
 
     async def start_settings_action(
         self,
@@ -340,11 +226,19 @@ class GitHubActivityPlugin(Plugin):
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sources.github_activity"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "github_activity",
-                        "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sources.github_activity").model_dump(),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                         "sync_interval_minutes": sync_interval_minutes,
                     },
                 ),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -27,7 +29,7 @@ def _load_plugin_module() -> ModuleType:
 
 
 def test_claude_history_registers_only_claude_code() -> None:
-    plugin = _load_plugin_module().ClaudeCodePlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ClaudeCodePlugin())
     sources = plugin.get_sources()
 
     assert len(sources) == 1
@@ -41,7 +43,7 @@ def test_claude_history_registers_only_claude_code() -> None:
 
 
 def test_claude_history_registers_only_claude_profile() -> None:
-    plugin = _load_plugin_module().ClaudeCodePlugin()
+    plugin = bind_test_plugin(_load_plugin_module().ClaudeCodePlugin())
     profiles = plugin.get_extraction_profiles()
 
     assert [profile.source_types for profile in profiles] == [

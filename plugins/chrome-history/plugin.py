@@ -5,9 +5,6 @@ from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
     SourceSpec,
@@ -65,153 +62,6 @@ def _budget_int(budget: object | None, key: str, default: int) -> int:
         return int(raw)
     except (TypeError, ValueError):
         return int(default)
-
-
-def _activation_flow(prefix: str) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title="Enable Chrome History",
-        description=(
-            "Chrome history is sensitive local data. Choose how the first sync should seed the timeline before "
-            "this source starts running."
-        ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        first_context={
-            "max_items_per_sync": 200,
-            "settings_overrides": {
-                f"{prefix}.initial_sync_policy": "lookback_days",
-                f"{prefix}.initial_sync_lookback_days": 7,
-            }
-        },
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_policy",
-                type="select",
-                label="First Sync Scope",
-                description="Decide how much history should be imported when this source is enabled for the first time.",
-                default="lookback_days",
-                options=[
-                    ExtensionFieldOption(label="Sync full history", value="full"),
-                    ExtensionFieldOption(label="Sync recent days", value="lookback_days"),
-                    ExtensionFieldOption(label="Only new records from now on", value="from_now"),
-                ],
-                section="activation",
-                surface="timeline",
-                order=10,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_lookback_days",
-                type="number",
-                label="Recent Days",
-                description="Used when the first-sync scope is set to recent days.",
-                default=7,
-                section="activation",
-                surface="timeline",
-                order=20,
-                depends_on_key=f"{prefix}.initial_sync_policy",
-                depends_on_values=["lookback_days"],
-            ),
-        ],
-    )
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enabled",
-            description="Whether Chrome history sync is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.profile",
-            type="input",
-            label="Profile",
-            description="Chrome profile directory to read, such as Default or Profile 1.",
-            default="Default",
-            section="general",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_mode",
-            type="select",
-            label="Sync Mode",
-            description="How Chrome history should be synchronized.",
-            default="interval",
-            required=True,
-            options=[
-                ExtensionFieldOption(label="Manual", value="manual"),
-                ExtensionFieldOption(label="Interval", value="interval"),
-            ],
-            section="general",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="number",
-            label="Sync Interval (minutes)",
-            description="Polling interval used for interval-based sync.",
-            default=30,
-            section="general",
-            surface="timeline",
-            order=40,
-            depends_on_key=f"{prefix}.sync_mode",
-            depends_on_values=["interval"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.merge_window_minutes",
-            type="number",
-            label="Merge Window (minutes)",
-            description=(
-                "Raw visits to the same page within this window are merged into one timeline item, "
-                "even when other pages appear between them."
-            ),
-            default=30,
-            section="general",
-            surface="timeline",
-            order=50,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.max_items_per_sync",
-            type="number",
-            label="Max Items Per Sync",
-            description="Maximum number of history records to ingest per run.",
-            default=1000,
-            section="sync",
-            surface="timeline",
-            order=60,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.filter_domains",
-            type="tags",
-            label="Filter Domains (Regex)",
-            description="Visits whose normalized domain matches any regex via partial search are skipped before AI analysis. Use ^...$ for exact matches.",
-            default=[],
-            section="filters",
-            surface="timeline",
-            order=70,
-            placeholder="e.g. ^mail\\.google\\.com$",
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.filter_keywords",
-            type="tags",
-            label="Filter Keywords",
-            description="Visits whose URL or title contains any of these keywords are skipped before AI analysis. Case-insensitive substring match, not regex.",
-            default=[],
-            section="filters",
-            surface="timeline",
-            order=80,
-            placeholder="e.g. password reset",
-        ),
-    ]
 
 
 class ChromeHistoryPlugin(Plugin):
@@ -360,11 +210,19 @@ class ChromeHistoryPlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode=getattr(source, "polling_mode", "interval"),
-                    fields=_fields("sources.chrome_history"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "chrome_history",
-                        "default_settings": dict(DEFAULT_SETTINGS),
-                        "activation_flow": _activation_flow("sources.chrome_history").model_dump(),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
                         **BROWSER_HISTORY_CAPABILITY_METADATA,
                     },
                 ),

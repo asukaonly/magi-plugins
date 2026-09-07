@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -26,7 +28,7 @@ def _load_plugin_class():
 
 def test_chrome_history_profile_declares_derived_interest_rule() -> None:
     cls = _load_plugin_class()
-    plugin = cls()
+    plugin = bind_test_plugin(cls())
     profile = plugin.get_extraction_profiles()[0]
 
     assert profile.profile_id == "source.chrome_history"
@@ -48,7 +50,7 @@ def test_chrome_history_profile_declares_derived_interest_rule() -> None:
 
 def test_chrome_history_activation_flow_declares_first_context_overrides() -> None:
     cls = _load_plugin_class()
-    plugin = cls()
+    plugin = bind_test_plugin(cls())
     _source_id, _source, spec = plugin.get_sources()[0]
     flow = spec.metadata["activation_flow"]
 

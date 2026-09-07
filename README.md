@@ -29,16 +29,23 @@ normalization. Tools and settings actions enter the host's typed operation
 boundary; the host controls invocation identity, effects and retries.
 
 `projection_sources` names the categories used by each package's projections.
-The manifest also contains `settings_fields`, the complete schema the host
-validates before loading plugin code.
+The manifest is the static authority for `settings_fields`, the complete schema
+the host validates before loading plugin code.
 Packages with onboarding also declare `activation_flow`; the host collects its
 values before enabling or importing the package. Declarative `settings_actions`,
 `settings_resources`, and `settings_ui_blocks` expose setup controls before enable.
 Host-approved user actions and resource requests marked `requires_enabled = false`
 may run in a scoped setup worker. Catalog export includes schemas, never resource
-values or secrets. For multi-source packages, the
-first registered source flow is primary (the knowledge tier for Local Documents
-and Obsidian Vault); secondary tiers reuse that connection configuration.
+values or secrets. Runtime configuration views copy the reviewed fields, defaults,
+activation flow and setup catalogs from the configured manifest. Field `surface`,
+`section` and `order` control their presentation: timeline forms exclude activation-only
+fields; channel forms exclude internal advanced fields. Steam applies existing locale
+translations to copied presentation text without changing field contracts.
+
+For multi-source packages, author the primary connection activation explicitly in
+`plugin.activation_flow`. Local Documents and Obsidian Vault register their knowledge
+tier first; their search tier reuses the same connection configuration. Export never
+chooses a primary flow by executing sources or inspecting availability.
 Selectors grant no access by themselves: the host intersects them with the
 connection's authorized data. Projection revision is the immutable package
 version.
@@ -122,7 +129,11 @@ also declares its complete settings schema (an empty list when none is needed).
 | [terminal-history](plugins/terminal_history/plugin.toml) | source | `terminal_history` | Form |
 | [weixin](plugins/weixin/plugin.toml) | channel | `weixin` | Actions, Resources |
 
-`scripts/export-settings-fields.py` exports reviewed declarations;
+`python scripts/export-settings-fields.py [plugins/<name>/plugin.toml]` emits
+SDK-validated JSON from the manifests, without rewriting them. `--check` validates
+without JSON output. Export never imports a plugin, constructs a collector, inspects
+a local installation, or depends on the current OS or enabled state.
+`scripts/settings_declarations.py` exposes the same static read/export API to tests;
 `scripts/build-registry.py` copies those declarations and package identity into
 `registry.json`. `version-history.json` records immutable published identities.
 
@@ -224,9 +235,13 @@ the same time.
 
 1. Create a new directory under `plugins/`.
 2. Add `plugin.toml` and `plugin.py` (see the plugin development guide in the [main repo docs](https://github.com/asukaonly/magi/blob/main/docs/plugin-development-guide.md)).
-3. Export and review public schemas with `python scripts/export-settings-fields.py`.
-4. Run SDK-only conformance and the package's behavior tests.
-5. Stage the complete package, run `bash scripts/refresh.sh <plugin-directory>`,
+3. Author the complete settings/setup catalog in `plugin.toml`; validate with
+   `python scripts/export-settings-fields.py --check` and review its JSON export.
+   Runtime views must read the configured manifest, including when a shared library
+   builds the source registration; do not maintain another Python schema catalog.
+4. Run the static export suite, SDK conformance and package tests:
+   `python -m pytest --import-mode=importlib scripts/test_settings_declarations.py scripts/test_sdk_conformance.py plugins -q`.
+5. Bump each changed package's patch version, stage the complete package, run `bash scripts/refresh.sh <plugin-directory>`,
    and commit its generated metadata with the source. Push only when requested.
 
 ### Local development
@@ -270,3 +285,36 @@ final published SDK commit, stage every changed package, and run
 `bash scripts/refresh.sh`. The history refresh appends new package versions and
 preserves every previously published entry unchanged. Include regenerated locks, registry and version history
 with their source changes. Never publish an intermediate SDK hash.
+
+## Native paired runtime verification
+
+Both repositories also run the selected host's `scripts/plugin_runtime_ci.py`
+on native Linux, macOS and Windows with Python 3.13. Companion CI selects its
+host from the exact SDK commit above; host CI selects a fixed companion artifact
+commit. The gate records both revisions, creates an SDK-only worker environment,
+installs supported packages with their real locked dependencies, and launches
+their workers for registration. Unsupported platforms are reported explicitly.
+This complements simulated-platform declaration tests; it does not claim to
+collect personal data or authenticate every external service.
+
+From the host checkout, with its SDK and backend test dependencies installed:
+
+```bash
+python scripts/plugin_runtime_ci.py --plugins-repo /path/to/magi-plugins --report-dir /tmp/magi-plugin-runtime-results --pair-source local
+```
+
+If upstream has no wheel, a reviewed prebuilt wheel may be carried in a
+package's `wheels/` directory. Only regular `.whl` files are allowed there.
+The generated lock records its exact hash, and `package_sha256` covers the
+artifact plus its source provenance, license and maintainer build recipe.
+Installation remains binary-only with hash verification. Lock checks consume
+the artifact and never run a source build. Apple Photos includes a documented
+example under `plugins/apple-photos/wheel-provenance/`.
+
+Publish paired changes in dependency order: make the reviewed companion
+artifact commit reachable on a branch first, then publish the host referencing
+that artifact and validate its native matrix, then publish the companion SDK
+pin selecting that host. The host keeps the artifact commit while companion
+may advance only its SDK pin and repository documentation. This avoids circular
+commit references. Every referenced SHA must be reachable before the dependent
+CI runs; local commits and local test results do not satisfy that requirement.

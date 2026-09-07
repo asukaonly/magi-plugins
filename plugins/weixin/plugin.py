@@ -8,14 +8,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Any
 
-from magi_plugin_sdk import (
-    ContributionType,
-    ExtensionFieldSpec,
-    Plugin,
-    PluginSettingsActionResult,
-    PluginSettingsActionSpec,
-    PluginSettingsResourceSpec,
-)
+from magi_plugin_sdk import ExtensionFieldSpec, Plugin, PluginSettingsActionResult, PluginSettingsActionSpec, PluginSettingsResourceSpec
 from magi_plugin_sdk.channels import Channel
 
 from .adapter import WeixinChannel, WeixinChannelConfig
@@ -28,7 +21,7 @@ from .api import (
     WeixinApiClient,
     WeixinApiTimeout,
 )
-from .auth import DEFAULT_LOGIN_TIMEOUT_MS, MAX_QR_REFRESH_COUNT
+from .auth import MAX_QR_REFRESH_COUNT
 from .state import WeixinCredentials, WeixinStateStore
 
 
@@ -202,92 +195,10 @@ class WeixinPlugin(Plugin):
         return WeixinChannel(config=config, state_store=self._state_store())
 
     def get_settings_actions(self) -> list[PluginSettingsActionSpec]:
-        return [
-            PluginSettingsActionSpec(
-                action_id=QR_LOGIN_ACTION_ID,
-                requires_enabled=False,
-                label="Weixin QR Login",
-                description="Scan with Weixin to authorize this channel without pasting a bot token manually.",
-                button_label="Start QR Login",
-                presentation="qr_code",
-                surface="extensions",
-                contribution_type=ContributionType.CHANNEL,
-                order=0,
-                poll_interval_ms=2_000,
-                timeout_ms=DEFAULT_LOGIN_TIMEOUT_MS,
-                persist_settings_on_success=True,
-            ),
-            PluginSettingsActionSpec(
-                action_id=VALIDATE_CREDENTIALS_ACTION_ID,
-                requires_enabled=False,
-                label="Validate Credentials",
-                description="Check the saved Weixin credentials and gateway connection.",
-                button_label="Test Connection",
-                presentation="inline",
-                surface="extensions",
-                contribution_type=ContributionType.CHANNEL,
-                order=1,
-                poll_interval_ms=2_000,
-                timeout_ms=30_000,
-                persist_settings_on_success=False,
-            ),
-            PluginSettingsActionSpec(
-                action_id=RESET_CURSOR_ACTION_ID,
-                label="Reset Cursor",
-                description="Clear the saved Weixin getUpdates cursor and reconnect from the gateway's next position.",
-                button_label="Reset Cursor",
-                presentation="inline",
-                surface="extensions",
-                contribution_type=ContributionType.CHANNEL,
-                order=2,
-                poll_interval_ms=2_000,
-                timeout_ms=30_000,
-                persist_settings_on_success=False,
-            ),
-            PluginSettingsActionSpec(
-                action_id=CLEAR_PROCESSED_MESSAGES_ACTION_ID,
-                label="Clear Message Dedupe",
-                description="Clear the local processed-message cache used for Weixin retry safety.",
-                button_label="Clear Dedupe",
-                presentation="inline",
-                surface="extensions",
-                contribution_type=ContributionType.CHANNEL,
-                order=3,
-                poll_interval_ms=2_000,
-                timeout_ms=30_000,
-                persist_settings_on_success=False,
-            ),
-            PluginSettingsActionSpec(
-                action_id=LOGOUT_ACTION_ID,
-                label="Logout Weixin",
-                description="Remove saved Weixin credentials for this account and stop the channel until QR login runs again.",
-                button_label="Logout",
-                presentation="inline",
-                surface="extensions",
-                contribution_type=ContributionType.CHANNEL,
-                order=4,
-                destructive=True,
-                poll_interval_ms=2_000,
-                timeout_ms=30_000,
-                persist_settings_on_success=True,
-            ),
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_actions]
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
-        return [
-            PluginSettingsResourceSpec(
-                requires_enabled=False,
-                resource_name=CHANNEL_STATUS_RESOURCE_NAME,
-                resource_type="channel_status",
-                description="Latest Weixin channel runtime status.",
-            ),
-            PluginSettingsResourceSpec(
-                requires_enabled=False,
-                resource_name=ACCOUNTS_RESOURCE_NAME,
-                resource_type="collection",
-                description="The account bound to this connection.",
-            )
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_resources]
 
     def read_settings_resource(self, resource_name: str) -> Any:
         store = self._state_store()
@@ -561,86 +472,7 @@ class WeixinPlugin(Plugin):
 
     def get_channel_fields(self) -> list[ExtensionFieldSpec]:
         return [
-            ExtensionFieldSpec(
-                key="bot_token",
-                type="secret",
-                label="Bot Token",
-                description="iLink bot token returned by the Weixin QR login flow. Leave empty when using QR login.",
-                default="",
-                surface="extensions",
-                order=0,
-            ),
-            ExtensionFieldSpec(
-                key="account_id",
-                type="input",
-                label="Account ID",
-                description="iLink bot account ID. Leave empty only when the state directory contains exactly one logged-in account.",
-                default="",
-                placeholder="example@im.bot",
-                surface="extensions",
-                order=1,
-            ),
-            ExtensionFieldSpec(
-                key="allowed_user_ids",
-                type="tags",
-                label="Allowed Weixin User IDs",
-                description="Whitelist of Weixin user IDs. Empty means allow all users who can message this bot.",
-                default=[],
-                surface="extensions",
-                order=4,
-            ),
-            ExtensionFieldSpec(
-                key="enable_typing_indicator",
-                type="switch",
-                label="Typing Indicator",
-                description="Send Weixin typing status while Magi is processing a message.",
-                default=True,
-                surface="extensions",
-                order=5,
-            ),
-            ExtensionFieldSpec(
-                key="base_url",
-                type="input",
-                label="API Base URL",
-                description="Weixin iLink API base URL.",
-                default=DEFAULT_BASE_URL,
-                surface="extensions",
-                order=6,
-            ),
-            ExtensionFieldSpec(
-                key="bot_type",
-                type="input",
-                label="Bot Type",
-                description="iLink bot_type used by the QR login helper.",
-                default=DEFAULT_BOT_TYPE,
-                surface="extensions",
-                order=7,
-            ),
-            ExtensionFieldSpec(
-                key="route_tag",
-                type="input",
-                label="Route Tag",
-                description="Optional SKRouteTag header for internal routing.",
-                default="",
-                surface="extensions",
-                order=8,
-            ),
-            ExtensionFieldSpec(
-                key="max_message_length",
-                type="number",
-                label="Max Message Length",
-                description="Maximum characters per Weixin outbound text message.",
-                default=4000,
-                surface="extensions",
-                order=9,
-            ),
-            ExtensionFieldSpec(
-                key="poll_timeout_ms",
-                type="number",
-                label="Poll Timeout",
-                description="Long-poll timeout in milliseconds for getUpdates.",
-                default=DEFAULT_LONG_POLL_TIMEOUT_MS,
-                surface="extensions",
-                order=10,
-            ),
+            field.model_copy(deep=True)
+            for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+            if field.surface == "extensions" and field.section != "advanced"
         ]

@@ -326,3 +326,92 @@ def test_sdk_exposes_separate_model_observation_contract() -> None:
     result = ToolResult(success=True, data={"id": "original"}, model_text="Readable result")
     assert result.model_text == "Readable result"
     assert result.data == {"id": "original"}
+
+
+@pytest.mark.parametrize("path,runtime_platform", DECLARATION_CASES)
+def test_runtime_settings_views_follow_manifest_edits(path: Path, runtime_platform: str) -> None:
+    """Changing reviewed schemas must immediately change configured runtime views."""
+    if tomllib.loads(path.read_text())["plugin"].get("kind") == "library":
+        return
+    plugin = bind_test_plugin(load_plugin(path))
+    manifest = plugin.manifest
+    for field in manifest.settings_fields:
+        field.required = not field.required
+    if manifest.activation_flow is not None:
+        manifest.activation_flow.authorize_on_confirm = not manifest.activation_flow.authorize_on_confirm
+        manifest.activation_flow.first_context = None
+    for action in manifest.settings_actions:
+        action.order += 100
+        action.requires_enabled = not action.requires_enabled
+    for resource in manifest.settings_resources:
+        resource.requires_enabled = not resource.requires_enabled
+    for block in manifest.settings_ui_blocks:
+        block.depends_on_values = ["reviewed-condition"]
+
+    before = manifest.model_dump()
+    declared_fields = {field.key: field for field in manifest.settings_fields}
+    assert [entry.model_dump() for entry in plugin.get_settings_actions()] == before["settings_actions"]
+    assert [entry.model_dump() for entry in plugin.get_settings_resources()] == before["settings_resources"]
+    for field in plugin.get_channel_fields():
+        assert field.model_dump() == declared_fields[field.key].model_dump()
+    with patch.object(sys, "platform", runtime_platform):
+        registrations = plugin.get_sources()
+    for _, _, spec in registrations:
+        for field in spec.fields:
+            assert field.model_dump() == declared_fields[field.key].model_dump()
+            field.required = not field.required
+        if spec.metadata.get("activation_flow"):
+            assert spec.metadata["activation_flow"] == manifest.activation_flow.model_dump()
+            spec.metadata["activation_flow"]["fields"].clear()
+        if spec.metadata.get("settings_ui_blocks"):
+            assert spec.metadata["settings_ui_blocks"] == before["settings_ui_blocks"]
+        for name, value in spec.metadata.get("default_settings", {}).items():
+            matches = [field for field in manifest.settings_fields if field.key.endswith(f".{name}")]
+            assert len(matches) == 1
+            assert value == matches[0].default
+    assert manifest.model_dump() == before, "Runtime views must not mutate reviewed declarations"
+
+
+@pytest.mark.parametrize("directory", ["local-documents", "obsidian-vault"])
+@pytest.mark.parametrize("enabled", [False, True])
+def test_multisource_primary_activation_is_stable(directory: str, enabled: bool) -> None:
+    plugin = bind_test_plugin(load_plugin(ROOT / "plugins" / directory / "plugin.toml"), enabled=enabled)
+    prefix = plugin.manifest.activation_flow.enabled_key.rsplit(".", 1)[0]
+    plugin.settings = {"sources": {prefix.removeprefix("sources."): {"enabled": enabled}}}
+    registrations = plugin.get_sources()
+    assert [source_id.rsplit(".", 1)[-1] for source_id, _, _ in registrations] == ["knowledge", "search"]
+    assert [source.memory_policy.cognition_eligible for _, source, _ in registrations] == [True, False]
+    assert all(spec.metadata["activation_flow"] == plugin.manifest.activation_flow.model_dump() for _, _, spec in registrations)
+    assert registrations[0][2].fields == registrations[1][2].fields
+    assert registrations[0][2].fields is not registrations[1][2].fields
+
+
+def test_steam_manifest_views_preserve_localization_without_contract_drift() -> None:
+    from magi_plugin_sdk.i18n import get_current_language, set_current_language
+
+    plugin = bind_test_plugin(load_plugin(ROOT / "plugins/steam_play_history/plugin.toml"))
+    manifest_before = plugin.manifest.model_dump()
+    original_language = get_current_language()
+    try:
+        set_current_language("en")
+        english = plugin.get_sources()[0][2]
+        set_current_language("zh-CN")
+        chinese = plugin.get_sources()[0][2]
+    finally:
+        set_current_language(original_language)
+
+    def structural(value):
+        if isinstance(value, list):
+            return [structural(item) for item in value]
+        if isinstance(value, dict):
+            return {key: structural(item) for key, item in value.items() if key not in {
+                "label", "description", "title", "confirm_label", "cancel_label",
+            }}
+        return value
+
+    assert english.fields[0].label != chinese.fields[0].label
+    assert english.metadata["activation_flow"]["title"] != chinese.metadata["activation_flow"]["title"]
+    assert chinese.fields[0].label == plugin.t("settings.enabled.label", language="zh-CN")
+    assert structural([field.model_dump() for field in english.fields]) == structural([field.model_dump() for field in chinese.fields])
+    assert structural(chinese.metadata["activation_flow"]) == structural(manifest_before["activation_flow"])
+    assert plugin.manifest.model_dump() == manifest_before

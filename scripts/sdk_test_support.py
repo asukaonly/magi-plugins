@@ -38,14 +38,14 @@ def private_dir() -> Path:
     return Path(temporary.name).resolve()
 
 
-def bind_test_plugin(plugin, *, connection_id: str = "test-connection", settings: dict | None = None):
+def bind_test_plugin(plugin, *, connection_id: str = "test-connection", settings: dict | None = None, enabled: bool = True):
     """Configure a real plugin through the production SDK binding contract."""
     path = plugin.plugin_dir / "plugin.toml"
     metadata = tomllib.loads(path.read_text())["plugin"]
     manifest = PluginManifest.model_validate({**metadata, "manifest_path": str(path)})
     connection = PluginConnection(
         connection_id=connection_id, plugin_id=manifest.plugin_id,
-        display_name=manifest.name, settings=settings or {}, enabled=True,
+        display_name=manifest.name, settings=settings or {}, enabled=enabled,
     )
     root = private_dir()
     plugin.configure(manifest=manifest, connection=connection, context=PluginContext(

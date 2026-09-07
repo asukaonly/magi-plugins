@@ -6,8 +6,6 @@ from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import (
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
     SourceSpec,
@@ -61,48 +59,6 @@ def _format_minutes(seconds: int) -> str:
         remainder = minutes % 60
         return f"{hours}h {remainder}m" if remainder else f"{hours}h"
     return f"{minutes}m"
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    """Define all settings fields for the foreground app usage plugin."""
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enable App Usage Sync",
-            description=(
-                "Tracks the foreground app every second and writes one summary per app "
-                "for each clock hour (10:00-11:00, 11:00-12:00, ...). A bucket is only "
-                "written to your timeline after the hour it belongs to has fully ended, "
-                "so the first entry typically appears 0-59 minutes after you enable this."
-            ),
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="select",
-            label="Check Interval",
-            description=(
-                "How often the plugin checks for hourly buckets that have just ended and "
-                "flushes them to the timeline. This does NOT change how often new entries "
-                "appear (always one per app per clock hour); a smaller value only reduces "
-                "the delay between an hour ending and its records becoming visible."
-            ),
-            default="5",
-            options=[
-                ExtensionFieldOption(label="Every minute", value="1"),
-                ExtensionFieldOption(label="Every 5 minutes", value="5"),
-                ExtensionFieldOption(label="Every 15 minutes", value="15"),
-                ExtensionFieldOption(label="Every 60 minutes", value="60"),
-            ],
-            section="sync",
-            surface="timeline",
-            order=20,
-        ),
-    ]
 
 
 class ScreenTimePlugin(Plugin):
@@ -281,10 +237,18 @@ class ScreenTimePlugin(Plugin):
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sources.screen_time"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "screen_time",
-                        "default_settings": dict(DEFAULT_SETTINGS),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
                         "sync_interval_minutes": sync_interval_minutes,
                     },
                 ),

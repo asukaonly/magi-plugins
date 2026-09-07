@@ -5,14 +5,11 @@ from collections import Counter
 from typing import Any
 
 from magi_plugin_sdk import (
-    ActivationFlowSpec,
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
+    PluginManifest,
     ExtractionProfileSpec,
     SourceSpec,
 )
 
-from .apple_photos_reader import DEFAULT_PHOTOS_LIBRARY_PATH
 from .source import PhotoLibraryTimelineSource
 
 CAPABILITY_ID = "photo_library"
@@ -64,176 +61,10 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
     )
 
 
-def build_fields(prefix: str, source_mode: str) -> list[ExtensionFieldSpec]:
-    fields = [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enable",
-            description="Whether this photo source is active.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-    ]
-    if source_mode == "apple_photos":
-        fields.append(
-            ExtensionFieldSpec(
-                key=f"{prefix}.photos_library_path",
-                type="path",
-                label="Custom Apple Photos Library",
-                description=(
-                    "Optional .photoslibrary path. Leave empty to use the "
-                    "current system Photos library."
-                ),
-                default="",
-                required=False,
-                section="general",
-                surface="timeline",
-                order=14,
-                placeholder=DEFAULT_PHOTOS_LIBRARY_PATH,
-            )
-        )
-    else:
-        fields.extend(
-            [
-                ExtensionFieldSpec(
-                    key=f"{prefix}.source_paths",
-                    type="path",
-                    label="Photo Directories",
-                    description="Local directories containing photos to scan. Add one or more paths.",
-                    default=[],
-                    required=True,
-                    section="general",
-                    surface="timeline",
-                    order=15,
-                    placeholder="/path/to/photos",
-                ),
-                ExtensionFieldSpec(
-                    key=f"{prefix}.exclude_patterns",
-                    type="tags",
-                    label="Exclude Patterns",
-                    description="Glob patterns for directories or files to skip.",
-                    default=["**/thumbnails", "**/.cache", "**/Thumbs.db", "**/@eaDir"],
-                    section="general",
-                    surface="timeline",
-                    order=16,
-                    placeholder="**/thumbnails",
-                ),
-            ]
-        )
-    fields.extend(
-        [
-            ExtensionFieldSpec(
-                key=f"{prefix}.sync_mode",
-                type="select",
-                label="Sync Mode",
-                description="How this photo source should be synchronized.",
-                default="interval",
-                required=True,
-                options=[
-                    ExtensionFieldOption(label="Manual", value="manual"),
-                    ExtensionFieldOption(label="Automatic", value="interval"),
-                ],
-                section="general",
-                surface="timeline",
-                order=20,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.sync_interval_minutes",
-                type="number",
-                label="Sync Interval (minutes)",
-                description="Polling interval used for interval-based sync.",
-                default=60,
-                section="general",
-                surface="timeline",
-                order=30,
-                depends_on_key=f"{prefix}.sync_mode",
-                depends_on_values=["interval"],
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.max_items_per_sync",
-                type="number",
-                label="Max Items Per Sync",
-                description="Maximum number of photos to process per sync run.",
-                default=200,
-                section="general",
-                surface="timeline",
-                order=40,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.analysis_features",
-                type="tags",
-                label="Analysis Features",
-                description="Metadata extraction capabilities to apply.",
-                default=["exif"],
-                options=[
-                    ExtensionFieldOption(label="EXIF Metadata", value="exif"),
-                    ExtensionFieldOption(label="GPS Geocoding", value="geocode"),
-                ],
-                section="general",
-                surface="timeline",
-                order=45,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.settle_window_hours",
-                type="number",
-                label="Session Settle Window (hours)",
-                description=(
-                    "A photo session is emitted only after no new photos arrive "
-                    "for this many hours."
-                ),
-                default=4,
-                section="general",
-                surface="timeline",
-                order=50,
-            ),
-        ]
-    )
-    return fields
-
-
-def build_activation_flow(
-    prefix: str,
-    *,
-    display_name: str,
-    source_mode: str,
-) -> ActivationFlowSpec:
-    fields: list[ExtensionFieldSpec] = []
-    if source_mode == "directory":
-        fields.append(
-            ExtensionFieldSpec(
-                key=f"{prefix}.source_paths",
-                type="path",
-                label="Photo Directories",
-                description="Local folders containing photos to scan. Add one or more.",
-                default=[],
-                required=True,
-                section="activation",
-                surface="timeline",
-                order=10,
-                placeholder="/path/to/photos",
-            )
-        )
-    return ActivationFlowSpec(
-        title=f"Enable {display_name}",
-        description=(
-            f"{display_name} is sensitive local data. Magi reads photo metadata "
-            "(time, place, camera) to build your timeline."
-        ),
-        confirm_label="Enable source",
-        cancel_label="Not now",
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        first_context={"max_items_per_sync": 200},
-        fields=fields,
-    )
-
-
 def build_source_registration(
     plugin_settings: dict[str, Any],
     *,
+    manifest: PluginManifest,
     source_type: str,
     entry_id: str,
     display_name: str,
@@ -276,15 +107,14 @@ def build_source_registration(
         )
         * 3600.0,
     )
-    prefix = f"sources.{source_type}"
     metadata = {
         "source_type": source_type,
-        "default_settings": defaults,
-        "activation_flow": build_activation_flow(
-            prefix,
-            display_name=display_name,
-            source_mode=source_mode,
-        ).model_dump(),
+        "default_settings": {
+            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+            for field in manifest.settings_fields
+            if field.key.startswith("sources.") and field.type != "secret"
+        },
+        "activation_flow": manifest.activation_flow.model_dump() if manifest.activation_flow is not None else None,
         "capability_id": CAPABILITY_ID,
         "capability_display_name": CAPABILITY_DISPLAY_NAME,
         "capability_description": CAPABILITY_DESCRIPTION,
@@ -305,7 +135,11 @@ def build_source_registration(
             surface="timeline",
             sync_mode=str(settings.get("sync_mode", defaults["sync_mode"])),
             polling_mode=getattr(source, "polling_mode", "interval"),
-            fields=build_fields(prefix, source_mode),
+            fields=[
+                field.model_copy(deep=True)
+                for field in sorted(manifest.settings_fields, key=lambda field: field.order)
+                if field.surface == "timeline" and field.section != "activation"
+            ],
             metadata=metadata,
         ),
     )

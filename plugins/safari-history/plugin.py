@@ -6,7 +6,7 @@ from errno import EACCES, EPERM
 from pathlib import Path
 from typing import Any
 
-from magi_plugin_sdk import Plugin, PluginSettingsResourceSpec, SourceSpec, SettingsUIBlockSpec
+from magi_plugin_sdk import Plugin, PluginSettingsResourceSpec, SourceSpec
 
 _CORE_PARENT = Path(__file__).resolve().parents[1]
 if str(_CORE_PARENT) not in sys.path:
@@ -14,31 +14,14 @@ if str(_CORE_PARENT) not in sys.path:
 
 from browser_history_core.plugin_support import (
     DEFAULT_SETTINGS,
-    build_activation_flow,
     build_browser_capability_metadata,
     build_extraction_profiles,
-    build_fields,
     build_summary_profile,
     build_temporal_summary_features,
 )
 
 from .safari_reader import _default_safari_root
 from .source import SafariHistoryTimelineSource
-
-
-def _settings_ui_blocks() -> list[SettingsUIBlockSpec]:
-    """Host-rendered custom blocks for Safari's macOS permission status."""
-    return [
-        SettingsUIBlockSpec(
-            block_id="macos_permissions",
-            type="resource_picker",
-            title="macOS Permissions",
-            description="Full Disk Access is required to read Safari History.db.",
-            resource_name="permissions",
-            value_key="_readonly",
-            presentation="permission_status",
-        ),
-    ]
 
 
 def _full_disk_access_status() -> str:
@@ -89,21 +72,20 @@ class SafariHistoryPlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode=getattr(source, "polling_mode", "interval"),
-                    fields=build_fields(
-                        "sources.safari_history",
-                        "Safari",
-                        profile_default="",
-                        profile_description="Safari stores history in one History.db file; leave this empty.",
-                    ),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "safari_history",
                         "default_settings": {
-                            **dict(DEFAULT_SETTINGS),
-                            "profile": "",
-                            "source_path": _default_safari_root(),
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
                         },
-                        "activation_flow": build_activation_flow("sources.safari_history", "Safari").model_dump(),
-                        "settings_ui_blocks": [block.model_dump() for block in _settings_ui_blocks()],
+                        "activation_flow": self.manifest.activation_flow.model_dump() if self.manifest.activation_flow is not None else None,
+                        "settings_ui_blocks": [block.model_dump() for block in self.manifest.settings_ui_blocks],
                         **build_browser_capability_metadata(
                             entry_id="safari",
                             entry_display_name="Safari",
@@ -116,14 +98,7 @@ class SafariHistoryPlugin(Plugin):
         ]
 
     def get_settings_resources(self) -> list[PluginSettingsResourceSpec]:
-        return [
-            PluginSettingsResourceSpec(
-                requires_enabled=False,
-                resource_name="permissions",
-                resource_type="channel_status",
-                description="Live macOS permission grant required by the Safari history plugin.",
-            ),
-        ]
+        return [entry.model_copy(deep=True) for entry in self.manifest.settings_resources]
 
     def read_settings_resource(self, resource_name: str) -> Any:
         if resource_name != "permissions":

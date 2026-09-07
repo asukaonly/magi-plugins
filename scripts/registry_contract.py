@@ -32,6 +32,8 @@ KNOWN_CAPABILITIES = frozenset(
         "filesystem_write",
         "network",
         "subprocess",
+        "memory_search",
+        "interaction_ask",
     }
 )
 _KNOWN_CONTRIBUTION_TYPES = frozenset(item.value for item in ContributionType)

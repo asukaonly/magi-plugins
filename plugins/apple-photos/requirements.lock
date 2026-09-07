@@ -119,7 +119,7 @@ bitarray==3.8.1 ; sys_platform == 'darwin' \
     --hash=sha256:ff2ca039a161d49a8c713f5380def315c6f793df5fe348b94782b1dbee37a644
     # via bitstring
 bitmath==1.4.0.1 ; sys_platform == 'darwin' \
-    --hash=sha256:7e64a1e7161887e254dbb910942e265fe840a4cf0cede4e29a1da9754b7334e8
+    --hash=sha256:86423d08f9a60a6da9cde8368551e4e58977f5c0b318ab2f039c070509898569
     # via osxphotos
 bitstring==4.4.0 ; sys_platform == 'darwin' \
     --hash=sha256:e682ac522bb63e041d16cbc9d0ca86a4f00194db16d0847c7efe066f836b2e37 \

@@ -5,7 +5,7 @@ from collections import Counter
 import sys
 from typing import Any
 
-from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldOption, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SourceSpec
+from magi_plugin_sdk import ActivationFlowSpec, ExtensionFieldSpec, ExtractionProfileSpec, Plugin, SourceSpec
 
 from .source import SteamPlayHistoryTimelineSource
 from .state import DEFAULT_MIN_SESSION_S, SteamPlayStateStore
@@ -94,174 +94,31 @@ def _format_minutes(seconds: int) -> str:
     return f"{minutes}m"
 
 
-def _activation_flow(prefix: str, t: Any) -> ActivationFlowSpec:
-    return ActivationFlowSpec(
-        title=t("activation.title", fallback="Enable Steam Play History"),
-        description=t(
-            "activation.description",
-            fallback=(
-                "Steam play history reveals gaming habits. Choose how the first sync should seed the timeline before "
-                "this source starts running. Exact sessions are inferred only after the source is enabled."
-            ),
-        ),
-        confirm_label=t("activation.confirm_label", fallback="Enable source"),
-        cancel_label=t("activation.cancel_label", fallback="Not now"),
-        enabled_key=f"{prefix}.enabled",
-        configured_key=f"{prefix}.initial_sync_configured",
-        fields=[
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_policy",
-                type="select",
-                label=t("settings.initial_sync_policy.label", fallback="First Sync Scope"),
-                description=t(
-                    "settings.initial_sync_policy.description",
-                    fallback="Decide how much previous Steam activity should be imported.",
-                ),
-                default="lookback_days",
-                options=[
-                    ExtensionFieldOption(
-                        label=t("settings.initial_sync_policy.options.full", fallback="Import all last-played summaries"),
-                        value="full",
-                    ),
-                    ExtensionFieldOption(
-                        label=t(
-                            "settings.initial_sync_policy.options.lookback_days",
-                            fallback="Import recent last-played summaries",
-                        ),
-                        value="lookback_days",
-                    ),
-                    ExtensionFieldOption(
-                        label=t("settings.initial_sync_policy.options.from_now", fallback="Only record play from now on"),
-                        value="from_now",
-                    ),
-                ],
-                section="activation",
-                surface="timeline",
-                order=10,
-            ),
-            ExtensionFieldSpec(
-                key=f"{prefix}.initial_sync_lookback_days",
-                type="number",
-                label=t("settings.initial_sync_lookback_days.label", fallback="Recent Days"),
-                description=t(
-                    "settings.initial_sync_lookback_days.description",
-                    fallback="Used when the first-sync scope is set to recent summaries.",
-                ),
-                default=14,
-                minimum=1,
-                section="activation",
-                surface="timeline",
-                order=20,
-                depends_on_key=f"{prefix}.initial_sync_policy",
-                depends_on_values=["lookback_days"],
-            ),
-        ],
-    )
+def _localize_field(field: ExtensionFieldSpec, t: Any) -> ExtensionFieldSpec:
+    """Translate presentation text while preserving the reviewed field contract."""
+    field = field.model_copy(deep=True)
+    key = f"settings.{field.key.rsplit('.', 1)[-1]}"
+    for attribute in ("label", "description"):
+        setattr(field, attribute, t(f"{key}.{attribute}", fallback=getattr(field, attribute)))
+    for option in field.options:
+        option.label = t(f"{key}.options.{option.value}", fallback=option.label)
+    return field
 
 
-def _fields(prefix: str, t: Any) -> list[ExtensionFieldSpec]:
+def _localized_fields(fields: list[ExtensionFieldSpec], t: Any) -> list[ExtensionFieldSpec]:
     return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label=t("settings.enabled.label", fallback="Enabled"),
-            description=t("settings.enabled.description", fallback="Whether Steam play history sync is active."),
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.steam_path",
-            type="path",
-            label=t("settings.steam_path.label", fallback="Steam Path"),
-            description=t(
-                "settings.steam_path.description",
-                fallback="Optional Steam install path. Leave empty to auto-detect the local Steam folder.",
-            ),
-            default="",
-            section="general",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_mode",
-            type="select",
-            label=t("settings.sync_mode.label", fallback="Sync Mode"),
-            description=t("settings.sync_mode.description", fallback="How Steam play history should be synchronized."),
-            default="interval",
-            options=[
-                ExtensionFieldOption(label=t("settings.sync_mode.options.manual", fallback="Manual"), value="manual"),
-                ExtensionFieldOption(label=t("settings.sync_mode.options.interval", fallback="Interval"), value="interval"),
-            ],
-            section="sync",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="number",
-            label=t("settings.sync_interval_minutes.label", fallback="Sync Interval (minutes)"),
-            description=t("settings.sync_interval_minutes.description", fallback="How often to poll Steam playtime changes."),
-            default=10,
-            minimum=1,
-            section="sync",
-            surface="timeline",
-            order=40,
-            depends_on_key=f"{prefix}.sync_mode",
-            depends_on_values=["interval"],
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.min_session_seconds",
-            type="number",
-            label=t("settings.min_session_seconds.label", fallback="Minimum Session Duration (seconds)"),
-            description=t("settings.min_session_seconds.description", fallback="Inferred play sessions shorter than this are ignored."),
-            default=DEFAULT_MIN_SESSION_S,
-            minimum=60,
-            section="sync",
-            surface="timeline",
-            order=50,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.idle_timeout_minutes",
-            type="number",
-            label=t("settings.idle_timeout_minutes.label", fallback="Idle Timeout (minutes)"),
-            description=t(
-                "settings.idle_timeout_minutes.description",
-                fallback="A session is closed after this many minutes without additional Steam playtime.",
-            ),
-            default=15,
-            minimum=2,
-            section="sync",
-            surface="timeline",
-            order=60,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.max_items_per_sync",
-            type="number",
-            label=t("settings.max_items_per_sync.label", fallback="Max Items Per Sync"),
-            description=t("settings.max_items_per_sync.description", fallback="Maximum number of Steam records to emit per sync."),
-            default=500,
-            minimum=1,
-            section="sync",
-            surface="timeline",
-            order=70,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.excluded_keywords",
-            type="tags",
-            label=t("settings.excluded_keywords.label", fallback="Excluded Game Keywords"),
-            description=t(
-                "settings.excluded_keywords.description",
-                fallback="Game names containing these case-insensitive keywords are skipped before AI analysis.",
-            ),
-            default=[],
-            section="privacy",
-            surface="timeline",
-            order=80,
-            placeholder="e.g. private",
-        ),
+        _localize_field(field, t)
+        for field in sorted(fields, key=lambda field: field.order)
+        if field.surface == "timeline" and field.section != "activation"
     ]
+
+
+def _localized_activation(flow: ActivationFlowSpec, t: Any) -> ActivationFlowSpec:
+    flow = flow.model_copy(deep=True)
+    for attribute in ("title", "description", "confirm_label", "cancel_label"):
+        setattr(flow, attribute, t(f"activation.{attribute}", fallback=getattr(flow, attribute)))
+    flow.fields = [_localize_field(field, t) for field in flow.fields]
+    return flow
 
 
 class SteamPlayHistoryPlugin(Plugin):
@@ -412,15 +269,16 @@ class SteamPlayHistoryPlugin(Plugin):
                     surface="timeline",
                     sync_mode=str(settings.get("sync_mode", DEFAULT_SETTINGS["sync_mode"])),
                     polling_mode="interval",
-                    fields=_fields(
-                        "sources.steam_play_history",
-                        self.t,
-                    ),
+                    fields=_localized_fields(self.manifest.settings_fields, self.t),
                     metadata={
                         "source_type": "steam_play_history",
-                        "default_settings": dict(DEFAULT_SETTINGS),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
                         "sync_interval_minutes": sync_interval,
-                        "activation_flow": _activation_flow("sources.steam_play_history", self.t).model_dump(),
+                        "activation_flow": _localized_activation(self.manifest.activation_flow, self.t).model_dump() if self.manifest.activation_flow is not None else None,
                         **GAME_RECORDS_CAPABILITY_METADATA,
                     },
                 ),

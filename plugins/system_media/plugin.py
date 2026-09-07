@@ -6,8 +6,6 @@ import sys
 from typing import Any
 
 from magi_plugin_sdk import (
-    ExtensionFieldOption,
-    ExtensionFieldSpec,
     ExtractionProfileSpec,
     Plugin,
     SourceSpec,
@@ -72,59 +70,6 @@ def _format_minutes(seconds: int) -> str:
         remainder = minutes % 60
         return f"{hours}h {remainder}m" if remainder else f"{hours}h"
     return f"{minutes}m"
-
-
-def _fields(prefix: str) -> list[ExtensionFieldSpec]:
-    """Settings fields for the system media plugin."""
-    return [
-        ExtensionFieldSpec(
-            key=f"{prefix}.enabled",
-            type="switch",
-            label="Enable Media Recording",
-            description="Automatically detect and record playback from apps that expose OS media controls. Some players may not be supported.",
-            default=False,
-            section="general",
-            surface="timeline",
-            order=10,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.sync_interval_minutes",
-            type="select",
-            label="Recording Frequency",
-            description="How often completed playback records are saved to memory.",
-            default="1",
-            options=[
-                ExtensionFieldOption(label="Every 1 minute", value="1"),
-                ExtensionFieldOption(label="Every 5 minutes", value="5"),
-                ExtensionFieldOption(label="Every 15 minutes", value="15"),
-            ],
-            section="sync",
-            surface="timeline",
-            order=20,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.min_session_seconds",
-            type="number",
-            label="Minimum Play Duration (seconds)",
-            description="Tracks played shorter than this are ignored (skipped songs won't be recorded).",
-            default=30,
-            minimum=5,
-            section="sync",
-            surface="timeline",
-            order=30,
-        ),
-        ExtensionFieldSpec(
-            key=f"{prefix}.pause_timeout_seconds",
-            type="number",
-            label="Pause Before Ending Record (seconds)",
-            description="When paused for longer than this, the current record is saved. 300 = 5 minutes.",
-            default=300,
-            minimum=30,
-            section="sync",
-            surface="timeline",
-            order=40,
-        ),
-    ]
 
 
 class SystemMediaPlugin(Plugin):
@@ -287,10 +232,18 @@ class SystemMediaPlugin(Plugin):
                     surface="timeline",
                     sync_mode="interval",
                     polling_mode="interval",
-                    fields=_fields("sources.system_media"),
+                    fields=[
+                        field.model_copy(deep=True)
+                        for field in sorted(self.manifest.settings_fields, key=lambda field: field.order)
+                        if field.surface == "timeline" and field.section != "activation"
+                    ],
                     metadata={
                         "source_type": "system_media",
-                        "default_settings": dict(DEFAULT_SETTINGS),
+                        "default_settings": {
+                            field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
+                            for field in self.manifest.settings_fields
+                            if field.key.startswith("sources.") and field.type != "secret"
+                        },
                         "sync_interval_minutes": sync_interval,
                         **LISTENING_HISTORY_CAPABILITY_METADATA,
                     },

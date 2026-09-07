@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -34,7 +36,7 @@ def _load_plugin_module() -> ModuleType:
 
 def test_get_settings_resources_declares_safari_permissions() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.SafariHistoryPlugin()
+    plugin = bind_test_plugin(plugin_mod.SafariHistoryPlugin())
 
     resources = plugin.get_settings_resources()
 
@@ -45,7 +47,7 @@ def test_get_settings_resources_declares_safari_permissions() -> None:
 
 def test_read_settings_resource_reports_full_disk_access(monkeypatch: pytest.MonkeyPatch) -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.SafariHistoryPlugin()
+    plugin = bind_test_plugin(plugin_mod.SafariHistoryPlugin())
     monkeypatch.setattr(plugin_mod, "_full_disk_access_status", lambda: "denied")
 
     payload = plugin.read_settings_resource("permissions")
@@ -111,7 +113,7 @@ def test_full_disk_access_status_reports_unknown_when_history_db_is_missing(
 
 def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.SafariHistoryPlugin()
+    plugin = bind_test_plugin(plugin_mod.SafariHistoryPlugin())
 
     with pytest.raises(KeyError):
         plugin.read_settings_resource("missing")
@@ -119,7 +121,7 @@ def test_read_settings_resource_unknown_resource_raises_key_error() -> None:
 
 def test_source_metadata_exposes_permissions_settings_block() -> None:
     plugin_mod = _load_plugin_module()
-    plugin = plugin_mod.SafariHistoryPlugin()
+    plugin = bind_test_plugin(plugin_mod.SafariHistoryPlugin())
     plugin.settings = {"sources": {"safari_history": {"source_path": "/tmp/Safari"}}}
 
     _, _, spec = plugin.get_sources()[0]

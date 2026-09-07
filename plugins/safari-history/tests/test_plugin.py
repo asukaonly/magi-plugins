@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sdk_test_support import bind_test_plugin
+
 import importlib.util
 import sys
 from pathlib import Path
@@ -27,7 +29,7 @@ def _load_plugin_class():
 
 def test_plugin_registers_browser_core_source_spec() -> None:
     cls = _load_plugin_class()
-    plugin = cls()
+    plugin = bind_test_plugin(cls())
     plugin.settings = {
         "sources": {
             "safari_history": {
@@ -57,7 +59,7 @@ def test_plugin_registers_browser_core_source_spec() -> None:
 
 def test_plugin_declares_safari_extraction_and_summary_profiles() -> None:
     cls = _load_plugin_class()
-    plugin = cls()
+    plugin = bind_test_plugin(cls())
     plugin.settings = {}
 
     profile = plugin.get_extraction_profiles()[0]

@@ -10,7 +10,7 @@ id = "codex"
 name = "Codex"
 name_i18n = { "zh-CN" = "Codex" }
 icon = "asset:assets/icon.svg"
-version = "0.3.0"
+version = "0.3.1"
 description = "Reads only your own messages from local Codex transcripts so Magi can learn what you build."
 description_i18n = { "zh-CN" = "仅读取本地 Codex 会话中你自己发送的内容，让 Magi 了解你在做什么" }
 author = "Magi Team"

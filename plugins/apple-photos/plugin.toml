@@ -10,7 +10,7 @@ id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
 icon = "asset:assets/icon.svg"
-version = "0.3.1"
+version = "0.3.3"
 description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
 author = "Magi Team"

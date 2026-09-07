@@ -10,7 +10,7 @@ id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "lucide:images"
-version = "0.3.1"
+version = "0.3.2"
 description = "Scans photo folders you choose and reads capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息" }
 author = "Magi Team"

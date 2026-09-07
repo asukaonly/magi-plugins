@@ -37,6 +37,7 @@ class LocalPhotosPlugin(Plugin):
         return [
             build_source_registration(
                 self.settings,
+                manifest=self.manifest,
                 source_type=DIRECTORY_SOURCE_TYPE,
                 entry_id="directory",
                 display_name="Local Photos",
