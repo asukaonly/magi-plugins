@@ -4875,9 +4875,9 @@
         "zh-CN": "屏幕快照时间线"
       },
       "icon": "lucide:scan",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "protocol_version": 2,
-      "min_sdk_version": "0.2.0",
+      "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
       "projection_sources": [
         "screenshot_timeline"
@@ -5253,7 +5253,7 @@
           "en": "Lets magi see what's on your screen"
         }
       },
-      "package_sha256": "79fa8f7667fbdf085e657171a2db0b28b3e90b372bb756429d70f9fe5dd03607"
+      "package_sha256": "8c9331cdf7cde86620fff6666759b09751987a05b5621b94a6b9ee2fe900e95b"
     },
     {
       "plugin_id": "steam-play-history",

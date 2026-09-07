@@ -21,6 +21,7 @@ uses the same calling pattern across sources.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -154,8 +155,22 @@ def build_screenshot_timeline_tool_classes(
                 {k: v for k, v in r.items() if v is not None}
                 for r in asset_refs
             ]
+            lines = [f"Resolved {len(file_paths)} screenshot(s); missing {len(missing_ids)}."]
+            if file_paths:
+                lines.append("Use the resolved paths as file_paths in prepare_chat_attachments to send them.")
+                lines.append("File references only; image contents have not been inspected.")
+                lines.append("Resolved files (capture_ref_id -> file_path; variant):")
+                for ref in asset_refs:
+                    variant = "thumbnail" if ref["file_path"] == ref.get("thumbnail_path") else "original"
+                    lines.append(f"{json.dumps(ref['asset_ref_id'], ensure_ascii=False)} -> {json.dumps(ref['file_path'], ensure_ascii=False)}; {variant}")
+            else:
+                lines.append("No files are available to attach.")
+            if missing_ids:
+                lines.append("Missing capture_ref_ids: " + json.dumps(missing_ids, ensure_ascii=False))
+
             return ToolResult(
                 success=True,
+                model_text="\n".join(lines),
                 data={
                     "asset_refs": asset_refs,
                     "assistant_payload": {"asset_refs": asset_refs},

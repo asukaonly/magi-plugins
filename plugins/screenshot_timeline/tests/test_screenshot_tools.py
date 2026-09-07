@@ -203,3 +203,37 @@ def test_recall_asset_refs_skips_event_without_source_item_id() -> None:
 def test_capture_id_cannot_traverse_resource_directory() -> None:
     mod = _load("screenshot_tools")
     assert mod._date_subpath_from_capture_id("20260528/../../../../private") is None
+
+
+@pytest.mark.asyncio
+async def test_model_text_retains_selected_variant_missing_ids_and_internal_refs(tmp_path: Path) -> None:
+    import json
+
+    tool = _make_tool(tmp_path)
+    capture_id = "20260528T150647_328216_54AQ"
+    _seed_capture(tmp_path, capture_id, with_original=False)
+    result = await tool.execute({"capture_ref_ids": [capture_id, "missing"]}, context=None)
+    text = result.model_text
+    assert "Resolved 1 screenshot(s); missing 1." in text
+    assert json.dumps(result.data["file_paths"][0], ensure_ascii=False) in text
+    assert f'"{capture_id}" ->' in text
+    assert "; thumbnail" in text
+    assert 'Missing capture_ref_ids: ["missing"]' in text
+    assert "prepare_chat_attachments" in text
+    assert "have not been inspected" in text
+    assert "assistant_payload" not in text
+    assert "original_path" not in text
+    assert result.data["assistant_payload"]["asset_refs"] == result.data["asset_refs"]
+    assert result.data["asset_refs"][0]["connection_id"] == "screens"
+
+
+@pytest.mark.asyncio
+async def test_model_text_empty_resolution_does_not_request_attachments(tmp_path: Path) -> None:
+    tool = _make_tool(tmp_path)
+    result = await tool.execute({"capture_ref_ids": ["missing"]}, context=None)
+    assert "Resolved 0 screenshot(s); missing 1." in result.model_text
+    assert "No files are available" in result.model_text
+    assert "prepare_chat_attachments" not in result.model_text
+    failed = await tool.execute({"capture_ref_ids": []}, context=None)
+    assert failed.success is False
+    assert failed.model_text is None

@@ -369,6 +369,12 @@
         "bin/magi-vision-helper"
       ]
     },
+    "screenshot_timeline@0.7.1": {
+      "package_sha256": "8c9331cdf7cde86620fff6666759b09751987a05b5621b94a6b9ee2fe900e95b",
+      "executable_paths": [
+        "bin/magi-vision-helper"
+      ]
+    },
     "steam-play-history@0.1.1": {
       "package_sha256": "06e4af4cbf7d53d733b93e174bccfbab46917cc42e248c536c688a48b5410add",
       "executable_paths": []

@@ -3,14 +3,14 @@ settings_actions = [{ "action_id" = "request_permissions", "label" = "System per
 settings_resources = [{ "resource_name" = "permissions", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Live macOS permission grants required by the screenshot timeline plugin.", "metadata" = {  } }]
 settings_ui_blocks = [{ "block_id" = "macos_permissions", "type" = "resource_picker", "title" = "macOS Permissions", "description" = "Screen Recording is required for capture. Accessibility is optional, and provides window titles and structured on-screen text.", "resource_name" = "permissions", "value_key" = "_readonly", "presentation" = "permission_status", "depends_on_values" = [] }]
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.1"
 execution_mode = "trusted_process"
 projection_sources = ["screenshot_timeline"]
 id = "screenshot_timeline"
 name = "Screenshot Timeline"
 name_i18n = { "zh-CN" = "屏幕快照时间线" }
 icon = "lucide:scan"
-version = "0.7.0"
+version = "0.7.1"
 description = "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days."
 description_i18n = { "zh-CN" = "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。" }
 author = "Magi Team"

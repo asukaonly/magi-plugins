@@ -102,3 +102,12 @@ echo '{"id":"req_1","op":"probe_active_window"}' | ./bin/magi-vision-helper
 ## License
 
 MIT — same as the magi project.
+
+
+### Resolver observations
+
+The capture resolver requires SDK 0.2.1. Its `model_text` exposes each capture
+ID and selected file path, whether the file is an original or thumbnail, and
+unresolved IDs. This resolves references only; it does not inspect image pixels.
+Complete `asset_refs`, `assistant_payload` and `file_paths` remain in `data`
+for attachment preparation and runtime evidence.

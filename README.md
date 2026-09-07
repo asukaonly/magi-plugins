@@ -81,7 +81,7 @@ the model on success and retains canonical results for evidence and downstream
 consumers. Failures keep host-owned error codes and recovery details. Include
 IDs, paths, missing items and any limitations needed for the next call.
 
-Photo resolvers use this field to avoid repeating asset references inside the
+Photo and screenshot resolvers use this field to avoid repeating asset references inside the
 model context. They expose reference-to-path mappings and unresolved IDs while
 retaining complete attachment metadata internally. Source ingestion, memory
 projections, channel delivery and settings responses remain typed data; they
