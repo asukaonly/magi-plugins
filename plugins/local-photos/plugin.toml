@@ -3,14 +3,14 @@ settings_actions = []
 settings_resources = []
 settings_ui_blocks = []
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.1"
 execution_mode = "trusted_process"
 projection_sources = ["photo_library_directory"]
 id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "lucide:images"
-version = "0.3.0"
+version = "0.3.1"
 description = "Scans photo folders you choose and reads capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息" }
 author = "Magi Team"

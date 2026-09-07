@@ -7,7 +7,8 @@ This is a **companion repository** to the [Magi](https://github.com/asukaonly/ma
 ## Connection runtime
 
 All 22 plugins and three independently installed libraries target plugin protocol
-2 and `magi-plugin-sdk` 0.2.0. A package is installed once; each configured
+2. Packages declare their minimum `magi-plugin-sdk` version; model observations
+require 0.2.1. A package is installed once; each configured
 connection owns separate settings, credentials, state, and resources. There is
 no legacy-plugin adapter or historical-data migration.
 
@@ -72,9 +73,23 @@ Magi App  →  Settings → Extensions → Marketplace
    connection. Its worker receives the explicit connection, private directories,
    and scoped credential port. Additional accounts use additional connections.
 
+## Model observations
+
+SDK 0.2.1 lets tools return optional `model_text` beside complete `data`;
+operations use `model_text` beside `value`. The host sends the bounded text to
+the model on success and retains canonical results for evidence and downstream
+consumers. Failures keep host-owned error codes and recovery details. Include
+IDs, paths, missing items and any limitations needed for the next call.
+
+Photo resolvers use this field to avoid repeating asset references inside the
+model context. They expose reference-to-path mappings and unresolved IDs while
+retaining complete attachment metadata internally. Source ingestion, memory
+projections, channel delivery and settings responses remain typed data; they
+are not tool observations and should not be converted to Markdown.
+
 ## Package coverage
 
-All packages below declare protocol 2 and SDK 0.2.0. Libraries remain separate
+All packages below declare protocol 2 and their required minimum SDK version. Libraries remain separate
 installable dependencies. “Form” means a declarative initial activation flow;
 actions and resources are listed only when callable before enable. Every package
 also declares its complete settings schema (an empty list when none is needed).

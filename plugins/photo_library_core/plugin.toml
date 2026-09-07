@@ -4,14 +4,14 @@ settings_actions = []
 settings_resources = []
 settings_ui_blocks = []
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.1"
 execution_mode = "trusted_process"
 projection_sources = []
 id = "photo_library_core"
 name = "Photo Library Core"
 name_i18n = { "zh-CN" = "照片来源核心库" }
 icon = "lucide:images"
-version = "0.3.0"
+version = "0.3.1"
 description = "Shared photo ingestion and metadata processing used by the Local Photos and Apple Photos plugins. Installed automatically as a dependency."
 description_i18n = { "zh-CN" = "本地照片和 Apple Photos 共用的照片读取与元数据处理能力。作为依赖自动安装。" }
 author = "Magi Team"

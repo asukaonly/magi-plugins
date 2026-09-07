@@ -12,7 +12,9 @@ from unittest.mock import patch
 
 import pytest
 from magi_plugin_sdk import ExtensionFieldSpec, PluginManifest, Source
-from magi_plugin_sdk.runtime import OperationSpec
+from magi_plugin_sdk.runtime import SDK_VERSION, OperationSpec
+from magi_plugin_sdk.tools import ToolResult
+from magi_plugin_sdk.versioning import parse_plugin_version
 from sdk_test_support import bind_test_plugin, load_plugin
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,7 +32,7 @@ DECLARATION_CASES = [
 def test_package_uses_explicit_protocol_and_public_sdk(path: Path) -> None:
     meta = tomllib.loads(path.read_text())["plugin"]
     assert meta["protocol_version"] == 2
-    assert meta["min_sdk_version"] == "0.2.0"
+    assert parse_plugin_version(meta["min_sdk_version"]) <= parse_plugin_version(SDK_VERSION)
     assert meta["execution_mode"] == "trusted_process"
     assert isinstance(meta["projection_sources"], list)
     assert isinstance(meta["settings_fields"], list)
@@ -318,3 +320,9 @@ def test_internal_source_controls_are_declared(directory: str, keys: set[str]) -
     meta = tomllib.loads((ROOT / "plugins" / directory / "plugin.toml").read_text())["plugin"]
     declared = {entry["key"] for entry in meta["settings_fields"]}
     assert {f"sources.{directory}.{key}" for key in keys} <= declared
+
+
+def test_sdk_exposes_separate_model_observation_contract() -> None:
+    result = ToolResult(success=True, data={"id": "original"}, model_text="Readable result")
+    assert result.model_text == "Readable result"
+    assert result.data == {"id": "original"}

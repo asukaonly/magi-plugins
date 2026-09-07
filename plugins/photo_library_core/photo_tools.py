@@ -1,6 +1,7 @@
 """Resolver tools shared by the local and Apple photo plugins."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -198,8 +199,23 @@ def _build_photo_tool_classes(
                 summary += " photo_library source_paths are not configured; skipped non-Apple Photos refs."
             summary += " Call prepare_chat_attachments with file_paths to send them in chat."
 
+            lines = [f"Resolved {len(file_paths)} photo(s); missing {len(missing_ids)}."]
+            if file_paths:
+                lines.append("Use the resolved paths as file_paths in prepare_chat_attachments to send them.")
+                lines.append("File references only; image contents have not been inspected.")
+                lines.append("Resolved files (asset_ref_id -> file_path):")
+                for item in resolved_items:
+                    path = str(item.get("path") or "")
+                    if path:
+                        lines.append(f"{json.dumps(_asset_ref_id(item), ensure_ascii=False)} -> {json.dumps(path, ensure_ascii=False)}")
+            else:
+                lines.append("No files are available to attach.")
+            if missing_ids:
+                lines.append("Missing asset_ref_ids: " + json.dumps(missing_ids, ensure_ascii=False))
+
             return ToolResult(
                 success=True,
+                model_text="\n".join(lines),
                 data={
                     "asset_refs": resolved_refs,
                     "assistant_payload": {"asset_refs": resolved_refs},

@@ -42,9 +42,9 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkFwcGxlIFBob3RvczwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOS4yIiBmaWxsPSIjZmZmIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iI0VGNDQ0NCIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNGOTczMTYiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNFQUIzMDgiIHRyYW5zZm9ybT0icm90YXRlKDkwIDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiMyMkM1NUUiIHRyYW5zZm9ybT0icm90YXRlKDEzNSAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjMzhCREY4IiB0cmFuc2Zvcm09InJvdGF0ZSgxODAgMTIgMTIpIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iIzYzNjZGMSIgdHJhbnNmb3JtPSJyb3RhdGUoMjI1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNBODU1RjciIHRyYW5zZm9ybT0icm90YXRlKDI3MCAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjRUM0ODk5IiB0cmFuc2Zvcm09InJvdGF0ZSgzMTUgMTIgMTIpIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMi4yNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEuMTUiIGZpbGw9IiM5Q0EzQUYiLz48L3N2Zz4K",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
-      "min_sdk_version": "0.2.0",
+      "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
       "projection_sources": [
         "photo_library_apple_photos"
@@ -436,7 +436,7 @@
           }
         ]
       },
-      "package_sha256": "d72e98a39e95e78d725f0db09b981a2abac6a616adade53378aad7bf839c91ec"
+      "package_sha256": "7b9077e61e22cd13da00ddaacb3fa68faa418553afacc263304af873134a285c"
     },
     {
       "plugin_id": "browser_history_core",
@@ -3341,9 +3341,9 @@
         "zh-CN": "本地照片"
       },
       "icon": "lucide:images",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
-      "min_sdk_version": "0.2.0",
+      "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
       "projection_sources": [
         "photo_library_directory"
@@ -3738,7 +3738,7 @@
           }
         ]
       },
-      "package_sha256": "c9f2ce3fed462c25a47cbf86c2b2ff59da7bd49bddd237822e094e6872bf5dad"
+      "package_sha256": "bd4083527d3aff03c052fce155a70d4e5751d93e4820bb4428d312ee86e48d93"
     },
     {
       "plugin_id": "netease-music",
@@ -4322,9 +4322,9 @@
         "zh-CN": "照片来源核心库"
       },
       "icon": "lucide:images",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "protocol_version": 2,
-      "min_sdk_version": "0.2.0",
+      "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
       "projection_sources": [],
       "settings_fields": [],
@@ -4344,7 +4344,7 @@
         "macos",
         "windows"
       ],
-      "package_sha256": "d44c5a79786aa70b6173096ac9cc733803c907f94571f30a52557929e8a044a4"
+      "package_sha256": "ab19a80204c292f22c7af841b7b0905a0c5de00cb1a983168b1565b5514192a5"
     },
     {
       "plugin_id": "safari-history",

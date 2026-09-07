@@ -114,3 +114,45 @@ def test_recall_refs_preserve_host_connection_and_native_session_id() -> None:
     assert ref["connection_id"] == "photos-a"
     assert ref["source_item_id"] == "native-photo"
     assert ref["attributes"]["session_source_item_id"] == "native-session"
+
+
+def test_model_text_preserves_paths_and_missing_ids_without_duplicate_payloads() -> None:
+    import json
+
+    source_path = '/photos/旅行 "album"'
+    tool_class = build_local_photo_tool_classes({"source_paths": [source_path]}, connection_id="photos")[0]
+    tool_class._reader_factory = _DirectoryReader
+    result = _run(tool_class(), ["dir-1", "missing"])
+    text = result.model_text
+    assert "Resolved 1 photo(s); missing 1." in text
+    assert json.dumps(result.data["file_paths"][0], ensure_ascii=False) in text
+    assert '"dir-1" ->' in text
+    assert 'Missing asset_ref_ids: ["missing"]' in text
+    assert "prepare_chat_attachments" in text
+    assert "have not been inspected" in text
+    assert "assistant_payload" not in text
+    assert "captured_at" not in text
+    assert result.data["assistant_payload"]["asset_refs"] == result.data["asset_refs"]
+    assert result.data["asset_refs"][0]["connection_id"] == "photos"
+
+
+def test_model_text_reports_empty_resolution_and_validation_failure() -> None:
+    tool_class = build_local_photo_tool_classes({"source_paths": ["/photos"]}, connection_id="photos")[0]
+    tool_class._reader_factory = _DirectoryReader
+    result = _run(tool_class(), ["unknown"])
+    assert "Resolved 0 photo(s); missing 1." in result.model_text
+    assert "No files are available" in result.model_text
+    assert "prepare_chat_attachments" not in result.model_text
+    assert result.data["missing_asset_ref_ids"] == ["unknown"]
+    invalid = _run(tool_class(), [])
+    assert invalid.success is False
+    assert invalid.model_text is None
+
+
+def test_apple_model_text_preserves_native_reference_identity() -> None:
+    tool_class = build_apple_photo_tool_classes({}, connection_id="apple")[0]
+    tool_class._apple_reader_factory = _AppleReader
+    result = _run(tool_class(), ["apple-photos:A", "dir-1"])
+    assert '\"apple-photos:A\" -> \"/photos/apple-photos:A.HEIC\"' in result.model_text
+    assert 'Missing asset_ref_ids: ["dir-1"]' in result.model_text
+    assert result.data["asset_refs"][0]["connection_id"] == "apple"

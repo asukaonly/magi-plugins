@@ -73,8 +73,9 @@ Key public contracts live under `sdk/src/magi_plugin_sdk/` in the main repo:
 - `sources.py`, `channels.py`, `history_imports.py`: source, channel, and bounded archive authoring.
 - `contracts.py`: strict manifest, settings, extraction and registry declarations.
 
-All packages explicitly declare `protocol_version = 2`, `min_sdk_version = "0.2.0"`,
-`execution_mode`, and `projection_sources`. Existing native/filesystem/network
+All packages explicitly declare `protocol_version = 2`, `min_sdk_version`,
+`execution_mode`, and `projection_sources`. Declare the minimum SDK needed by
+the package; `model_text` requires `min_sdk_version = "0.2.1"`. Existing native/filesystem/network
 packages require `trusted_process` and explicit host trust. A process boundary
 alone is not a sandbox. Never add a legacy alias, adapter, or data migration.
 
@@ -167,7 +168,7 @@ plugins/<plugin_name>/
 |-------|----------|-------------|
 | `id` | Yes | Unique identifier accepted by the SDK |
 | `protocol_version` | Yes | Explicit `2`; no old manifest fallback |
-| `min_sdk_version` | Yes | Explicit `"0.2.0"` |
+| `min_sdk_version` | Yes | Explicit minimum SDK version; `"0.2.1"` for `model_text` |
 | `execution_mode` | Yes | Existing packages declare `trusted_process`; host trust is required |
 | `projection_sources` | Yes | Semantic source selectors; grants remain host-owned |
 | `settings_fields` | Yes | Complete declarative schema, including hidden controls and secret keys |

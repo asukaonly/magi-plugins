@@ -3,14 +3,14 @@ settings_actions = []
 settings_resources = [{ "resource_name" = "apple_photos_permissions", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Live dependency and permission status for Apple Photos.", "metadata" = {  } }]
 settings_ui_blocks = [{ "block_id" = "apple_photos_permissions", "type" = "resource_picker", "title" = "Apple Photos Access", "description" = "Apple Photos needs the local reader dependency and macOS permission to read the Photos library.", "resource_name" = "apple_photos_permissions", "value_key" = "_readonly", "presentation" = "permission_status", "depends_on_values" = [] }]
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.1"
 execution_mode = "trusted_process"
 projection_sources = ["photo_library_apple_photos"]
 id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
 icon = "asset:assets/icon.svg"
-version = "0.3.0"
+version = "0.3.1"
 description = "Reads your macOS Photos library and extracts capture time, location, and camera metadata."
 description_i18n = { "zh-CN" = "读取 macOS 照片图库，提取拍摄时间、地点和设备信息" }
 author = "Magi Team"
