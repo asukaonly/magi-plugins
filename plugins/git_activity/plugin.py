@@ -279,6 +279,7 @@ class GitActivityPlugin(Plugin):
                     ],
                     metadata={
                         "source_type": "git_activity",
+                        "remote_collection": "source.change.v1",
                         "default_settings": {
                             field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
                             for field in self.manifest.settings_fields

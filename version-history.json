@@ -225,6 +225,10 @@
       "package_sha256": "bb7174f948df0a432c353ac3120df07c0ccb5a3d966f2a02731e702f1147aefe",
       "executable_paths": []
     },
+    "git-activity@0.3.2": {
+      "package_sha256": "c1b1de62e678d93aacdbbaf22f1f59fa27da02a75734f3739179d4bb150b04c9",
+      "executable_paths": []
+    },
     "github-activity@0.1.1": {
       "package_sha256": "e7a3e64ee2129962ddfea5f227819916eec6b3116dfbcae333a78719d948f6c2",
       "executable_paths": []
