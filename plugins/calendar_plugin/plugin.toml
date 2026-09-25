@@ -10,9 +10,9 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "lucide:calendar-days"
-version = "0.3.1"
-description = "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans."
-description_i18n = { "zh-CN" = "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划" }
+version = "0.3.2"
+description = "Your events and reminders"
+description_i18n = { "zh-CN" = "你的日程和提醒" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "CalendarPlugin"

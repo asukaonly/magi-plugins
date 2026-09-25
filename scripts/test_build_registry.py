@@ -216,10 +216,16 @@ def test_brand_plugins_embed_safe_package_owned_icons() -> None:
             official_ids=set(),
         )
         assert entry is not None
-        assert entry["icon"] == "asset:assets/icon.svg"
         prefix, encoded = entry["icon_data"].split(",", 1)
-        assert prefix == "data:image/svg+xml;base64"
-        assert base64.b64decode(encoded).lstrip().startswith(b"<svg")
+        payload = base64.b64decode(encoded)
+        if plugin_dir in {"edge-history", "steam_play_history"}:
+            assert entry["icon"] == "asset:assets/icon.png"
+            assert prefix == "data:image/png;base64"
+            assert payload.startswith(b"\x89PNG\r\n\x1a\n")
+        else:
+            assert entry["icon"] == "asset:assets/icon.svg"
+            assert prefix == "data:image/svg+xml;base64"
+            assert payload.lstrip().startswith(b"<svg")
 
 
 def test_every_plugin_declares_a_supported_icon_source() -> None:

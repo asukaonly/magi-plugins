@@ -7,12 +7,12 @@ min_sdk_version = "0.2.0"
 execution_mode = "trusted_process"
 projection_sources = ["obsidian_vault", "obsidian_vault_search"]
 id = "obsidian-vault"
-name = "Obsidian Vault"
-name_i18n = { "zh-CN" = "Obsidian 笔记库" }
+name = "Obsidian"
+name_i18n = { "zh-CN" = "Obsidian" }
 icon = "asset:assets/icon.svg"
-version = "0.3.1"
-description = "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder."
-description_i18n = { "zh-CN" = "可选。在本地读取 Obsidian 笔记库的 markdown（含 wikilink、标签、frontmatter），让 Magi 把你写的内容和其他活动连起来。默认关闭；笔记不出本机，任意文件夹都可排除。" }
+version = "0.3.2"
+description = "Notes in your vault"
+description_i18n = { "zh-CN" = "笔记库中的笔记内容" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ObsidianVaultPlugin"

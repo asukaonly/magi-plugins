@@ -7,12 +7,12 @@ min_sdk_version = "0.2.0"
 execution_mode = "trusted_process"
 projection_sources = ["system_media"]
 id = "system-media"
-name = "Local Now Playing"
-name_i18n = { "zh-CN" = "本机正在播放" }
+name = "Now Playing"
+name_i18n = { "zh-CN" = "正在播放" }
 icon = "lucide:music"
-version = "0.3.2"
-description = "Records music currently playing on this device through system media controls."
-description_i18n = { "zh-CN" = "通过系统媒体控制记录本机正在播放的音乐" }
+version = "0.3.3"
+description = "Music playing on this device"
+description_i18n = { "zh-CN" = "本机正在播放的音乐" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "SystemMediaPlugin"

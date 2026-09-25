@@ -7,12 +7,12 @@ min_sdk_version = "0.2.0"
 execution_mode = "trusted_process"
 projection_sources = ["git_activity"]
 id = "git-activity"
-name = "Git Activity"
-name_i18n = { "zh-CN" = "Git 活动" }
+name = "Git"
+name_i18n = { "zh-CN" = "Git" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
-description = "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow."
-description_i18n = { "zh-CN" = "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流" }
+version = "0.3.3"
+description = "Code commits and branch activity"
+description_i18n = { "zh-CN" = "代码提交和分支活动" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "GitActivityPlugin"

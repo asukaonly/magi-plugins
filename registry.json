@@ -42,7 +42,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkFwcGxlIFBob3RvczwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOS4yIiBmaWxsPSIjZmZmIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iI0VGNDQ0NCIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNGOTczMTYiIHRyYW5zZm9ybT0icm90YXRlKDQ1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNFQUIzMDgiIHRyYW5zZm9ybT0icm90YXRlKDkwIDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiMyMkM1NUUiIHRyYW5zZm9ybT0icm90YXRlKDEzNSAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjMzhCREY4IiB0cmFuc2Zvcm09InJvdGF0ZSgxODAgMTIgMTIpIi8+PGVsbGlwc2UgY3g9IjEyIiBjeT0iNi4xIiByeD0iMi4wNSIgcnk9IjQuMSIgZmlsbD0iIzYzNjZGMSIgdHJhbnNmb3JtPSJyb3RhdGUoMjI1IDEyIDEyKSIvPjxlbGxpcHNlIGN4PSIxMiIgY3k9IjYuMSIgcng9IjIuMDUiIHJ5PSI0LjEiIGZpbGw9IiNBODU1RjciIHRyYW5zZm9ybT0icm90YXRlKDI3MCAxMiAxMikiLz48ZWxsaXBzZSBjeD0iMTIiIGN5PSI2LjEiIHJ4PSIyLjA1IiByeT0iNC4xIiBmaWxsPSIjRUM0ODk5IiB0cmFuc2Zvcm09InJvdGF0ZSgzMTUgMTIgMTIpIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMi4yNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEuMTUiIGZpbGw9IiM5Q0EzQUYiLz48L3N2Zz4K",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "protocol_version": 2,
       "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
@@ -323,9 +323,9 @@
         }
       },
       "path": "plugins/apple-photos",
-      "description": "Reads your macOS Photos library and extracts capture time, location, and camera metadata.",
+      "description": "Photo capture dates and locations",
       "description_i18n": {
-        "zh-CN": "读取 macOS 照片图库，提取拍摄时间、地点和设备信息"
+        "zh-CN": "照片的拍摄时间和地点"
       },
       "author": "Magi Team",
       "official": true,
@@ -436,7 +436,7 @@
           }
         ]
       },
-      "package_sha256": "e578b0b9de6d653d02380e83b02444f20c169c4232063ae29c4fc49d7d9eff18"
+      "package_sha256": "3507ff6e09563d4a6fdf40f2222106709388b2188de6db605e480c88681fef60"
     },
     {
       "plugin_id": "browser_history_core",
@@ -476,7 +476,7 @@
         "zh-CN": "日历"
       },
       "icon": "lucide:calendar-days",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -649,9 +649,9 @@
         }
       },
       "path": "plugins/calendar_plugin",
-      "description": "Reads your calendar events and reminders so Magi can understand your schedule, meetings, and daily plans.",
+      "description": "Your events and reminders",
       "description_i18n": {
-        "zh-CN": "读取日历中的事件和提醒，帮助 Magi 了解你的日程安排、会议记录和每日计划"
+        "zh-CN": "你的日程和提醒"
       },
       "author": "Magi Team",
       "official": true,
@@ -744,7 +744,7 @@
           }
         ]
       },
-      "package_sha256": "479c691e012dc0fd1428e3843313490e57a36cdd0c6c89319297eddaac274a68"
+      "package_sha256": "59d31d148963d9f99c31103eb9d817fd4b1eb0b906538adc1ff7cb2b5f5df1af"
     },
     {
       "plugin_id": "chatgpt-history",
@@ -810,13 +810,13 @@
     },
     {
       "plugin_id": "chrome-history",
-      "name": "Chrome History",
+      "name": "Chrome",
       "name_i18n": {
-        "zh-CN": "Chrome 浏览器历史"
+        "zh-CN": "Chrome"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdvb2dsZSBDaHJvbWU8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTEyIDJhMTAgMTAgMCAwIDEgOC42NiA1SDEyYTUgNSAwIDAgMC00LjMzIDIuNUw1LjE3IDUuMTdBOS45NiA5Ljk2IDAgMCAxIDEyIDJaIi8+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTIwLjY2IDdBMTAgMTAgMCAwIDEgMTIgMjJsNC4zMy03LjVBNSA1IDAgMCAwIDEyIDdoOC42NloiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMTIgMjJBMTAgMTAgMCAwIDEgNS4xNyA1LjE3bDQuMzMgNy41QTUgNSAwIDAgMCAxNi4zMyAxNC41TDEyIDIyWiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjUuMTUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIzLjg1IiBmaWxsPSIjNDI4NUY0Ii8+PC9zdmc+Cg==",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -1091,9 +1091,9 @@
         }
       },
       "path": "plugins/chrome-history",
-      "description": "Reads your local Chrome browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description": "Pages you've visited",
       "description_i18n": {
-        "zh-CN": "读取本地 Chrome 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+        "zh-CN": "你浏览过的网页"
       },
       "author": "Magi Team",
       "official": true,
@@ -1190,8 +1190,8 @@
               "en": "Continue from the topics you have been exploring recently"
             },
             "scope": {
-              "zh": "最近 7 天的页面标题和时间",
-              "en": "Page titles and timestamps from the last 7 days"
+              "zh": "最近 7 天的浏览记录，包括网页标题、网址和访问时间",
+              "en": "Browsing records from the last 7 days, including page titles, URLs and visit times"
             }
           }
         },
@@ -1205,7 +1205,7 @@
           }
         ]
       },
-      "package_sha256": "721c205a09dc552a04ac8772b586c2c74f69dd7ae2daf1cf24987c2a6443c10c"
+      "package_sha256": "5a78e99159ba7ad2ba16ed3ccffd19182de078bcda1aa364afc9ddbdfdd74624"
     },
     {
       "plugin_id": "claude-code",
@@ -1215,7 +1215,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkNsYXVkZSBDb2RlPC90aXRsZT48cGF0aCBmaWxsPSIjRDk3NzU3IiBkPSJNMjEgMTAuNWgzdjNoLTN2M2gtMS41djNIMTh2LTNoLTEuNXYzSDE1di0zSDl2M0g3LjV2LTNINnYzSDQuNXYtM0gzdi0zSDB2LTNoM3YtNmgxOFptLTE1IDBoMS41di0zSDZabTEwLjUgMEgxOHYtM2gtMS41eiIvPjwvc3ZnPgo=",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -1338,9 +1338,9 @@
         }
       },
       "path": "plugins/claude-code",
-      "description": "Reads only your own messages from local Claude Code transcripts so Magi can learn what you build.",
+      "description": "Your messages in coding conversations",
       "description_i18n": {
-        "zh-CN": "仅读取本地 Claude Code 会话中你自己发送的内容，让 Magi 了解你在做什么"
+        "zh-CN": "你在编程对话中发送的内容"
       },
       "author": "Magi Team",
       "official": false,
@@ -1451,7 +1451,7 @@
           }
         ]
       },
-      "package_sha256": "fc524770bdd3fb9934e1427ceb6bc2ddcecae68d12113e84d6373d6ebc046e21"
+      "package_sha256": "cf7d9a83f9b80c45e211e0d0537a46c8c301ba325cfbf235a2a614bc23380313"
     },
     {
       "plugin_id": "codex",
@@ -1461,7 +1461,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbC1ydWxlPSJldmVub2RkIj48dGl0bGU+Q29kZXg8L3RpdGxlPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZmZmIi8+PHBhdGggZmlsbD0iIzExMTgyNyIgZD0iTTkuMjA1IDguNjU4di0yLjI2YzAtLjE5LjA3Mi0uMzMzLjIzOC0uNDI4bDQuNTQzLTIuNjE2Yy42MTktLjM1NyAxLjM1Ni0uNTIzIDIuMTE3LS41MjMgMi44NTQgMCA0LjY2MiAyLjIxMiA0LjY2MiA0LjU2NiAwIC4xNjcgMCAuMzU3LS4wMjQuNTQ3bC00LjcxLTIuNzU5YS43OTcuNzk3IDAgMCAwLS44NTYgMGwtNS45NyAzLjQ3M1ptMTAuNjA5IDguOFYxMi4wNmMwLS4zMzMtLjE0My0uNTctLjQyOS0uNzM3bC01Ljk3LTMuNDczIDEuOTUtMS4xMThhLjQzMy40MzMgMCAwIDEgLjQ3NiAwbDQuNTQzIDIuNjE3YzEuMzA5Ljc2IDIuMTg5IDIuMzc4IDIuMTg5IDMuOTQ4IDAgMS44MDgtMS4wNyAzLjQ3My0yLjc2IDQuMTYzWk03LjgwMiAxMi43MDNsLTEuOTUtMS4xNDJjLS4xNjctLjA5NS0uMjM5LS4yMzgtLjIzOS0uNDI4VjUuODk5YzAtMi41NDUgMS45NS00LjQ3MiA0LjU5MS00LjQ3MiAxIDAgMS45MjcuMzMzIDIuNzEyLjkyOEw4LjIzIDUuMDY3Yy0uMjg1LjE2Ni0uNDI4LjQwNC0uNDI4LjczN3Y2Ljg5OFpNMTIgMTUuMTI4bC0yLjc5NS0xLjU3di0zLjMzTDEyIDguNjU4bDIuNzk1IDEuNTd2My4zM0wxMiAxNS4xMjhabTEuNzk2IDcuMjNjLTEgMC0xLjkyNy0uMzMyLTIuNzEyLS45MjdsNC42ODYtMi43MTJjLjI4NS0uMTY2LjQyOC0uNDA0LjQyOC0uNzM3di02Ljg5OGwxLjk3NCAxLjE0MmMuMTY3LjA5NS4yMzguMjM4LjIzOC40Mjh2NS4yMzNjMCAyLjU0NS0xLjk3NCA0LjQ3Mi00LjYxNCA0LjQ3MlptLTUuNjM3LTUuMzAzLTQuNTQ0LTIuNjE3Yy0xLjMwOC0uNzYxLTIuMTg4LTIuMzc4LTIuMTg4LTMuOTQ4QTQuNDgyIDQuNDgyIDAgMCAxIDQuMjEgNi4zMjd2NS40MjNjMCAuMzMzLjE0My41NzEuNDI4LjczOGw1Ljk0NyAzLjQ0OS0xLjk1IDEuMTE4YS40MzIuNDMyIDAgMCAxLS40NzYgMFptLS4yNjIgMy45Yy0yLjY4OCAwLTQuNjYyLTIuMDIxLTQuNjYyLTQuNTE5IDAtLjE5LjAyNC0uMzguMDQ3LS41N2w0LjY4NiAyLjcxYy4yODYuMTY3LjU3MS4xNjcuODU2IDBsNS45Ny0zLjQ0OHYyLjI2YzAgLjE5LS4wNy4zMzMtLjIzNy40MjhsLTQuNTQzIDIuNjE2Yy0uNjE5LjM1Ny0xLjM1Ni41MjMtMi4xMTcuNTIzWm01Ljg5OSAyLjgzYTUuOTQ3IDUuOTQ3IDAgMCAwIDUuODI3LTQuNzU2QzIyLjI4NyAxOC4zMzkgMjQgMTUuODQgMjQgMTMuMjk2YzAtMS42NjUtLjcxMy0zLjI4Mi0xLjk5OC00LjQ0OC4xMTktLjUuMTktLjk5OS4xOS0xLjQ5OCAwLTMuNDAxLTIuNzU5LTUuOTQ3LTUuOTQ2LTUuOTQ3LS42NDIgMC0xLjI2LjA5NS0xLjg4LjMxQTUuOTYyIDUuOTYyIDAgMCAwIDEwLjIwNSAwYTUuOTQ3IDUuOTQ3IDAgMCAwLTUuODI3IDQuNzU3QzEuNzEzIDUuNDQ3IDAgNy45NDUgMCAxMC40OWMwIDEuNjY2LjcxMyAzLjI4MyAxLjk5OCA0LjQ0OC0uMTE5LjUtLjE5IDEtLjE5IDEuNDk5IDAgMy40MDEgMi43NTkgNS45NDYgNS45NDYgNS45NDYuNjQyIDAgMS4yNi0uMDk1IDEuODgtLjMwOWE1Ljk2IDUuOTYgMCAwIDAgNC4xNjIgMS43MTNaIi8+PC9zdmc+Cg==",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -1584,9 +1584,9 @@
         }
       },
       "path": "plugins/codex",
-      "description": "Reads only your own messages from local Codex transcripts so Magi can learn what you build.",
+      "description": "Your messages in coding conversations",
       "description_i18n": {
-        "zh-CN": "仅读取本地 Codex 会话中你自己发送的内容，让 Magi 了解你在做什么"
+        "zh-CN": "你在编程对话中发送的内容"
       },
       "author": "Magi Team",
       "official": false,
@@ -1697,17 +1697,17 @@
           }
         ]
       },
-      "package_sha256": "262fb6f81b222dd67f10459dd0dda77149d51c05483239f7905b4d37e97e2545"
+      "package_sha256": "75600137a2f53f2a38583af44d4ea6b0a742beaf4a2f241e05805101872a10b4"
     },
     {
       "plugin_id": "edge-history",
-      "name": "Edge History",
+      "name": "Microsoft Edge",
       "name_i18n": {
-        "zh-CN": "Edge 浏览器历史"
+        "zh-CN": "Microsoft Edge"
       },
-      "icon": "asset:assets/icon.svg",
-      "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk1pY3Jvc29mdCBFZGdlPC90aXRsZT48cGF0aCBmaWxsPSIjMEM1OUE0IiBkPSJNMjEuNCAxNS4zQTkuOCA5LjggMCAwIDAgMy4zIDcuOGMxLjgtMiA0LjYtMy4yIDcuNy0yLjggMy40LjQgNS44IDIuNiA2LjUgNS4zSDguMWMuNS0xLjYgMi0yLjcgMy44LTIuNyAxLjIgMCAyLjMuNSAzIDEuM2gyLjRDMTYuMiA2LjYgMTQgNS4yIDExLjQgNS4yYy00LjIgMC03LjYgMy4zLTcuNiA3LjQgMCAuMyAwIC42LjEuOS44LTEuMiAyLTIuMSAzLjQtMi43YTYgNiAwIDAgMCA1LjQgOC42YzMuNyAwIDYuOC0yIDguMS01WiIvPjxwYXRoIGZpbGw9IiMwQUE3QjUiIGQ9Ik0zLjggMTIuNmMwLTQuMSAzLjQtNy40IDcuNi03LjQgMi42IDAgNC44IDEuNCA1LjkgMy43aC0yLjRhNCA0IDAgMCAwLTMtMS4zYy0yLjIgMC00IDEuNy00IDMuOSAwIDIuOCAyLjQgNSA1LjYgNSAyIDAgMy44LS42IDUuMS0xLjctLjggMy4zLTMuOCA1LjgtNy40IDUuOGE3LjUgNy41IDAgMCAxLTcuNC04WiIvPjxwYXRoIGZpbGw9IiMxNkM3OUEiIGQ9Ik04LjEgMTAuM2g5LjRjLS43LTIuNy0zLjEtNC45LTYuNS01LjMtMy4xLS40LTUuOS44LTcuNyAyLjhBOS44IDkuOCAwIDAgMSAyMS40IDE1LjNjLTEuNS44LTMuMyAxLjItNS4yIDEuMi0zLjMgMC02LjItMS40LTcuNS0zLjZhMy44IDMuOCAwIDAgMS0uNi0yLjZaIi8+PC9zdmc+Cg==",
-      "version": "0.3.1",
+      "icon": "asset:assets/icon.png",
+      "icon_data": "data:image/png;base64,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",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -1957,9 +1957,9 @@
         }
       },
       "path": "plugins/edge-history",
-      "description": "Reads your local Microsoft Edge browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description": "Pages you've visited",
       "description_i18n": {
-        "zh-CN": "读取本地 Microsoft Edge 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+        "zh-CN": "你浏览过的网页"
       },
       "author": "Magi Team",
       "official": true,
@@ -2051,8 +2051,8 @@
               "en": "Continue from the topics you have been exploring recently"
             },
             "scope": {
-              "zh": "最近 7 天的页面标题和时间",
-              "en": "Page titles and timestamps from the last 7 days"
+              "zh": "最近 7 天的浏览记录，包括网页标题、网址和访问时间",
+              "en": "Browsing records from the last 7 days, including page titles, URLs and visit times"
             }
           }
         },
@@ -2065,17 +2065,17 @@
           }
         ]
       },
-      "package_sha256": "e0bbcdc15bb3dedccfe492871270977060c0798843feaba499ea130b8505bc5d"
+      "package_sha256": "fa2f945d1d55ed1e9b82d3263200a222a684352086634f1f170d093f1dec6aee"
     },
     {
       "plugin_id": "firefox-history",
-      "name": "Firefox History",
+      "name": "Firefox",
       "name_i18n": {
-        "zh-CN": "Firefox 浏览器历史"
+        "zh-CN": "Firefox"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkZpcmVmb3ggQnJvd3NlcjwvdGl0bGU+PHBhdGggZmlsbD0iI0ZGNzEzOSIgZD0iTTguODI0IDcuMjg3Yy4wMDggMCAuMDA0IDAgMCAwem0tMi44LTEuNGMuMDA2IDAgLjAwMyAwIDAgMHptMTYuNzU0IDIuMTYxYy0uNTA1LTEuMjE1LTEuNTMtMi41MjgtMi4zMzMtMi45NDMuNjU0IDEuMjgzIDEuMDMzIDIuNTcgMS4xNzcgMy41M2wuMDAyLjAyYy0xLjMxNC0zLjI3OC0zLjU0NC00LjYtNS4zNjYtNy40NzctLjA5MS0uMTQ3LS4xODQtLjI5Mi0uMjczLS40NDZhMy41NDUgMy41NDUgMCAwMS0uMTMtLjI0IDIuMTE4IDIuMTE4IDAgMDEtLjE3Mi0uNDYuMDMuMDMgMCAwMC0uMDI3LS4wMy4wMzguMDM4IDAgMDAtLjAyMSAwbC0uMDA2LjAwMWEuMDM3LjAzNyAwIDAwLS4wMS4wMDVMMTUuNjI0IDBjLTIuNTg1IDEuNTE1LTMuNjU3IDQuMTY4LTMuOTMyIDUuODU2YTYuMTk3IDYuMTk3IDAgMDAtMi4zMDUuNTg3LjI5Ny4yOTcgMCAwMC0uMTQ3LjM3Yy4wNTcuMTYyLjI0LjI0LjM5Ni4xN2E1LjYyMiA1LjYyMiAwIDAxMi4wMDgtLjUyM2wuMDY3LS4wMDVhNS44NDcgNS44NDcgMCAwMTEuOTU3LjIyMmwuMDk1LjAzYTUuODE2IDUuODE2IDAgMDEuNjE2LjIyOGMuMDguMDM2LjE2LjA3My4yMzguMTEybC4xMDcuMDU1YTUuODM1IDUuODM1IDAgMDEuMzY4LjIxMSA1Ljk1MyA1Ljk1MyAwIDAxMi4wMzQgMi4xMDRjLS42Mi0uNDM3LTEuNzMzLS44NjgtMi44MDMtLjY4MSA0LjE4MyAyLjA5IDMuMDYgOS4yOTItMi43MzcgOS4wMmE1LjE2NCA1LjE2NCAwIDAxLTEuNTEzLS4yOTIgNC40MiA0LjQyIDAgMDEtLjUzOC0uMjMyYy0xLjQyLS43MzUtMi41OTMtMi4xMjEtMi43NC0zLjgwNiAwIDAgLjUzNy0yIDMuODQ1LTIgLjM1NyAwIDEuMzgtLjk5OCAxLjM5OC0xLjI4Ny0uMDA1LS4wOTUtMi4wMjktLjktMi44MTctMS42NzctLjQyMi0uNDE2LS42MjItLjYxNi0uOC0uNzY3YTMuNDcgMy40NyAwIDAwLS4zMDEtLjIyNyA1LjM4OCA1LjM4OCAwIDAxLS4wMzItMi44NDJjLTEuMTk1LjU0NC0yLjEyNCAxLjQwMy0yLjggMi4xNjNoLS4wMDZjLS40Ni0uNTg0LS40MjgtMi41MS0uNDAyLTIuOTEzLS4wMDYtLjAyNS0uMzQzLjE3Ni0uMzg5LjIwNi0uNDA2LjI5LS43ODcuNjE2LTEuMTM2Ljk3NC0uMzk3LjQwMy0uNzYuODM5LTEuMDg1IDEuMzAzYTkuODE2IDkuODE2IDAgMDAtMS41NjIgMy41MmMtLjAwMy4wMTMtLjExLjQ4Ny0uMTkgMS4wNzMtLjAxMy4wOS0uMDI2LjE4MS0uMDM3LjI3MmE3LjggNy44IDAgMDAtLjA2OS42NjdsLS4wMDIuMDM0LS4wMjMuMzg3LS4wMDEuMDZDLjM4NiAxOC43OTUgNS41OTMgMjQgMTIuMDE2IDI0YzUuNzUyIDAgMTAuNTI3LTQuMTc2IDExLjQ2My05LjY2MS4wMi0uMTQ5LjAzNS0uMjk4LjA1Mi0uNDQ4LjIzMi0xLjk5NC0uMDI1LTQuMDktLjc1My01Ljg0NHoiLz48L3N2Zz4K",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2325,9 +2325,9 @@
         }
       },
       "path": "plugins/firefox-history",
-      "description": "Reads your local Firefox browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description": "Pages you've visited",
       "description_i18n": {
-        "zh-CN": "读取本地 Firefox 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+        "zh-CN": "你浏览过的网页"
       },
       "author": "Magi Team",
       "official": true,
@@ -2421,8 +2421,8 @@
               "en": "Continue from the topics you have been exploring recently"
             },
             "scope": {
-              "zh": "最近 7 天的页面标题和时间",
-              "en": "Page titles and timestamps from the last 7 days"
+              "zh": "最近 7 天的浏览记录，包括网页标题、网址和访问时间",
+              "en": "Browsing records from the last 7 days, including page titles, URLs and visit times"
             }
           }
         },
@@ -2436,17 +2436,17 @@
           }
         ]
       },
-      "package_sha256": "07330aecfb3e305d88217c2b10ed31d88f8a84a78636d00e78e5ca880dbbb211"
+      "package_sha256": "db64376436536e45d558ff4f3b46b5324118f25b2a1d6700d91b4d95d7f400bc"
     },
     {
       "plugin_id": "git-activity",
-      "name": "Git Activity",
+      "name": "Git",
       "name_i18n": {
-        "zh-CN": "Git 活动"
+        "zh-CN": "Git"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdDwvdGl0bGU+PHBhdGggZmlsbD0iI0YwM0MyRSIgZD0iTTEzLjA5IDIzLjU0OWExLjU0IDEuNTQgMCAwIDEtMi4xOCAwTC40NTEgMTMuMDg5YTEuNTQgMS41NCAwIDAgMSAwLTIuMTc5bDcuMTkxLTcuMTkgMi43MzMgMi43MzNhMS44NSAxLjg1IDAgMCAwIC45NjQgMi4zMjZ2Ni42NmExLjg0OSAxLjg0OSAwIDEgMCAxLjU0IDBWOC45NTdsMi41MDggMi41MDhhMS44NSAxLjg1IDAgMSAwIDEuMDktMS4wOWwtMi42MzQtMi42MzRhMS44NSAxLjg1IDAgMCAwLTIuMzc4LTIuMzc3TDguNzMgMi42MyAxMC45MS40NTFhMS41NCAxLjU0IDAgMCAxIDIuMTc5IDBsMTAuNDU5IDEwLjQ2YTEuNTQgMS41NCAwIDAgMSAwIDIuMTc5eiIvPjwvc3ZnPgo=",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2684,9 +2684,9 @@
         }
       },
       "path": "plugins/git_activity",
-      "description": "Tracks your Git commits and repository checkouts so Magi can understand your coding projects and development workflow.",
+      "description": "Code commits and branch activity",
       "description_i18n": {
-        "zh-CN": "追踪 Git 提交和分支操作，帮助 Magi 了解你的开发项目和工作流"
+        "zh-CN": "代码提交和分支活动"
       },
       "author": "Magi Team",
       "official": true,
@@ -2786,17 +2786,17 @@
           }
         ]
       },
-      "package_sha256": "c1b1de62e678d93aacdbbaf22f1f59fa27da02a75734f3739179d4bb150b04c9"
+      "package_sha256": "5c1568767e598532711aaa95dce8d04b96a2298e02575d52b4a28179172f99de"
     },
     {
       "plugin_id": "github-activity",
-      "name": "GitHub Activity",
+      "name": "GitHub",
       "name_i18n": {
-        "zh-CN": "GitHub 活动"
+        "zh-CN": "GitHub"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdEh1YjwvdGl0bGU+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjMTgxNzE3IiBkPSJNMTIgLjI5N2MtNi42MyAwLTEyIDUuMzczLTEyIDEyIDAgNS4zMDMgMy40MzggOS44IDguMjA1IDExLjM4NS42LjExMy44Mi0uMjU4LjgyLS41NzcgMC0uMjg1LS4wMS0xLjA0LS4wMTUtMi4wNC0zLjMzOC43MjQtNC4wNDItMS42MS00LjA0Mi0xLjYxQzQuNDIyIDE4LjA3IDMuNjMzIDE3LjcgMy42MzMgMTcuN2MtMS4wODctLjc0NC4wODQtLjcyOS4wODQtLjcyOSAxLjIwNS4wODQgMS44MzggMS4yMzYgMS44MzggMS4yMzYgMS4wNyAxLjgzNSAyLjgwOSAxLjMwNSAzLjQ5NS45OTguMTA4LS43NzYuNDE3LTEuMzA1Ljc2LTEuNjA1LTIuNjY1LS4zLTUuNDY2LTEuMzMyLTUuNDY2LTUuOTMgMC0xLjMxLjQ2NS0yLjM4IDEuMjM1LTMuMjItLjEzNS0uMzAzLS41NC0xLjUyMy4xMDUtMy4xNzYgMCAwIDEuMDA1LS4zMjIgMy4zIDEuMjMuOTYtLjI2NyAxLjk4LS4zOTkgMy0uNDA1IDEuMDIuMDA2IDIuMDQuMTM4IDMgLjQwNSAyLjI4LTEuNTUyIDMuMjg1LTEuMjMgMy4yODUtMS4yMy42NDUgMS42NTMuMjQgMi44NzMuMTIgMy4xNzYuNzY1Ljg0IDEuMjMgMS45MSAxLjIzIDMuMjIgMCA0LjYxLTIuODA1IDUuNjI1LTUuNDc1IDUuOTIuNDIuMzYuODEgMS4wOTYuODEgMi4yMiAwIDEuNjA2LS4wMTUgMi44OTYtLjAxNSAzLjI4NiAwIC4zMTUuMjEuNjkuODI1LjU3QzIwLjU2NSAyMi4wOTIgMjQgMTcuNTkyIDI0IDEyLjI5N2MwLTYuNjI3LTUuMzczLTEyLTEyLTEyIi8+PC9zdmc+Cg==",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2950,9 +2950,9 @@
         }
       },
       "path": "plugins/github_activity",
-      "description": "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status.",
+      "description": "Commits, issues and pull requests in selected repositories",
       "description_i18n": {
-        "zh-CN": "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。"
+        "zh-CN": "所选仓库的提交、议题和拉取请求"
       },
       "author": "Magi Team",
       "official": true,
@@ -3033,7 +3033,7 @@
           }
         }
       },
-      "package_sha256": "f4f849fdfe82d9c349f399553b00916863248eba8e114faa653e71af4fa73a53"
+      "package_sha256": "c1d3f2793efb1030b5c9e7c3e73b945035a6c68d26dd2a459e475548b67ae277"
     },
     {
       "plugin_id": "local-documents",
@@ -3042,7 +3042,7 @@
         "zh-CN": "本地文档"
       },
       "icon": "lucide:file-text",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -3257,9 +3257,9 @@
         }
       },
       "path": "plugins/local-documents",
-      "description": "Optional. Reads local Markdown and text documents from folders you choose so Magi can connect your notes and written work to the rest of your memory.",
+      "description": "Markdown and text documents in selected folders",
       "description_i18n": {
-        "zh-CN": "可选。读取你指定文件夹中的本地 Markdown 和文本类文档，让 Magi 把你的笔记和写作内容接入记忆。"
+        "zh-CN": "所选文件夹中的 Markdown 和文本文档"
       },
       "author": "Magi Team",
       "official": true,
@@ -3332,7 +3332,7 @@
           }
         }
       },
-      "package_sha256": "7fd019a1be4213cd9df61e178a9aebcace2860faf1429e2dc3a9ef90411996ba"
+      "package_sha256": "9a1e57eb85a9e69adb6f7d0c130b08ec4a2799c117af65a289b0f8438a410ed6"
     },
     {
       "plugin_id": "local-photos",
@@ -3341,7 +3341,7 @@
         "zh-CN": "本地照片"
       },
       "icon": "lucide:images",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
@@ -3619,9 +3619,9 @@
         }
       },
       "path": "plugins/local-photos",
-      "description": "Scans photo folders you choose and reads capture time, location, and camera metadata.",
+      "description": "Photo capture dates and locations in selected folders",
       "description_i18n": {
-        "zh-CN": "扫描你选择的本地照片文件夹，读取拍摄时间、地点和设备信息"
+        "zh-CN": "所选照片的拍摄时间和地点"
       },
       "author": "Magi Team",
       "official": true,
@@ -3738,7 +3738,7 @@
           }
         ]
       },
-      "package_sha256": "bd63ed581c04fa2614b1bbff009ae25e13f2f1376fd07a67695372adc8bf2c7b"
+      "package_sha256": "fc23e3e1358de520a39e0b8f2d8f5adb684d59fa2571c450b66e88677444374c"
     },
     {
       "plugin_id": "netease-music",
@@ -3748,7 +3748,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk5ldEVhc2UgQ2xvdWQgTXVzaWM8L3RpdGxlPjxwYXRoIGZpbGw9IiNENDNDMzMiIGQ9Ik0xMy4wNDYgOS4zODhhMy45MTkgMy45MTkgMCAwIDAtLjY2LjE5Yy0uODA5LjMxMi0xLjQ0Ny45OTEtMS42NjYgMS43NzVhMi4yNjkgMi4yNjkgMCAwIDAtLjA3NC44MWMuMDQ4LjU0Ni4zMzMgMS4wNS43NjQgMS4zNWExLjQ4MyAxLjQ4MyAwIDAgMCAyLjAxLS4yODZjLjQwNi0uNTMxLjM1NS0xLjE4My4yNC0xLjYzNi0uMDk4LS4zODctLjIyLS44MTYtLjM0NS0xLjI0OWE2NC43NiA2NC43NiAwIDAgMS0uMjY5LS45NTR6bS0uODIgMTAuMDdjLTMuOTg0IDAtNy4yMjQtMy4yNC03LjIyNC03LjIyMyAwLS45OC4yMjYtMy4wMiAxLjg4NC00LjgyMkE3LjE4OCA3LjE4OCAwIDAgMSA5LjUwMiA1LjZhLjc5Mi43OTIgMCAxIDEgLjU4NyAxLjQ3MiA1LjYxOSA1LjYxOSAwIDAgMC0yLjc5NSAyLjQ2MiA1LjUzOCA1LjUzOCAwIDAgMC0uNzA3IDIuNyA1LjY0NSA1LjY0NSAwIDAgMCA1LjYzOCA1LjYzOGMxLjg0NCAwIDMuNjI3LS45NTMgNC41NDItMi40MjggMS4wNDItMS42OC43NzItMy45MzEtLjYyNy01LjIzOGEzLjI5OSAzLjI5OSAwIDAgMC0xLjQzNy0uNzc3Yy4xNzIuNTg5LjMzNCAxLjE4LjQ5NCAxLjc3Mi4yODQgMS4xMi4xIDIuMTgxLS41MTkgMi45ODktLjM5LjUxLS45NTYuODg4LTEuNTkyIDEuMDY0YTMuMDM4IDMuMDM4IDAgMCAxLTIuNTgtLjQ0IDMuNDUgMy40NSAwIDAgMS0xLjQ0LTIuNTE0Yy0uMDQtLjQ2Ny4wMDItLjkzLjEyOC0xLjM3Ni4zNS0xLjI1NiAxLjM1Ni0yLjMzOSAyLjYyMi0yLjgyNmE1LjUgNS41IDAgMCAxIC44MjMtLjI0NmwtLjEzNC0uNTA1Yy0uMzctMS4zNzEuMjUtMi41NzkgMS41NDctMy4wMDcuMzI5LS4xMDkuNjgtLjE0NSAxLjAyNS0uMTA1Ljc5Mi4wOSAxLjQ3Ni41OTIgMS43MDkgMS4wMjMuMjU4LjUwNy0uMDk2IDEuMTUzLS43MDYgMS4xNTNhLjc4OC43ODggMCAwIDEtLjU0LS4yMTNjLS4wODgtLjA4LS4xNjMtLjE3NC0uMjU5LS4yNDdhLjgyNS44MjUgMCAwIDAtLjYzMi0uMTY2LjgwNy44MDcgMCAwIDAtLjYzNC41NTFjLS4wNTYuMTkxLS4wMzEuNDA2LjAyLjU5NS4wNy4yNTYuMTU5LjU5Ny4yMTcuODIgMS4xMS4wOTggMi4xNjIuNTQgMi45NyAxLjI5NiAxLjk3NCAxLjg0NCAyLjM1IDQuODg2Ljg5MiA3LjIzMy0xLjE5NyAxLjkzLTMuNTA5IDMuMTc3LTUuODg5IDMuMTc3ek0wIDEyYzAgNi42MjcgNS4zNzMgMTIgMTIgMTJzMTItNS4zNzMgMTItMTJTMTguNjI3IDAgMTIgMCAwIDUuMzczIDAgMTJaIi8+PC9zdmc+Cg==",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4000,9 +4000,9 @@
         ]
       },
       "path": "plugins/netease_music",
-      "description": "Reads your NetEase Cloud Music listening history so Magi can understand your music taste and listening habits.",
+      "description": "Music you've listened to",
       "description_i18n": {
-        "zh-CN": "读取网易云音乐的收听记录，帮助 Magi 了解你的音乐喜好和收听习惯"
+        "zh-CN": "你听过的音乐"
       },
       "author": "Magi Team",
       "official": true,
@@ -4097,17 +4097,17 @@
           }
         ]
       },
-      "package_sha256": "6d4ae9c3f6c3615d9b17ad109d51bae409efeee6b93cb7a86d335adb255df433"
+      "package_sha256": "b1eb9f41276697f897f1ff5c466ca6d1d755fc5bae0e8313ded5c52642d30812"
     },
     {
       "plugin_id": "obsidian-vault",
-      "name": "Obsidian Vault",
+      "name": "Obsidian",
       "name_i18n": {
-        "zh-CN": "Obsidian 笔记库"
+        "zh-CN": "Obsidian"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk9ic2lkaWFuPC90aXRsZT48cGF0aCBmaWxsPSIjN0MzQUVEIiBkPSJNMTkuMzU1IDE4LjUzOGE2OC45NjcgNjguOTU5IDAgMCAwIDEuODU4LTIuOTU0LjgxLjgxIDAgMCAwLS4wNjItLjljLS41MTYtLjY4NS0xLjUwNC0yLjA3NS0yLjA0Mi0zLjM2Mi0uNTUzLTEuMzIxLS42MzYtMy4zNzUtLjY0LTQuMzc3YTEuNzA3IDEuNzA3IDAgMCAwLS4zNTgtMS4wNWwtMy4xOTgtNC4wNjRhMy43NDQgMy43NDQgMCAwIDEtLjA3Ni41NDNjLS4xMDYuNTAzLS4zMDcgMS4wMDQtLjUzNiAxLjUtLjEzNC4yOS0uMjkuNi0uNDQ2LjkxNGwtLjMxLjYyNmMtLjUxNiAxLjA2OC0uOTk3IDIuMjI3LTEuMTMyIDMuNTktLjEyNCAxLjI2LjA0NiAyLjczLjgxNSA0LjQ4MS4xMjguMDExLjI1Ny4wMjUuMzg2LjA0NGE2LjM2MyA2LjM2MyAwIDAgMSAzLjMyNiAxLjUwNWMuOTE2Ljc5IDEuNzQ0IDEuOTIyIDIuNDE1IDMuNXpNOC4xOTkgMjIuNTY5Yy4wNzMuMDEyLjE0Ni4wMi4yMi4wMi43OC4wMjQgMi4wOTUuMDkyIDMuMTYuMjkuODcuMTYgMi41OTMuNjQgNC4wMSAxLjA1NSAxLjA4My4zMTYgMi4xOTgtLjU0OCAyLjM1NS0xLjY2NC4xMTQtLjgxNC4zMy0xLjczNS43MjUtMi41OGwtLjAxLjAwNWMtLjY3LTEuODctMS41MjItMy4wNzgtMi40MTYtMy44NDlhNS4yOTUgNS4yOTUgMCAwIDAtMi43NzgtMS4yNTdjLTEuNTQtLjIxNi0yLjk1Mi4xOS0zLjg0LjQ1LjUzMiAyLjIxOC4zNjggNC44MjktMS40MjUgNy41MzF6TTUuNTMzIDkuOTM4Yy0uMDIzLjEtLjA1Ni4xOTctLjA5OC4yOUwyLjgyIDE2LjA1OWExLjYwMiAxLjYwMiAwIDAgMCAuMzEzIDEuNzcybDQuMTE2IDQuMjRjMi4xMDMtMy4xMDEgMS43OTYtNi4wMi44MzYtOC4zLS43MjgtMS43My0xLjgzMi0zLjA4MS0yLjU1LTMuODMxek05LjMyIDE0LjAxYy42MTUtLjE4MyAxLjYwNi0uNDY1IDIuNzQ1LS41MzQtLjY4My0xLjcyNS0uODQ4LTMuMjMzLS43MTYtNC41NzcuMTU0LTEuNTUyLjctMi44NDcgMS4yMzUtMy45NS4xMTMtLjIzNS4yMjMtLjQ1NC4zMjgtLjY2NC4xNDktLjI5Ny4yODgtLjU3Ny40MTktLjg2LjIxNy0uNDcuMzc5LS44ODUuNDYtMS4yNy4wOC0uMzguMDgtLjcyLS4wMTQtMS4wNDMtLjA5NS0uMzI1LS4yOTctLjY3NS0uNjgtMS4wNmExLjYgMS42IDAgMCAwLTEuNDc1LjM2bC00Ljk1IDQuNDUyYTEuNjAyIDEuNjAyIDAgMCAwLS41MTMuOTUybC0uNDI3IDIuODNjLjY3Mi41OSAyLjMyOCAyLjMxNiAzLjMzNSA0LjcxMS4wOS4yMS4xNzUuNDMuMjUzLjY1M3oiLz48L3N2Zz4K",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4242,9 +4242,9 @@
         }
       },
       "path": "plugins/obsidian-vault",
-      "description": "Optional. Reads markdown notes locally from an Obsidian vault (wikilinks, tags, frontmatter) so Magi can connect what you write to the rest of your activity. Off by default; notes never leave your device, and you can exclude any folder.",
+      "description": "Notes in your vault",
       "description_i18n": {
-        "zh-CN": "可选。在本地读取 Obsidian 笔记库的 markdown（含 wikilink、标签、frontmatter），让 Magi 把你写的内容和其他活动连起来。默认关闭；笔记不出本机，任意文件夹都可排除。"
+        "zh-CN": "笔记库中的笔记内容"
       },
       "author": "Magi Team",
       "official": false,
@@ -4313,7 +4313,7 @@
           }
         }
       },
-      "package_sha256": "94885435976be8bf0aa2df90f0eb19dd77e50ed97d14fe7b9d460ec432ca6f64"
+      "package_sha256": "59bdb6d6dbf986839954d827d6480077ba65696f917938120fe8ecf2186c31a2"
     },
     {
       "plugin_id": "photo_library_core",
@@ -4348,13 +4348,13 @@
     },
     {
       "plugin_id": "safari-history",
-      "name": "Safari History",
+      "name": "Safari",
       "name_i18n": {
-        "zh-CN": "Safari 浏览器历史"
+        "zh-CN": "Safari"
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlNhZmFyaTwvdGl0bGU+PHBhdGggZmlsbD0iIzAwNkNGRiIgZD0iTTEyIDBBMTIgMTIgMCAwIDAgMCAxMmExMiAxMiAwIDAgMCAxMiAxMiAxMiAxMiAwIDAgMCAxMi0xMkExMiAxMiAwIDAgMCAxMiAwem0tLjAwNC45NTNoLjAwNmMuMDYzIDAgLjExMy4wNS4xMTMuMTEzdjEuODQyYzAgLjA2My0uMDUuMTEzLS4xMTMuMTEzaC0uMDA2YS4xMTIuMTEyIDAgMCAxLS4xMTMtLjExM1YxLjA2NmMwLS4wNjMuMDUtLjExMy4xMTMtLjExM3ptLS45NDEuMDQxYy4wNTYuMDAxLjEwNC4wNDYuMTEuMTA0bC4wNzcuOTE4YS4xMTIuMTEyIDAgMCAxLS4xMDEuMTJoLS4wMWEuMTEuMTEgMCAwIDEtLjEyLS4xbC0uMDgtLjkxOWEuMTEyLjExMiAwIDAgMSAuMTAyLS4xMmguMDFsLjAxMi0uMDAzem0xLjg5MiAwSDEyLjk2NWEuMTEzLjExMyAwIDAgMSAuMTAzLjEyMWwtLjA4LjkyYS4xMTEuMTExIDAgMCAxLS4xMi4xMDJoLS4wMDlhLjExMS4xMTEgMCAwIDEtLjEwMS0uMTIxbC4wNzgtLjkyYS4xMTIuMTEyIDAgMCAxIC4xMTEtLjEwMnptLTIuODM4LjEyM2EuMTEuMTEgMCAwIDEgLjEwNi4wOTJsLjMyIDEuODE4Yy4wMS4wNi0uMDMuMTE5LS4wOS4xM2wtLjAxLjAwMWEuMTExLjExMSAwIDAgMS0uMTI4LS4wOWwtLjMyLTEuODE4YS4xMTEuMTExIDAgMCAxIC4wOS0uMTI5bC4wMS0uMDAyYS4xMDMuMTAzIDAgMCAxIC4wMjItLjAwMnptMy43ODQuMDAyaC4wMjFsLjAwOC4wMDJjLjA2MS4wMS4xMDIuMDcuMDkyLjEzMWwtLjMyIDEuODE0Yy0uMDExLjA2Mi0uMDcuMTAxLS4xMzIuMDloLS4wMDVhLjExMy4xMTMgMCAwIDEtLjA5Mi0uMTNsLjMyLTEuODE1YS4xMTEuMTExIDAgMCAxIC4xMDgtLjA5MnptLTQuNzE1LjIwM2MuMDQ4LjAwMi4wOS4wMzUuMTAzLjA4NGwuMjM5Ljg5M2EuMTEyLjExMiAwIDAgMS0uMDc5LjEzOWwtLjAwNS4wMDFhLjExNC4xMTQgMCAwIDEtLjE0LS4wOGwtLjIzNy0uODk0YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzdsLjAwNi0uMDAyYS4xMjMuMTIzIDAgMCAxIC4wMzUtLjAwNHptNS42NDQgMGEuMTEuMTEgMCAwIDEgLjAzMy4wMDRsLjAwNi4wMDJjLjA2LjAxNi4wOTcuMDc5LjA4LjEzOWwtLjI0Ljg5MmEuMTEyLjExMiAwIDAgMS0uMTM3LjA4bC0uMDA1LS4wMDJhLjExNC4xMTQgMCAwIDEtLjA4LS4xMzhsLjI0LS44OTNhLjExMi4xMTIgMCAwIDEgLjEwMy0uMDg0em0tNi41NjIuMjg1YS4xMS4xMSAwIDAgMSAuMTA3LjA3M0w5IDMuNDJhLjEwNy4xMDcgMCAwIDEtLjA2NC4xMzlsLS4wMTIuMDA1YS4xMS4xMSAwIDAgMS0uMTQtLjA2Nkw4LjE1IDEuNzZhLjExLjExIDAgMCAxIC4wNjUtLjE0bC4wMTQtLjAwNWEuMTA2LjEwNiAwIDAgMSAuMDMtLjAwOHptNy40NjkuMDAyYy4wMTQgMCAuMDI4LjAwMS4wNDIuMDA2bC4wMTIuMDA2Yy4wNTcuMDIuMDg3LjA4Mi4wNjcuMTM5bC0uNjMzIDEuNzM4YS4xMS4xMSAwIDAgMS0uMTQuMDY2bC0uMDEzLS4wMDNBLjExLjExIDAgMCAxIDE1IDMuNDJsLjYzMy0xLjczOGEuMTA4LjEwOCAwIDAgMSAuMDk2LS4wNzN6bS04LjM1Mi4zNjZhLjExMi4xMTIgMCAwIDEgLjEwNS4wNjRsLjM5My44MzhhLjExMi4xMTIgMCAwIDEtLjA1NS4xNDhsLS4wMDguMDA0YS4xMS4xMSAwIDAgMS0uMTQ2LS4wNTRsLS4zOTUtLjgzOGEuMTEyLjExMiAwIDAgMSAuMDU1LS4xNDlsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQzLS4wMXptOS4yNDYgMGEuMTEuMTEgMCAwIDEgLjA0My4wMWwuMDA2LjAwM2EuMTEuMTEgMCAwIDEgLjA1My4xNDlsLS4zOTEuODM4YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU0bC0uMDA2LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ4bC4zOTMtLjg0YS4xMTIuMTEyIDAgMCAxIC4xMDUtLjA2NHptLTEwLjA5Mi40NGMuMDQtLjAwMi4wOC4wMTguMTAyLjA1NmwuOTIyIDEuNTk3YS4xMTMuMTEzIDAgMCAxLS4wNDEuMTU1bC0uMDA2LjAwMmEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNDFsLS45MjItMS41OThhLjExMy4xMTMgMCAwIDEgLjA0LS4xNTRsLjAwNy0uMDAyYS4xMS4xMSAwIDAgMSAuMDUyLS4wMTZ6bTEwLjk0LjAwMWMuMDE4IDAgLjAzNS4wMDQuMDUyLjAxNGwuMDA0LjAwMmEuMTE0LjExNCAwIDAgMSAuMDQxLjE1NmwtLjkyMyAxLjU5NmEuMTE0LjExNCAwIDAgMS0uMTU3LjA0bC0uMDA0LS4wMDFhLjExMi4xMTIgMCAwIDEtLjA0LS4xNTVsLjkyNS0xLjU5NWEuMTEzLjExMyAwIDAgMSAuMTAyLS4wNTd6TTUuNzI5IDIuOTNhLjExLjExIDAgMCAxIC4wOTMuMDQ3bC41MzIuNzUzYS4xMTQuMTE0IDAgMCAxLS4wMjguMTU5bC0uMDA0LjAwMmEuMTE0LjExNCAwIDAgMS0uMTU4LS4wMjhsLS41MzEtLjc1MmEuMTE0LjExNCAwIDAgMSAuMDI3LS4xNThsLjAwNi0uMDAyYS4xMTMuMTEzIDAgMCAxIC4wNjMtLjAyMXptMTIuNTQyIDBhLjExLjExIDAgMCAxIC4wNjMuMDJsLjAwNi4wMDNhLjExMi4xMTIgMCAwIDEgLjAyNy4xNTZsLS41MzEuNzU2YS4xMTIuMTEyIDAgMCAxLS4xNTYuMDI4bC0uMDA2LS4wMDRhLjExMi4xMTIgMCAwIDEtLjAyOC0uMTU3bC41MzItLjc1NWEuMTEuMTEgMCAwIDEgLjA5My0uMDQ3em0uNzQ3LjU3OGEuMTEuMTEgMCAwIDEgLjA4LjAyN2wuMDA2LjAwNGMuMDQ3LjA0LjA1My4xMTEuMDEzLjE1OEwxNy45MzIgNS4xMWEuMTEuMTEgMCAwIDEtLjE1Ny4wMTZsLS4wMDUtLjAwNmEuMTEuMTEgMCAwIDEtLjAxNC0uMTU2bDEuMTg1LTEuNDE0YS4xMTQuMTE0IDAgMCAxIC4wNzctLjA0MXpNNC45ODQgMy41MWEuMTEuMTEgMCAwIDEgLjA3Ny4wMzlMNi4yNDQgNC45NmEuMTEyLjExMiAwIDAgMS0uMDE0LjE1OGwtLjAwMy4wMDRhLjExMi4xMTIgMCAwIDEtLjE1OS0uMDE0TDQuODgzIDMuNjk3YS4xMTIuMTEyIDAgMCAxIC4wMTMtLjE1OGwuMDA2LS4wMDRhLjExMS4xMTEgMCAwIDEgLjA4Mi0uMDI1em0tLjcxNC42NGMuMDI3IDAgLjA1NS4wMS4wNzYuMDMybC42NTguNjZhLjEwNy4xMDcgMCAwIDEgMCAuMTUybC0uMDEuMDFhLjEwNy4xMDcgMCAwIDEtLjE1MiAwbC0uNjYtLjY1OGEuMTEuMTEgMCAwIDEgMC0uMTU1bC4wMS0uMDFhLjExMS4xMTEgMCAwIDEgLjA3OC0uMDN6bTE1LjQ2MiAwYy4wMjggMCAuMDU1LjAxLjA3Ny4wMzJsLjAwNy4wMDdhLjEwOS4xMDkgMCAwIDEgMCAuMTU1bC0uNjU4LjY2YS4xMDkuMTA5IDAgMCAxLS4xNTQgMGwtLjAwOC0uMDA4YS4xMDkuMTA5IDAgMCAxIDAtLjE1NGwuNjU4LS42NmEuMTEuMTEgMCAwIDEgLjA3OC0uMDMyem0uNzA3LjY2Yy4wMzggMCAuMDcxLjAyLjA5Mi4wNzVhLjExMi4xMTIgMCAwIDEtLjAyMy4xMTdsLTcuNjA2IDguMDhjLTMuMDg0IDIuMDI0LTYuMTQ5IDQuMDQtOS4yMjIgNi4wNS0uMDc4LjA1MS0uMTcuMDgyLS4yMTEtLjAyOGEuMTEyLjExMiAwIDAgMSAuMDIzLS4xMThsNy41OTQtOC4wOGMzLjA4NC0yLjAyMyA2LjE2MS00LjAzOSA5LjIzNC02LjA0OWEuMjQ3LjI0NyAwIDAgMSAuMTItLjA0NnptLTE2LjgyNC4wNDVhLjEwOS4xMDkgMCAwIDEgLjA4LjAyNmwxLjQxNiAxLjE4N2EuMTEuMTEgMCAwIDEgLjAxNC4xNTdsLS4wMDYuMDA1YS4xMS4xMSAwIDAgMS0uMTU2LjAxNEwzLjU0OSA1LjA1N2EuMTA5LjEwOSAwIDAgMS0uMDE0LS4xNTVsLjAwNi0uMDA3YS4xMDguMTA4IDAgMCAxIC4wNzQtLjA0em0xNy4zMzYuNzU2Yy4wMzYgMCAuMDcyLjAxNy4wOTQuMDVsLjAwNC4wMDNhLjExNC4xMTQgMCAwIDEtLjAyOC4xNThsLS43NTMuNTNhLjExMi4xMTIgMCAwIDEtLjE1Ny0uMDI4bC0uMDA0LS4wMDRhLjExNC4xMTQgMCAwIDEgLjAyOC0uMTU4bC43NTQtLjUzYS4xMTMuMTEzIDAgMCAxIC4wNjItLjAyem0tMTcuOTA0LjAwMmMuMDIgMCAuMDQyLjAwNy4wNi4wMmwuNzYuNTMxYy4wNS4wMzUuMDYuMTAzLjAyNi4xNTJsLS4wMDYuMDFhLjEwOS4xMDkgMCAwIDEtLjE1My4wMjZsLS43Ni0uNTMyYS4xMDkuMTA5IDAgMCAxLS4wMjUtLjE1MmwuMDA2LS4wMWEuMTA4LjEwOCAwIDAgMSAuMDkyLS4wNDV6bS0uNTEyLjgwM2MuMDE4IDAgLjAzNi4wMDYuMDUzLjAxNmwxLjU5Ni45MjNhLjExMS4xMTEgMCAwIDEgLjA0LjE1M2wtLjAwMy4wMDZhLjExMS4xMTEgMCAwIDEtLjE1My4wNEwyLjQ3MyA2LjYzYS4xMTEuMTExIDAgMCAxLS4wNDEtLjE1MmwuMDA0LS4wMDZhLjExLjExIDAgMCAxIC4xLS4wNTV6bTE4LjkzMiAwYS4xMS4xMSAwIDAgMSAuMS4wNTVsLjAwMS4wMDRhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGwtMS41OTYuOTI2YS4xMTMuMTEzIDAgMCAxLS4xNTUtLjA0MWwtLjAwMi0uMDA0YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwxLjU5Ni0uOTI1YS4xMTUuMTE1IDAgMCAxIC4wNTUtLjAxNHptLTE5LjM3My44NDZjLjAxNCAwIC4wMjkuMDAzLjA0My4wMWwuODM4LjM5MmEuMTEuMTEgMCAwIDEgLjA1Mi4xNDdsLS4wMDQuMDFhLjExLjExIDAgMCAxLS4xNDYuMDUybC0uODM4LS4zOTNhLjExLjExIDAgMCAxLS4wNTMtLjE0NmwuMDA0LS4wMWEuMTA5LjEwOSAwIDAgMSAuMTA0LS4wNjJ6bTE5LjgxLjAwMmEuMTEuMTEgMCAwIDEgLjEwNi4wNjJsLjAwMi4wMDhhLjExLjExIDAgMCAxLS4wNTMuMTQ2bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ni0uMDUzbC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTItLjE0NmwuODM4LS4zOTNhLjExLjExIDAgMCAxIC4wNDMtLjAxem0tMjAuMTgzLjg4Yy4wMTQgMCAuMDI4LjAwMS4wNDMuMDA2bDEuNzMyLjYzMWEuMTEyLjExMiAwIDAgMSAuMDY3LjE0NWwtLjAwMi4wMDZhLjExLjExIDAgMCAxLS4xNDMuMDY2bC0xLjczMi0uNjNhLjExMy4xMTMgMCAwIDEtLjA2OS0uMTQ1bC4wMDItLjAwNGEuMTE1LjExNSAwIDAgMSAuMTAyLS4wNzR6bTIwLjU0OSAwYS4xMTMuMTEzIDAgMCAxIC4xMS4wNzVsLjAwMy4wMDRhLjExNS4xMTUgMCAwIDEtLjA2OS4xNDZsLTEuNzMyLjYyOWEuMTEyLjExMiAwIDAgMS0uMTQ1LS4wNjZsLS4wMDEtLjAwNmEuMTEzLjExMyAwIDAgMSAuMDY4LS4xNDVsMS43MzItLjYzYS4xMS4xMSAwIDAgMSAuMDM0LS4wMDZ6bS0yMC44MzYuOTA5YS4xMS4xMSAwIDAgMSAuMDMzLjAwNGwuODkyLjI0Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzdsLS4wMDIuMDA3YS4xMS4xMSAwIDAgMS0uMTM2LjA3OWwtLjg5NS0uMjM5YS4xMTMuMTEzIDAgMCAxLS4wNzgtLjEzOGwuMDAyLS4wMDZhLjExMy4xMTMgMCAwIDEgLjEwNC0uMDg0em0yMS4xMy4wMDJhLjExNS4xMTUgMCAwIDEgLjEwNi4wODR2LjAwNGEuMTEyLjExMiAwIDAgMS0uMDc4LjEzOGwtLjg5My4yMzlhLjExMi4xMTIgMCAwIDEtLjEzOC0uMDc5di0uMDA1YS4xMTIuMTEyIDAgMCAxIC4wNzgtLjE0bC44OTItLjIzN2EuMTEuMTEgMCAwIDEgLjAzMy0uMDA0em0tMjEuMzM1LjkzLjAyMy4wMDEgMS44MTQuMzIzYy4wNjIuMDEuMTAxLjA2OS4wOS4xM3YuMDA2YS4xMTEuMTExIDAgMCAxLS4xMy4wOWwtMS44MTUtLjMyMmEuMTEzLjExMyAwIDAgMS0uMDkyLS4xMzFsLjAwMi0uMDA2YS4xMS4xMSAwIDAgMSAuMTA4LS4wOTJ6bTIxLjUxOS4wMDFoLjAyMmMuMDUyLjAwMi4xLjAzOC4xMDkuMDkydi4wMDZjLjAxLjA2Mi0uMDMuMTItLjA5Mi4xM2wtMS44MTQuMzIxYS4xMTMuMTEzIDAgMCAxLS4xMzEtLjA5MnYtLjAwNWEuMTEzLjExMyAwIDAgMSAuMDkyLS4xMzFsMS44MTQtLjMyem0tMjEuNjQ0Ljk0NGguMDExbC45MjIuMDg0YS4xMS4xMSAwIDAgMSAuMTAyLjExOWwtLjAwMi4wMWEuMTEuMTEgMCAwIDEtLjEyMS4xbC0uOTIyLS4wODNhLjExLjExIDAgMCAxLS4xLS4xMnYtLjAwOWEuMTExLjExMSAwIDAgMSAuMTEtLjEwMXptMjEuNzc5LjAwMmguMDEyYy4wNTYgMCAuMTA2LjA0My4xMS4xMDF2LjAwOGEuMTExLjExMSAwIDAgMS0uMS4xMjFsLS45MjMuMDhhLjExMS4xMTEgMCAwIDEtLjEyLS4xMDF2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjEtLjEyMWwuOTItLjA4em0tMTEuODIuNzNMNi4wOTEgMTYuOTVjMi4wMi0xLjMyNCA0LjAzOS0yLjY0NiA2LjA2Ni0zLjk3NmwtMS4wOTUtMS4zMXptMTEuODcuMjE5Yy4wNjMgMCAuMTE0LjA1LjExNC4xMTN2LjAwNGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2wtMS44NDQuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMTMtLjExM3YtLjAwNGMwLS4wNjMuMDUtLjExMy4xMTMtLjExM2wxLjg0NC0uMDA0em0tMjEuODY5LjAwMmgxLjg0NGMuMDYyIDAgLjExMi4wNS4xMTIuMTExdi4wMDhjMCAuMDYyLS4wNS4xMTEtLjExMi4xMTFIMS4wNjRhLjExMS4xMTEgMCAwIDEtLjExLS4xMTF2LS4wMDhjMC0uMDYxLjA0OS0uMTExLjExLS4xMTF6bS45NTIuODc1aC4wMTFhLjExLjExIDAgMCAxIC4xMS4xMDF2LjAwNmEuMTExLjExMSAwIDAgMS0uMTAyLjEyMWwtLjkyMi4wOGEuMTEuMTEgMCAwIDEtLjExOS0uMTAxbC0uMDAyLS4wMDZhLjExMS4xMTEgMCAwIDEgLjEwMi0uMTIxbC45MjItLjA4em0xOS45NTUgMGguMDExbC45MjIuMDhhLjExLjExIDAgMCAxIC4xMDIuMTE5di4wMDhhLjExMi4xMTIgMCAwIDEtLjEyMS4xMDFsLS45MjItLjA4YS4xMS4xMSAwIDAgMS0uMTAyLS4xMTl2LS4wMDhhLjExMS4xMTEgMCAwIDEgLjExLS4xMDF6bS0xOC45MjQuNzA1Yy4wNTMuMDAxLjA5OC4wNC4xMDcuMDk0bC4wMDIuMDA0Yy4wMTEuMDYxLS4wMy4xMi0uMDkyLjEzbC0xLjgxMi4zMmEuMTEzLjExMyAwIDAgMS0uMTMtLjA5MXYtLjAwNGEuMTE1LjExNSAwIDAgMSAuMDktLjEzM2wxLjgxMS0uMzE4YS4xMTcuMTE3IDAgMCAxIC4wMjQtLjAwMnptMTcuOTAyIDBjLjAwOCAwIC4wMTYgMCAuMDI0LjAwMmwxLjgxNi4zMmMuMDYxLjAxMS4xLjA3LjA5LjEzMXYuMDA0YS4xMTMuMTEzIDAgMCAxLS4xMzEuMDkybC0xLjgxNi0uMzJhLjExMi4xMTIgMCAwIDEtLjA5LS4xMzF2LS4wMDRhLjExMy4xMTMgMCAwIDEgLjEwNy0uMDk0ek0yLjMzMiAxNC40NzdhLjExLjExIDAgMCAxIC4xMDQuMDgybC4wMDIuMDA1Yy4wMTYuMDYtLjAyLjEyMS0uMDguMTM3bC0uODkxLjI0YS4xMTIuMTEyIDAgMCAxLS4xMzctLjA4bC0uMDAyLS4wMDZhLjExMi4xMTIgMCAwIDEgLjA4LS4xMzZsLjg5LS4yMzlhLjExMi4xMTIgMCAwIDEgLjAzNC0uMDAzem0xOS4zMzIgMGMuMDExIDAgLjAyNCAwIC4wMzUuMDAzbC44OTMuMjM5Yy4wNi4wMTYuMDk2LjA3Ny4wOC4xMzZsLS4wMDIuMDA2YS4xMTEuMTExIDAgMCAxLS4xMzcuMDc4bC0uODk0LS4yMzhhLjExMS4xMTEgMCAwIDEtLjA3OC0uMTM3bC4wMDItLjAwNWEuMTA5LjEwOSAwIDAgMSAuMTAxLS4wODJ6bS0xOC4yMTMuNTE3YS4xMS4xMSAwIDAgMSAuMTEuMDc0bC4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4wNjcuMTQ1bC0xLjczMi42M2EuMTEzLjExMyAwIDAgMS0uMTQ1LS4wNjhsLS4wMDItLjAwNGEuMTEzLjExMyAwIDAgMSAuMDY5LS4xNDRMMy40MTggMTVhLjExLjExIDAgMCAxIC4wMzMtLjAwNnptMTcuMDg2IDBjLjAxNSAwIC4wMjkgMCAuMDQzLjAwNmwxLjczNC42M2EuMTExLjExMSAwIDAgMSAuMDY3LjE0M2wtLjAwMi4wMDhhLjExMS4xMTEgMCAwIDEtLjE0My4wNjdsLTEuNzM0LS42MzFhLjExMS4xMTEgMCAwIDEtLjA2Ni0uMTQzbC4wMDItLjAwOGEuMTExLjExMSAwIDAgMSAuMS0uMDcyek0yLjkyIDE2LjExN2EuMTA5LjEwOSAwIDAgMSAuMTAzLjA2M2wuMDA0LjAxYS4xMDguMTA4IDAgMCAxLS4wNTIuMTQ0bC0uODM4LjM5M2EuMTEuMTEgMCAwIDEtLjE0Ny0uMDU1bC0uMDA0LS4wMDhhLjExLjExIDAgMCAxIC4wNTMtLjE0NmwuODM4LS4zOTFhLjExMi4xMTIgMCAwIDEgLjA0My0uMDF6bTE4LjE1OCAwYS4xMS4xMSAwIDAgMSAuMDQzLjAxbC44MzguMzljLjA1Ni4wMjcuMDguMDkzLjA1NS4xNDlsLS4wMDIuMDA0YS4xMTIuMTEyIDAgMCAxLS4xNDkuMDU1bC0uODM4LS4zOTFhLjExMi4xMTIgMCAwIDEtLjA1NC0uMTQ4bC4wMDItLjAwNGEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjV6bS0xNi45NTcuMzE1Yy4wNC0uMDAxLjA3OC4wMi4xLjA1NmwuMDA0LjAwNGEuMTEuMTEgMCAwIDEtLjA0MS4xNTNsLTEuNTk2LjkyMWEuMTEzLjExMyAwIDAgMS0uMTU0LS4wNGwtLjAwMi0uMDA1YS4xMTMuMTEzIDAgMCAxIC4wNC0uMTU0bDEuNTk2LS45MjJhLjEwOS4xMDkgMCAwIDEgLjA1My0uMDEzem0xNS43NTYgMGMuMDE4IDAgLjAzNi4wMDQuMDUzLjAxM2wxLjU5Ny45MjRhLjExLjExIDAgMCAxIC4wNDEuMTUybC0uMDAyLjAwNGEuMTEuMTEgMCAwIDEtLjE1Mi4wNDFsLTEuNTk4LS45MjFhLjExMy4xMTMgMCAwIDEtLjA0LS4xNTVsLjAwMS0uMDAyYS4xMTEuMTExIDAgMCAxIC4xLS4wNTZ6bS4zMjggMS4xOTNhLjExLjExIDAgMCAxIC4wNi4wMjFsLjc1OC41MzRjLjA1LjAzNS4wNjEuMTAyLjAyNi4xNTJsLS4wMDQuMDA4YS4xMTEuMTExIDAgMCAxLS4xNTQuMDI3bC0uNzU2LS41MzVhLjEwOS4xMDkgMCAwIDEtLjAyOC0uMTUybC4wMDYtLjAwOGEuMTEuMTEgMCAwIDEgLjA5Mi0uMDQ3em0tMTYuNDEyLjAwMmMuMDM1IDAgLjA3Mi4wMTYuMDk0LjA0N2wuMDA0LjAwOGEuMTA5LjEwOSAwIDAgMS0uMDI4LjE1MmwtLjc1Ni41MzFhLjEwOC4xMDggMCAwIDEtLjE1Mi0uMDI1bC0uMDA2LS4wMDhhLjEwOS4xMDkgMCAwIDEgLjAyOC0uMTUybC43NTUtLjUzNGEuMTA3LjEwNyAwIDAgMSAuMDYxLS4wMTl6bTE1LjE2Mi4xMDJhLjExMi4xMTIgMCAwIDEgLjA4Mi4wMjVsMS40MTQgMS4xODdhLjExLjExIDAgMCAxIC4wMTQuMTU3bC0uMDA0LjAwNGEuMTEzLjExMyAwIDAgMS0uMTU4LjAxM0wxOC44OSAxNy45M2EuMTEuMTEgMCAwIDEtLjAxNC0uMTU3bC4wMDQtLjAwNWEuMTA4LjEwOCAwIDAgMSAuMDc0LS4wNHptLTEyLjgxMiAxLjEyYS4xMS4xMSAwIDAgMSAuMDguMDI2bC4wMDcuMDA4YS4xMS4xMSAwIDAgMSAuMDE0LjE1NEw1LjA2IDIwLjQ1MWEuMTEuMTEgMCAwIDEtLjE1NS4wMTJsLS4wMDgtLjAwNmEuMTEuMTEgMCAwIDEtLjAxMy0uMTU0bDEuMTg1LTEuNDE0YS4xMS4xMSAwIDAgMSAuMDc1LS4wNHptMTEuNzAzIDBjLjAzMiAwIC4wNjUuMDE1LjA4OC4wNDJsMS4xODEgMS40MWMuMDQuMDQ4LjAzNS4xMi0uMDEzLjE2bC0uMDAyLjAwMmEuMTE0LjExNCAwIDAgMS0uMTYtLjAxNGwtMS4xODItMS40MWEuMTE0LjExNCAwIDAgMSAuMDEzLS4xNmwuMDAyLS4wMDJhLjExNS4xMTUgMCAwIDEgLjA3My0uMDI3em0tMTIuOTI4LjExNGMuMDI3IDAgLjA1NC4wMS4wNzQuMDMxbC4wMTQuMDEyYS4xMDcuMTA3IDAgMCAxIDAgLjE1bC0uNjYyLjY2YS4xMDUuMTA1IDAgMCAxLS4xNDkgMGwtLjAxMS0uMDExYS4xMDUuMTA1IDAgMCAxIDAtLjE0OWwuNjYtLjY2MmEuMTA1LjEwNSAwIDAgMSAuMDc0LS4wMzF6bTE0LjE2NCAwYy4wMjcgMCAuMDUzLjAxLjA3NC4wMzFsLjY2LjY2MmEuMTA2LjEwNiAwIDAgMSAwIC4xNWwtLjAxMS4wMTJhLjEwNi4xMDYgMCAwIDEtLjE1LS4wMDJsLS42Ni0uNjZhLjEwNi4xMDYgMCAwIDEgLjAwMS0uMTVsLjAxLS4wMTJhLjEwOC4xMDggMCAwIDEgLjA3Ni0uMDMxem0tMTEuNjI3Ljc5N2MuMDE4IDAgLjAzNC4wMDYuMDUuMDE1bC4wMDcuMDA0YS4xMS4xMSAwIDAgMSAuMDQuMTVsLS45MjEgMS41OThhLjExLjExIDAgMCAxLS4xNS4wNDFsLS4wMDgtLjAwNGEuMTExLjExMSAwIDAgMS0uMDQtLjE1MmwuOTIyLTEuNTk2YS4xMTMuMTEzIDAgMCAxIC4xLS4wNTZ6bTkuMDg4LjAwMmEuMTEuMTEgMCAwIDEgLjEuMDU0bC45MjUgMS41OTZhLjExMy4xMTMgMCAwIDEtLjA0LjE1NGgtLjAwNWEuMTEuMTEgMCAwIDEtLjE1Mi0uMDM5bC0uOTI2LTEuNTk1YS4xMTMuMTEzIDAgMCAxIC4wNDEtLjE1NWwuMDA0LS4wMDJhLjEwOC4xMDggMCAwIDEgLjA1My0uMDEzem0tMTAuMjg1LjMyNGMuMDIxIDAgLjA0My4wMDguMDYyLjAyMWwuMDA0LjAwMmMuMDUxLjAzNi4wNjMuMTA2LjAyOC4xNTdsLS41My43NTVhLjExMi4xMTIgMCAwIDEtLjE1Ni4wMjhsLS4wMDQtLjAwMmEuMTEyLjExMiAwIDAgMS0uMDI3LS4xNTZsLjUzLS43NTZhLjExMy4xMTMgMCAwIDEgLjA5My0uMDV6bTExLjQ4NC4wMDJjLjAzNiAwIC4wNzIuMDE1LjA5NC4wNDdsLjUzLjc1NmMuMDM1LjA1LjAyMy4xMi0uMDI4LjE1NmwtLjAwNC4wMDJhLjExMi4xMTIgMCAwIDEtLjE1Ni0uMDI4bC0uNTMtLjc1NWEuMTEyLjExMiAwIDAgMSAuMDI4LS4xNTdsLjAwNC0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wNjItLjAyem0tOC44NjMuMzQyYS4xMS4xMSAwIDAgMSAuMDQzLjAwNmwuMDEyLjAwNWMuMDU2LjAyLjA4NC4wODEuMDY0LjEzN2wtLjYzMyAxLjc0YS4xMDUuMTA1IDAgMCAxLS4xMzYuMDYzbC0uMDE0LS4wMDRhLjEwNi4xMDYgMCAwIDEtLjA2NS0uMTM3bC42MzMtMS43NGEuMTA3LjEwNyAwIDAgMSAuMDk2LS4wN3ptNi4yMzIgMGEuMTA3LjEwNyAwIDAgMSAuMTA2LjA3bC42MzMgMS43MzhhLjEwNy4xMDcgMCAwIDEtLjA2NS4xMzdsLS4wMTUuMDA2YS4xMDcuMTA3IDAgMCAxLS4xMzctLjA2NUwxNSAyMC41NzhhLjEwNy4xMDcgMCAwIDEgLjA2NC0uMTM3bC4wMTQtLjAwNWEuMTE3LjExNyAwIDAgMSAuMDMzLS4wMDZ6bS00LjY5NS40MWMuMDA4IDAgLjAxNCAwIC4wMjEuMDAybC4wMDYuMDAyYy4wNjIuMDEuMTAxLjA2Ny4wOS4xMjlsLS4zMTggMS44MTJhLjExMy4xMTMgMCAwIDEtLjEzMS4wOTJsLS4wMDQtLjAwMmEuMTExLjExMSAwIDAgMS0uMDkyLS4xMjlsLjMyLTEuODEyYS4xMTMuMTEzIDAgMCAxIC4xMDgtLjA5NHptMy4xNDYuMDAyYy4wMDgtLjAwMi4wMTUgMCAuMDIyIDBhLjExMS4xMTEgMCAwIDEgLjEwNy4wOTJsLjMyIDEuODEyYy4wMTIuMDYxLS4wMy4xMi0uMDkxLjEzMWwtLjAwNC4wMDJhLjExMy4xMTMgMCAwIDEtLjEzLS4wOTJsLS4zMjEtMS44MTJhLjExMy4xMTMgMCAwIDEgLjA5Mi0uMTMxbC4wMDUtLjAwMnptLTUuNzkuMTE5YS4xMS4xMSAwIDAgMSAuMDQyLjAxbC4wMDQuMDAyYS4xMTQuMTE0IDAgMCAxIC4wNTUuMTVsLS4zOTMuODM0YS4xMTIuMTEyIDAgMCAxLS4xNDguMDU1bC0uMDA0LS4wMDJhLjExMi4xMTIgMCAwIDEtLjA1NS0uMTQ5bC4zOTMtLjgzNmEuMTEyLjExMiAwIDAgMSAuMTA1LS4wNjR6bTguNDU4IDBhLjEwOC4xMDggMCAwIDEgLjEwNC4wNjJsLjM5Ljg0YS4xMS4xMSAwIDAgMS0uMDUyLjE0N2wtLjAwOC4wMDRhLjExLjExIDAgMCAxLS4xNDYtLjA1NWwtLjM5MS0uODM4YS4xMS4xMSAwIDAgMSAuMDUzLS4xNDZsLjAwOC0uMDA0YS4xMS4xMSAwIDAgMSAuMDQyLS4wMXptLTQuMjM2LjAxOEgxMmMuMDYzIDAgLjExNS4wNS4xMTUuMTEzbC4wMDIgMS44NGMwIC4wNjMtLjA1LjExMy0uMTEzLjExM2gtLjAwNmEuMTEzLjExMyAwIDAgMS0uMTEzLS4xMTNsLS4wMDQtMS44MzhjMC0uMDYzLjA1LS4xMTUuMTEzLS4xMTV6bS0yLjU5Mi41NzhjLjAxMSAwIC4wMjIgMCAuMDM0LjAwNGwuMDA1LjAwMmMuMDYuMDE2LjA5NS4wNzcuMDc5LjEzNmwtLjI0Ljg5M2EuMTExLjExMSAwIDAgMS0uMTM3LjA3OGwtLjAwNi0uMDAyYS4xMTEuMTExIDAgMCAxLS4wNzgtLjEzN2wuMjQtLjg5YS4xMTMuMTEzIDAgMCAxIC4xMDMtLjA4NHptNS4xOTYuMDAyYS4xMS4xMSAwIDAgMSAuMTAzLjA4MmwuMjQuODlhLjExLjExIDAgMCAxLS4wNzguMTM3bC0uMDA2LjAwMmEuMTEuMTEgMCAwIDEtLjEzNi0uMDc4bC0uMjQtLjg5YS4xMS4xMSAwIDAgMSAuMDc4LS4xMzhsLjAwNS0uMDAyYS4xMTIuMTEyIDAgMCAxIC4wMzQtLjAwM3ptLTMuNDc1LjMwMmguMDFsLjAwOC4wMDJjLjA2MS4wMDYuMTA3LjA2LjEwMS4xMjFsLS4wOC45MmEuMTEyLjExMiAwIDAgMS0uMTIxLjEwMmgtLjAwOGEuMTEuMTEgMCAwIDEtLjEtLjEyMWwuMDgtLjkyMmEuMTExLjExMSAwIDAgMSAuMTEtLjEwMnptMS43MzYgMGguMDJhLjExLjExIDAgMCAxIC4xMDcuMTAybC4wOC45MjRhLjExLjExIDAgMCAxLS4xMDEuMTE5bC0uMDA4LjAwMmEuMTEuMTEgMCAwIDEtLjEyLS4xMDJsLS4wOC0uOTI0YS4xMTIuMTEyIDAgMCAxIC4xMDItLjEyeiIvPjwvc3ZnPgo=",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4634,9 +4634,9 @@
         }
       },
       "path": "plugins/safari-history",
-      "description": "Reads your local Safari browsing history so Magi can understand your interests, research habits, and frequently visited sites.",
+      "description": "Pages you've visited",
       "description_i18n": {
-        "zh-CN": "读取本地 Safari 浏览记录，帮助 Magi 了解你的兴趣方向、研究习惯和常访站点"
+        "zh-CN": "你浏览过的网页"
       },
       "author": "Magi Team",
       "official": true,
@@ -4732,8 +4732,8 @@
               "en": "Continue from the topics you have been exploring recently"
             },
             "scope": {
-              "zh": "最近 7 天的页面标题和时间",
-              "en": "Page titles and timestamps from the last 7 days"
+              "zh": "最近 7 天的浏览记录，包括网页标题、网址和访问时间",
+              "en": "Browsing records from the last 7 days, including page titles, URLs and visit times"
             }
           }
         },
@@ -4746,16 +4746,16 @@
           }
         ]
       },
-      "package_sha256": "24a0f2741ae76b7ee739fe9e9880df5534761a5d092397fc05b418ca4c117920"
+      "package_sha256": "9468d725eb73481366db68340ecfd29d77ec9b47cde0ba5a2fb087c566f3f793"
     },
     {
       "plugin_id": "screen-time",
       "name": "App Usage",
       "name_i18n": {
-        "zh-CN": "屏幕使用"
+        "zh-CN": "应用使用时间"
       },
       "icon": "lucide:chart-no-axes-column",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4808,9 +4808,9 @@
       "settings_resources": [],
       "settings_ui_blocks": [],
       "path": "plugins/screen_time",
-      "description": "Tracks which apps you use and for how long, helping Magi understand your work focus, productivity patterns, and daily habits. Records are aggregated by clock hour, so the first entries appear on your timeline only after the current hour ends.",
+      "description": "Time spent in each app",
       "description_i18n": {
-        "zh-CN": "记录各应用的使用时长，帮助 Magi 了解你的工作专注情况、效率规律和日常使用习惯。数据按整点小时聚合，第一条记录会在当前所在的整点小时结束后才出现在时间线上。"
+        "zh-CN": "各应用的使用时长"
       },
       "author": "Magi Team",
       "official": true,
@@ -4866,16 +4866,16 @@
           "en": "Lets magi see your screen-time usage"
         }
       },
-      "package_sha256": "5c46a84836b8f33ab29cf26e6d8d88f874b655fa8b779a1fdc8885b7b9adf5ee"
+      "package_sha256": "d3453ffe0af651c78c9e54fccc3288f3ac43bcb6ee4c31a6977bda5967128018"
     },
     {
       "plugin_id": "screenshot_timeline",
-      "name": "Screenshot Timeline",
+      "name": "Screen Captures",
       "name_i18n": {
-        "zh-CN": "屏幕快照时间线"
+        "zh-CN": "屏幕快照"
       },
       "icon": "lucide:scan",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.1",
       "execution_mode": "trusted_process",
@@ -5171,9 +5171,9 @@
         "fields": []
       },
       "path": "plugins/screenshot_timeline",
-      "description": "Local-only screen capture (opt-in, off by default): extracts on-screen text into magi's memory. Captures stay on your Mac, are never uploaded, and auto-delete after 30 days.",
+      "description": "Screen captures and the text they contain",
       "description_i18n": {
-        "zh-CN": "纯本地截屏（默认关闭、需手动开启）：提取屏幕文本接入 magi 记忆。截图只留在本机、绝不上传，30 天后自动删除。"
+        "zh-CN": "屏幕截图及其中的文字"
       },
       "author": "Magi Team",
       "official": true,
@@ -5253,7 +5253,7 @@
           "en": "Lets magi see what's on your screen"
         }
       },
-      "package_sha256": "395a55916dbc5e6d326d3d76ffa54856a3f03e52a209413665ed04da262f784a"
+      "package_sha256": "d9d538247d9d7cb9a9eeff54be81fee7c1666f68528506c377aa6b13295917b8"
     },
     {
       "plugin_id": "steam-play-history",
@@ -5261,9 +5261,9 @@
       "name_i18n": {
         "zh-CN": "Steam"
       },
-      "icon": "asset:assets/icon.svg",
-      "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPlN0ZWFtPC90aXRsZT48cGF0aCBmaWxsPSIjNjZDMEY0IiBkPSJNMTEuOTc5IDBDNS42NzggMCAuNTExIDQuODYuMDIyIDExLjAzN2w2LjQzMiAyLjY1OGMuNTQ1LS4zNzEgMS4yMDMtLjU5IDEuOTEyLS41OS4wNjMgMCAuMTI1LjAwNC4xODguMDA2bDIuODYxLTQuMTQyVjguOTFjMC0yLjQ5NSAyLjAyOC00LjUyNCA0LjUyNC00LjUyNCAyLjQ5NCAwIDQuNTI0IDIuMDMxIDQuNTI0IDQuNTI3cy0yLjAzIDQuNTI1LTQuNTI0IDQuNTI1aC0uMTA1bC00LjA3NiAyLjkxMWMwIC4wNTIuMDA0LjEwNS4wMDQuMTU5IDAgMS44NzUtMS41MTUgMy4zOTYtMy4zOSAzLjM5Ni0xLjYzNSAwLTMuMDE2LTEuMTczLTMuMzMxLTIuNzI3TC40MzYgMTUuMjdDMS44NjIgMjAuMzA3IDYuNDg2IDI0IDExLjk3OSAyNGM2LjYyNyAwIDExLjk5OS01LjM3MyAxMS45OTktMTJTMTguNjA1IDAgMTEuOTc5IDB6TTcuNTQgMTguMjFsLTEuNDczLS42MWMuMjYyLjU0My43MTQuOTk5IDEuMzE0IDEuMjUgMS4yOTcuNTM5IDIuNzkzLS4wNzYgMy4zMzItMS4zNzUuMjYzLS42My4yNjQtMS4zMTkuMDA1LTEuOTQ5cy0uNzUtMS4xMjEtMS4zNzctMS4zODNjLS42MjQtLjI2LTEuMjktLjI0OS0xLjg3OC0uMDNsMS41MjMuNjNjLjk1Ni40IDEuNDA5IDEuNSAxLjAwOSAyLjQ1NS0uMzk3Ljk1Ny0xLjQ5NyAxLjQxLTIuNDU0IDEuMDEySDcuNTR6bTExLjQxNS05LjMwM2MwLTEuNjYyLTEuMzUzLTMuMDE1LTMuMDE1LTMuMDE1LTEuNjY1IDAtMy4wMTUgMS4zNTMtMy4wMTUgMy4wMTUgMCAxLjY2NSAxLjM1IDMuMDE1IDMuMDE1IDMuMDE1IDEuNjYzIDAgMy4wMTUtMS4zNSAzLjAxNS0zLjAxNXptLTUuMjczLS4wMDVjMC0xLjI1MiAxLjAxMy0yLjI2NiAyLjI2NS0yLjI2NiAxLjI0OSAwIDIuMjY2IDEuMDE0IDIuMjY2IDIuMjY2IDAgMS4yNTEtMS4wMTcgMi4yNjUtMi4yNjYgMi4yNjUtMS4yNTMgMC0yLjI2NS0xLjAxNC0yLjI2NS0yLjI2NXoiLz48L3N2Zz4K",
-      "version": "0.3.2",
+      "icon": "asset:assets/icon.png",
+      "icon_data": "data:image/png;base64,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",
+      "version": "0.3.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5522,9 +5522,9 @@
         ]
       },
       "path": "plugins/steam_play_history",
-      "description": "Infers Steam game records from local Steam files and playtime changes.",
+      "description": "Recently played games and playtime",
       "description_i18n": {
-        "zh-CN": "根据本地 Steam 文件和游玩时长变化推断游戏记录"
+        "zh-CN": "最近玩过的游戏和游玩时长"
       },
       "author": "Magi Team",
       "official": true,
@@ -5612,16 +5612,16 @@
           }
         ]
       },
-      "package_sha256": "b2c0dc20eb1d76c7ca068f9cf635fac912b81a81f98a29d5c597dde992ab0f82"
+      "package_sha256": "c0d8936dd1a26e340939b58a57d48e0750bac96f417cc6ba9f1a7ec36958274b"
     },
     {
       "plugin_id": "system-media",
-      "name": "Local Now Playing",
+      "name": "Now Playing",
       "name_i18n": {
-        "zh-CN": "本机正在播放"
+        "zh-CN": "正在播放"
       },
       "icon": "lucide:music",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -5694,9 +5694,9 @@
       "settings_resources": [],
       "settings_ui_blocks": [],
       "path": "plugins/system_media",
-      "description": "Records music currently playing on this device through system media controls.",
+      "description": "Music playing on this device",
       "description_i18n": {
-        "zh-CN": "通过系统媒体控制记录本机正在播放的音乐"
+        "zh-CN": "本机正在播放的音乐"
       },
       "author": "Magi Team",
       "official": true,
@@ -5768,7 +5768,7 @@
           "en": "Lets magi see music playing on this device"
         }
       },
-      "package_sha256": "83ef81f5a1d8ca3503ca90a3e5725c1b3c56b971883ebe2930952058af29d058"
+      "package_sha256": "fc94116ad54c9df2d76785b12dcdb4fc6765ed00d36cce362aff4203c278cc0a"
     },
     {
       "plugin_id": "telegram",
@@ -5939,7 +5939,7 @@
         "zh-CN": "终端历史"
       },
       "icon": "lucide:terminal",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -6146,9 +6146,9 @@
         ]
       },
       "path": "plugins/terminal_history",
-      "description": "Reads your shell command history so Magi can understand your development workflow, tools used, and technical habits.",
+      "description": "Commands you've run in the terminal",
       "description_i18n": {
-        "zh-CN": "读取 Shell 命令历史，帮助 Magi 了解你的开发工作流、常用工具和技术操作习惯"
+        "zh-CN": "终端中执行过的命令"
       },
       "author": "Magi Team",
       "official": true,
@@ -6213,7 +6213,7 @@
           }
         ]
       },
-      "package_sha256": "6343af45a85cb62f00b6fa01777c5b15eb607d2e5e40bd267cde837b35a7061b"
+      "package_sha256": "cfa094f56ffd158b6bd32fc9b060d663d41e8ac7dbe368acf9b8965b946e3ec2"
     },
     {
       "plugin_id": "weixin",

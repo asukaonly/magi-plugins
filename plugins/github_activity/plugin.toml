@@ -7,12 +7,12 @@ min_sdk_version = "0.2.0"
 execution_mode = "trusted_process"
 projection_sources = ["github_activity"]
 id = "github-activity"
-name = "GitHub Activity"
-name_i18n = { "zh-CN" = "GitHub 活动" }
+name = "GitHub"
+name_i18n = { "zh-CN" = "GitHub" }
 icon = "asset:assets/icon.svg"
-version = "0.3.1"
-description = "Syncs selected GitHub repository activity locally so Magi can understand projects, pull requests, issues, reviews, commits, and CI status."
-description_i18n = { "zh-CN" = "在本机同步你选择的 GitHub 仓库动态，帮助 Magi 理解项目、PR、issue、review、提交和 CI 状态。" }
+version = "0.3.2"
+description = "Commits, issues and pull requests in selected repositories"
+description_i18n = { "zh-CN" = "所选仓库的提交、议题和拉取请求" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "GitHubActivityPlugin"
