@@ -9,8 +9,8 @@ projection_sources = ["calendar"]
 id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
-icon = "lucide:calendar-days"
-version = "0.3.2"
+icon = "asset:assets/icon.png"
+version = "0.3.3"
 description = "Your events and reminders"
 description_i18n = { "zh-CN" = "你的日程和提醒" }
 author = "Magi Team"

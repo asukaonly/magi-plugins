@@ -9,8 +9,8 @@ projection_sources = ["local_documents", "local_documents_search"]
 id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
-icon = "lucide:file-text"
-version = "0.3.2"
+icon = "asset:assets/icon.png"
+version = "0.3.3"
 description = "Markdown and text documents in selected folders"
 description_i18n = { "zh-CN" = "所选文件夹中的 Markdown 和文本文档" }
 author = "Magi Team"

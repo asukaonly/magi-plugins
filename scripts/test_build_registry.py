@@ -191,10 +191,13 @@ def test_split_sources_do_not_install_their_siblings() -> None:
     }
 
 
-def test_brand_plugins_embed_safe_package_owned_icons() -> None:
+def test_plugins_embed_safe_package_owned_icons() -> None:
     build_registry = _load_build_registry_module()
     plugin_dirs = {
         "apple-photos",
+        "calendar_plugin",
+        "local-documents",
+        "local-photos",
         "chrome-history",
         "claude-code",
         "codex",
@@ -218,7 +221,7 @@ def test_brand_plugins_embed_safe_package_owned_icons() -> None:
         assert entry is not None
         prefix, encoded = entry["icon_data"].split(",", 1)
         payload = base64.b64decode(encoded)
-        if plugin_dir in {"edge-history", "steam_play_history"}:
+        if plugin_dir in {"calendar_plugin", "local-documents", "local-photos", "edge-history", "steam_play_history"}:
             assert entry["icon"] == "asset:assets/icon.png"
             assert prefix == "data:image/png;base64"
             assert payload.startswith(b"\x89PNG\r\n\x1a\n")

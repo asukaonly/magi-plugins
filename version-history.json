@@ -97,6 +97,10 @@
       "package_sha256": "59d31d148963d9f99c31103eb9d817fd4b1eb0b906538adc1ff7cb2b5f5df1af",
       "executable_paths": []
     },
+    "calendar@0.3.3": {
+      "package_sha256": "25f2295edb0b694cad3b05e7fecde59569c8e5f7d1877cf0a3a6c170357515e8",
+      "executable_paths": []
+    },
     "chatgpt-history@0.1.0": {
       "package_sha256": "5701c0b7c304c4b0ca58d033a302ee69ee272c9d5b1c7871edaf2af11b7e7abd",
       "executable_paths": []
@@ -309,6 +313,10 @@
       "package_sha256": "9a1e57eb85a9e69adb6f7d0c130b08ec4a2799c117af65a289b0f8438a410ed6",
       "executable_paths": []
     },
+    "local-documents@0.3.3": {
+      "package_sha256": "370613da29097a7403612c934201f135e02d1200c8ab9d4941e5f1b629c7bb94",
+      "executable_paths": []
+    },
     "local-photos@0.1.0": {
       "package_sha256": "f9fcd8f2af7473091632d98f489600986f8b6f26aeac4c7c58d8c51ae4f19b54",
       "executable_paths": []
@@ -335,6 +343,10 @@
     },
     "local-photos@0.3.3": {
       "package_sha256": "fc23e3e1358de520a39e0b8f2d8f5adb684d59fa2571c450b66e88677444374c",
+      "executable_paths": []
+    },
+    "local-photos@0.3.4": {
+      "package_sha256": "2b1cf7dc53a8a48f6773ba9eb6632a87f967e04c71273197a7b0520174f25a6f",
       "executable_paths": []
     },
     "netease-music@0.1.2": {
