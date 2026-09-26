@@ -10,7 +10,7 @@ id = "obsidian-vault"
 name = "Obsidian"
 name_i18n = { "zh-CN" = "Obsidian" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
+version = "0.3.3"
 description = "Notes in your vault"
 description_i18n = { "zh-CN" = "笔记库中的笔记内容" }
 author = "Magi Team"
@@ -59,7 +59,7 @@ en = "Markdown from the vault you choose"
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
-reason_i18n = { en = "Read markdown notes from your Obsidian vault", "zh-CN" = "读取你 Obsidian 库中的 markdown 笔记" }
+reason_i18n = { en = "Read Markdown notes in your Obsidian vault", "zh-CN" = "读取 Obsidian 笔记库中的 Markdown 笔记" }
 
 [plugin.activation_flow]
 title = "Enable Obsidian Vault"

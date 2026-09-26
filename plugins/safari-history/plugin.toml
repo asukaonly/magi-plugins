@@ -10,7 +10,7 @@ id = "safari-history"
 name = "Safari"
 name_i18n = { "zh-CN" = "Safari" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
+version = "0.3.3"
 description = "Pages you've visited"
 description_i18n = { "zh-CN" = "你浏览过的网页" }
 author = "Magi Team"
@@ -94,7 +94,7 @@ darwin = "~/Library/Safari/History.db"
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 scope = ["~/Library/Safari"]
-reason_i18n = { en = "Read the local Safari history database", "zh-CN" = "读取本地 Safari 历史数据库" }
+reason_i18n = { en = "Read Safari browsing history", "zh-CN" = "读取 Safari 浏览记录" }
 
 [plugin.activation_flow]
 title = "Enable Safari History"

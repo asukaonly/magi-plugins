@@ -1,7 +1,7 @@
 {
   "telegram": {
     "name": "Telegram",
-    "description": "Connects Magi to Telegram as a bot, so you can chat with Magi and receive responses directly in Telegram.",
+    "description": "Chat with Magi in Telegram",
     "fields": {
       "bot_token": {
         "label": "Bot Token",

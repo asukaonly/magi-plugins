@@ -10,7 +10,7 @@ id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "asset:assets/icon.png"
-version = "0.3.4"
+version = "0.3.5"
 description = "Photo capture dates and locations in selected folders"
 description_i18n = { "zh-CN" = "所选照片的拍摄时间和地点" }
 author = "Magi Team"
@@ -97,7 +97,7 @@ reason_i18n = { en = "Read photos from folders you choose", "zh-CN" = "读取你
 capability = "network"
 scope = ["download.geonames.org"]
 optional = true
-reason_i18n = { en = "Optionally download the offline GeoNames dataset for local geocoding", "zh-CN" = "可选下载 GeoNames 离线数据，用于在本地识别照片地点" }
+reason_i18n = { en = "Download GeoNames place data for offline location lookup", "zh-CN" = "下载 GeoNames 地名数据，用于离线识别照片地点" }
 
 [plugin.activation_flow]
 title = "Enable Local Photos"

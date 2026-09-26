@@ -10,7 +10,7 @@ id = "netease-music"
 name = "NetEase Cloud Music"
 name_i18n = { "zh-CN" = "网易云音乐" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
+version = "0.3.3"
 description = "Music you've listened to"
 description_i18n = { "zh-CN" = "你听过的音乐" }
 author = "Magi Team"
@@ -67,7 +67,7 @@ reason_i18n = { en = "Read the NetEase Music local play history", "zh-CN" = "读
 [[plugin.permissions.capabilities]]
 capability = "network"
 scope = ["ws.audioscrobbler.com"]
-reason_i18n = { en = "Fetch genre tags for played tracks from the Last.fm API (only when a Last.fm API key is configured).", "zh-CN" = "从 Last.fm API 获取所播曲目的风格标签(仅在配置了 Last.fm API key 时)。" }
+reason_i18n = { en = "When Last.fm is configured, send artist and track names to look up genre tags", "zh-CN" = "配置 Last.fm 后，发送歌手和曲名以查询风格标签" }
 
 [plugin.activation_flow]
 title = "Enable NetEase Cloud Music"

@@ -10,7 +10,7 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "asset:assets/icon.png"
-version = "0.3.3"
+version = "0.3.4"
 description = "Your events and reminders"
 description_i18n = { "zh-CN" = "你的日程和提醒" }
 author = "Magi Team"
@@ -76,12 +76,12 @@ darwin = "~/Library/Calendars"
 
 [[plugin.permissions.capabilities]]
 capability = "calendar"
-reason_i18n = { en = "Read your calendar events and reminders", "zh-CN" = "读取你的日历事件与提醒事项" }
+reason_i18n = { en = "Read your calendar events and reminders", "zh-CN" = "读取你的日程和提醒" }
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 scope = ["~/Library/Calendars"]
-reason_i18n = { en = "Parse the local calendar store", "zh-CN" = "解析本地日历数据" }
+reason_i18n = { en = "Read calendar records stored on this device", "zh-CN" = "读取本机保存的日历记录" }
 
 [plugin.activation_flow]
 title = "Connect Calendar"

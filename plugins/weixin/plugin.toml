@@ -10,9 +10,9 @@ id = "weixin"
 name = "Weixin"
 name_i18n = { "zh-CN" = "微信" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
-description = "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages."
-description_i18n = { "zh-CN" = "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话" }
+version = "0.3.3"
+description = "Chat with Magi in Weixin"
+description_i18n = { "zh-CN" = "在微信中与 Magi 对话" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "WeixinPlugin"
@@ -23,7 +23,7 @@ dependencies = ["segno>=1.6.1", "cryptography>=42.0.0", "Pillow>=10.0.0"]
 
 [[plugin.permissions.capabilities]]
 capability = "network"
-reason_i18n = { en = "Connect to the iLink bot gateway", "zh-CN" = "连接 iLink 机器人网关" }
+reason_i18n = { en = "Send and receive messages through the Weixin iLink bot gateway", "zh-CN" = "通过微信 iLink 机器人收发消息" }
 
 [[plugin.settings_fields]]
 key = "account"

@@ -10,7 +10,7 @@ id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "asset:assets/icon.png"
-version = "0.3.3"
+version = "0.3.4"
 description = "Markdown and text documents in selected folders"
 description_i18n = { "zh-CN" = "所选文件夹中的 Markdown 和文本文档" }
 author = "Magi Team"
@@ -64,7 +64,7 @@ en = "Text and Markdown from folders you choose"
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
-reason_i18n = { en = "Read local document folders selected by the user", "zh-CN" = "读取用户选择的本地文档文件夹" }
+reason_i18n = { en = "Read documents in the folders you select", "zh-CN" = "读取所选文件夹中的文档" }
 
 [plugin.activation_flow]
 title = "Enable Local Documents"

@@ -10,7 +10,7 @@ id = "firefox-history"
 name = "Firefox"
 name_i18n = { "zh-CN" = "Firefox" }
 icon = "asset:assets/icon.svg"
-version = "0.3.2"
+version = "0.3.3"
 description = "Pages you've visited"
 description_i18n = { "zh-CN" = "你浏览过的网页" }
 author = "Magi Team"
@@ -79,7 +79,7 @@ win32 = "%APPDATA%/Mozilla/Firefox/Profiles"
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 scope = ["~/Library/Application Support/Firefox", "%APPDATA%\\Mozilla\\Firefox"]
-reason_i18n = { en = "Read the local Firefox history database", "zh-CN" = "读取本地 Firefox 历史数据库" }
+reason_i18n = { en = "Read Firefox browsing history", "zh-CN" = "读取 Firefox 浏览记录" }
 
 [plugin.activation_flow]
 title = "Enable Firefox History"

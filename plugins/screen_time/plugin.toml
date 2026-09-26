@@ -10,7 +10,7 @@ id = "screen-time"
 name = "App Usage"
 name_i18n = { "zh-CN" = "应用使用时间" }
 icon = "lucide:chart-no-axes-column"
-version = "0.4.2"
+version = "0.4.3"
 description = "Time spent in each app"
 description_i18n = { "zh-CN" = "各应用的使用时长" }
 author = "Magi Team"
@@ -47,7 +47,7 @@ en = "Lets magi see your screen-time usage"
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
 scope = ["~/Library/Application Support/Knowledge"]
-reason_i18n = { en = "Read the local app-usage data source", "zh-CN" = "读取本地应用用量数据源" }
+reason_i18n = { en = "Read app usage duration from local records", "zh-CN" = "读取本机记录中的应用使用时长" }
 
 [[plugin.settings_fields]]
 key = "sources.screen_time.enabled"

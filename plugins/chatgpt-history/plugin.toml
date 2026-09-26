@@ -11,9 +11,9 @@ id = "chatgpt-history"
 name = "ChatGPT History"
 name_i18n = { "zh-CN" = "ChatGPT 历史" }
 icon = "asset:assets/icon.svg"
-version = "0.2.0"
-description = "Imports conversations from an official ChatGPT data export without ongoing access to your account."
-description_i18n = { "zh-CN" = "从 ChatGPT 官方数据导出文件中一次性导入对话，不会持续访问你的账户。" }
+version = "0.2.1"
+description = "Import ChatGPT conversations once from an export file"
+description_i18n = { "zh-CN" = "从导出文件一次性导入 ChatGPT 对话" }
 author = "Magi Team"
 entry_module = "plugin"
 entry_class = "ChatGPTHistoryPlugin"
@@ -36,4 +36,4 @@ member_order = 5
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
-reason_i18n = { en = "Read only the ChatGPT export files selected by the user", "zh-CN" = "仅读取用户选择的 ChatGPT 导出文件" }
+reason_i18n = { en = "Read the ChatGPT export files you select", "zh-CN" = "读取你选择的 ChatGPT 导出文件" }

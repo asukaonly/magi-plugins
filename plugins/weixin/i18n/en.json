@@ -1,7 +1,7 @@
 {
   "weixin": {
     "name": "Weixin",
-    "description": "Connects Magi to Weixin through the official iLink bot gateway for direct chat messages.",
+    "description": "Chat with Magi in Weixin",
     "fields": {
       "bot_token": {
         "label": "Manual Bot Token",

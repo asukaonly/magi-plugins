@@ -10,7 +10,7 @@ id = "apple-photos"
 name = "Apple Photos"
 name_i18n = { "zh-CN" = "Apple Photos" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Photo capture dates and locations"
 description_i18n = { "zh-CN" = "照片的拍摄时间和地点" }
 author = "Magi Team"
@@ -91,13 +91,13 @@ darwin = "~/Pictures/Photos Library.photoslibrary"
 
 [[plugin.permissions.capabilities]]
 capability = "photos"
-reason_i18n = { en = "Read your Apple Photos library and its metadata", "zh-CN" = "读取你的 Apple Photos 照片图库及其元数据" }
+reason_i18n = { en = "Read photos and their details from Apple Photos", "zh-CN" = "读取 Apple Photos 中的照片及其信息" }
 
 [[plugin.permissions.capabilities]]
 capability = "network"
 scope = ["download.geonames.org"]
 optional = true
-reason_i18n = { en = "Optionally download the offline GeoNames dataset for local geocoding", "zh-CN" = "可选下载 GeoNames 离线数据，用于在本地识别照片地点" }
+reason_i18n = { en = "Download GeoNames place data for offline location lookup", "zh-CN" = "下载 GeoNames 地名数据，用于离线识别照片地点" }
 
 [plugin.activation_flow]
 title = "Enable Apple Photos"

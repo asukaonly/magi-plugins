@@ -10,7 +10,7 @@ id = "screenshot_timeline"
 name = "Screen Captures"
 name_i18n = { "zh-CN" = "屏幕快照" }
 icon = "lucide:scan"
-version = "0.7.3"
+version = "0.7.4"
 description = "Screen captures and the text they contain"
 description_i18n = { "zh-CN" = "屏幕截图及其中的文字" }
 author = "Magi Team"
@@ -76,7 +76,7 @@ reason_i18n = { en = "Capture screenshots of your screen", "zh-CN" = "截取你�
 [[plugin.permissions.capabilities]]
 capability = "accessibility"
 optional = true
-reason_i18n = { en = "Read window content via the accessibility tree (cleaner than OCR) + active-window context (optional)", "zh-CN" = "通过辅助功能树读取窗口内容（比 OCR 更干净）及活动窗口上下文（可选）" }
+reason_i18n = { en = "Read the active window title and text", "zh-CN" = "读取活动窗口的标题和文字" }
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_write"
@@ -86,7 +86,7 @@ reason_i18n = { en = "Save screenshots and thumbnails", "zh-CN" = "保存截图�
 [[plugin.permissions.capabilities]]
 capability = "subprocess"
 scope = ["magi-vision-helper"]
-reason_i18n = { en = "Run the bundled OCR/vision helper", "zh-CN" = "运行随附的 OCR/视觉助手" }
+reason_i18n = { en = "Run the bundled tool to recognize text in screenshots", "zh-CN" = "运行随附的工具，识别截图中的文字" }
 
 [plugin.activation_flow]
 title = "Enable Screenshot Timeline"

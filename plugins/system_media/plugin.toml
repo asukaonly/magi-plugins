@@ -10,7 +10,7 @@ id = "system-media"
 name = "Now Playing"
 name_i18n = { "zh-CN" = "正在播放" }
 icon = "lucide:music"
-version = "0.3.3"
+version = "0.3.4"
 description = "Music playing on this device"
 description_i18n = { "zh-CN" = "本机正在播放的音乐" }
 author = "Magi Team"
@@ -61,7 +61,7 @@ en = "Lets magi see music playing on this device"
 
 [[plugin.permissions.capabilities]]
 capability = "system_media"
-reason_i18n = { en = "Read system media playback (now-playing) info", "zh-CN" = "读取系统媒体播放（正在播放）信息" }
+reason_i18n = { en = "Read information about media playing on this device", "zh-CN" = "读取本机正在播放的媒体信息" }
 
 [[plugin.settings_fields]]
 key = "sources.system_media.enabled"

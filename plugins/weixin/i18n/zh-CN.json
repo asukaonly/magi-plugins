@@ -1,7 +1,7 @@
 {
   "weixin": {
     "name": "微信",
-    "description": "通过微信官方 iLink 机器人网关接入 Magi，让你可以直接在微信里与 Magi 对话。",
+    "description": "在微信中与 Magi 对话",
     "fields": {
       "bot_token": {
         "label": "手动机器人 Token",
