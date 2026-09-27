@@ -10,7 +10,7 @@ id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "asset:assets/icon.png"
-version = "0.3.4"
+version = "0.3.5"
 description = "Markdown and text documents in selected folders"
 description_i18n = { "zh-CN" = "所选文件夹中的 Markdown 和文本文档" }
 author = "Magi Team"
@@ -52,11 +52,11 @@ zh = "magi 能读取你指定文件夹里的本地笔记和文档"
 en = "Lets magi read local notes and documents from folders you choose"
 
 [plugin.suggestion_descriptor.surfaces.first_context]
-order = 51
+order = 41
 
 [plugin.suggestion_descriptor.surfaces.first_context.rationale]
-zh = "从本地笔记和文档中补充已有背景"
-en = "Add existing context from local notes and documents"
+zh = "从文档里的内容聊起"
+en = "Start with something from your documents"
 
 [plugin.suggestion_descriptor.surfaces.first_context.scope]
 zh = "你选择文件夹中的文本与 Markdown"

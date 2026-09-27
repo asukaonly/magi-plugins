@@ -10,7 +10,7 @@ id = "edge-history"
 name = "Microsoft Edge"
 name_i18n = { "zh-CN" = "Microsoft Edge" }
 icon = "asset:assets/icon.png"
-version = "0.3.3"
+version = "0.3.4"
 description = "Pages you've visited"
 description_i18n = { "zh-CN" = "你浏览过的网页" }
 author = "Magi Team"
@@ -62,8 +62,8 @@ en = "Lets magi see what you've been reading online"
 order = 13
 
 [plugin.suggestion_descriptor.surfaces.first_context.rationale]
-zh = "从最近浏览中了解你正在关注的问题"
-en = "Continue from the topics you have been exploring recently"
+zh = "从最近浏览的话题聊起"
+en = "Talk about topics you recently explored"
 
 [plugin.suggestion_descriptor.surfaces.first_context.scope]
 zh = "最近 7 天的浏览记录，包括网页标题、网址和访问时间"

@@ -10,7 +10,7 @@ id = "git-activity"
 name = "Git"
 name_i18n = { "zh-CN" = "Git" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Code commits and branch activity"
 description_i18n = { "zh-CN" = "代码提交和分支活动" }
 author = "Magi Team"
@@ -56,11 +56,11 @@ zh = "让 magi 看到你在做什么项目"
 en = "Lets magi see what you've been building"
 
 [plugin.suggestion_descriptor.surfaces.first_context]
-order = 40
+order = 50
 
 [plugin.suggestion_descriptor.surfaces.first_context.rationale]
-zh = "从提交记录中了解正在推进的项目"
-en = "Understand active projects from recent commits"
+zh = "聊聊最近的代码改动"
+en = "Talk about your recent code changes"
 
 [plugin.suggestion_descriptor.surfaces.first_context.scope]
 zh = "最近 30 天的提交和分支活动"

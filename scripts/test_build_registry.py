@@ -416,3 +416,19 @@ def test_registry_copies_preexecution_connection_catalog() -> None:
         for field in fields:
             assert entry[field] == meta[field], (path, field)
         assert entry.get("activation_flow") == meta.get("activation_flow")
+
+
+def test_first_context_prioritizes_coding_conversations_before_calendar() -> None:
+    registry = json.loads((ROOT / "registry.json").read_text())
+    surfaces = {
+        entry["plugin_id"]: entry["suggestion_descriptor"]["surfaces"]["first_context"]
+        for entry in registry["plugins"]
+        if (entry.get("suggestion_descriptor") or {}).get("surfaces", {}).get("first_context")
+    }
+    preferred = ["chrome-history", "codex", "claude-code", "calendar", "obsidian-vault"]
+    assert sorted(preferred, key=lambda plugin_id: surfaces[plugin_id]["order"]) == preferred
+    for surface in surfaces.values():
+        assert surface["rationale"]["zh"]
+        assert surface["rationale"]["en"]
+        assert surface["scope"]["zh"]
+        assert surface["scope"]["en"]

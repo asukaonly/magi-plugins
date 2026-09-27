@@ -10,7 +10,7 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "asset:assets/icon.png"
-version = "0.3.4"
+version = "0.3.5"
 description = "Your events and reminders"
 description_i18n = { "zh-CN" = "你的日程和提醒" }
 author = "Magi Team"
@@ -58,11 +58,11 @@ zh = "让 magi 看到你的日程"
 en = "Lets magi see what's on your schedule"
 
 [plugin.suggestion_descriptor.surfaces.first_context]
-order = 20
+order = 30
 
 [plugin.suggestion_descriptor.surfaces.first_context.rationale]
-zh = "让第一次对话知道你最近的安排与节奏"
-en = "Give the first conversation a sense of your recent plans and rhythm"
+zh = "聊聊最近的安排和接下来的计划"
+en = "Talk about recent events and upcoming plans"
 
 [plugin.suggestion_descriptor.surfaces.first_context.scope]
 zh = "最近 30 天的事件和提醒"
