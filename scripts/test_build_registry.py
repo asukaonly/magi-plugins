@@ -41,7 +41,7 @@ def test_browser_history_plugins_declare_marketplace_display_group() -> None:
         assert group["id"] == "browser_history"
         assert group["name"] == "Browser History"
         assert group["name_i18n"]["zh-CN"] == "浏览器历史"
-        assert group["icon"] == "lucide:globe"
+        assert group["icon"].startswith("data:image/svg+xml;base64,")
         assert group["member_label"] == member_label
         assert group["member_order"] == member_order
 
@@ -99,7 +99,7 @@ def test_media_and_game_plugins_declare_marketplace_display_groups() -> None:
         assert group["id"] == spec["id"]
         assert group["name"] == spec["name"]
         assert group["name_i18n"]["zh-CN"] == spec["name_zh"]
-        assert group["icon"] == spec["icon"]
+        assert group["icon"].startswith("data:image/svg+xml;base64,")
         assert group["member_label"] == spec["member_label"]
         assert group["member_order"] == spec["member_order"]
 
@@ -193,25 +193,7 @@ def test_split_sources_do_not_install_their_siblings() -> None:
 
 def test_plugins_embed_safe_package_owned_icons() -> None:
     build_registry = _load_build_registry_module()
-    plugin_dirs = {
-        "apple-photos",
-        "calendar_plugin",
-        "local-documents",
-        "local-photos",
-        "chrome-history",
-        "claude-code",
-        "codex",
-        "edge-history",
-        "firefox-history",
-        "git_activity",
-        "github_activity",
-        "netease_music",
-        "obsidian-vault",
-        "safari-history",
-        "steam_play_history",
-        "telegram",
-        "weixin",
-    }
+    plugin_dirs = {path.parent.name for path in (ROOT / "plugins").glob("*/plugin.toml")}
 
     for plugin_dir in sorted(plugin_dirs):
         entry = build_registry.build_entry(
@@ -432,3 +414,32 @@ def test_first_context_prioritizes_coding_conversations_before_calendar() -> Non
         assert surface["rationale"]["en"]
         assert surface["scope"]["zh"]
         assert surface["scope"]["en"]
+
+
+def test_group_artwork_is_packaged_and_identical_across_members() -> None:
+    build_registry = _load_build_registry_module()
+    artwork_by_group: dict[str, str] = {}
+    for path in sorted((ROOT / "plugins").glob("*/plugin.toml")):
+        manifest = tomllib.loads(path.read_text())["plugin"]
+        group = manifest.get("display_group")
+        if not group:
+            continue
+        assert group["icon"] == "asset:assets/group-icon.svg"
+        entry = build_registry.build_entry(path.parent, official_ids=set())
+        artwork = entry["display_group"]["icon"]
+        assert base64.b64decode(artwork.split(",", 1)[1]) == (path.parent / "assets/group-icon.svg").read_bytes()
+        assert artwork_by_group.setdefault(group["id"], artwork) == artwork
+    assert len(artwork_by_group) == 5
+
+
+def test_group_artwork_rejects_unsafe_svg_from_frozen_snapshot() -> None:
+    build_registry = _load_build_registry_module()
+    plugin_dir = ROOT / "plugins/chrome-history"
+
+    def read_content(path: Path) -> bytes:
+        if path.name == "group-icon.svg":
+            return b"<svg><script/></svg>"
+        return path.read_bytes()
+
+    with pytest.raises(ValueError, match="forbidden <script>"):
+        build_registry.build_entry(plugin_dir, official_ids=set(), content_reader=read_content)

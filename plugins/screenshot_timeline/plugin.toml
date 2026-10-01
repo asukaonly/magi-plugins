@@ -9,8 +9,8 @@ projection_sources = ["screenshot_timeline"]
 id = "screenshot_timeline"
 name = "Screen Captures"
 name_i18n = { "zh-CN" = "屏幕快照" }
-icon = "lucide:scan"
-version = "0.7.4"
+icon = "asset:assets/icon.svg"
+version = "0.7.5"
 description = "Screen captures and the text they contain"
 description_i18n = { "zh-CN" = "屏幕截图及其中的文字" }
 author = "Magi Team"

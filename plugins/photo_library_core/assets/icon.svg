@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect x="11" y="4" width="44" height="47" rx="8" transform="rotate(10 33 28)" fill="#EFAB65"/><rect x="5" y="13" width="46" height="45" rx="8" fill="#F6EAD6"/><rect x="10" y="18" width="36" height="29" rx="4" fill="#7EBEC6"/><circle cx="36" cy="26" r="5" fill="#FFE3A2"/><path d="m10 40 11-13 13 17 6-7 6 6v4H10Z" fill="#2E7F77"/><path d="M19 52h18" stroke="#C4AD8A" stroke-width="3" stroke-linecap="round"/>
+</svg>

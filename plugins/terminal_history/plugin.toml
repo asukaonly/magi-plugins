@@ -9,8 +9,8 @@ projection_sources = ["terminal_history"]
 id = "terminal-history"
 name = "Terminal History"
 name_i18n = { "zh-CN" = "终端历史" }
-icon = "lucide:terminal"
-version = "0.3.3"
+icon = "asset:assets/icon.svg"
+version = "0.3.4"
 description = "Commands you've run in the terminal"
 description_i18n = { "zh-CN" = "终端中执行过的命令" }
 author = "Magi Team"

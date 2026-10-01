@@ -10,7 +10,7 @@ id = "steam-play-history"
 name = "Steam"
 name_i18n = { "zh-CN" = "Steam" }
 icon = "asset:assets/icon.png"
-version = "0.3.4"
+version = "0.3.5"
 description = "Recently played games and playtime"
 description_i18n = { "zh-CN" = "最近玩过的游戏和游玩时长" }
 author = "Magi Team"
@@ -26,7 +26,7 @@ name = "Game Records"
 name_i18n = { "zh-CN" = "游戏记录" }
 description = "Manage game activity sources from installed game plugins."
 description_i18n = { "zh-CN" = "统一管理游戏记录入口。" }
-icon = "lucide:gamepad-2"
+icon = "asset:assets/group-icon.svg"
 order = 40
 member_label = "Steam"
 member_label_i18n = { "zh-CN" = "Steam" }

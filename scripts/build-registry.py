@@ -285,7 +285,14 @@ def build_entry(
         entry["depends_on"] = depends_on
     display_group = meta.get("display_group", {})
     if display_group:
-        entry["display_group"] = display_group
+        group_icon = str(display_group.get("icon", "") or "").strip()
+        group_icon_data = encode_icon_asset(
+            plugin_dir, group_icon, content_reader=content_reader,
+        )
+        entry["display_group"] = {
+            **display_group,
+            "icon": group_icon_data if group_icon_data is not None else group_icon,
+        }
     entry["platforms"] = meta.get("platforms", [])
     # Privacy-transparency signal -> "Local only" marketplace badge. Prefer the
     # top-level declaration, falling back to the suggestion_descriptor's

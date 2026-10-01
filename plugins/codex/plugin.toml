@@ -10,7 +10,7 @@ id = "codex"
 name = "Codex"
 name_i18n = { "zh-CN" = "Codex" }
 icon = "asset:assets/icon.svg"
-version = "0.3.3"
+version = "0.3.4"
 description = "Your messages in coding conversations"
 description_i18n = { "zh-CN" = "你在编程对话中发送的内容" }
 author = "Magi Team"
@@ -27,7 +27,7 @@ name = "Agent History"
 name_i18n = { "zh-CN" = "Agent 历史" }
 description = "Manage installed coding-agent history sources."
 description_i18n = { "zh-CN" = "统一管理已安装的编程助手历史来源。" }
-icon = "lucide:bot"
+icon = "asset:assets/group-icon.svg"
 order = 40
 member_label = "Codex"
 member_label_i18n = { "zh-CN" = "Codex" }

@@ -9,8 +9,8 @@ projection_sources = ["screen_time"]
 id = "screen-time"
 name = "App Usage"
 name_i18n = { "zh-CN" = "应用使用时间" }
-icon = "lucide:chart-no-axes-column"
-version = "0.4.3"
+icon = "asset:assets/icon.svg"
+version = "0.4.4"
 description = "Time spent in each app"
 description_i18n = { "zh-CN" = "各应用的使用时长" }
 author = "Magi Team"

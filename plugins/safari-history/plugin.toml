@@ -10,7 +10,7 @@ id = "safari-history"
 name = "Safari"
 name_i18n = { "zh-CN" = "Safari" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Pages you've visited"
 description_i18n = { "zh-CN" = "你浏览过的网页" }
 author = "Magi Team"
@@ -27,7 +27,7 @@ name = "Browser History"
 name_i18n = { "zh-CN" = "浏览器历史" }
 description = "Manage browser history sources from installed browser plugins."
 description_i18n = { "zh-CN" = "统一管理浏览器历史入口。" }
-icon = "lucide:globe"
+icon = "asset:assets/group-icon.svg"
 order = 10
 member_label = "Safari"
 member_label_i18n = { "zh-CN" = "Safari" }

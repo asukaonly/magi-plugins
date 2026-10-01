@@ -9,8 +9,8 @@ projection_sources = ["system_media"]
 id = "system-media"
 name = "Now Playing"
 name_i18n = { "zh-CN" = "正在播放" }
-icon = "lucide:music"
-version = "0.3.4"
+icon = "asset:assets/icon.svg"
+version = "0.3.5"
 description = "Music playing on this device"
 description_i18n = { "zh-CN" = "本机正在播放的音乐" }
 author = "Magi Team"
@@ -30,7 +30,7 @@ name = "Listening History"
 name_i18n = { "zh-CN" = "听歌历史" }
 description = "Manage music listening history sources from installed music plugins."
 description_i18n = { "zh-CN" = "统一管理听歌历史入口。" }
-icon = "lucide:music"
+icon = "asset:assets/group-icon.svg"
 order = 30
 member_label = "Local Now Playing"
 member_label_i18n = { "zh-CN" = "本机正在播放" }
