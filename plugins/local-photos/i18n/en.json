@@ -33,8 +33,8 @@
         "description": "Choose manual or automatic sync."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often automatic sync runs."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "max_items_per_sync": {
         "label": "Maximum Items Per Sync",

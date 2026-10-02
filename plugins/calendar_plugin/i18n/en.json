@@ -12,8 +12,8 @@
         "description": "Choose whether calendar sync runs manually or on a schedule."
       },
       "sync_interval_minutes": {
-        "label": "Scheduled Interval",
-        "description": "How often to sync calendar events when scheduled sync is enabled."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "lookback_days": {
         "label": "Lookback Days",

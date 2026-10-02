@@ -10,7 +10,7 @@ id = "firefox-history"
 name = "Firefox"
 name_i18n = { "zh-CN" = "Firefox" }
 icon = "asset:assets/icon.svg"
-version = "0.3.5"
+version = "0.3.6"
 description = "Pages you've visited"
 description_i18n = { "zh-CN" = "你浏览过的网页" }
 author = "Magi Team"
@@ -181,7 +181,7 @@ label = "Max Items Per Sync"
 description = "Maximum number of history records to ingest per run."
 default = 1000
 required = false
-section = "sync"
+section = "advanced_settings"
 surface = "timeline"
 order = 60
 
@@ -192,7 +192,7 @@ label = "Merge Window (minutes)"
 description = "Raw visits to the same page within this window are merged into one timeline item, even when other pages appear between them."
 default = 30
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 50
 
@@ -203,7 +203,7 @@ label = "Profile"
 description = "Firefox profile path segment (optional). Leave empty to auto-detect the default profile."
 default = ""
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 20
 

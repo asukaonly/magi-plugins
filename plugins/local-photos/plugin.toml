@@ -10,7 +10,7 @@ id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "asset:assets/icon.png"
-version = "0.3.7"
+version = "0.3.8"
 description = "Photo capture dates and locations in selected folders"
 description_i18n = { "zh-CN" = "所选照片的拍摄时间和地点" }
 author = "Magi Team"
@@ -229,7 +229,7 @@ label = "Max Items Per Sync"
 description = "Maximum number of photos to process per sync run."
 default = 200
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 40
 
@@ -251,7 +251,7 @@ label = "Session Settle Window (hours)"
 description = "A photo session is emitted only after no new photos arrive for this many hours."
 default = 4
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 50
 

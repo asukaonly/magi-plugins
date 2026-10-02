@@ -20,8 +20,8 @@
         "description": "How NetEase Cloud Music history should be synchronized."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "Polling interval used for interval-based sync."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "min_play_duration": {
         "label": "Minimum Play Duration (seconds)",

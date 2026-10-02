@@ -34,8 +34,8 @@
         "description": "Read for search but kept out of the knowledge graph."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often to rescan the vault."
+        "label": "Sync interval (minutes)",
+        "description": ""
       }
     },
     "sections": {

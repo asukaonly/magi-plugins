@@ -20,8 +20,8 @@
         "description": "自动检测并记录本机播放器正在播放的音乐。Spotify、Apple Music 等通常可用，网易云音乐当前不保证支持。"
       },
       "sync_interval_minutes": {
-        "label": "记录频率",
-        "description": "多久把已完成的播放记录写入记忆。"
+        "label": "同步间隔（分钟）",
+        "description": ""
       },
       "min_session_seconds": {
         "label": "最短播放时长（秒）",

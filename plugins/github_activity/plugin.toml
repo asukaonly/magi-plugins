@@ -10,7 +10,7 @@ id = "github-activity"
 name = "GitHub"
 name_i18n = { "zh-CN" = "GitHub" }
 icon = "asset:assets/icon.svg"
-version = "0.3.3"
+version = "0.3.4"
 description = "Commits, issues and pull requests in selected repositories"
 description_i18n = { "zh-CN" = "所选仓库的提交、议题和拉取请求" }
 author = "Magi Team"
@@ -124,7 +124,7 @@ label = "Initial Sync Days"
 description = "How many recent days to import when no previous cursor exists."
 default = 30
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 40
 minimum = 1.0

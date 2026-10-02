@@ -60,8 +60,8 @@
       }
     },
     "sync_interval_minutes": {
-      "label": "Sync Interval (minutes)",
-      "description": "How often to poll Steam playtime changes."
+      "label": "Sync interval (minutes)",
+      "description": ""
     },
     "min_session_seconds": {
       "label": "Minimum Session Duration (seconds)",

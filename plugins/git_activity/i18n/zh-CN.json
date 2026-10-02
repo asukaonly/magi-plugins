@@ -15,7 +15,7 @@
       },
       "sync_interval_minutes": {
         "label": "同步间隔（分钟）",
-        "description": "多久检查一次新的 Git 活动。"
+        "description": ""
       },
       "initial_sync_policy": {
         "label": "首次同步范围",

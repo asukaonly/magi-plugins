@@ -10,7 +10,7 @@ id = "terminal-history"
 name = "Terminal History"
 name_i18n = { "zh-CN" = "终端历史" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Commands you've run in the terminal"
 description_i18n = { "zh-CN" = "终端中执行过的命令" }
 author = "Magi Team"
@@ -76,7 +76,7 @@ label = "Dedup Window (seconds)"
 description = "Time window for session-based command deduplication."
 default = 60
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "timeline"
 order = 60
 minimum = 0.0

@@ -28,8 +28,8 @@
         "description": "How Firefox history should be synchronized."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "Polling interval used for interval-based sync."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "merge_window_minutes": {
         "label": "Merge Window (minutes)",

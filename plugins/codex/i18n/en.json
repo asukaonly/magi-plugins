@@ -28,8 +28,8 @@
         "description": "How many recent days to include on first sync."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often to check for new Codex sessions."
+        "label": "Sync interval (minutes)",
+        "description": ""
       }
     },
     "sections": {

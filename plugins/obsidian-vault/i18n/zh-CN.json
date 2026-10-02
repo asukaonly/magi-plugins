@@ -35,7 +35,7 @@
       },
       "sync_interval_minutes": {
         "label": "同步间隔（分钟）",
-        "description": "多久重新扫描一次库。"
+        "description": ""
       }
     },
     "sections": {

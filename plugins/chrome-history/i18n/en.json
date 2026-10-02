@@ -28,8 +28,8 @@
         "description": "Control how Chrome history should be synchronized."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval",
-        "description": "How often Chrome history should be synced on an interval schedule."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "merge_window_minutes": {
         "label": "Merge Window (minutes)",

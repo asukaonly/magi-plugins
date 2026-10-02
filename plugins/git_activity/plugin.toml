@@ -10,7 +10,7 @@ id = "git-activity"
 name = "Git"
 name_i18n = { "zh-CN" = "Git" }
 icon = "asset:assets/icon.svg"
-version = "0.3.5"
+version = "0.3.6"
 description = "Code commits and branch activity"
 description_i18n = { "zh-CN" = "代码提交和分支活动" }
 author = "Magi Team"

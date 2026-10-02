@@ -10,7 +10,7 @@ id = "calendar"
 name = "Calendar"
 name_i18n = { "zh-CN" = "日历" }
 icon = "asset:assets/icon.png"
-version = "0.3.5"
+version = "0.3.6"
 description = "Your events and reminders"
 description_i18n = { "zh-CN" = "你的日程和提醒" }
 author = "Magi Team"
@@ -134,7 +134,7 @@ label = "Lookback Days"
 description = "How many days of history to sync on initial setup."
 default = 30
 required = false
-section = "sync"
+section = "advanced_settings"
 surface = "timeline"
 order = 40
 minimum = 1.0
@@ -147,7 +147,7 @@ label = "Future Recurring Event Window"
 description = "How many future days of recurring events should be prefetched into the timeline."
 default = 30
 required = false
-section = "sync"
+section = "advanced_settings"
 surface = "timeline"
 order = 50
 minimum = 1.0

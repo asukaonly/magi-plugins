@@ -26,8 +26,8 @@
         "description": "Repositories to sync, for example owner/repo or a GitHub repository URL."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often to check GitHub for updates."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "initial_sync_lookback_days": {
         "label": "Initial Sync Days",

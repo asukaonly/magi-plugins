@@ -14,8 +14,8 @@
         "description": "Select one or more Git repository folders to monitor."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often to check for new Git activity."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "initial_sync_policy": {
         "label": "Initial Sync Scope",

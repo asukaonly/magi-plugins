@@ -10,7 +10,7 @@ id = "screenshot_timeline"
 name = "Screen Captures"
 name_i18n = { "zh-CN" = "屏幕快照" }
 icon = "asset:assets/icon.svg"
-version = "0.7.5"
+version = "0.7.6"
 description = "Screen captures and the text they contain"
 description_i18n = { "zh-CN" = "屏幕截图及其中的文字" }
 author = "Magi Team"
@@ -216,8 +216,8 @@ label = "Jpeg Quality Original"
 description = ""
 default = 80
 required = false
-section = "advanced"
-surface = "extensions"
+section = "advanced_settings"
+surface = "timeline"
 order = 0
 
 [[plugin.settings_fields]]
@@ -227,8 +227,8 @@ label = "Jpeg Quality Thumbnail"
 description = ""
 default = 70
 required = false
-section = "advanced"
-surface = "extensions"
+section = "advanced_settings"
+surface = "timeline"
 order = 0
 
 [[plugin.settings_fields]]
@@ -238,7 +238,7 @@ label = "OCR languages"
 description = "Apple Vision recognition language codes (BCP-47), e.g. zh-Hans, en-US, ja. Order matters: the first language is the primary character-set hypothesis. If your screen content is mostly Chinese with code/URLs mixed in, keep zh-Hans first; English-only users can put en-US first."
 default = ["zh-Hans", "en-US"]
 required = false
-section = "ocr"
+section = "advanced_settings"
 surface = "timeline"
 order = 50
 
@@ -250,7 +250,7 @@ description = "Apple Vision text-recognition precision tier. \"Accurate\" uses a
 default = "accurate"
 required = false
 options = [{ "label" = "Accurate", "value" = "accurate" }, { "label" = "Fast", "value" = "fast" }]
-section = "ocr"
+section = "advanced_settings"
 surface = "timeline"
 order = 60
 
@@ -283,8 +283,8 @@ label = "Thumbnail Max Width"
 description = ""
 default = 1024
 required = false
-section = "advanced"
-surface = "extensions"
+section = "advanced_settings"
+surface = "timeline"
 order = 0
 
 [[plugin.settings_fields]]

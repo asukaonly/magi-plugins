@@ -28,8 +28,8 @@
         "description": "控制本地文档的同步策略。"
       },
       "sync_interval_minutes": {
-        "label": "定时间隔（分钟）",
-        "description": "重新扫描文件夹中变更文档的频率。"
+        "label": "同步间隔（分钟）",
+        "description": ""
       },
       "include_extensions": {
         "label": "包含扩展名",

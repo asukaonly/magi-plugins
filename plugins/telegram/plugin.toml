@@ -10,7 +10,7 @@ id = "telegram"
 name = "Telegram"
 name_i18n = { "zh-CN" = "Telegram" }
 icon = "asset:assets/icon.svg"
-version = "0.3.3"
+version = "0.3.4"
 description = "Chat with Magi in Telegram"
 description_i18n = { "zh-CN" = "在 Telegram 中与 Magi 对话" }
 author = "Magi Team"
@@ -66,7 +66,7 @@ label = "Magi User ID"
 description = "Magi user identity to associate with this channel."
 default = "default"
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 6
 
@@ -77,7 +77,7 @@ label = "Max Message Length"
 description = "Maximum characters per Telegram message (1–4096)."
 default = 4096
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 7
 
@@ -89,7 +89,7 @@ description = "Polling checks for updates periodically; Webhook requires a publi
 default = "polling"
 required = false
 options = [{ "label" = "Polling", "value" = "polling" }, { "label" = "Webhook", "value" = "webhook" }]
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 1
 
@@ -100,7 +100,7 @@ label = "Proxy"
 description = "HTTP/SOCKS5 proxy URL. Leave empty to use the global network proxy."
 default = ""
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 3
 placeholder = "http://127.0.0.1:7890"
@@ -111,7 +111,7 @@ type = "secret"
 label = "Webhook Secret"
 description = ""
 required = false
-section = "advanced"
+section = "advanced_settings"
 surface = "extensions"
 order = 0
 
@@ -122,7 +122,7 @@ label = "Webhook URL"
 description = "Public HTTPS URL for webhook mode. Required when mode is 'webhook'."
 default = ""
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 2
 placeholder = "https://your-domain.com/webhook/telegram"

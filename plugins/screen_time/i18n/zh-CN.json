@@ -14,8 +14,8 @@
         "description": "跟踪前台应用激活事件，并把按小时汇总的结果写入记忆。"
       },
       "sync_interval_minutes": {
-        "label": "刷新间隔",
-        "description": "已完成的小时应用使用桶，多久刷新一次并写入记忆。"
+        "label": "同步间隔（分钟）",
+        "description": ""
       }
     },
     "options": {

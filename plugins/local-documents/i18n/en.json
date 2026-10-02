@@ -28,8 +28,8 @@
         "description": "How local documents should be synchronized."
       },
       "sync_interval_minutes": {
-        "label": "Sync Interval (minutes)",
-        "description": "How often to rescan the folders for changed documents."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "include_extensions": {
         "label": "Included Extensions",

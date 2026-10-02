@@ -10,7 +10,7 @@ id = "weixin"
 name = "Weixin"
 name_i18n = { "zh-CN" = "微信" }
 icon = "asset:assets/icon.svg"
-version = "0.3.3"
+version = "0.3.4"
 description = "Chat with Magi in Weixin"
 description_i18n = { "zh-CN" = "在微信中与 Magi 对话" }
 author = "Magi Team"
@@ -65,7 +65,7 @@ label = "API Base URL"
 description = "Weixin iLink API base URL."
 default = "https://ilinkai.weixin.qq.com"
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 6
 
@@ -87,7 +87,7 @@ label = "Bot Type"
 description = "iLink bot_type used by the QR login helper."
 default = "3"
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 7
 
@@ -98,7 +98,7 @@ label = "Cdn Base Url"
 description = ""
 default = "https://novac2c.cdn.weixin.qq.com/c2c"
 required = false
-section = "advanced"
+section = "advanced_settings"
 surface = "extensions"
 order = 0
 
@@ -120,7 +120,7 @@ label = "Ilink App Id"
 description = ""
 default = "bot"
 required = false
-section = "advanced"
+section = "advanced_settings"
 surface = "extensions"
 order = 0
 
@@ -131,7 +131,7 @@ label = "Max Message Length"
 description = "Maximum characters per Weixin outbound text message."
 default = 4000
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 9
 
@@ -142,7 +142,7 @@ label = "Poll Timeout"
 description = "Long-poll timeout in milliseconds for getUpdates."
 default = 35000
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 10
 
@@ -153,7 +153,7 @@ label = "Request Timeout Ms"
 description = ""
 default = 15000
 required = false
-section = "advanced"
+section = "advanced_settings"
 surface = "extensions"
 order = 0
 
@@ -164,6 +164,6 @@ label = "Route Tag"
 description = "Optional SKRouteTag header for internal routing."
 default = ""
 required = false
-section = "general"
+section = "advanced_settings"
 surface = "extensions"
 order = 8

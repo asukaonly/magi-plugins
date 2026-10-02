@@ -21,7 +21,7 @@
       },
       "sync_interval_minutes": {
         "label": "同步间隔（分钟）",
-        "description": "定时同步模式下的轮询间隔。"
+        "description": ""
       },
       "min_play_duration": {
         "label": "最短播放时长（秒）",

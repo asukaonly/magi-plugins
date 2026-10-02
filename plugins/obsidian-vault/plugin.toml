@@ -10,7 +10,7 @@ id = "obsidian-vault"
 name = "Obsidian"
 name_i18n = { "zh-CN" = "Obsidian" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Notes in your vault"
 description_i18n = { "zh-CN" = "笔记库中的笔记内容" }
 author = "Magi Team"

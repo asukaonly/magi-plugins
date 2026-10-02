@@ -20,8 +20,8 @@
         "description": "Automatically detect and record music currently playing in local players. Spotify and Apple Music usually work; NetEase Cloud Music is not currently guaranteed to surface here."
       },
       "sync_interval_minutes": {
-        "label": "Recording Frequency",
-        "description": "How often completed playback records are saved to memory."
+        "label": "Sync interval (minutes)",
+        "description": ""
       },
       "min_session_seconds": {
         "label": "Minimum Play Duration (seconds)",

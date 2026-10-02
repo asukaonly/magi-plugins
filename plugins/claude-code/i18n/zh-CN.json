@@ -29,7 +29,7 @@
       },
       "sync_interval_minutes": {
         "label": "同步间隔（分钟）",
-        "description": "检查新 Claude Code 会话的频率。"
+        "description": ""
       }
     },
     "sections": {
