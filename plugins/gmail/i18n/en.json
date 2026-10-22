@@ -1,0 +1,89 @@
+{
+  "gmail": {
+    "disconnected": "Gmail disconnected on this device.",
+    "client_required": "Enter a Google Desktop OAuth client ID first.",
+    "authorize": "Authorize Gmail in the browser on the service host, then return here.",
+    "expired": "Authorization expired. Start again.",
+    "waiting": "Waiting for Gmail authorization.",
+    "different_account": "Create a new connection for a different Gmail account.",
+    "connected": "Gmail connected with read-only access.",
+    "failed": "Gmail authorization failed. Check the OAuth configuration and retry.",
+    "cancelled": "Gmail authorization cancelled.",
+    "source_description": "Read-only Gmail messages and thread evidence.",
+    "fields": {
+      "client_id": {
+        "label": "Google Desktop OAuth client ID",
+        "description": "Enable Gmail API in your Google Cloud project and create an OAuth client of type Desktop app."
+      },
+      "client_secret": {
+        "label": "OAuth client secret",
+        "description": "The client secret from the Desktop OAuth credentials, when required. Stored in the credential vault."
+      },
+      "account_email": {
+        "label": "Connected account",
+        "description": "Set by Gmail authorization. Create another connection to use another account."
+      },
+      "oauth_token": {
+        "label": "Gmail authorization token",
+        "description": ""
+      },
+      "enabled": {
+        "label": "Enable mail source",
+        "description": ""
+      },
+      "allow_query": {
+        "label": "Allow on-demand mail checks",
+        "description": "Allow unified retrieval to check this mailbox when retained evidence is incomplete or current state is needed."
+      },
+      "initial_sync_configured": {
+        "label": "Initial sync configured",
+        "description": ""
+      },
+      "initial_sync_lookback_days": {
+        "label": "Initial sync days",
+        "description": "Days to import at the start of this connection. On-demand queries can search older mail."
+      },
+      "sync_interval_minutes": {
+        "label": "Sync interval (minutes)",
+        "description": ""
+      }
+    },
+    "actions": {
+      "connect": {
+        "label": "Connect Gmail",
+        "description": "Use a Google Desktop OAuth client. Complete authorization in a browser on the Magi service host.",
+        "button_label": "Authorize Gmail"
+      },
+      "disconnect": {
+        "label": "Disconnect Gmail",
+        "description": "Remove the local authorization token and stop mailbox access. Retained memories remain governed separately.",
+        "button_label": "Disconnect"
+      }
+    },
+    "activation": {
+      "title": "Connect Gmail",
+      "description": "Configure a Desktop OAuth client, authorize Gmail, then enable sync. Mail bodies are stored locally as external evidence.",
+      "confirm_label": "Enable Gmail sync",
+      "cancel_label": "Not now"
+    },
+    "sections": {
+      "connection": "Connection",
+      "general": "General",
+      "advanced": "Advanced"
+    },
+    "entries": {
+      "mail": {
+        "display_name": "Gmail",
+        "description": "Read-only Gmail messages and thread evidence."
+      }
+    }
+  },
+  "activity": {
+    "source": {
+      "mail": "Mail"
+    },
+    "action": {
+      "received": "Mail message"
+    }
+  }
+}

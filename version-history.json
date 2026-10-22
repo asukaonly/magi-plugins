@@ -429,6 +429,10 @@
       "package_sha256": "3eb01f2adfef9f11aa76853edb0246669aae1795bf8887a2f54d3594516123c8",
       "executable_paths": []
     },
+    "gmail@0.1.0": {
+      "package_sha256": "940097a41b6f2b9f8a155ec46785422a8d9d59785a3113d8619068641603498a",
+      "executable_paths": []
+    },
     "local-documents@0.1.2": {
       "package_sha256": "7178ec6f85ffbc85dd3f845b8bde240b2e0d6596d5f5983851fb16fbac118ee8",
       "executable_paths": []

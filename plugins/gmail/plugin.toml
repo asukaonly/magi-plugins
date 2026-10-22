@@ -1,0 +1,158 @@
+[plugin]
+id = "gmail"
+name = "Gmail"
+version = "0.1.0"
+description = "Read-only Gmail sync and on-demand mail search through unified personal retrieval."
+description_i18n = { "zh-CN" = "只读同步 Gmail，通过统一个人检索查找邮件、读取正文和核查线程。" }
+author = "Magi Team"
+icon = "lucide:Mail"
+entry_module = "plugin"
+entry_class = "GmailPlugin"
+protocol_version = 2
+min_sdk_version = "0.2.3"
+execution_mode = "trusted_process"
+projection_sources = ["mail"]
+contribution_types = ["source"]
+platforms = ["macos", "windows", "linux"]
+data_locality = "local_only"
+depends_on = ["mail_core"]
+dependencies = ["httpx>=0.28.1,<0.29"]
+settings_resources = []
+settings_ui_blocks = []
+
+[plugin.default_settings.sources.mail]
+enabled = false
+allow_query = true
+client_id = ""
+account_email = ""
+initial_sync_configured = false
+initial_sync_lookback_days = 30
+sync_interval_minutes = 10
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["gmail.googleapis.com", "oauth2.googleapis.com", "accounts.google.com", "127.0.0.1"]
+reason_i18n = { en = "Authorize read-only Gmail access using a local callback and read selected mailbox data", "zh-CN" = "通过本机回调授权 Gmail 只读访问，读取所连接邮箱的数据" }
+
+[[plugin.settings_actions]]
+action_id = "connect"
+label = "Connect Gmail"
+button_label = "Authorize Gmail"
+description = "Use a Google Desktop OAuth client. Complete authorization in a browser on the Magi service host."
+surface = "timeline"
+contribution_id = "mail"
+contribution_type = "source"
+presentation = "inline"
+requires_enabled = false
+persist_settings_on_success = true
+poll_interval_ms = 2000
+timeout_ms = 600000
+
+[[plugin.settings_actions]]
+action_id = "disconnect"
+label = "Disconnect Gmail"
+button_label = "Disconnect"
+description = "Remove the local authorization token and stop mailbox access. Retained memories remain governed separately."
+surface = "timeline"
+contribution_id = "mail"
+contribution_type = "source"
+requires_enabled = false
+destructive = true
+persist_settings_on_success = true
+order = 20
+
+[plugin.activation_flow]
+title = "Connect Gmail"
+description = "Configure a Desktop OAuth client, authorize Gmail, then enable sync. Mail bodies are stored locally as external evidence."
+confirm_label = "Enable Gmail sync"
+cancel_label = "Not now"
+authorize_on_confirm = false
+enabled_key = "sources.mail.enabled"
+configured_key = "sources.mail.initial_sync_configured"
+fields = [{ key = "sources.mail.initial_sync_lookback_days", type = "number", label = "Initial sync days", default = 30, minimum = 1, maximum = 3650, section = "connection", surface = "timeline", order = 30 }]
+first_context = { max_items_per_sync = 50, settings_overrides = {} }
+
+[[plugin.settings_fields]]
+key = "sources.mail.client_id"
+type = "input"
+label = "Google Desktop OAuth client ID"
+description = "Enable Gmail API in your Google Cloud project and create an OAuth client of type Desktop app."
+default = ""
+surface = "timeline"
+section = "connection"
+order = 10
+
+[[plugin.settings_fields]]
+key = "sources.mail.client_secret"
+type = "secret"
+label = "OAuth client secret"
+description = "The client secret from the Desktop OAuth credentials, when required. Stored in the credential vault."
+surface = "timeline"
+section = "connection"
+order = 11
+
+[[plugin.settings_fields]]
+key = "sources.mail.account_email"
+type = "input"
+label = "Connected account"
+description = "Set by Gmail authorization. Create another connection to use another account."
+default = ""
+surface = "extensions"
+section = "advanced"
+
+[[plugin.settings_fields]]
+key = "sources.mail.oauth_token"
+type = "secret"
+label = "Gmail authorization token"
+surface = "extensions"
+section = "advanced"
+
+[[plugin.settings_fields]]
+key = "sources.mail.enabled"
+type = "switch"
+label = "Enable mail source"
+default = false
+surface = "timeline"
+section = "general"
+order = 20
+
+[[plugin.settings_fields]]
+key = "sources.mail.allow_query"
+type = "switch"
+label = "Allow on-demand mail checks"
+description = "Allow unified retrieval to check this mailbox when retained evidence is incomplete or current state is needed."
+default = true
+surface = "timeline"
+section = "general"
+order = 21
+
+[[plugin.settings_fields]]
+key = "sources.mail.initial_sync_configured"
+type = "switch"
+label = "Initial sync configured"
+default = false
+surface = "extensions"
+section = "advanced"
+
+[[plugin.settings_fields]]
+key = "sources.mail.initial_sync_lookback_days"
+type = "number"
+label = "Initial sync days"
+description = "Days to import at the start of this connection. On-demand queries can search older mail."
+default = 30
+minimum = 1
+maximum = 3650
+surface = "timeline"
+section = "connection"
+order = 30
+
+[[plugin.settings_fields]]
+key = "sources.mail.sync_interval_minutes"
+type = "number"
+label = "Sync interval (minutes)"
+default = 10
+minimum = 5
+maximum = 1440
+surface = "timeline"
+section = "general"
+order = 40

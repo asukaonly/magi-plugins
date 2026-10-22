@@ -1,0 +1,89 @@
+{
+  "gmail": {
+    "disconnected": "已在此设备断开 Gmail 连接。",
+    "client_required": "请先填写 Google 桌面应用的 OAuth 客户端 ID。",
+    "authorize": "请在运行 Magi 服务的电脑浏览器中授权 Gmail，然后返回这里。",
+    "expired": "授权已过期，请重新开始。",
+    "waiting": "等待 Gmail 授权。",
+    "different_account": "如需使用其他 Gmail 账号，请创建新连接。",
+    "connected": "已获得 Gmail 只读访问权限。",
+    "failed": "Gmail 授权失败，请检查 OAuth 配置后重试。",
+    "cancelled": "已取消 Gmail 授权。",
+    "source_description": "只读 Gmail 邮件和线程证据。",
+    "fields": {
+      "client_id": {
+        "label": "Google 桌面 OAuth 客户端 ID",
+        "description": "在 Google Cloud 项目中启用 Gmail API，并创建桌面应用类型的 OAuth 客户端。"
+      },
+      "client_secret": {
+        "label": "OAuth 客户端密钥",
+        "description": "桌面 OAuth 凭据中的客户端密钥，保存在凭据保险库中。"
+      },
+      "account_email": {
+        "label": "已连接账号",
+        "description": "由 Gmail 授权写入。如需切换账号，请新建连接。"
+      },
+      "oauth_token": {
+        "label": "Gmail 授权令牌",
+        "description": ""
+      },
+      "enabled": {
+        "label": "启用邮件来源",
+        "description": ""
+      },
+      "allow_query": {
+        "label": "允许按需补查邮箱",
+        "description": "当记忆不足或需要核查当前状态时，允许统一检索查询此邮箱。"
+      },
+      "initial_sync_configured": {
+        "label": "已配置首次同步",
+        "description": ""
+      },
+      "initial_sync_lookback_days": {
+        "label": "首次同步天数",
+        "description": "创建连接时导入最近多少天的邮件。按需查询仍可搜索更早邮件。"
+      },
+      "sync_interval_minutes": {
+        "label": "同步间隔（分钟）",
+        "description": ""
+      }
+    },
+    "actions": {
+      "connect": {
+        "label": "连接 Gmail",
+        "button_label": "授权 Gmail",
+        "description": "使用 Google 桌面 OAuth 客户端，在运行 Magi 服务的电脑浏览器中完成授权。"
+      },
+      "disconnect": {
+        "label": "断开 Gmail",
+        "button_label": "断开连接",
+        "description": "删除本机授权令牌并停止访问邮箱，已保留的记忆仍由记忆系统管理。"
+      }
+    },
+    "activation": {
+      "title": "连接 Gmail",
+      "description": "配置桌面 OAuth 客户端并授权 Gmail 后启用同步，邮件正文作为外部证据保存在本机。",
+      "confirm_label": "启用 Gmail 同步",
+      "cancel_label": "暂不启用"
+    },
+    "sections": {
+      "connection": "连接",
+      "general": "常规",
+      "advanced": "高级"
+    },
+    "entries": {
+      "mail": {
+        "display_name": "Gmail",
+        "description": "只读 Gmail 邮件和线程证据。"
+      }
+    }
+  },
+  "activity": {
+    "source": {
+      "mail": "邮件"
+    },
+    "action": {
+      "received": "邮件记录"
+    }
+  }
+}

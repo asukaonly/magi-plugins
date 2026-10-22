@@ -3039,6 +3039,197 @@
       "package_sha256": "3eb01f2adfef9f11aa76853edb0246669aae1795bf8887a2f54d3594516123c8"
     },
     {
+      "plugin_id": "gmail",
+      "name": "Gmail",
+      "icon": "lucide:Mail",
+      "version": "0.1.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.3",
+      "execution_mode": "trusted_process",
+      "projection_sources": [
+        "mail"
+      ],
+      "settings_fields": [
+        {
+          "key": "sources.mail.client_id",
+          "type": "input",
+          "label": "Google Desktop OAuth client ID",
+          "description": "Enable Gmail API in your Google Cloud project and create an OAuth client of type Desktop app.",
+          "default": "",
+          "surface": "timeline",
+          "section": "connection",
+          "order": 10
+        },
+        {
+          "key": "sources.mail.client_secret",
+          "type": "secret",
+          "label": "OAuth client secret",
+          "description": "The client secret from the Desktop OAuth credentials, when required. Stored in the credential vault.",
+          "surface": "timeline",
+          "section": "connection",
+          "order": 11
+        },
+        {
+          "key": "sources.mail.account_email",
+          "type": "input",
+          "label": "Connected account",
+          "description": "Set by Gmail authorization. Create another connection to use another account.",
+          "default": "",
+          "surface": "extensions",
+          "section": "advanced"
+        },
+        {
+          "key": "sources.mail.oauth_token",
+          "type": "secret",
+          "label": "Gmail authorization token",
+          "surface": "extensions",
+          "section": "advanced"
+        },
+        {
+          "key": "sources.mail.enabled",
+          "type": "switch",
+          "label": "Enable mail source",
+          "default": false,
+          "surface": "timeline",
+          "section": "general",
+          "order": 20
+        },
+        {
+          "key": "sources.mail.allow_query",
+          "type": "switch",
+          "label": "Allow on-demand mail checks",
+          "description": "Allow unified retrieval to check this mailbox when retained evidence is incomplete or current state is needed.",
+          "default": true,
+          "surface": "timeline",
+          "section": "general",
+          "order": 21
+        },
+        {
+          "key": "sources.mail.initial_sync_configured",
+          "type": "switch",
+          "label": "Initial sync configured",
+          "default": false,
+          "surface": "extensions",
+          "section": "advanced"
+        },
+        {
+          "key": "sources.mail.initial_sync_lookback_days",
+          "type": "number",
+          "label": "Initial sync days",
+          "description": "Days to import at the start of this connection. On-demand queries can search older mail.",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 3650,
+          "surface": "timeline",
+          "section": "connection",
+          "order": 30
+        },
+        {
+          "key": "sources.mail.sync_interval_minutes",
+          "type": "number",
+          "label": "Sync interval (minutes)",
+          "default": 10,
+          "minimum": 5,
+          "maximum": 1440,
+          "surface": "timeline",
+          "section": "general",
+          "order": 40
+        }
+      ],
+      "settings_actions": [
+        {
+          "action_id": "connect",
+          "label": "Connect Gmail",
+          "button_label": "Authorize Gmail",
+          "description": "Use a Google Desktop OAuth client. Complete authorization in a browser on the Magi service host.",
+          "surface": "timeline",
+          "contribution_id": "mail",
+          "contribution_type": "source",
+          "presentation": "inline",
+          "requires_enabled": false,
+          "persist_settings_on_success": true,
+          "poll_interval_ms": 2000,
+          "timeout_ms": 600000
+        },
+        {
+          "action_id": "disconnect",
+          "label": "Disconnect Gmail",
+          "button_label": "Disconnect",
+          "description": "Remove the local authorization token and stop mailbox access. Retained memories remain governed separately.",
+          "surface": "timeline",
+          "contribution_id": "mail",
+          "contribution_type": "source",
+          "requires_enabled": false,
+          "destructive": true,
+          "persist_settings_on_success": true,
+          "order": 20
+        }
+      ],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "activation_flow": {
+        "title": "Connect Gmail",
+        "description": "Configure a Desktop OAuth client, authorize Gmail, then enable sync. Mail bodies are stored locally as external evidence.",
+        "confirm_label": "Enable Gmail sync",
+        "cancel_label": "Not now",
+        "authorize_on_confirm": false,
+        "enabled_key": "sources.mail.enabled",
+        "configured_key": "sources.mail.initial_sync_configured",
+        "fields": [
+          {
+            "key": "sources.mail.initial_sync_lookback_days",
+            "type": "number",
+            "label": "Initial sync days",
+            "default": 30,
+            "minimum": 1,
+            "maximum": 3650,
+            "section": "connection",
+            "surface": "timeline",
+            "order": 30
+          }
+        ],
+        "first_context": {
+          "max_items_per_sync": 50,
+          "settings_overrides": {}
+        }
+      },
+      "path": "plugins/gmail",
+      "description": "Read-only Gmail sync and on-demand mail search through unified personal retrieval.",
+      "description_i18n": {
+        "zh-CN": "只读同步 Gmail，通过统一个人检索查找邮件、读取正文和核查线程。"
+      },
+      "author": "Magi Team",
+      "official": false,
+      "contribution_types": [
+        "source"
+      ],
+      "capabilities": [
+        {
+          "capability": "network",
+          "scope": [
+            "gmail.googleapis.com",
+            "oauth2.googleapis.com",
+            "accounts.google.com",
+            "127.0.0.1"
+          ],
+          "reason_i18n": {
+            "en": "Authorize read-only Gmail access using a local callback and read selected mailbox data",
+            "zh-CN": "通过本机回调授权 Gmail 只读访问，读取所连接邮箱的数据"
+          }
+        }
+      ],
+      "depends_on": [
+        "mail_core"
+      ],
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "data_locality": "local_only",
+      "package_sha256": "940097a41b6f2b9f8a155ec46785422a8d9d59785a3113d8619068641603498a"
+    },
+    {
       "plugin_id": "local-documents",
       "name": "Local Documents",
       "name_i18n": {
