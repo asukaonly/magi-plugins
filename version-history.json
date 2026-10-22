@@ -521,6 +521,10 @@
       "package_sha256": "cb953929a2b20593405e148a61485e17e9bc23a703e84575979fc030c620d8fa",
       "executable_paths": []
     },
+    "mail_core@0.1.0": {
+      "package_sha256": "b6c1c01c10b95b5b301f77bdbadfb8f6c082770bb6ac5c121f01eda3f5f2c43a",
+      "executable_paths": []
+    },
     "netease-music@0.1.2": {
       "package_sha256": "4342c36ca9f813e1d44ad84af1cf98a7fc669725dc9e71ed8c43835ab37a72ef",
       "executable_paths": []

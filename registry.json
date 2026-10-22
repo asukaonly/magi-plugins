@@ -3746,6 +3746,38 @@
       "package_sha256": "cb953929a2b20593405e148a61485e17e9bc23a703e84575979fc030c620d8fa"
     },
     {
+      "plugin_id": "mail_core",
+      "name": "Mail Core",
+      "name_i18n": {
+        "zh-CN": "邮箱公共核心"
+      },
+      "icon": "lucide:Mail",
+      "version": "0.1.0",
+      "protocol_version": 2,
+      "min_sdk_version": "0.2.3",
+      "execution_mode": "trusted_process",
+      "projection_sources": [],
+      "settings_fields": [],
+      "settings_actions": [],
+      "settings_resources": [],
+      "settings_ui_blocks": [],
+      "path": "plugins/mail_core",
+      "description": "Provider-neutral mail contracts and source normalization. Installed as a mailbox dependency.",
+      "description_i18n": {
+        "zh-CN": "邮箱共用的数据契约与记忆来源处理，随邮箱插件自动安装。"
+      },
+      "author": "Magi Team",
+      "official": false,
+      "kind": "library",
+      "contribution_types": [],
+      "platforms": [
+        "macos",
+        "windows",
+        "linux"
+      ],
+      "package_sha256": "b6c1c01c10b95b5b301f77bdbadfb8f6c082770bb6ac5c121f01eda3f5f2c43a"
+    },
+    {
       "plugin_id": "netease-music",
       "name": "NetEase Cloud Music",
       "name_i18n": {
