@@ -465,6 +465,10 @@
       "package_sha256": "2c522d3e0a868e31ef36ed1454e5ef254a616e86378e8835ca5883b7c7e59702",
       "executable_paths": []
     },
+    "local-documents@0.3.7": {
+      "package_sha256": "16e6862ea42ac6acc79a5b4a4338360b3d9a73c88b341477828cd15b4132aaed",
+      "executable_paths": []
+    },
     "local-photos@0.1.0": {
       "package_sha256": "f9fcd8f2af7473091632d98f489600986f8b6f26aeac4c7c58d8c51ae4f19b54",
       "executable_paths": []
@@ -583,6 +587,10 @@
     },
     "obsidian-vault@0.3.5": {
       "package_sha256": "d482960b852522e0100462e58d3369f18a2de4a9f50b798acfc3304986215321",
+      "executable_paths": []
+    },
+    "obsidian-vault@0.3.6": {
+      "package_sha256": "158447b402f73caede6b820ac3dbb1c3e3c8eeb89e33905785c4710267164e1f",
       "executable_paths": []
     },
     "photo_library_core@0.1.0": {

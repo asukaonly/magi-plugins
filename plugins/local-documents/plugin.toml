@@ -10,7 +10,7 @@ id = "local-documents"
 name = "Local Documents"
 name_i18n = { "zh-CN" = "本地文档" }
 icon = "asset:assets/icon.png"
-version = "0.3.6"
+version = "0.3.7"
 description = "Markdown and text documents in selected folders"
 description_i18n = { "zh-CN" = "所选文件夹中的 Markdown 和文本文档" }
 author = "Magi Team"

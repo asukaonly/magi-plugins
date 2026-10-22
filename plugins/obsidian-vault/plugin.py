@@ -35,23 +35,24 @@ class ObsidianVaultPlugin(Plugin):
             ExtractionProfileSpec(
                 profile_id="source.obsidian_vault",
                 source_types=["obsidian_vault"],
-                # Every type/predicate MUST be in the host ENTITY_TYPE_REGISTRY /
-                # PREDICATE_REGISTRY or the whole profile is rejected at load. Notes and
-                # wikilink targets map to `concept`; tags to `topic`.
-                allowed_entity_types=["concept", "topic", "person", "project", "software", "organization"],
-                allowed_predicates=["REFERENCES", "INTERESTED_IN", "KNOWS", "USES", "WORKS_WITH", "MEMBER_OF"],
+                # Semantic self-reports use the host ontology; structured hints
+                # remain restricted to wikilink concepts and tag topics.
+                allowed_entity_types="all",
+                allowed_predicates="all",
                 structured_allowed_entity_types=["concept", "topic"],
                 structured_allowed_predicates=["REFERENCES"],
                 allow_graph=True,
-                allow_assertion=False,
+                allow_assertion=True,
                 extraction_instructions=(
-                    "These events are user-authored Obsidian notes.\n"
-                    "- [[wikilinks]] and #tags are already emitted as deterministic REFERENCES\n"
-                    "  edges (structured hints); do not re-derive them.\n"
-                    "- From the note body, extract entities the user clearly writes about\n"
-                    "  (people, projects, concepts) and relations among them.\n"
-                    "- Do NOT assert quoted, clipped, or third-party claims as the user's own\n"
-                    "  beliefs."
+                    "These events are user-authored notes and diary documents.\n"
+                    "- Extract explicit self-reports about identity, communication preferences, "
+                    "stable preferences, habits, situations and stated goals.\n"
+                    "- Preserve the actual subject, negation, conditions and time of each claim.\n"
+                    "- Quoted, clipped, copied or third-party statements are not user self-reports; "
+                    "inspect the surrounding prose and preserve assertion_mode.\n"
+                    "- A wikilink, tag or mere mention is not a preference, belief or intention. "
+                    "Structured REFERENCES edges already cover these references.\n"
+                    "- Keep uncertain historical plans uncertain; file times do not establish currentness."
                 ),
             )
         ]

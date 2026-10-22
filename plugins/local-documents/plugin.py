@@ -40,34 +40,22 @@ class LocalDocumentsPlugin(Plugin):
             ExtractionProfileSpec(
                 profile_id="source.local_documents",
                 source_types=["local_documents"],
-                allowed_entity_types=[
-                    "concept",
-                    "topic",
-                    "person",
-                    "project",
-                    "software",
-                    "organization",
-                    "product",
-                    "technology",
-                    "media",
-                ],
-                allowed_predicates=[
-                    "REFERENCES",
-                    "INTERESTED_IN",
-                    "KNOWS",
-                    "USES",
-                    "WORKS_WITH",
-                    "MEMBER_OF",
-                ],
+                allowed_entity_types="all",
+                allowed_predicates="all",
                 structured_allowed_entity_types=["concept", "topic"],
                 structured_allowed_predicates=["REFERENCES"],
                 allow_graph=True,
-                allow_assertion=False,
+                allow_assertion=True,
                 extraction_instructions=(
-                    "These events are user-authored local notes or text documents.\n"
-                    "- Markdown-style [[wikilinks]] and #tags are emitted as deterministic REFERENCES edges.\n"
-                    "- From the document body, extract only entities and relations the user clearly wrote about.\n"
-                    "- Do not treat quoted, clipped, or reference material as the user's own belief unless the text says so."
+                    "These events are user-authored notes and diary documents.\n"
+                    "- Extract explicit self-reports about identity, communication preferences, "
+                    "stable preferences, habits, situations and stated goals.\n"
+                    "- Preserve the actual subject, negation, conditions and time of each claim.\n"
+                    "- Quoted, clipped, copied or third-party statements are not user self-reports; "
+                    "inspect the surrounding prose and preserve assertion_mode.\n"
+                    "- A wikilink, tag or mere mention is not a preference, belief or intention. "
+                    "Structured REFERENCES edges already cover these references.\n"
+                    "- Keep uncertain historical plans uncertain; file times do not establish currentness."
                 ),
             )
         ]

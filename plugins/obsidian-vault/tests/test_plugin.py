@@ -76,10 +76,9 @@ def test_extraction_profile_uses_registry_predicates() -> None:
     profiles = plugin.get_extraction_profiles()
     assert len(profiles) == 1
     prof = profiles[0]
-    assert "obsidian_vault" in prof.source_types
-    assert "REFERENCES" in prof.allowed_predicates
+    assert prof.source_types == ["obsidian_vault"]
+    assert prof.allowed_predicates == "all"
+    assert prof.allowed_entity_types == "all"
+    assert prof.allow_assertion is True
     assert list(prof.structured_allowed_predicates) == ["REFERENCES"]
-    # Non-registry predicates/types would invalidate the WHOLE profile at host load.
-    assert "TAGGED_AS" not in prof.allowed_predicates
-    assert "MENTIONS" not in prof.allowed_predicates
-    assert "note" not in prof.allowed_entity_types
+    assert list(prof.structured_allowed_entity_types) == ["concept", "topic"]

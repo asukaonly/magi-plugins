@@ -76,9 +76,11 @@ def test_extraction_profile_only_targets_knowledge_source() -> None:
 
     assert profile.profile_id == "source.local_documents"
     assert profile.source_types == ["local_documents"]
-    assert "REFERENCES" in profile.allowed_predicates
+    assert profile.allowed_predicates == "all"
+    assert profile.allowed_entity_types == "all"
+    assert profile.allow_assertion is True
     assert list(profile.structured_allowed_predicates) == ["REFERENCES"]
-    assert "note" not in profile.allowed_entity_types
+    assert list(profile.structured_allowed_entity_types) == ["concept", "topic"]
 
 
 def test_summary_profile_covers_both_tiers() -> None:
