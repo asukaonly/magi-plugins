@@ -29,7 +29,7 @@ def _channel() -> TelegramChannel:
 
 
 def _msg_update(text: str):
-    msg = MagicMock()
+    msg = MagicMock(message_thread_id=None)
     msg.text = text
     msg.message_id = 7
     msg.date = datetime(2026, 8, 1, tzinfo=UTC)
@@ -118,13 +118,26 @@ async def test_process_inbound_non_command_dispatches() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("thread_id", [11, 22])
+async def test_topic_identity_reaches_host_binding_and_typing(thread_id: int) -> None:
+    ch = _channel()
+    app = _wire(ch, result=None)
+    update = _msg_update("hello")
+    update.effective_message.message_thread_id = thread_id
+    await ch._process_inbound(update, "hello")
+    assert ch._session_mapper.resolve_or_create.await_args.kwargs["external_thread_id"] == str(thread_id)
+    assert ch._message_dispatcher.dispatch_user_message.await_args.kwargs["metadata"]["external_thread_id"] == str(thread_id)
+    assert app.bot.send_chat_action.await_args.kwargs["message_thread_id"] == thread_id
+
+
+@pytest.mark.asyncio
 async def test_callback_query_approve_via_port() -> None:
     ch = _channel()
     _wire(ch, result=ChannelControlCommandResult(ack="✓ 已同意", kind="permission"))
 
     query = MagicMock()
     query.data = "magi:approve:abc123"
-    query.message = MagicMock()
+    query.message = MagicMock(message_thread_id=None)
     query.message.date = datetime(2026, 8, 1, tzinfo=UTC)
     query.answer = AsyncMock()
     query.edit_message_reply_markup = AsyncMock()

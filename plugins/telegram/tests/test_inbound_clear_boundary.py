@@ -179,7 +179,7 @@ async def test_command_uses_provider_time_before_mapping_control_and_ack() -> No
     assert evidence.provider_occurred_at_ms == PROVIDER_TIME_MS
     assert mapper.resolve_or_create.await_args.kwargs["inbound_context"] is inbound_context
     assert control_port.handle_command.await_args.kwargs["inbound_context"] is inbound_context
-    bot.send_message.assert_awaited_once_with(chat_id=555, text="reset done")
+    bot.send_message.assert_awaited_once_with(chat_id=555, message_thread_id=None, text="reset done")
     bot.send_chat_action.assert_not_awaited()
     dispatcher.dispatch_user_message.assert_not_awaited()
 
@@ -218,13 +218,14 @@ async def test_callback_uses_callback_message_provider_time_and_same_context() -
 
     evidence = dispatcher.capture_inbound_context.await_args.kwargs["evidence"]
     assert evidence.provider_occurred_at_ms == PROVIDER_TIME_MS
-    mapper.lookup.assert_awaited_once_with("telegram", "555")
+    mapper.lookup.assert_awaited_once_with("telegram", "555", external_thread_id=None)
     mapper.resolve_or_create.assert_not_awaited()
     assert control_port.handle_command.await_args.kwargs["inbound_context"] is inbound_context
     query.answer.assert_awaited_once()
     callback_bot.send_message.assert_awaited_once_with(
         chat_id=555,
         text="approved",
+        message_thread_id=None,
     )
 
 

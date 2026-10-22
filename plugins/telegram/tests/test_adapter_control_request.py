@@ -87,7 +87,8 @@ async def test_deliver_control_request_sends_message_with_inline_keyboard() -> N
 
     target = ChannelTarget(
         channel_type="telegram",
-        external_chat_id="",
+        external_chat_id="555",
+        external_thread_id="12",
         magi_session_id="sess-1",
         magi_user_id="local_user",
     )
@@ -97,6 +98,8 @@ async def test_deliver_control_request_sends_message_with_inline_keyboard() -> N
     bot.send_message.assert_awaited()
     call = bot.send_message.await_args
     assert call.kwargs["chat_id"] == 555
+    assert call.kwargs["message_thread_id"] == 12
+    mapper.lookup_by_session.assert_not_awaited()
     assert "image_gen" in call.kwargs["text"]
     assert "abc123" in call.kwargs["text"]
 
@@ -108,7 +111,7 @@ async def test_deliver_control_request_sends_message_with_inline_keyboard() -> N
 
 
 @pytest.mark.asyncio
-async def test_deliver_control_request_no_mapping_silent() -> None:
+async def test_deliver_control_request_rejects_missing_address() -> None:
     """If the session has no Telegram mapping, the channel can't
     deliver — silently no-op rather than crash."""
     channel = _make_channel()
@@ -126,7 +129,8 @@ async def test_deliver_control_request_no_mapping_silent() -> None:
         magi_session_id="sess-without-telegram",
         magi_user_id="local_user",
     )
-    await channel.deliver_control_request(target, _make_request())
+    with pytest.raises(ValueError, match="explicit conversation"):
+        await channel.deliver_control_request(target, _make_request())
     bot.send_message.assert_not_called()
 
 
@@ -187,7 +191,7 @@ async def test_callback_query_dispatches_synthesized_slash_approve() -> None:
 
     query = MagicMock()
     query.data = "magi:approve:abc123"
-    query.message = MagicMock()
+    query.message = MagicMock(message_thread_id=None)
     query.message.date = datetime(2026, 8, 1, tzinfo=UTC)
     query.answer = AsyncMock()
     query.edit_message_reply_markup = AsyncMock()
@@ -227,7 +231,7 @@ async def test_callback_query_dispatches_synthesized_slash_deny() -> None:
 
     query = MagicMock()
     query.data = "magi:deny:xyz789"
-    query.message = MagicMock()
+    query.message = MagicMock(message_thread_id=None)
     query.message.date = datetime(2026, 8, 1, tzinfo=UTC)
     query.answer = AsyncMock()
     query.edit_message_reply_markup = AsyncMock()

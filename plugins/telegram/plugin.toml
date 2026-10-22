@@ -3,14 +3,14 @@ settings_actions = []
 settings_resources = []
 settings_ui_blocks = []
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.3"
 execution_mode = "trusted_process"
 projection_sources = ["telegram"]
 id = "telegram"
 name = "Telegram"
 name_i18n = { "zh-CN" = "Telegram" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Chat with Magi in Telegram"
 description_i18n = { "zh-CN" = "在 Telegram 中与 Magi 对话" }
 author = "Magi Team"

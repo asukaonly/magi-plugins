@@ -31,6 +31,25 @@ from .formatter import telegram_format
 logger = get_logger(__name__)
 
 
+def _thread_id(message: Any) -> str | None:
+    value = getattr(message, "message_thread_id", None)
+    if value is None:
+        return None
+    if type(value) is not int or value <= 0:
+        raise ValueError("Telegram thread identity must be a positive integer")
+    return str(value)
+
+
+def _target_address(target: ChannelTarget) -> dict[str, Any]:
+    if target.channel_type != "telegram" or not target.external_chat_id:
+        raise ValueError("Telegram delivery requires an explicit conversation address")
+    return {
+        "chat_id": int(target.external_chat_id),
+        "message_thread_id": int(target.external_thread_id) if target.external_thread_id else None,
+    }
+
+
+
 @dataclass
 class TelegramChannelConfig:
     """Telegram-specific channel configuration."""
@@ -288,7 +307,7 @@ class TelegramChannel(Channel):
         if not text.strip():
             return
         kwargs: dict[str, Any] = {
-            "chat_id": int(target.external_chat_id),
+            **_target_address(target),
             "text": text,
         }
         # Try MarkdownV2 first; fall back to plain text on parse error.
@@ -367,6 +386,7 @@ class TelegramChannel(Channel):
         chat_id: int,
         attachment: dict[str, Any],
         caption: str | None,
+        thread_id: str | None = None,
     ) -> Any:
         """Pick the right send_* method, open the file, and call it.
 
@@ -391,6 +411,7 @@ class TelegramChannel(Channel):
         with open(storage_path, "rb") as fh:
             kwargs: dict[str, Any] = {
                 "chat_id": chat_id,
+                "message_thread_id": int(thread_id) if thread_id else None,
                 media_kwarg: fh,
             }
             if caption:
@@ -430,7 +451,7 @@ class TelegramChannel(Channel):
         #   message first, then each attachment without a caption.
         if not attachments:
             # Legacy text-only path — unchanged behavior.
-            kwargs: dict[str, Any] = {"chat_id": chat_id, "text": text}
+            kwargs: dict[str, Any] = {**_target_address(target), "text": text}
             try:
                 last_message = await self._application.bot.send_message(
                     parse_mode="MarkdownV2", **kwargs
@@ -457,13 +478,13 @@ class TelegramChannel(Channel):
             if preamble_text:
                 try:
                     last_message = await self._application.bot.send_message(
-                        chat_id=chat_id, text=preamble_text, parse_mode="MarkdownV2",
+                        **_target_address(target), text=preamble_text, parse_mode="MarkdownV2",
                     )
                 except Exception:
                     logger.debug("MarkdownV2 preamble failed, retrying as plain text")
                     try:
                         last_message = await self._application.bot.send_message(
-                            chat_id=chat_id,
+                            **_target_address(target),
                             text=content.text[: self._config.max_message_length],
                         )
                     except Exception:
@@ -481,6 +502,7 @@ class TelegramChannel(Channel):
                         chat_id=chat_id,
                         attachment=attachment,
                         caption=caption,
+                        thread_id=target.external_thread_id,
                     )
                 except Exception:
                     logger.exception(
@@ -609,30 +631,11 @@ class TelegramChannel(Channel):
         target: ChannelTarget,
         request: ControlRequest,
     ) -> None:
-        """Render a permission prompt as a text message + inline
-        keyboard with [✅ 同意][❌ 拒绝] buttons.
-
-        Looks up the real Telegram chat_id from ``target.magi_session_id``
-        via the session_mapper — the host's fanout populates
-        magi_session_id but leaves external_chat_id empty so each
-        channel resolves its own native id.
-        """
+        """Render a permission prompt at the exact host-selected address."""
         if self._application is None:
             return
-        if self._session_mapper is None:
-            logger.warning(
-                "Telegram deliver_control_request: session_mapper not "
-                "bound, cannot resolve chat_id"
-            )
-            return
-        # Look up the (channel_type, chat_id) row for this session.
-        mapping = await self._session_mapper.lookup_by_session(
-            target.magi_session_id
-        )
-        if mapping is None:
-            # No mapping = no chat_id known; nothing to render.
-            return
-        chat_id = int(mapping.external_chat_id)
+        address = _target_address(target)
+        chat_id = address["chat_id"]
 
         try:
             from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -664,7 +667,7 @@ class TelegramChannel(Channel):
         )
         try:
             await self._application.bot.send_message(
-                chat_id=chat_id,
+                **address,
                 text=text,
                 reply_markup=keyboard,
                 parse_mode="MarkdownV2",
@@ -675,7 +678,7 @@ class TelegramChannel(Channel):
             # prompt rather than the host hanging on broker.wait.
             try:
                 await self._application.bot.send_message(
-                    chat_id=chat_id,
+                    **address,
                     text=text,
                     reply_markup=keyboard,
                 )
@@ -732,6 +735,7 @@ class TelegramChannel(Channel):
             mapping = await self._session_mapper.lookup(
                 self.channel_type,
                 str(chat.id),
+                external_thread_id=_thread_id(provider_message),
             )
             if mapping is None:
                 return
@@ -772,7 +776,8 @@ class TelegramChannel(Channel):
                 try:
                     await query.answer()
                     await query.edit_message_reply_markup(reply_markup=None)
-                    await context.bot.send_message(chat_id=chat.id, text=ack_text)
+                    await context.bot.send_message(chat_id=chat.id, text=ack_text,
+                                                   message_thread_id=int(_thread_id(provider_message)) if _thread_id(provider_message) else None)
                 except Exception:
                     logger.debug(
                         "Telegram callback ack edit failed (non-fatal)",
@@ -786,7 +791,7 @@ class TelegramChannel(Channel):
             return
         try:
             await self._application.bot.send_chat_action(
-                chat_id=int(target.external_chat_id), action="typing"
+                **_target_address(target), action="typing"
             )
         except Exception:
             pass  # Non-critical
@@ -808,6 +813,7 @@ class TelegramChannel(Channel):
             async with self._local_inbound_activity(inbound_context):
                 await context.bot.send_message(
                     chat_id=chat.id,
+                    message_thread_id=int(_thread_id(message)) if _thread_id(message) else None,
                     text=(
                         "Hello! I'm your Magi assistant. "
                         "Send me a message to get started."
@@ -886,6 +892,7 @@ class TelegramChannel(Channel):
                 inbound_context=inbound_context,
                 channel_type=self.channel_type,
                 external_chat_id=str(chat.id),
+                external_thread_id=_thread_id(message),
                 external_user_id=external_user_id,
                 is_group=is_group,
                 display_name=display_name,
@@ -905,6 +912,7 @@ class TelegramChannel(Channel):
                             try:
                                 await self._application.bot.send_message(
                                     chat_id=chat.id,
+                                    message_thread_id=int(_thread_id(message)) if _thread_id(message) else None,
                                     text=result.ack,
                                 )
                             except Exception:
@@ -918,6 +926,7 @@ class TelegramChannel(Channel):
                 try:
                     await self._application.bot.send_chat_action(
                         chat_id=chat.id,
+                        message_thread_id=int(_thread_id(message)) if _thread_id(message) else None,
                         action="typing",
                     )
                 except Exception:
@@ -928,6 +937,7 @@ class TelegramChannel(Channel):
                 "external_chat_id": str(chat.id),
                 "external_user_id": external_user_id,
                 "external_message_id": str(message.message_id),
+                "external_thread_id": _thread_id(message),
                 "external_username": user.username,
                 "is_group": is_group,
             }

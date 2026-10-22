@@ -91,6 +91,18 @@ async def test_text_only_unchanged_legacy_path(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_topic_address_is_preserved_for_text_and_attachment(tmp_path):
+    channel, bot = _make_channel(tmp_path)
+    target = _target()
+    target.external_thread_id = "17"
+    await channel.deliver(target, DeliveryContent(text="hello"))
+    assert bot.send_message.await_args.kwargs["message_thread_id"] == 17
+    att = _attachment(tmp_path, "shot.png", "image", "image/png")
+    await channel.deliver(target, DeliveryContent(text="photo", attachments=(att,)))
+    assert bot.send_photo.await_args.kwargs["message_thread_id"] == 17
+
+
+@pytest.mark.asyncio
 async def test_single_image_short_text_carries_caption(tmp_path):
     """Short text fits in caption → 1 send_photo only, no separate text."""
     channel, bot = _make_channel(tmp_path)
