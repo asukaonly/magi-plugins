@@ -193,7 +193,7 @@ async def test_one_attachment_failure_does_not_suppress_siblings(tmp_path):
 
     This is best-effort delivery — silently dropping all images because
     image #1 failed would be worse than a partial send. The exception is
-    swallowed at the channel boundary (logged via logger.exception)."""
+    propagated after the remaining attachments are attempted."""
     channel, bot = _make_channel(tmp_path)
     img1 = _attachment(tmp_path, "ok.png", "image", "image/png")
     img2 = _attachment(tmp_path, "alsoOK.png", "image", "image/png")
@@ -202,24 +202,37 @@ async def test_one_attachment_failure_does_not_suppress_siblings(tmp_path):
         RuntimeError("network blip"),
         MagicMock(message_id=99),
     ]
-    receipt = await channel.deliver(
-        _target(), DeliveryContent(text="x", attachments=(img1, img2)),
-    )
+    with pytest.raises(RuntimeError, match="unconfirmed attachments"):
+        await channel.deliver(_target(), DeliveryContent(text="x", attachments=(img1, img2)))
 
     assert bot.send_photo.await_count == 2
-    # Receipt reflects the surviving send.
-    assert receipt.external_message_id == "42:99"
+    # Partial completion must not produce a success receipt.
 
 
 @pytest.mark.asyncio
-async def test_attachment_missing_storage_path_is_logged_and_skipped(tmp_path):
-    """A malformed attachment dict (no storage_path) doesn't crash deliver."""
+async def test_attachment_missing_storage_path_prevents_success_receipt(tmp_path):
+    """A malformed attachment cannot be reported as successfully delivered."""
     channel, bot = _make_channel(tmp_path)
     bad = {"attachment_id": "x", "kind": "image", "mime_type": "image/png"}
     good = _attachment(tmp_path, "real.png", "image", "image/png")
-    receipt = await channel.deliver(
-        _target(), DeliveryContent(text="hi", attachments=(bad, good)),
-    )
+    with pytest.raises(RuntimeError, match="unconfirmed attachments"):
+        await channel.deliver(_target(), DeliveryContent(text="hi", attachments=(bad, good)))
     # The good one still went through.
     bot.send_photo.assert_awaited_once()
-    assert receipt.external_message_id is not None
+
+
+@pytest.mark.asyncio
+async def test_timeout_is_not_retried_or_acknowledged(tmp_path):
+    channel, bot = _make_channel(tmp_path)
+    bot.send_message.side_effect = TimeoutError("Unknown provider result")
+    with pytest.raises(TimeoutError):
+        await channel.deliver(_target(), DeliveryContent(text="hello", delivery_id="delivery-1"))
+    assert bot.send_message.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_receipt_correlates_durable_delivery(tmp_path):
+    channel, _ = _make_channel(tmp_path)
+    receipt = await channel.deliver(_target(), DeliveryContent(text="hello", delivery_id="delivery-1"))
+    assert receipt.delivery_id == "delivery-1"
+    assert receipt.magi_session_id == "s-1"

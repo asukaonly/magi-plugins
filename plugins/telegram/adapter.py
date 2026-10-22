@@ -301,28 +301,21 @@ class TelegramChannel(Channel):
         self._application = None
 
     async def send_message(self, target: ChannelTarget, content: OutboundContent) -> None:
-        if self._application is None:
-            return
-        text = telegram_format(content.text, max_length=self._config.max_message_length)
-        if not text.strip():
-            return
-        kwargs: dict[str, Any] = {
-            **_target_address(target),
-            "text": text,
-        }
-        # Try MarkdownV2 first; fall back to plain text on parse error.
+        await self.deliver(target, DeliveryContent(text=content.text))
+
+    async def _send_formatted(self, *, address: dict[str, Any], text: str, plain_text: str, **kwargs: Any) -> Any:
+        from telegram.error import BadRequest
+
         try:
-            await self._application.bot.send_message(parse_mode="MarkdownV2", **kwargs)
-        except Exception:
-            logger.debug("MarkdownV2 send failed, retrying as plain text")
-            kwargs["text"] = content.text[: self._config.max_message_length]
-            try:
-                await self._application.bot.send_message(**kwargs)
-            except Exception:
-                logger.exception(
-                    "Failed to send message to Telegram",
-                    chat_id=target.external_chat_id,
-                )
+            return await self._application.bot.send_message(
+                **address, text=text, parse_mode="MarkdownV2", **kwargs,
+            )
+        except BadRequest as exc:
+            # A confirmed formatting rejection has no send side effect.
+            # Network errors and timeouts must propagate without another send.
+            if "parse" not in str(exc).lower() and "reserved" not in str(exc).lower():
+                raise
+            return await self._application.bot.send_message(**address, text=plain_text, **kwargs)
 
     # === Phase G capability flags ===
     # supports_streaming = False (SDK default): Telegram has no native streaming
@@ -418,113 +411,38 @@ class TelegramChannel(Channel):
                 kwargs["caption"] = caption
             return await method(**kwargs)
 
-    async def deliver(self, target: ChannelTarget, content: "DeliveryContent") -> "DeliveryReceipt":
-        """Phase G delivery returning a DeliveryReceipt with the native
-        Telegram message_id so the host can later edit / delete the message.
-
-        Phase A media-outbound: when ``content.attachments`` is non-empty,
-        attachments are sent in addition to (and AFTER) the text. The
-        first attachment carries the text as its caption when the text is
-        short enough; otherwise the text goes out as its own message first
-        so nothing gets truncated. The receipt's ``external_message_id``
-        tracks the LAST sent message (consistent with how multi-chunk
-        text was already handled and how Weixin returns the last
-        client_id), so retract operates on the most recent surface.
-        """
-        from magi_plugin_sdk.delivery import DeliveryContent, DeliveryReceipt  # noqa: F401
+    async def deliver(self, target: ChannelTarget, content: DeliveryContent) -> DeliveryReceipt:
+        """Send an explicit destination; only acknowledge a fully accepted payload."""
         import time
 
-        chat_id = int(target.external_chat_id)
+        if self._application is None:
+            raise RuntimeError("Telegram channel is not started")
+        address = _target_address(target)
         text = telegram_format(content.text, max_length=self._config.max_message_length)
-        if not text.strip() and content.text:
-            text = content.text[: self._config.max_message_length]
-        attachments = list(content.attachments or ())
-
+        plain = content.text[:self._config.max_message_length]
+        attachments = list(content.attachments)
         last_message = None
-
-        # Decide where the text goes:
-        # - No attachments: send text as before (legacy text-only path).
-        # - 1+ attachments AND text fits in a single caption: bundle the
-        #   text on the first attachment so we save a round-trip and
-        #   render as one "card" in Telegram.
-        # - 1+ attachments AND text doesn't fit: send text as a standalone
-        #   message first, then each attachment without a caption.
-        if not attachments:
-            # Legacy text-only path — unchanged behavior.
-            kwargs: dict[str, Any] = {**_target_address(target), "text": text}
+        if not attachments or (text and len(text) > self._CAPTION_MAX_CHARS):
+            last_message = await self._send_formatted(address=address, text=text or plain, plain_text=plain)
+        failures = []
+        for index, attachment in enumerate(attachments):
+            caption = text if index == 0 and len(text) <= self._CAPTION_MAX_CHARS else None
             try:
-                last_message = await self._application.bot.send_message(
-                    parse_mode="MarkdownV2", **kwargs
+                last_message = await self._send_one_attachment(
+                    chat_id=address["chat_id"], thread_id=target.external_thread_id,
+                    attachment=attachment, caption=caption,
                 )
-            except Exception:
-                logger.debug("MarkdownV2 deliver failed, retrying as plain text")
-                kwargs["text"] = content.text[: self._config.max_message_length]
-                try:
-                    last_message = await self._application.bot.send_message(**kwargs)
-                except Exception:
-                    logger.exception(
-                        "Failed to deliver message to Telegram",
-                        chat_id=target.external_chat_id,
-                    )
-        else:
-            # Decide whether the caption can carry the full text.
-            inline_caption: str | None = None
-            preamble_text = ""
-            if text and len(text) <= self._CAPTION_MAX_CHARS:
-                inline_caption = text
-            elif text:
-                preamble_text = text
-
-            if preamble_text:
-                try:
-                    last_message = await self._application.bot.send_message(
-                        **_target_address(target), text=preamble_text, parse_mode="MarkdownV2",
-                    )
-                except Exception:
-                    logger.debug("MarkdownV2 preamble failed, retrying as plain text")
-                    try:
-                        last_message = await self._application.bot.send_message(
-                            **_target_address(target),
-                            text=content.text[: self._config.max_message_length],
-                        )
-                    except Exception:
-                        logger.exception(
-                            "Failed to deliver preamble text to Telegram",
-                            chat_id=target.external_chat_id,
-                        )
-
-            for i, attachment in enumerate(attachments):
-                # Caption rides on the FIRST attachment only (and only
-                # when we didn't already send a preamble).
-                caption = inline_caption if i == 0 and not preamble_text else None
-                try:
-                    last_message = await self._send_one_attachment(
-                        chat_id=chat_id,
-                        attachment=attachment,
-                        caption=caption,
-                        thread_id=target.external_thread_id,
-                    )
-                except Exception:
-                    logger.exception(
-                        "Failed to deliver attachment to Telegram "
-                        "chat_id=%s attachment_id=%s kind=%s storage_path=%s",
-                        target.external_chat_id,
-                        attachment.get("attachment_id"),
-                        attachment.get("kind"),
-                        attachment.get("storage_path"),
-                    )
-                    # Keep going — best-effort: one bad attachment
-                    # shouldn't suppress siblings.
-
-        # external_message_id is stored as "<chat_id>:<message_id>" so that
-        # retract/revise can recover the chat_id without relying on channel_id.
-        # channel_id is set to self.channel_type ("telegram") so ChannelRegistry
-        # lookups (which index by channel_type) succeed.
-        ext_msg_id = f"{chat_id}:{last_message.message_id}" if last_message is not None else None
+            except Exception as exc:
+                failures.append(exc)
+        if failures:
+            raise RuntimeError("Telegram delivery contains unconfirmed attachments") from failures[0]
+        if last_message is None:
+            raise RuntimeError("Telegram returned no message confirmation")
         return DeliveryReceipt(
             channel_id=self.channel_type,
-            external_message_id=ext_msg_id,
-            delivered_at_ms=int(time.time() * 1000),
+            external_message_id=f"{address['chat_id']}:{last_message.message_id}",
+            delivered_at_ms=int(time.time()*1000), magi_session_id=target.magi_session_id,
+            delivery_id=content.delivery_id,
         )
 
     async def revise(self, receipt: "DeliveryReceipt", new_content: "DeliveryContent") -> "DeliveryReceipt":
@@ -665,29 +583,7 @@ class TelegramChannel(Channel):
                 ]
             ]
         )
-        try:
-            await self._application.bot.send_message(
-                **address,
-                text=text,
-                reply_markup=keyboard,
-                parse_mode="MarkdownV2",
-            )
-        except Exception:
-            # MarkdownV2 escape might fail for unusual preview text.
-            # Retry without parse_mode so the user still sees the
-            # prompt rather than the host hanging on broker.wait.
-            try:
-                await self._application.bot.send_message(
-                    **address,
-                    text=text,
-                    reply_markup=keyboard,
-                )
-            except Exception:
-                logger.exception(
-                    "Telegram deliver_control_request failed "
-                    "chat_id=%s short_id=%s",
-                    chat_id, request.short_id,
-                )
+        await self._send_formatted(address=address, text=text, plain_text=text, reply_markup=keyboard)
 
     async def _on_callback_query(self, update: Any, context: Any) -> None:
         """Handle button taps from deliver_control_request prompts.
