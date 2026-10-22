@@ -25,6 +25,10 @@
       "package_sha256": "b8efa2630dadbd0d68bb3659d2efd651519c99fc25e127f876e63517a54a3ca9",
       "executable_paths": []
     },
+    "agent_history_core@0.3.3": {
+      "package_sha256": "aa7476914cf6989201fc459d7d691b9db203e9f7f2ec2609343127df7959e13f",
+      "executable_paths": []
+    },
     "apple-photos@0.1.0": {
       "package_sha256": "09827a11070c27e49baf12319590beaa18182fa679f2272ef7c9828026e02f29",
       "executable_paths": []

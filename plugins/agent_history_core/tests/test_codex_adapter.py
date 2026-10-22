@@ -262,3 +262,34 @@ def test_missing_history_yields_nothing(tmp_path: Path) -> None:
     assert (
         list(mod.CodexAdapter().iter_conversations(str(codex), since_mtime=0.0, cutoff_ts=0.0)) == []
     )
+
+
+def test_message_roles_and_typed_blocks_are_respected(tmp_path):
+    root = tmp_path / ".codex" / "sessions"
+    root.mkdir(parents=True)
+    path = root / "session.jsonl"
+    records = [
+        {"type": "response_item", "payload": {"type": "message", "role": role, "content": [
+            {"type": "input_text", "text": text},
+        ]}}
+        for role, text in [("assistant", "我叫助手。"), ("system", "我叫系统。"), ("tool", "我叫工具。"), ("user", "我叫明日香。"), ("user", "    我叫缩进。")]
+    ]
+    records.append({"type": "response_item", "payload": {"type": "message", "role": "user", "content": [
+        {"type": "tool_result", "text": "我叫伪装。"}, {"text": "untyped"},
+        {"type": "input_text", "text": {"nested": "not text"}},
+        {"type": "input_text", "text": "> 我叫引用。"},
+        {"type": "input_text", "text": "请叫我小明。"},
+    ]}})
+    path.write_text("\n".join(json.dumps(row) for row in records))
+    adapter = _load_codex_adapter().CodexAdapter()
+    conversation = list(adapter.iter_conversations(str(root), since_mtime=0, cutoff_ts=0))[0]
+    assert conversation.user_turns == ["我叫明日香。", "    我叫缩进。", "> 我叫引用。\n请叫我小明。"]
+    # Authoritative input events replace model-input copies, not append to them.
+    records.extend([
+        {"type": "event_msg", "payload": {"type": "agent_message", "message": "我叫助手。"}},
+        {"type": "event_msg", "payload": {"type": "user_message", "message": {"nested": "not text"}}},
+        {"type": "event_msg", "payload": {"type": "user_message", "message": "我一直喜欢 DIIV。"}},
+    ])
+    path.write_text("\n".join(json.dumps(row) for row in records))
+    conversation = list(adapter.iter_conversations(str(root), since_mtime=0, cutoff_ts=0))[0]
+    assert conversation.user_turns == ["我一直喜欢 DIIV。"]

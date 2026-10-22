@@ -4,11 +4,9 @@ Claude Code stores one JSONL transcript per session under
 ``~/.claude/projects/<encoded-project-path>/<session>.jsonl``. Each line is one
 event; we want **only the user's own typed turns**.
 
-The crux: a genuine user turn is a line with ``type == "user"`` AND
-``message.content`` that is a **str**. When ``content`` is a **list** it is a
-``tool_result`` -- the agent feeding a tool's output back as a synthetic user
-message -- and must be skipped (it is not something the user wrote). Assistant
-lines (``type == "assistant"``) are likewise skipped.
+Both the event type and message role must be ``user``. Content may be a string
+or typed text blocks. Messages containing tool results are synthetic feedback,
+not user statements, and are excluded even when wrapped in a user role.
 
 ``occurred_at`` is the max user-turn ISO timestamp in the session.
 """
@@ -92,12 +90,12 @@ class ClaudeCodeAdapter:
                         if not isinstance(obj, dict) or obj.get("type") != "user":
                             continue
                         message = obj.get("message") or {}
-                        content = message.get("content") if isinstance(message, dict) else None
-                        # list content == tool_result feedback -> NOT a genuine
-                        # user turn; only a non-empty str is something the user typed.
-                        if not isinstance(content, str) or not content.strip():
+                        if not isinstance(message, dict) or message.get("role") != "user":
                             continue
-                        turns.append(content.strip())
+                        content = _user_text(message.get("content"))
+                        if not content:
+                            continue
+                        turns.append(content)
                         if not session_id:
                             session_id = str(obj.get("sessionId") or jsonl.stem)
                         max_ts = max(max_ts, _iso_to_ts(str(obj.get("timestamp") or "")))
@@ -121,3 +119,21 @@ class ClaudeCodeAdapter:
                 project_hint=project_hint,
                 native_path=str(jsonl),
             )
+
+
+def _user_text(content: object) -> str:
+    """Keep typed user text while rejecting synthetic tool-result messages."""
+    if isinstance(content, str):
+        return content if content.strip() else ""
+    if not isinstance(content, list):
+        return ""
+    if any(isinstance(part, dict) and part.get("type") == "tool_result" for part in content):
+        return ""
+    return "\n".join(
+        part["text"]
+        for part in content
+        if isinstance(part, dict)
+        and part.get("type") == "text"
+        and isinstance(part.get("text"), str)
+        and part["text"].strip()
+    )

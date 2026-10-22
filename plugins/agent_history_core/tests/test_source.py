@@ -170,7 +170,7 @@ def test_agent_filter_keeps_entries_separate(tmp_path: Path) -> None:
         json.dumps(
             {
                 "type": "user",
-                "message": {"content": "work on claude adapter"},
+                "message": {"role": "user", "content": "work on claude adapter"},
                 "sessionId": "claude-1",
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
             }
@@ -327,3 +327,62 @@ def test_build_output_activity_and_narration_shape(tmp_path: Path) -> None:
     assert "refactor the auth module" in (out.pinned_payload or "")
     assert "now add a parser test" in (out.pinned_payload or "")
     assert out.provenance["source_id"] == source.source_id
+
+
+def test_profile_opens_semantic_self_reports_without_expanding_structured_hints():
+    import importlib
+    _load_source_module()
+    support = importlib.import_module("agent_history_under_test.plugin_support")
+    for source in ["codex_agent_history", "claude_code_agent_history"]:
+        profile = support.build_extraction_profile(source)
+        assert profile.allowed_entity_types == "all"
+        assert profile.allowed_predicates == "all"
+        assert profile.allow_assertion is True
+        assert "goal_profile" in profile.allowed_assertion_families
+        assert "REAL_NAME" not in profile.structured_allowed_predicates
+        assert "LIKES" not in profile.structured_allowed_predicates
+        assert "person" not in profile.structured_allowed_entity_types
+        assert profile.derived_assertion_specs == []
+
+
+def test_pinned_body_preserves_user_turn_and_quote_boundaries():
+    source = _load_source_module().CodingAgentHistorySource(
+        agent="codex", source_type="codex_agent_history", display_name="History",
+    )
+    output = asyncio.run(source.build_output({
+        "source_item_id": "session", "occurred_at": 1,
+        "user_turns": ["> 我叫引用。\n\n我叫明日香。", "请叫我小明。"],
+    }))
+    assert output.pinned_payload == "## User turn 1\n\n> 我叫引用。\n\n我叫明日香。\n\n## User turn 2\n\n请叫我小明。"
+
+
+def test_transcript_to_pinned_payload_keeps_roles_and_original_quote_structure(tmp_path):
+    mod = _load_source_module()
+    user_text = "    我叫代码。\n\n> 我叫引用。\n\n我叫明日香。"
+    for agent, source_type in [("codex", "codex_agent_history"), ("claude_code", "claude_code_agent_history")]:
+        if agent == "codex":
+            root = tmp_path / ".codex" / "sessions"
+            rows = [
+                {"type": "response_item", "payload": {"type": "message", "role": "assistant", "content": "我叫助手。"}},
+                {"type": "event_msg", "payload": {"type": "user_message", "message": user_text}},
+                {"type": "event_msg", "payload": {"type": "user_message", "message": "请叫我小明。"}},
+            ]
+        else:
+            root = tmp_path / ".claude" / "projects" / "project"
+            rows = [
+                {"type": "assistant", "message": {"role": "assistant", "content": "我叫助手。"}},
+                {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "content": "我叫工具。"}]}},
+                {"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": user_text}]}},
+                {"type": "user", "message": {"role": "user", "content": "请叫我小明。"}},
+            ]
+        root.mkdir(parents=True)
+        (root / "session.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+        source = mod.CodingAgentHistorySource(agent=agent, source_type=source_type, display_name="History")
+        context = _ctx(tmp_path, [str(root)], source_type=source_type, lookback=0)
+        batch = asyncio.run(source.collect_items(context))
+        assert len(batch.changes) == 1
+        assert batch.changes[0].payload["user_turns"] == [user_text, "请叫我小明。"]
+        output = asyncio.run(source.build_output(batch.changes[0].payload))
+        assert output.pinned_payload == f"## User turn 1\n\n{user_text}\n\n## User turn 2\n\n请叫我小明。"
+        assert "我叫助手。" not in output.pinned_payload
+        assert "我叫工具。" not in output.pinned_payload

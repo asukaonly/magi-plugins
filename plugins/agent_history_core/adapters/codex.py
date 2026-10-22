@@ -44,8 +44,7 @@ def _safe_mtime(path: Path) -> float:
 def _content_texts(content: object) -> list[str]:
     """Extract text parts from a Codex message content payload."""
     if isinstance(content, str):
-        stripped = content.strip()
-        return [stripped] if stripped else []
+        return [content] if content.strip() else []
     if not isinstance(content, list):
         return []
     texts: list[str] = []
@@ -53,9 +52,10 @@ def _content_texts(content: object) -> list[str]:
         if not isinstance(part, dict):
             continue
         part_type = str(part.get("type") or "")
-        if part_type and part_type not in {"input_text", "text"}:
+        if part_type not in {"input_text", "text"}:
             continue
-        text = str(part.get("text") or "").strip()
+        value = part.get("text")
+        text = value if isinstance(value, str) and value.strip() else ""
         if text:
             texts.append(text)
     return texts
@@ -140,7 +140,8 @@ class CodexAdapter:
                     if not isinstance(obj, dict):
                         continue
                     session_id = str(obj.get("session_id") or "").strip()
-                    text = str(obj.get("text") or "").strip()
+                    value = obj.get("text")
+                    text = value if isinstance(value, str) and value.strip() else ""
                     if not session_id or not text:
                         continue
                     try:
@@ -221,7 +222,8 @@ class CodexAdapter:
 
                     ts = _iso_to_ts(str(obj.get("timestamp") or ""))
                     if obj.get("type") == "event_msg" and payload.get("type") == "user_message":
-                        text = str(payload.get("message") or "").strip()
+                        value = payload.get("message")
+                        text = value if isinstance(value, str) and value.strip() else ""
                         if text:
                             turns.append(text)
                             max_ts = max(max_ts, ts)
@@ -234,7 +236,7 @@ class CodexAdapter:
                     ):
                         texts = _content_texts(payload.get("content"))
                         if texts:
-                            fallback_turns.extend(texts)
+                            fallback_turns.append("\n".join(texts))
                             max_ts = max(max_ts, ts)
         except OSError:
             return None

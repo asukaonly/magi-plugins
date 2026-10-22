@@ -10,7 +10,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CjxwYXRoIGQ9Ik0yMyA2aDI1YTExIDExIDAgMCAxIDExIDExdjIwYTExIDExIDAgMCAxLTExIDExaC01bC04IDh2LThIMjNhMTEgMTEgMCAwIDEtMTEtMTFWMTdBMTEgMTEgMCAwIDEgMjMgNloiIGZpbGw9IiNGMUMxN0EiLz48cGF0aCBkPSJNMTQgMTZoMjVhMTEgMTEgMCAwIDEgMTEgMTF2MTZhMTEgMTEgMCAwIDEtMTEgMTFIMjNsLTEyIDd2LTlhMTEgMTEgMCAwIDEtOC0xMFYyN2ExMSAxMSAwIDAgMSAxMS0xMVoiIGZpbGw9IiNDNzc2NDMiLz48cGF0aCBkPSJtMjcgMjIgMy41IDkuNUw0MCAzNWwtOS41IDMuNUwyNyA0OGwtMy41LTkuNUwxNCAzNWw5LjUtMy41WiIgZmlsbD0iI0ZGRjNENyIvPgo8L3N2Zz4K",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -33,7 +33,7 @@
         "windows",
         "linux"
       ],
-      "package_sha256": "b8efa2630dadbd0d68bb3659d2efd651519c99fc25e127f876e63517a54a3ca9"
+      "package_sha256": "aa7476914cf6989201fc459d7d691b9db203e9f7f2ec2609343127df7959e13f"
     },
     {
       "plugin_id": "apple-photos",

@@ -7,10 +7,8 @@ than a sys.path import, so it exercises the worktree copy directly.
 whose ``__path__`` points at the adapters dir, so its ``from .base import
 Conversation`` relative import resolves against the sibling ``base.py``.
 
-The crux this guards: a *genuine* user turn is a line with ``type=="user"`` AND
-``message.content`` that is a **str**. When ``content`` is a **list** it is a
-``tool_result`` (the agent feeding a tool's output back as a synthetic user
-message) and MUST be skipped.
+Both event type and message role must identify the user. Strings and typed text
+blocks are authored input; tool-result messages remain synthetic feedback.
 """
 from __future__ import annotations
 
@@ -280,3 +278,28 @@ def test_missing_directory_yields_nothing(tmp_path: Path) -> None:
         )
         == []
     )
+
+
+def test_typed_user_text_is_kept_but_conflicting_roles_and_tool_feedback_are_not(tmp_path):
+    root = tmp_path / ".claude" / "projects" / "project"
+    root.mkdir(parents=True)
+    contents = [
+        ("user", "user", [{"type": "text", "text": "我叫明日香。"}, {"type": "image", "source": {}}]),
+        ("assistant", "assistant", "我叫助手。"),
+        ("user", "assistant", "我叫伪装。"),
+        ("user", None, "我叫未知。"),
+        ("user", "user", [{"type": "tool_result", "content": [{"type": "text", "text": "我叫工具。"}]}]),
+        ("user", "user", [{"type": "text", "text": "合成说明"}, {"type": "tool_result", "content": "data"}]),
+        ("user", "user", [{"type": "text", "text": {"nested": "not text"}}]),
+        ("user", "user", [{"text": "missing type"}]),
+        ("user", "user", "> 我叫引用。\n\n请叫我小明。"),
+        ("user", "user", "    我叫缩进。"),
+    ]
+    _write(root / "session.jsonl", [
+        {"type": kind, "sessionId": "session", "message": {"role": role, "content": content}}
+        for kind, role, content in contents
+    ])
+    conversations = list(_load_claude_adapter().ClaudeCodeAdapter().iter_conversations(
+        str(root.parent), since_mtime=0, cutoff_ts=0,
+    ))
+    assert conversations[0].user_turns == ["我叫明日香。", "> 我叫引用。\n\n请叫我小明。", "    我叫缩进。"]

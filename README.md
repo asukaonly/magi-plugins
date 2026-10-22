@@ -96,6 +96,15 @@ are not tool observations and should not be converted to Markdown.
 
 ## Package coverage
 
+Coding-history sources extract explicit user self-reports (including identity,
+preferred address, preferences and goals) through the host's governed portrait
+pipeline. Semantic profiles allow the full host ontology; structured work/tool
+hints stay restricted. The shared parser keeps only declared user messages and
+typed text blocks, excludes assistant and tool-result messages, preserves quote
+and code whitespace, and pins labeled user turns. The host still verifies exact
+authored evidence and controls promotion. Updating the package does not replay
+already processed sessions automatically.
+
 All packages below declare protocol 2 and their required minimum SDK version. Libraries remain separate
 installable dependencies. “Form” means a declarative initial activation flow;
 actions and resources are listed only when callable before enable. Every package

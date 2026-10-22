@@ -42,6 +42,7 @@ AGENT_HISTORY_ASSERTION_FAMILIES = [
     "project_profile",
     "routine_profile",
     "state_profile",
+    "goal_profile",
 ]
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -63,8 +64,8 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
     return ExtractionProfileSpec(
         profile_id=f"source.{source_type}",
         source_types=[source_type],
-        allowed_entity_types=AGENT_HISTORY_L2_ENTITY_TYPES,
-        allowed_predicates=AGENT_HISTORY_L2_PREDICATES,
+        allowed_entity_types="all",
+        allowed_predicates="all",
         structured_allowed_entity_types=AGENT_HISTORY_L2_ENTITY_TYPES,
         structured_allowed_predicates=AGENT_HISTORY_L2_PREDICATES,
         allowed_assertion_families=AGENT_HISTORY_ASSERTION_FAMILIES,
@@ -73,9 +74,15 @@ def build_extraction_profile(source_type: str) -> ExtractionProfileSpec:
         derived_assertion_specs=[],
         extraction_instructions=(
             "These events are the user's own turns from local coding-agent transcripts. "
-            "Treat them as user-authored evidence, not assistant output.\n"
-            "Extract durable projects, products, tools, technologies, organizations, "
-            "topics, skills, and work activities. Skip secrets, stack traces, pasted "
+            "A user role does not establish authorship of pasted content.\n"
+            "Extract explicit self-reports, including real name, preferred form of address, "
+            "likes, dislikes, habits, goals, and durable projects and tools. Preserve the "
+            "actual subject, negation, assertion mode and historical time scope. "
+            "Only the user's own prose is evidence. Assistant suggestions, third-party "
+            "statements and embedded transcripts are not user facts. Each labeled user "
+            "turn is separate; a short acknowledgement cannot adopt an absent assistant "
+            "statement. Task requests alone do not establish durable preferences. "
+            "Skip secrets, stack traces, pasted "
             "logs, file paths, one-off debugging details, quoted assistant text, and "
             "transient command instructions."
         ),

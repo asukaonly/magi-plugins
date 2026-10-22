@@ -199,8 +199,12 @@ class CodingAgentHistorySource(Source):
         # Collection already scrubs source snapshots. Keep direct normalization
         # calls safe before their text reaches host memory or a configured LLM.
         turns = [redact_secrets(str(t)) for t in (item.get("user_turns") or [])]
-        full = "\n\n".join(turns)[:_MAX_CHARS]
-        summary = _lean_summary(full)
+        summary = _lean_summary("\n\n".join(turns))
+        full = "\n\n".join(
+            f"## User turn {index}\n\n{turn}"
+            for index, turn in enumerate(turns, start=1)
+            if turn.strip()
+        )[:_MAX_CHARS]
         project = item.get("project_hint")
         occurred_at = float(item.get("occurred_at") or time.time())
         agent_label = agent.replace("_", " ").title()
