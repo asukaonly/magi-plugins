@@ -3,14 +3,14 @@ settings_actions = [{ "action_id" = "qr_login", "label" = "Weixin QR Login", "de
 settings_resources = [{ "resource_name" = "channel_status", "resource_type" = "channel_status", "requires_enabled" = false, "description" = "Latest Weixin channel runtime status.", "metadata" = {  } }, { "resource_name" = "accounts", "resource_type" = "collection", "requires_enabled" = false, "description" = "The account bound to this connection.", "metadata" = {  } }]
 settings_ui_blocks = []
 protocol_version = 2
-min_sdk_version = "0.2.0"
+min_sdk_version = "0.2.4"
 execution_mode = "trusted_process"
 projection_sources = ["weixin"]
 id = "weixin"
 name = "Weixin"
 name_i18n = { "zh-CN" = "微信" }
 icon = "asset:assets/icon.svg"
-version = "0.3.4"
+version = "0.3.5"
 description = "Chat with Magi in Weixin"
 description_i18n = { "zh-CN" = "在微信中与 Magi 对话" }
 author = "Magi Team"

@@ -253,32 +253,21 @@ async def test_deliver_returns_receipt_with_weixin_client_id(tmp_path: Path) -> 
         magi_session_id="s-7",
         magi_user_id="u-1",
     )
-    receipt = await channel.deliver(target, DeliveryContent(text="hello world"))
+    receipt = await channel.deliver(target, DeliveryContent(text="hello world", delivery_id="stable-id"))
 
     assert api.sent == ["hello", "world"]
     assert receipt.channel_id == "weixin"
     assert receipt.external_message_id == "client-2"
     assert receipt.magi_session_id == "s-7"
+    assert receipt.delivery_id == "stable-id"
     assert receipt.delivered_at_ms > 0
 
 
 @pytest.mark.asyncio
-async def test_deliver_resolves_external_chat_id_via_session_mapper_when_target_blank(
+async def test_deliver_rejects_blank_target_even_when_session_mapper_knows_recipient(
     tmp_path: Path,
 ) -> None:
-    """Phase H+2 fix: when ``ChannelTarget.external_chat_id`` is blank
-    (the host-side ``resolve_delivery_targets`` leaves it empty for
-    non-chat_sse channels, expecting the channel to look it up), the
-    Weixin channel MUST reverse-resolve via the bound session_mapper
-    using ``target.magi_session_id``. The inbound flow already recorded
-    a ``magi_session_id ↔ external_chat_id`` mapping when the user
-    first wrote to us, so the lookup hits.
-
-    Without this resolution, ``to_user_id=""`` would reach iLink's
-    ``sendmessage`` endpoint and the API would return ``ret: -2``
-    (param error), so the reply silently fails — which is what the
-    original WeChat-outbound bug looked like in production logs.
-    """
+    """Routing must not fall back to mutable session bindings."""
     from magi_plugin_sdk.delivery import DeliveryContent
 
     class _LookupMapper:
@@ -319,13 +308,9 @@ async def test_deliver_resolves_external_chat_id_via_session_mapper_when_target_
         magi_session_id="chsess_for_wx",
         magi_user_id="channel_weixin_o9cq_etc",
     )
-    receipt = await channel.deliver(target, DeliveryContent(text="hi from agent"))
-
-    # The send happened and used the mapper-resolved id.
-    assert api.sent == ["hi from agent"]
-    assert receipt.external_message_id == "client-1"
-    assert receipt.channel_id == "weixin"
-    assert receipt.magi_session_id == "chsess_for_wx"
+    with pytest.raises(ValueError, match="explicit unthreaded target"):
+        await channel.deliver(target, DeliveryContent(text="hi from agent"))
+    assert api.sent == []
 
 
 @pytest.mark.asyncio
@@ -362,7 +347,7 @@ async def test_deliver_raises_when_blank_target_and_no_session_mapping(
         magi_user_id="u-orphan",
     )
 
-    with pytest.raises(RuntimeError, match="no external_chat_id resolvable"):
+    with pytest.raises(ValueError, match="explicit unthreaded target"):
         await channel.deliver(target, DeliveryContent(text="hi"))
 
     # Nothing was sent — we refused to call iLink with a blank to_user_id.
@@ -370,12 +355,8 @@ async def test_deliver_raises_when_blank_target_and_no_session_mapping(
 
 
 @pytest.mark.asyncio
-async def test_deliver_empty_text_returns_receipt_with_no_external_id(tmp_path: Path) -> None:
-    """Empty text → no chunks sent → receipt has external_message_id=None.
-
-    This matches ChatSseChannel's convention for "nothing actually went
-    out" and lets the DeliveryReceiptsStore record the attempt without
-    a phantom client_id."""
+async def test_deliver_empty_content_does_not_confirm_delivery(tmp_path: Path) -> None:
+    """No provider confirmation means no successful delivery receipt."""
     from magi_plugin_sdk.delivery import DeliveryContent
 
     channel = WeixinChannel(state_store=WeixinStateStore(str(tmp_path), credentials=credentials_for_path(str(tmp_path))),
@@ -389,11 +370,9 @@ async def test_deliver_empty_text_returns_receipt_with_no_external_id(tmp_path: 
         channel_type="weixin", external_chat_id="user-1",
         magi_session_id="s-1", magi_user_id="u-1",
     )
-    receipt = await channel.deliver(target, DeliveryContent(text="   "))
-
+    with pytest.raises(RuntimeError, match="no confirmed content"):
+        await channel.deliver(target, DeliveryContent(text="   "))
     assert api.sent == []
-    assert receipt.external_message_id is None
-    assert receipt.channel_id == "weixin"
 
 
 @pytest.mark.asyncio

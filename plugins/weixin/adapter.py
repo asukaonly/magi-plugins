@@ -260,38 +260,11 @@ class WeixinChannel(Channel):
     async def deliver(
         self, target: ChannelTarget, content: DeliveryContent,
     ) -> DeliveryReceipt:
-        """Phase G typed delivery — returns a receipt carrying the
-        Weixin-side ``client_id`` of the last sent chunk so the host's
-        DeliveryReceiptsStore can correlate later operations.
-
-        ``client_id`` is what Weixin uses as its per-message identity.
-        For multi-chunk sends, we return the LAST chunk's id (consistent
-        with how telegram and chat_sse handle their receipts).
-
-        Phase A media-outbound: when ``content.attachments`` is non-empty,
-        each image attachment is AES-128-ECB-encrypted client-side,
-        uploaded to the iLink CDN, and sent as a follow-up image message
-        AFTER the text body — same ordering as Telegram. Non-image
-        attachments are currently logged-and-skipped (iLink does support
-        voice/file/video item types via the same 3-step pipeline, but
-        each needs its own metadata which isn't wired yet). The receipt
-        tracks the LAST sent ``client_id`` so a subsequent retract
-        operates on the most recent message.
-        """
-        # Phase H+2 diagnostics: log every deliver entry so we can
-        # tell whether attachments are reaching the channel at all
-        # vs being lost upstream (e.g. orchestrator dropping them
-        # before fanout). Logged at INFO so it shows in default
-        # backend logs.
+        """Confirm the complete addressed payload before returning a receipt."""
+        await self._resolve_external_chat_id(target)
         attachments_in = list(content.attachments or ())
-        attachment_kinds = [str(a.get("kind") or "?") for a in attachments_in]
-        logger.info(
-            "Weixin.deliver entry session=%s text_len=%d attachments=%d kinds=%s",
-            target.magi_session_id,
-            len(content.text or ""),
-            len(attachments_in),
-            attachment_kinds,
-        )
+        if any(str(item.get("kind") or "").strip().lower() != "image" for item in attachments_in):
+            raise ValueError("Weixin delivery supports image attachments only")
         client_ids = await self._send_text(
             text=content.text or "", target=target,
         )
@@ -305,11 +278,14 @@ class WeixinChannel(Channel):
                 target.magi_session_id,
                 len(attachment_ids), len(attachments_in),
             )
+        if not client_ids:
+            raise RuntimeError("Weixin delivery has no confirmed content")
         return DeliveryReceipt(
             channel_id="weixin",
-            external_message_id=client_ids[-1] if client_ids else None,
+            external_message_id=client_ids[-1],
             delivered_at_ms=_now_ms(),
             magi_session_id=target.magi_session_id,
+            delivery_id=content.delivery_id,
         )
 
     async def deliver_control_request(
@@ -345,17 +321,7 @@ class WeixinChannel(Channel):
             f"回复 同意 或 拒绝\n"
             f"(同时有多个时请加 ID: 同意 {request.short_id})"
         )
-        try:
-            await self._send_text(text=text, target=target)
-        except Exception:
-            # _send_text already logs; swallow so the fanout in the
-            # host (DeliveryRouter.fanout_control_request) doesn't see
-            # an exception that aborts other channels.
-            logger.exception(
-                "Weixin deliver_control_request failed "
-                "session=%s short_id=%s",
-                target.magi_session_id, request.short_id,
-            )
+        await self._send_text(text=text, target=target)
 
     async def _send_attachments(
         self,
@@ -363,12 +329,7 @@ class WeixinChannel(Channel):
         attachments: list[dict[str, Any]],
         target: ChannelTarget,
     ) -> list[str]:
-        """Send each attachment via the iLink media pipeline.
-
-        Currently handles ``kind="image"`` only — non-image kinds are
-        logged and skipped rather than dropped silently. Best-effort per
-        attachment: one failure doesn't abort siblings.
-        """
+        """Attempt images independently, but reject a partially confirmed payload."""
         if self._api is None or self._credentials is None:
             raise RuntimeError("Weixin channel is not started")
         to_user_id = await self._resolve_external_chat_id(target)
@@ -379,16 +340,8 @@ class WeixinChannel(Channel):
             )
         context_token = self._context_tokens.get(to_user_id)
         client_ids: list[str] = []
+        failures = 0
         for attachment in attachments:
-            kind = str(attachment.get("kind") or "").strip().lower()
-            if kind != "image":
-                logger.warning(
-                    "Weixin attachment skipped (only image is wired today) "
-                    "kind=%s attachment_id=%s original_name=%s",
-                    kind, attachment.get("attachment_id"),
-                    attachment.get("original_name"),
-                )
-                continue
             try:
                 client_id = await self._send_image_attachment(
                     attachment=attachment,
@@ -403,7 +356,9 @@ class WeixinChannel(Channel):
                     attachment.get("attachment_id"),
                     attachment.get("storage_path"),
                 )
-                # Keep going — best-effort across siblings.
+                failures += 1
+        if failures:
+            raise RuntimeError("Weixin attachment delivery was not fully confirmed")
         return client_ids
 
     async def _send_image_attachment(
@@ -588,31 +543,11 @@ class WeixinChannel(Channel):
         return client_id
 
     async def _resolve_external_chat_id(self, target: ChannelTarget) -> str:
-        """Return the WeChat-side ``to_user_id`` for this target.
-
-        Phase G design: ``resolve_delivery_targets`` leaves
-        ``target.external_chat_id`` blank for non-chat_sse channels and
-        expects the channel to look it up itself via the session_mapper
-        (the inbound flow already recorded a ``magi_session_id ↔
-        external_chat_id`` mapping when the user first wrote to us on
-        WeChat). Without this lookup, ``to_user_id=""`` reaches iLink's
-        ``sendmessage`` endpoint and gets back ``ret: -2`` (param error).
-
-        Callers may still pre-fill ``target.external_chat_id`` — we
-        prefer it when present so the basic ``send_message`` path
-        (which does fill it) keeps working unchanged.
-        """
+        """Use only the explicit address selected by the host routing policy."""
         external = (target.external_chat_id or "").strip()
-        if external:
-            return external
-        if self._session_mapper is None:
-            return ""
-        mapping = await self._session_mapper.lookup_by_session(
-            target.magi_session_id
-        )
-        if mapping is None or mapping.channel_type != "weixin":
-            return ""
-        return str(mapping.external_chat_id or "").strip()
+        if target.channel_type != "weixin" or not external or target.external_thread_id is not None:
+            raise ValueError("Weixin delivery requires an explicit unthreaded target")
+        return external
 
     async def _send_text(
         self, *, text: str, target: ChannelTarget,

@@ -164,12 +164,8 @@ async def test_deliver_image_only_no_text_skips_send_text(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_non_image_attachment_is_skipped_with_warning(tmp_path, caplog):
-    """document / video / etc. aren't wired into the iLink pipeline yet
-    (each needs its own item type metadata). They MUST be skipped with
-    a clear log, not silently dropped or sent as text."""
-    import logging
-
+async def test_non_image_attachment_is_rejected_before_sending(tmp_path):
+    """Unsupported content cannot receive a successful partial receipt."""
     channel = _make_channel(tmp_path)
     pdf_path = tmp_path / "spec.pdf"
     pdf_path.write_bytes(b"%PDF-fake")
@@ -183,19 +179,11 @@ async def test_non_image_attachment_is_skipped_with_warning(tmp_path, caplog):
         "sha256": "fake",
     }
 
-    with caplog.at_level(logging.WARNING, logger="magi_plugin_weixin.adapter"):
-        receipt = await channel.deliver(
-            _target(tmp_path),
-            DeliveryContent(text="see attached", attachments=(doc_att,)),
-        )
-
-    channel._api.send_text_message.assert_awaited_once()  # text still goes
-    channel._api.get_upload_url.assert_not_awaited()      # no image flow
+    with pytest.raises(ValueError, match="image attachments only"):
+        await channel.deliver(_target(tmp_path), DeliveryContent(text="see attached", attachments=(doc_att,)))
+    channel._api.send_text_message.assert_not_awaited()
+    channel._api.get_upload_url.assert_not_awaited()
     channel._api.send_image_message.assert_not_awaited()
-    # Receipt falls back to the text client_id.
-    assert receipt.external_message_id == "magi-weixin-text-cid"
-    # The skip is logged at WARNING so ops can spot it.
-    assert any("Weixin attachment skipped" in r.message for r in caplog.records)
 
 
 @pytest.mark.asyncio
@@ -217,14 +205,9 @@ async def test_failed_attachment_does_not_abort_siblings(tmp_path):
         "magi-weixin-second",
     ])
 
-    receipt = await channel.deliver(
-        _target(tmp_path),
-        DeliveryContent(text="", attachments=(a, b)),
-    )
-
+    with pytest.raises(RuntimeError, match="not fully confirmed"):
+        await channel.deliver(_target(tmp_path), DeliveryContent(text="", attachments=(a, b)))
     assert channel._api.send_image_message.await_count == 1
-    # Receipt tracks the surviving send.
-    assert receipt.external_message_id == "magi-weixin-second"
 
 
 @pytest.mark.asyncio

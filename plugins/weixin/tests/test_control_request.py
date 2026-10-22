@@ -10,7 +10,7 @@ Pins:
 * ``deliver_control_request`` sends a single text message via
   ``_send_text`` containing the tool name, preview, natural-language
   choices, and the explicit-ID fallback.
-* Exception in _send_text is swallowed (host fanout's per-channel
+* Exception in _send_text propagates to the host fanout's per-channel
   isolation depends on this).
 """
 from __future__ import annotations
@@ -105,14 +105,12 @@ async def test_deliver_control_request_sends_instructions_text(
 
 
 @pytest.mark.asyncio
-async def test_deliver_control_request_swallows_exceptions(
+async def test_deliver_control_request_propagates_failure(
     tmp_path: Path,
 ) -> None:
-    """If _send_text raises (Weixin API down), the host fanout's
-    per-channel isolation requires us to NOT propagate — other
-    channels' control requests must continue."""
+    """The host router owns failure isolation across destinations."""
     channel = _make_channel(tmp_path)
     channel._send_text = AsyncMock(side_effect=RuntimeError("api down"))  # type: ignore[method-assign]
 
-    # Must not raise.
-    await channel.deliver_control_request(_make_target(), _make_request())
+    with pytest.raises(RuntimeError, match="api down"):
+        await channel.deliver_control_request(_make_target(), _make_request())
