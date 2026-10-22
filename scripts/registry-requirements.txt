@@ -1,4 +1,4 @@
 # Registry generation must use one exact host contract revision.
 pydantic==2.13.4
-magi-plugin-sdk @ git+https://github.com/asukaonly/magi.git@218f07d50740e3b1826bb6ef90a822fda388f464#subdirectory=sdk
+magi-plugin-sdk @ git+https://github.com/asukaonly/magi.git@7e3536eda78e2603e2e6cd9ba043e0ff22a5a4d5#subdirectory=sdk
 pytest==8.4.1
