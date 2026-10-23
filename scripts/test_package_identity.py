@@ -308,7 +308,8 @@ def test_all_current_packages_match_host_sdk_identity() -> None:
         ]
     }
 
-    assert len(plugin_dirs) == 25
+    assert plugin_dirs
+    assert {path.relative_to(ROOT).as_posix() for path in plugin_dirs} == set(registry_entries)
     for plugin_dir in plugin_dirs:
         files = tracked_plugin_package_files(ROOT, plugin_dir, tree_id=tree_id)
         expected = sdk_package_sha256(
