@@ -179,6 +179,7 @@ def test_split_sources_do_not_install_their_siblings() -> None:
         visit(plugin_id)
         return resolved
 
+    assert closure("gmail") == {"gmail", "mail_core"}
     assert closure("apple-photos") == {"apple-photos", "photo_library_core"}
     assert closure("local-photos") == {"local-photos", "photo_library_core"}
     assert closure("claude-code") == {
@@ -201,6 +202,9 @@ def test_plugins_embed_safe_package_owned_icons() -> None:
             official_ids=set(),
         )
         assert entry is not None
+        if entry["icon"].startswith("lucide:"):
+            assert "icon_data" not in entry
+            continue
         prefix, encoded = entry["icon_data"].split(",", 1)
         payload = base64.b64decode(encoded)
         if plugin_dir in {"calendar_plugin", "local-documents", "local-photos", "edge-history", "steam_play_history"}:
