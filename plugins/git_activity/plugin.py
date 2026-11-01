@@ -12,6 +12,7 @@ from magi_plugin_sdk import (
 
 from .reader import is_git_repo
 from .source import GitActivitySource
+from .collection_contract import collection_capability
 
 DEFAULT_SETTINGS = {
     "enabled": False,
@@ -279,7 +280,7 @@ class GitActivityPlugin(Plugin):
                     ],
                     metadata={
                         "source_type": "git_activity",
-                        "remote_collection": "source.change.v1",
+                        "remote_collection": collection_capability(),
                         "default_settings": {
                             field.key.rsplit(".", 1)[-1]: field.model_copy(deep=True).default
                             for field in self.manifest.settings_fields

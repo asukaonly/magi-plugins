@@ -2449,7 +2449,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPkdpdDwvdGl0bGU+PHBhdGggZmlsbD0iI0YwM0MyRSIgZD0iTTEzLjA5IDIzLjU0OWExLjU0IDEuNTQgMCAwIDEtMi4xOCAwTC40NTEgMTMuMDg5YTEuNTQgMS41NCAwIDAgMSAwLTIuMTc5bDcuMTkxLTcuMTkgMi43MzMgMi43MzNhMS44NSAxLjg1IDAgMCAwIC45NjQgMi4zMjZ2Ni42NmExLjg0OSAxLjg0OSAwIDEgMCAxLjU0IDBWOC45NTdsMi41MDggMi41MDhhMS44NSAxLjg1IDAgMSAwIDEuMDktMS4wOWwtMi42MzQtMi42MzRhMS44NSAxLjg1IDAgMCAwLTIuMzc4LTIuMzc3TDguNzMgMi42MyAxMC45MS40NTFhMS41NCAxLjU0IDAgMCAxIDIuMTc5IDBsMTAuNDU5IDEwLjQ2YTEuNTQgMS41NCAwIDAgMSAwIDIuMTc5eiIvPjwvc3ZnPgo=",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -2789,7 +2789,7 @@
           }
         ]
       },
-      "package_sha256": "d10a00a862dddd609e4c32c18abd75dc6c3ed0cd6cf693edbfafdf18709efd22"
+      "package_sha256": "01acf8ee7775181fbf9c1f0585cffed9e6d4ed3f056a6ae50a37844730b32147"
     },
     {
       "plugin_id": "github-activity",

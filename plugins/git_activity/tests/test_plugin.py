@@ -51,3 +51,21 @@ def test_git_activity_profile_derives_recurring_projects() -> None:
     assert rule.durable_min_observations == 6
     assert rule.durable_min_distinct_days == 3
     assert rule.durable_min_span_days == 14
+
+
+def test_git_source_declares_versioned_observation_contract() -> None:
+    from sdk_test_support import bind_test_plugin
+
+    plugin = bind_test_plugin(_load_plugin_module().GitActivityPlugin())
+    spec = plugin.get_sources()[0][2]
+    capability = spec.metadata["remote_collection"]
+    assert capability["capability_id"] == "git_activity.observe"
+    assert capability["protocol"] == "source.change.v1"
+    assert capability["schema_id"] == "git_activity.session"
+    assert capability["schema_version"] == 1
+    assert capability["supports_resources"] is False
+    schema = capability["payload_schema"]
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == set(schema["properties"])
+    assert schema["properties"]["activity_type"] == {"const": "session"}
+    assert "plugin_version" not in capability
