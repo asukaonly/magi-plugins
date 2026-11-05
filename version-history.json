@@ -29,6 +29,10 @@
       "package_sha256": "aa7476914cf6989201fc459d7d691b9db203e9f7f2ec2609343127df7959e13f",
       "executable_paths": []
     },
+    "apple-health@0.1.0": {
+      "package_sha256": "69a6721fba6c18f8c4eb3316cb461232a38dc44a32c9ef78ccb1131246086575",
+      "executable_paths": []
+    },
     "apple-photos@0.1.0": {
       "package_sha256": "09827a11070c27e49baf12319590beaa18182fa679f2272ef7c9828026e02f29",
       "executable_paths": []

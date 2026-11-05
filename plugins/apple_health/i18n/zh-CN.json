@@ -1,0 +1,1 @@
+{"source":"Apple 健康","types":{"steps":"步数","sleep":"睡眠","workout":"运动"},"units":{"count":"步","seconds":"秒"},"record":"{title}。数据来源：{source}；时区：{timezone}。","settings":{"enabled":"启用","consent":"允许处理健康数据"}}

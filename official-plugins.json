@@ -1,5 +1,6 @@
 {
   "official_plugin_ids": [
+    "apple-health",
     "apple-photos",
     "browser_history_core",
     "calendar",

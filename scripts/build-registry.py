@@ -294,6 +294,8 @@ def build_entry(
             "icon": group_icon_data if group_icon_data is not None else group_icon,
         }
     entry["platforms"] = meta.get("platforms", [])
+    if meta.get("device_collectors"):
+        entry["device_collectors"] = meta["device_collectors"]
     # Privacy-transparency signal -> "Local only" marketplace badge. Prefer the
     # top-level declaration, falling back to the suggestion_descriptor's
     # data_locality (where most plugins already declare it). Only emitted when

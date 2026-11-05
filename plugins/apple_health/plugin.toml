@@ -1,0 +1,65 @@
+[plugin]
+id = "apple-health"
+name = "Apple Health"
+name_i18n = { "zh-CN" = "Apple 健康" }
+version = "0.1.0"
+description = "Steps, sleep and workouts shared from your iPhone"
+description_i18n = { "zh-CN" = "从 iPhone 分享的步数、睡眠与运动记录" }
+author = "Magi Team"
+icon = "lucide:heart"
+entry_module = "plugin"
+entry_class = "AppleHealthPlugin"
+protocol_version = 2
+min_sdk_version = "0.2.6"
+execution_mode = "trusted_process"
+projection_sources = ["apple_health"]
+contribution_types = ["source"]
+platforms = ["macos", "linux", "windows"]
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+
+[[plugin.device_collectors]]
+source_type = "apple_health"
+capability_id = "apple_health.observe"
+protocol = "source.change.v1"
+schema_id = "apple_health.record"
+schema_version = 1
+platforms = ["ios"]
+
+[plugin.permissions]
+capabilities = []
+
+[plugin.default_settings.sources.apple_health]
+enabled = false
+processing_consent = false
+
+[plugin.activation_flow]
+title = "Share Apple Health"
+description = "Connect from Magi on your iPhone. Selected health data is stored by your Magi service and can be processed by its configured models for memory and conversations."
+confirm_label = "Continue"
+cancel_label = "Cancel"
+authorize_on_confirm = false
+enabled_key = "sources.apple_health.enabled"
+configured_key = "sources.apple_health.processing_consent"
+fields = [{ key = "sources.apple_health.processing_consent", type = "switch", label = "Allow health data processing", description = "Allow your service and its configured models to process the health data you choose to share.", default = false, required = true, section = "activation", surface = "timeline", order = 10 }]
+
+[[plugin.settings_fields]]
+key = "sources.apple_health.enabled"
+type = "switch"
+label = "Enabled"
+default = false
+section = "advanced"
+surface = "timeline"
+order = 0
+
+[[plugin.settings_fields]]
+key = "sources.apple_health.processing_consent"
+type = "switch"
+label = "Allow health data processing"
+description = "Selected health records may be processed by your service's configured models."
+default = false
+required = true
+section = "activation"
+surface = "timeline"
+order = 10

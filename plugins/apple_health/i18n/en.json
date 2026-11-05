@@ -1,0 +1,1 @@
+{"source":"Apple Health","types":{"steps":"Steps","sleep":"Sleep","workout":"Workout"},"units":{"count":"steps","seconds":"seconds"},"record":"{title}. Recorded by {source}; time zone {timezone}.","settings":{"enabled":"Enabled","consent":"Allow health data processing"}}
