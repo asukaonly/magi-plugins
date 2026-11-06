@@ -10,7 +10,7 @@ id = "netease-music"
 name = "NetEase Cloud Music"
 name_i18n = { "zh-CN" = "网易云音乐" }
 icon = "asset:assets/icon.svg"
-version = "0.3.5"
+version = "0.3.6"
 description = "Music you've listened to"
 description_i18n = { "zh-CN" = "你听过的音乐" }
 author = "Magi Team"
@@ -56,12 +56,12 @@ en = "Lets magi see what you've been listening to"
 check_kind = "file_exists"
 
 [plugin.suggestion_descriptor.local_requirements.paths_per_platform]
-darwin = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+darwin = "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3"
 win32 = "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"
 
 [[plugin.permissions.capabilities]]
 capability = "filesystem_read"
-scope = ["~/Library/Containers/com.netease.163music"]
+scope = ["~/Library/Application Support/com.netease.163music"]
 reason_i18n = { en = "Read the NetEase Music local play history", "zh-CN" = "读取网易云音乐本地播放历史" }
 
 [[plugin.permissions.capabilities]]
@@ -84,12 +84,12 @@ key = "sources.netease_music.db_path"
 type = "path"
 label = "Cache Database Path"
 description = "Defaults to the standard NetEase cache database path. If NetEase settings show a cache folder such as C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. Choose the database file under the sibling Library directory instead, usually C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat."
-default = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+default = "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3"
 required = false
 section = "advanced_settings"
 surface = "timeline"
 order = 50
-placeholder = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+placeholder = "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3"
 
 [[plugin.settings_fields]]
 key = "sources.netease_music.default_retention_mode"

@@ -29,7 +29,7 @@
       },
       "db_path": {
         "label": "数据库路径",
-        "description": "网易云音乐本地播放数据库 local.db 的路径。"
+        "description": "网易云音乐播放数据库的路径：macOS 选择 sqlite_storage.sqlite3，Windows 选择 Library/webdb.dat。"
       },
       "initial_sync_policy": {
         "label": "首次同步范围",

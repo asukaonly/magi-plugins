@@ -29,7 +29,7 @@
       },
       "db_path": {
         "label": "Database Path",
-        "description": "Path to the NetEase Cloud Music local.db playback database."
+        "description": "Path to the NetEase Cloud Music playback database: sqlite_storage.sqlite3 on macOS or Library/webdb.dat on Windows."
       },
       "initial_sync_policy": {
         "label": "Initial Sync Scope",

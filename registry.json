@@ -4066,7 +4066,7 @@
       },
       "icon": "asset:assets/icon.svg",
       "icon_data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPk5ldEVhc2UgQ2xvdWQgTXVzaWM8L3RpdGxlPjxwYXRoIGZpbGw9IiNENDNDMzMiIGQ9Ik0xMy4wNDYgOS4zODhhMy45MTkgMy45MTkgMCAwIDAtLjY2LjE5Yy0uODA5LjMxMi0xLjQ0Ny45OTEtMS42NjYgMS43NzVhMi4yNjkgMi4yNjkgMCAwIDAtLjA3NC44MWMuMDQ4LjU0Ni4zMzMgMS4wNS43NjQgMS4zNWExLjQ4MyAxLjQ4MyAwIDAgMCAyLjAxLS4yODZjLjQwNi0uNTMxLjM1NS0xLjE4My4yNC0xLjYzNi0uMDk4LS4zODctLjIyLS44MTYtLjM0NS0xLjI0OWE2NC43NiA2NC43NiAwIDAgMS0uMjY5LS45NTR6bS0uODIgMTAuMDdjLTMuOTg0IDAtNy4yMjQtMy4yNC03LjIyNC03LjIyMyAwLS45OC4yMjYtMy4wMiAxLjg4NC00LjgyMkE3LjE4OCA3LjE4OCAwIDAgMSA5LjUwMiA1LjZhLjc5Mi43OTIgMCAxIDEgLjU4NyAxLjQ3MiA1LjYxOSA1LjYxOSAwIDAgMC0yLjc5NSAyLjQ2MiA1LjUzOCA1LjUzOCAwIDAgMC0uNzA3IDIuNyA1LjY0NSA1LjY0NSAwIDAgMCA1LjYzOCA1LjYzOGMxLjg0NCAwIDMuNjI3LS45NTMgNC41NDItMi40MjggMS4wNDItMS42OC43NzItMy45MzEtLjYyNy01LjIzOGEzLjI5OSAzLjI5OSAwIDAgMC0xLjQzNy0uNzc3Yy4xNzIuNTg5LjMzNCAxLjE4LjQ5NCAxLjc3Mi4yODQgMS4xMi4xIDIuMTgxLS41MTkgMi45ODktLjM5LjUxLS45NTYuODg4LTEuNTkyIDEuMDY0YTMuMDM4IDMuMDM4IDAgMCAxLTIuNTgtLjQ0IDMuNDUgMy40NSAwIDAgMS0xLjQ0LTIuNTE0Yy0uMDQtLjQ2Ny4wMDItLjkzLjEyOC0xLjM3Ni4zNS0xLjI1NiAxLjM1Ni0yLjMzOSAyLjYyMi0yLjgyNmE1LjUgNS41IDAgMCAxIC44MjMtLjI0NmwtLjEzNC0uNTA1Yy0uMzctMS4zNzEuMjUtMi41NzkgMS41NDctMy4wMDcuMzI5LS4xMDkuNjgtLjE0NSAxLjAyNS0uMTA1Ljc5Mi4wOSAxLjQ3Ni41OTIgMS43MDkgMS4wMjMuMjU4LjUwNy0uMDk2IDEuMTUzLS43MDYgMS4xNTNhLjc4OC43ODggMCAwIDEtLjU0LS4yMTNjLS4wODgtLjA4LS4xNjMtLjE3NC0uMjU5LS4yNDdhLjgyNS44MjUgMCAwIDAtLjYzMi0uMTY2LjgwNy44MDcgMCAwIDAtLjYzNC41NTFjLS4wNTYuMTkxLS4wMzEuNDA2LjAyLjU5NS4wNy4yNTYuMTU5LjU5Ny4yMTcuODIgMS4xMS4wOTggMi4xNjIuNTQgMi45NyAxLjI5NiAxLjk3NCAxLjg0NCAyLjM1IDQuODg2Ljg5MiA3LjIzMy0xLjE5NyAxLjkzLTMuNTA5IDMuMTc3LTUuODg5IDMuMTc3ek0wIDEyYzAgNi42MjcgNS4zNzMgMTIgMTIgMTJzMTItNS4zNzMgMTItMTJTMTguNjI3IDAgMTIgMCAwIDUuMzczIDAgMTJaIi8+PC9zdmc+Cg==",
-      "version": "0.3.5",
+      "version": "0.3.6",
       "protocol_version": 2,
       "min_sdk_version": "0.2.0",
       "execution_mode": "trusted_process",
@@ -4079,12 +4079,12 @@
           "type": "path",
           "label": "Cache Database Path",
           "description": "Defaults to the standard NetEase cache database path. If NetEase settings show a cache folder such as C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\cache, do not paste that folder here. Choose the database file under the sibling Library directory instead, usually C:\\Users\\<you>\\AppData\\Local\\NetEase\\CloudMusic\\Library\\webdb.dat.",
-          "default": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3",
+          "default": "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3",
           "required": false,
           "section": "advanced_settings",
           "surface": "timeline",
           "order": 50,
-          "placeholder": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+          "placeholder": "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3"
         },
         {
           "key": "sources.netease_music.default_retention_mode",
@@ -4331,7 +4331,7 @@
         {
           "capability": "filesystem_read",
           "scope": [
-            "~/Library/Containers/com.netease.163music"
+            "~/Library/Application Support/com.netease.163music"
           ],
           "reason_i18n": {
             "en": "Read the NetEase Music local play history",
@@ -4409,13 +4409,13 @@
           {
             "check_kind": "file_exists",
             "paths_per_platform": {
-              "darwin": "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3",
+              "darwin": "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3",
               "win32": "%LOCALAPPDATA%/NetEase/CloudMusic/Library/webdb.dat"
             }
           }
         ]
       },
-      "package_sha256": "687a5574badbf50591dffb35fde175d14299d3cd6df5c5b6a4641a858eec3173"
+      "package_sha256": "09ca7745db6c4dfea9f067aa62d0a8647a2343a05266d1dd7cb1209801a69f3d"
     },
     {
       "plugin_id": "obsidian-vault",

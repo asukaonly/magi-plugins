@@ -12,7 +12,7 @@ from typing import Any
 from .normalizers import extract_track_info
 from .temp_storage import NeteaseTemporaryDatabaseStore
 
-_MACOS_DB_PATH = "~/Library/Containers/com.netease.163music/Data/Documents/storage/sqlite_storage.sqlite3"
+_MACOS_DB_PATH = "~/Library/Application Support/com.netease.163music/Documents/storage/sqlite_storage.sqlite3"
 _WINDOWS_DB_PATH = os.path.join(
     os.environ.get("LOCALAPPDATA", ""), "NetEase", "CloudMusic", "Library", "webdb.dat"
 )
