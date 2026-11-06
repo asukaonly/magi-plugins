@@ -1,0 +1,139 @@
+[plugin]
+id = "storage-mysql"
+name = "MySQL Storage"
+name_i18n = { "zh-CN" = "MySQL 存储" }
+version = "1.0.0"
+icon = "lucide:database"
+protocol_version = 2
+min_sdk_version = "0.2.7"
+execution_mode = "trusted_process"
+projection_sources = []
+settings_actions = []
+settings_resources = []
+settings_ui_blocks = []
+description = "Store conversations, memory events and channel state in your MySQL database."
+description_i18n = { "zh-CN" = "将对话、记忆事件和渠道状态保存到自己的 MySQL 数据库。" }
+author = "Magi Team"
+entry_module = "plugin"
+entry_class = "MysqlStoragePlugin"
+contribution_types = ["storage"]
+platforms = ["macos", "windows", "linux"]
+data_locality = "uploads"
+dependencies = ["sqlalchemy[asyncio]>=2.0.55,<2.1", "alembic>=1.13,<2", "asyncmy>=0.2.10,<0.3", "PyMySQL[rsa]>=1.1,<2"]
+
+[plugin.default_settings]
+port = 3306
+tls = true
+connect_timeout_seconds = 5
+read_timeout_seconds = 30
+pool_size = 5
+
+[[plugin.permissions.capabilities]]
+capability = "network"
+scope = ["*"]
+reason_i18n = { en = "Read and write the configured MySQL database", "zh-CN" = "读写配置的 MySQL 数据库" }
+
+[[plugin.permissions.capabilities]]
+capability = "filesystem_read"
+scope = ["*"]
+optional = true
+reason_i18n = { en = "Read an optional database CA certificate", "zh-CN" = "读取可选的数据库 CA 证书" }
+
+[[plugin.settings_fields]]
+key = "host"
+type = "input"
+label = "Host"
+required = true
+surface = "extensions"
+section = "general"
+order = 0
+
+[[plugin.settings_fields]]
+key = "port"
+type = "number"
+label = "Port"
+default = 3306
+minimum = 1
+maximum = 65535
+surface = "extensions"
+section = "general"
+order = 1
+
+[[plugin.settings_fields]]
+key = "database"
+type = "input"
+label = "Database"
+required = true
+surface = "extensions"
+section = "general"
+order = 2
+
+[[plugin.settings_fields]]
+key = "user"
+type = "input"
+label = "User"
+required = true
+surface = "extensions"
+section = "general"
+order = 3
+
+[[plugin.settings_fields]]
+key = "password"
+type = "secret"
+label = "Password"
+required = true
+surface = "extensions"
+section = "general"
+order = 4
+
+[[plugin.settings_fields]]
+key = "tls"
+type = "switch"
+label = "Verify TLS"
+description = "Required for remote hosts. Disable only for a local test database."
+default = true
+surface = "extensions"
+section = "general"
+order = 5
+
+[[plugin.settings_fields]]
+key = "ca_file"
+type = "input"
+label = "CA certificate path"
+required = false
+surface = "extensions"
+section = "advanced_settings"
+order = 6
+
+[[plugin.settings_fields]]
+key = "pool_size"
+type = "number"
+label = "Connection pool size"
+default = 5
+minimum = 1
+maximum = 32
+surface = "extensions"
+section = "advanced_settings"
+order = 7
+
+[[plugin.settings_fields]]
+key = "connect_timeout_seconds"
+type = "number"
+label = "Connection timeout (seconds)"
+default = 5
+minimum = 1
+maximum = 60
+surface = "extensions"
+section = "advanced_settings"
+order = 8
+
+[[plugin.settings_fields]]
+key = "read_timeout_seconds"
+type = "number"
+label = "Read timeout (seconds)"
+default = 30
+minimum = 1
+maximum = 300
+surface = "extensions"
+section = "advanced_settings"
+order = 9

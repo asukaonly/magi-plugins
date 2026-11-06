@@ -1,0 +1,48 @@
+{
+  "storage-mysql": {
+    "name": "MySQL 存储",
+    "description": "将对话、记忆事件和渠道状态保存到自己的 MySQL 数据库。",
+    "fields": {
+      "host": {
+        "label": "主机",
+        "description": ""
+      },
+      "port": {
+        "label": "端口",
+        "description": ""
+      },
+      "database": {
+        "label": "数据库",
+        "description": ""
+      },
+      "user": {
+        "label": "用户名",
+        "description": ""
+      },
+      "password": {
+        "label": "密码",
+        "description": ""
+      },
+      "tls": {
+        "label": "验证 TLS",
+        "description": "远程主机必须开启，仅本地测试数据库允许关闭。"
+      },
+      "ca_file": {
+        "label": "CA 证书路径",
+        "description": ""
+      },
+      "pool_size": {
+        "label": "连接池大小",
+        "description": ""
+      },
+      "connect_timeout_seconds": {
+        "label": "连接超时（秒）",
+        "description": ""
+      },
+      "read_timeout_seconds": {
+        "label": "读取超时（秒）",
+        "description": ""
+      }
+    }
+  }
+}

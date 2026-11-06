@@ -1,0 +1,48 @@
+{
+  "storage-mysql": {
+    "name": "MySQL Storage",
+    "description": "Store conversations, memory events and channel state in your MySQL database.",
+    "fields": {
+      "host": {
+        "label": "Host",
+        "description": ""
+      },
+      "port": {
+        "label": "Port",
+        "description": ""
+      },
+      "database": {
+        "label": "Database",
+        "description": ""
+      },
+      "user": {
+        "label": "User",
+        "description": ""
+      },
+      "password": {
+        "label": "Password",
+        "description": ""
+      },
+      "tls": {
+        "label": "Verify TLS",
+        "description": "Required for remote hosts. Disable only for a local test database."
+      },
+      "ca_file": {
+        "label": "CA certificate path",
+        "description": ""
+      },
+      "pool_size": {
+        "label": "Connection pool size",
+        "description": ""
+      },
+      "connect_timeout_seconds": {
+        "label": "Connection timeout (seconds)",
+        "description": ""
+      },
+      "read_timeout_seconds": {
+        "label": "Read timeout (seconds)",
+        "description": ""
+      }
+    }
+  }
+}

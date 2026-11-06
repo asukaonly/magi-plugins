@@ -865,6 +865,10 @@
       "package_sha256": "7812be7d489ffadd3ae35adc4b8f9b7d97039ac0f9320a6434ef782f566a4abf",
       "executable_paths": []
     },
+    "storage-mysql@1.0.0": {
+      "package_sha256": "567e96fb5e6792f1da1c875b5a3e110cfac600933507dd4078e765840876c2ea",
+      "executable_paths": []
+    },
     "system-media@0.1.2": {
       "package_sha256": "d289be73fdd3d8536e04f22e6e1afedc5eb3ef726a94d29eeeb3ecb1ae1b0967",
       "executable_paths": []

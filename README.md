@@ -50,6 +50,12 @@ Selectors grant no access by themselves: the host intersects them with the
 connection's authorized data. Projection revision is the immutable package
 version.
 
+Storage providers are selected at server startup before domain consumers. The
+`storage-mysql` package owns the MySQL drivers, migrations and repository
+transactions for chat, L1 events and channels/outreach. SQLite remains bundled in
+the host as `storage-sqlite`. See the package README for connection selection,
+offline transfer, ownership checks and recovery.
+
 ## How It Works
 
 ```
@@ -133,6 +139,7 @@ also declares its complete settings schema (an empty list when none is needed).
 | [screen-time](plugins/screen_time/plugin.toml) | source | `screen_time` | — |
 | [screenshot_timeline](plugins/screenshot_timeline/plugin.toml) | source, tool | `screenshot_timeline` | Form, Actions, Resources |
 | [steam-play-history](plugins/steam_play_history/plugin.toml) | source | `steam_play_history` | Form |
+| [storage-mysql](plugins/storage-mysql/README.md) | storage | — | Connection fields |
 | [system-media](plugins/system_media/plugin.toml) | source | `system_media` | — |
 | [telegram](plugins/telegram/plugin.toml) | channel | `telegram` | — |
 | [terminal-history](plugins/terminal_history/plugin.toml) | source | `terminal_history` | Form |

@@ -34,6 +34,8 @@ PYTHON_VERSION = "3.13"
 # newer upstream releases; never auto-follow. See module docstring.
 EXCLUDE_NEWER = "2026-05-31T00:00:00Z"
 EXCLUDE_NEWER_PACKAGES = {
+    # Storage needs the native-driver ping fix in the SQLAlchemy 2.0.55 line.
+    "sqlalchemy": "2026-11-07T00:00:00Z",
     # osxphotos 0.75.9 resolves pyobjc 9.2, which does not build cleanly on
     # the bundled Python 3.13 runtime. Allow only this package to move far
     # enough to pick up the pyobjc 12.x-compatible release.
