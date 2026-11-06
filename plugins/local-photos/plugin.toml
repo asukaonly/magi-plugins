@@ -10,7 +10,7 @@ id = "local-photos"
 name = "Local Photos"
 name_i18n = { "zh-CN" = "本地照片" }
 icon = "asset:assets/icon.png"
-version = "0.3.8"
+version = "0.3.9"
 description = "Photo capture dates and locations in selected folders"
 description_i18n = { "zh-CN" = "所选照片的拍摄时间和地点" }
 author = "Magi Team"
