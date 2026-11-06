@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .base import Conversation
+from .user_content import authored_text
 
 _SESSION_DIRS = ("sessions", "archived_sessions")
 
@@ -141,7 +142,7 @@ class CodexAdapter:
                         continue
                     session_id = str(obj.get("session_id") or "").strip()
                     value = obj.get("text")
-                    text = value if isinstance(value, str) and value.strip() else ""
+                    text = authored_text(value) if isinstance(value, str) else ""
                     if not session_id or not text:
                         continue
                     try:
@@ -223,7 +224,7 @@ class CodexAdapter:
                     ts = _iso_to_ts(str(obj.get("timestamp") or ""))
                     if obj.get("type") == "event_msg" and payload.get("type") == "user_message":
                         value = payload.get("message")
-                        text = value if isinstance(value, str) and value.strip() else ""
+                        text = authored_text(value) if isinstance(value, str) else ""
                         if text:
                             turns.append(text)
                             max_ts = max(max_ts, ts)
@@ -236,8 +237,10 @@ class CodexAdapter:
                     ):
                         texts = _content_texts(payload.get("content"))
                         if texts:
-                            fallback_turns.append("\n".join(texts))
-                            max_ts = max(max_ts, ts)
+                            text = authored_text("\n".join(texts))
+                            if text.strip():
+                                fallback_turns.append(text)
+                                max_ts = max(max_ts, ts)
         except OSError:
             return None
 

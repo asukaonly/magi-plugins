@@ -26,6 +26,32 @@ from pathlib import Path
 from types import ModuleType
 
 
+def test_runtime_envelopes_do_not_become_user_prompts(tmp_path: Path) -> None:
+    adapter = _load_codex_adapter().CodexAdapter()
+    transcript = tmp_path / "session.jsonl"
+    prompts = [
+        "<environment_context>\n<cwd>/project</cwd>\n</environment_context>",
+        "# AGENTS.md instructions for /project\n\n<INSTRUCTIONS>\nUse tests.\n</INSTRUCTIONS>\n<environment_context>\nlocal\n</environment_context>",
+        "<environment_context>\nlocal\n</environment_context>\nFix the parser.",
+        "Explain `<environment_context>` and preserve the XML example.",
+        "```xml\n<environment_context>\nexample\n</environment_context>\n```",
+    ]
+    transcript.write_text("\n".join(json.dumps({
+        "type": "response_item", "timestamp": "2026-11-06T01:00:00Z",
+        "payload": {"type": "message", "role": "user", "content": text},
+    }) for text in prompts))
+    conversation = adapter._read_session_file(transcript, 0, 0)
+    assert conversation.user_turns == ["Fix the parser.", prompts[3], prompts[4]]
+
+
+def test_environment_only_session_does_not_emit_activity(tmp_path: Path) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(json.dumps({"type": "event_msg", "payload": {
+        "type": "user_message", "message": "<environment_context>\nlocal\n</environment_context>",
+    }}))
+    assert _load_codex_adapter().CodexAdapter()._read_session_file(transcript, 0, 0) is None
+
+
 def _load_codex_adapter() -> ModuleType:
     adapters_dir = Path(__file__).resolve().parents[1] / "adapters"
     pkg = "agent_history_adapters_under_test"

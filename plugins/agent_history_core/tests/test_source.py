@@ -23,6 +23,18 @@ from pathlib import Path
 from types import ModuleType
 
 
+def test_output_excludes_runtime_context_from_memory_payload() -> None:
+    source = _load_source_module().CodingAgentHistorySource(
+        agent="codex", source_type="codex_agent_history", display_name="History",
+    )
+    output = asyncio.run(source.build_output({
+        "source_item_id": "codex:example", "agent": "codex",
+        "user_turns": ["<environment_context>\nlocal\n</environment_context>", "Fix the parser."],
+    }))
+    assert output.pinned_payload == "## User turn 1\n\nFix the parser."
+    assert output.narration.body == "Fix the parser."
+
+
 def _load_source_module() -> ModuleType:
     plugin_dir = Path(__file__).resolve().parents[1]
     pkg_name = "agent_history_under_test"

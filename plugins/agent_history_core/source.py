@@ -38,6 +38,7 @@ from magi_plugin_sdk.sources import (
 
 from .adapters.base import select_adapter
 from .scrub import redact_secrets
+from .adapters.user_content import authored_text
 
 # Cap a single conversation's joined content. Per-session chunking is a future
 # enhancement (YAGNI for v1); this just bounds a runaway session's pinned text.
@@ -198,7 +199,11 @@ class CodingAgentHistorySource(Source):
         agent = str(item.get("agent") or "coding_assistant")
         # Collection already scrubs source snapshots. Keep direct normalization
         # calls safe before their text reaches host memory or a configured LLM.
-        turns = [redact_secrets(str(t)) for t in (item.get("user_turns") or [])]
+        turns = [
+            redact_secrets(cleaned)
+            for turn in item.get("user_turns") or []
+            if (cleaned := authored_text(str(turn))).strip()
+        ]
         summary = _lean_summary("\n\n".join(turns))
         full = "\n\n".join(
             f"## User turn {index}\n\n{turn}"
