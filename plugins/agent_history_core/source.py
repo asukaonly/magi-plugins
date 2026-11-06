@@ -17,7 +17,7 @@ through ``select_adapter``, applies the first-sync lookback window
 (``initial_sync_lookback_days``) on the first run only, and advances an
 mtime/occurred_at cursor so later runs are forward-incremental. ``build_output``
 scrubs every user turn (``redact_secrets``) and pins the full joined text in
-``pinned_payload`` for L2; L1's narration stays a lean summary. Dedup is by
+``pinned_payload`` for L2; L1 retains the same text and the timeline uses a compact preview. Dedup is by
 ``source_item_identity`` (``agent:session_id``) +
 ``source_item_version_fingerprint`` (changes when the session grows).
 """
@@ -34,6 +34,7 @@ from magi_plugin_sdk.sources import (
     SourceMemoryPolicy,
     SourceOutput,
     SourceSyncContext,
+    TimelinePresentation,
 )
 
 from .adapters.base import select_adapter
@@ -49,11 +50,7 @@ _SECONDS_PER_DAY = 86400
 
 
 def _lean_summary(text: str, *, max_chars: int = _SUMMARY_MAX_CHARS) -> str:
-    """First non-empty line of the (scrubbed) text, capped -- a lean L1 preview.
-
-    The full joined turns are pinned separately for L2; L1's narration only needs
-    a short, timeline-friendly summary.
-    """
+    """Return a timeline-only preview; never use it as memory evidence."""
     for line in str(text or "").splitlines():
         stripped = line.strip()
         if stripped:
@@ -236,9 +233,10 @@ class CodingAgentHistorySource(Source):
                 ),
                 qualifiers={"turn_count": len(turns), "project": project},
             ),
-            narration=self._build_narration(title=title, body=summary),
+            narration=self._build_narration(title=title, body=full),
+            timeline_presentation=TimelinePresentation(mode="compact", title=title, summary=summary),
             occurred_at=occurred_at,
-            content_blocks=[ContentBlock(kind="text", value=summary)] if summary else [],
+            content_blocks=[ContentBlock(kind="text", value=full)] if full else [],
             tags=[t for t in ["coding_assistant", agent, project] if t],
             provenance={
                 "source_id": self.source_id,

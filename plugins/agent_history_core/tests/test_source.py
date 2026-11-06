@@ -32,7 +32,29 @@ def test_output_excludes_runtime_context_from_memory_payload() -> None:
         "user_turns": ["<environment_context>\nlocal\n</environment_context>", "Fix the parser."],
     }))
     assert output.pinned_payload == "## User turn 1\n\nFix the parser."
-    assert output.narration.body == "Fix the parser."
+    assert output.narration.body == output.pinned_payload
+    assert output.timeline_presentation.summary == "Fix the parser."
+
+
+def test_memory_keeps_followup_requests_while_timeline_stays_compact() -> None:
+    source = _load_source_module().CodingAgentHistorySource(
+        agent="codex", source_type="codex_agent_history", display_name="History",
+    )
+    output = asyncio.run(source.build_output({
+        "source_item_id": "codex:example", "agent": "codex",
+        "user_turns": [
+            "# AGENTS.md instructions for /project\n<INSTRUCTIONS>\nRules\n</INSTRUCTIONS>",
+            "Investigate the report.\nThe November totals are missing.",
+            "Keep the existing product mappings and add a regression test.",
+        ],
+    }))
+    assert "AGENTS.md" not in output.narration.body
+    assert "November totals" in output.narration.body
+    assert "existing product mappings" in output.narration.body
+    assert "## User turn 2" in output.narration.body
+    assert output.content_blocks[0].value == output.narration.body == output.pinned_payload
+    assert output.timeline_presentation.mode == "compact"
+    assert output.timeline_presentation.summary == "Investigate the report."
 
 
 def _load_source_module() -> ModuleType:
