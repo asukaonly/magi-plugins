@@ -55,6 +55,9 @@ def test_memory_keeps_followup_requests_while_timeline_stays_compact() -> None:
     assert output.content_blocks[0].value == output.narration.body == output.pinned_payload
     assert output.timeline_presentation.mode == "compact"
     assert output.timeline_presentation.summary == "Investigate the report."
+    assert output.activity.qualifiers["content_scope"] == "user_turns_only"
+    assert output.activity.qualifiers["includes_assistant_results"] is False
+    assert output.activity.qualifiers["timestamp_scope"] == "latest_turn_in_cumulative_session"
 
 
 def _load_source_module() -> ModuleType:
