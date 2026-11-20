@@ -10,7 +10,7 @@ id = "telegram"
 name = "Telegram"
 name_i18n = { "zh-CN" = "Telegram" }
 icon = "asset:assets/icon.svg"
-version = "0.3.6"
+version = "0.3.7"
 description = "Chat with Magi in Telegram"
 description_i18n = { "zh-CN" = "在 Telegram 中与 Magi 对话" }
 author = "Magi Team"

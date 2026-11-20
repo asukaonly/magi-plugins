@@ -929,6 +929,10 @@
       "package_sha256": "0d6001ad8d3f94992420f347f758a73bdaa3f6e03c763ed67ed25283779b41d8",
       "executable_paths": []
     },
+    "telegram@0.3.7": {
+      "package_sha256": "d9f849cb463f42a6503217d04a4a7095f4b7640c8ffa4f87bc731aa99f5f62f5",
+      "executable_paths": []
+    },
     "terminal-history@0.1.1": {
       "package_sha256": "891ce3aa4fac9f305c1adfad16d0d2dbd292856f2d2d886520b37b7e96da8885",
       "executable_paths": []

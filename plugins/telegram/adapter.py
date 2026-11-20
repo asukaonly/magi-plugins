@@ -248,11 +248,7 @@ class TelegramChannel(Channel):
         self._application = builder.build()
 
         self._application.add_handler(CommandHandler("start", self._on_start_command))
-        # Common session commands (/new, /reset) are owned by the host's unified
-        # channel-command layer (one reset/mapping chain across all channels) —
-        # forward the raw command to dispatch rather than resetting here.
-        self._application.add_handler(CommandHandler("reset", self._on_session_command))
-        self._application.add_handler(CommandHandler("new", self._on_session_command))
+        self._application.add_handler(CommandHandler(("help", "new", "reset"), self._on_control_command))
         self._application.add_handler(CommandHandler("ask", self._on_ask_command))
         self._application.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self._on_message)
@@ -718,16 +714,13 @@ class TelegramChannel(Channel):
         except ChannelInboundRejectedError as exc:
             self._log_inbound_rejection(exc)
 
-    async def _on_session_command(self, update: Any, context: Any) -> None:
-        """Forward a common session command (/new, /reset) to the host's unified
-        channel-command layer, which owns the session-mapping reset chain. We
-        dispatch the raw command text (e.g. ``/reset``); the host parser resets
-        the mapping and returns the ack, surfaced in ``_process_inbound``. Keeps
-        ONE reset path shared across channels — no plugin-side duplicate."""
+    async def _on_control_command(self, update: Any, context: Any) -> None:
+        """Forward host commands after Telegram has checked the addressed bot."""
         message = update.effective_message
         if message is None or not message.text:
             return
-        await self._process_inbound(update, message.text)
+        text = message.text if context.args else message.text.strip().partition("@")[0]
+        await self._process_inbound(update, text)
 
     async def _on_ask_command(self, update: Any, context: Any) -> None:
         """Handle /ask <message> in group or DM."""

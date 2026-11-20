@@ -162,3 +162,50 @@ async def test_callback_query_approve_via_port() -> None:
     assert ch._control_port.handle_command.await_args.kwargs["message"] == "/approve abc123"
     assert ctx.bot.send_message.await_args.kwargs["text"] == "✓ 已同意"
     ch._message_dispatcher.dispatch_user_message.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("command", ["help", "new", "reset"])
+async def test_registered_commands_forward_only_requests_for_this_bot(monkeypatch, command):
+    from telegram import Update
+    from telegram.ext import Application, CommandHandler
+
+    channel = _channel()
+    app = _wire(channel, result=ChannelControlCommandResult(ack="Host reply", kind="help"))
+    app.initialize = AsyncMock()
+    app.start = AsyncMock()
+    app.updater.start_polling = AsyncMock()
+    app.bot.defaults = None
+    app.bot.username = "MagiBot"
+    app.bot.get_me.return_value.username = "MagiBot"
+    builder = MagicMock()
+    builder.token.return_value.build.return_value = app
+    monkeypatch.setattr(Application, "builder", lambda: builder)
+    await channel.start()
+    handler, = (
+        call.args[0] for call in app.add_handler.call_args_list
+        if isinstance(call.args[0], CommandHandler) and command in call.args[0].commands
+    )
+
+    for suffix in ("", "@magibot", "@OtherBot"):
+        text = f"/{command}{suffix}"
+        update = Update.de_json({
+            "update_id": 1,
+            "message": {
+                "message_id": 7, "date": 1_754_006_400,
+                "chat": {"id": 555, "type": "supergroup", "title": "Group"},
+                "from": {"id": 42, "is_bot": False, "first_name": "Alice"},
+                "text": text,
+                "entities": [{"type": "bot_command", "offset": 0, "length": len(text)}],
+            },
+        }, app.bot)
+        matched = handler.check_update(update)
+        if suffix == "@OtherBot":
+            assert not matched
+            continue
+        assert matched
+        await handler.callback(update, MagicMock(args=matched[0]))
+        assert channel._control_port.handle_command.await_args.kwargs["message"] == f"/{command}"
+        assert app.bot.send_message.await_args.kwargs["text"] == "Host reply"
+    assert channel._control_port.handle_command.await_count == 2
+    channel._message_dispatcher.dispatch_user_message.assert_not_awaited()
